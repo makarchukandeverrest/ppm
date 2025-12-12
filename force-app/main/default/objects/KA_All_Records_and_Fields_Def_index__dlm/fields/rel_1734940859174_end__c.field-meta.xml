@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>rel_1734940859174_end__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <label>KA_All_Records_and_Fields_Def_index__rel</label>
+    <referenceTo>KA_All_Records_and_Fields_Def_chunk__dlm</referenceTo>
+    <relationshipLabel>KA_All_Records_and_Fields_Def_index__rel</relationshipLabel>
+    <relationshipName>rel_1734940859174_end</relationshipName>
+    <required>false</required>
+    <type>Lookup</type>
+</CustomField>

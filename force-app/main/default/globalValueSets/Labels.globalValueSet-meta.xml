@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GlobalValueSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customValue>
+        <fullName>Hot Lead</fullName>
+        <default>false</default>
+        <label>Hot Lead</label>
+    </customValue>
+    <customValue>
+        <fullName>Warm Lead</fullName>
+        <default>false</default>
+        <label>Warm Lead</label>
+    </customValue>
+    <customValue>
+        <fullName>Cold Lead</fullName>
+        <default>false</default>
+        <label>Cold Lead</label>
+    </customValue>
+    <customValue>
+        <fullName>Need More Info</fullName>
+        <default>false</default>
+        <label>Need More Info</label>
+    </customValue>
+    <customValue>
+        <fullName>Assumptive Lead</fullName>
+        <default>false</default>
+        <label>Assumptive Lead</label>
+    </customValue>
+    <customValue>
+        <fullName>On Hold</fullName>
+        <default>false</default>
+        <label>On Hold</label>
+    </customValue>
+    <customValue>
+        <fullName>Contract Created</fullName>
+        <default>false</default>
+        <label>Contract Created</label>
+    </customValue>
+    <customValue>
+        <fullName>Revision Needed</fullName>
+        <default>false</default>
+        <label>Revision Needed</label>
+    </customValue>
+    <customValue>
+        <fullName>Keep Same Info</fullName>
+        <default>false</default>
+        <label>Keep Same Info</label>
+    </customValue>
+    <customValue>
+        <fullName>Contract Approved</fullName>
+        <default>false</default>
+        <label>Contract Approved</label>
+    </customValue>
+    <customValue>
+        <fullName>Sales Form Lead</fullName>
+        <default>false</default>
+        <label>Sales Form Lead</label>
+    </customValue>
+    <customValue>
+        <fullName>Marijana to do</fullName>
+        <default>false</default>
+        <label>Marijana to do</label>
+    </customValue>
+    <customValue>
+        <fullName>Natasa to do</fullName>
+        <default>false</default>
+        <label>Natasa to do</label>
+    </customValue>
+    <customValue>
+        <fullName>Rania to do</fullName>
+        <default>false</default>
+        <label>Rania to do</label>
+    </customValue>
+    <customValue>
+        <fullName>Goran to do</fullName>
+        <default>false</default>
+        <label>Goran to do</label>
+    </customValue>
+    <customValue>
+        <fullName>No Updates</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>No Updates</label>
+    </customValue>
+    <customValue>
+        <fullName>Details Page</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>Details Page</label>
+    </customValue>
+    <customValue>
+        <fullName>Check Information</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>Check Information</label>
+    </customValue>
+    <customValue>
+        <fullName>Verified</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>Verified</label>
+    </customValue>
+    <customValue>
+        <fullName>Value 6</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>Value 6</label>
+    </customValue>
+    <customValue>
+        <fullName>Value 5</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>Value 5</label>
+    </customValue>
+    <description>Labels to comment</description>
+    <masterLabel>Labels</masterLabel>
+    <sorted>false</sorted>
+</GlobalValueSet>

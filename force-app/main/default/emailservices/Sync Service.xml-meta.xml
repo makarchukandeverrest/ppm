@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<EmailServicesFunction xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apexClass>Email_Platform__SyncService</apexClass>
+    <attachmentOption>All</attachmentOption>
+    <authenticationFailureAction>Discard</authenticationFailureAction>
+    <authorizationFailureAction>Discard</authorizationFailureAction>
+    <emailServicesAddresses>
+        <developerName>Inbound</developerName>
+        <isActive>true</isActive>
+        <localPart>inbound</localPart>
+        <runAsUser>bohdan.pyrih@everrest.org</runAsUser>
+    </emailServicesAddresses>
+    <emailServicesAddresses>
+        <developerName>Outbound</developerName>
+        <isActive>true</isActive>
+        <localPart>outbound</localPart>
+        <runAsUser>bohdan.pyrih@everrest.org</runAsUser>
+    </emailServicesAddresses>
+    <functionInactiveAction>Discard</functionInactiveAction>
+    <functionName>Sync Service</functionName>
+    <isActive>true</isActive>
+    <isAuthenticationRequired>false</isAuthenticationRequired>
+    <isErrorRoutingEnabled>false</isErrorRoutingEnabled>
+    <isTextAttachmentsAsBinary>false</isTextAttachmentsAsBinary>
+    <isTlsRequired>false</isTlsRequired>
+    <overLimitAction>Discard</overLimitAction>
+</EmailServicesFunction>

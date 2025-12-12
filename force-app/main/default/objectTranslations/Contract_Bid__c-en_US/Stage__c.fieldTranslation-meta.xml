@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Stage --></label>
+    <name>Stage__c</name>
+    <picklistValues>
+        <masterLabel>Client Showed Interest</masterLabel>
+        <translation><!-- Client Showed Interest --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Closed - LOST</masterLabel>
+        <translation><!-- Closed - LOST --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Closed - WON</masterLabel>
+        <translation><!-- Closed - WON --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Contact Made</masterLabel>
+        <translation><!-- Contact Made --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Contact Verified</masterLabel>
+        <translation><!-- Contact Verified --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Contract Bid Package Sent</masterLabel>
+        <translation><!-- Contract Bid Package Sent --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Contract Sent via DocuSign</masterLabel>
+        <translation><!-- Contract Sent via DocuSign --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Contract Under Review</masterLabel>
+        <translation><!-- Contract Under Review --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>First Follow Up</masterLabel>
+        <translation><!-- First Follow Up --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Information Verified</masterLabel>
+        <translation><!-- Information Verified --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Need Contact Verification</masterLabel>
+        <translation><!-- Need Contact Verification --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Negotiation Started</masterLabel>
+        <translation><!-- Negotiation Started --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Second Follow Up</masterLabel>
+        <translation><!-- Second Follow Up --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Third Follow Up</masterLabel>
+        <translation><!-- Third Follow Up --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

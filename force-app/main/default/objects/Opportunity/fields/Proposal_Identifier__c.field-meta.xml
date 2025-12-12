@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Proposal_Identifier__c</fullName>
+    <externalId>false</externalId>
+    <formula>Name &amp; &quot;/&quot; &amp;
+TEXT(MONTH(CloseDate)) &amp; &quot;-&quot; &amp;
+TEXT(DAY(CloseDate)) &amp; &quot;-&quot; &amp;
+TEXT(YEAR(CloseDate)) &amp; &quot;/&quot; &amp;
+Reference_Number__c</formula>
+    <label>Proposal Identifier</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

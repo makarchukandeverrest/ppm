@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Colored_Labels__c</fullName>
+    <externalId>false</externalId>
+    <formula>TRIM(
+  IF(INCLUDES(Label__c, &quot;Revision Needed&quot;),
+     IMAGE(&quot;/resource/Red_Orange&quot;, &quot;Revision Needed&quot;, 30, 30) &amp; &quot; Revision Needed &quot;,
+     &quot;&quot;) &amp;
+
+  IF(INCLUDES(Label__c, &quot;Keep Same Info&quot;),
+     IMAGE(&quot;/resource/Green&quot;, &quot;Keep Same Info&quot;, 30, 30) &amp; &quot; Keep Same Info &quot;,
+     &quot;&quot;) &amp;
+
+  IF(INCLUDES(Label__c, &quot;Contract Created&quot;),
+     IMAGE(&quot;/resource/Purple&quot;, &quot;Contract Created&quot;, 30, 30) &amp; &quot; Contract Created &quot;,
+     &quot;&quot;) &amp;
+
+  IF(INCLUDES(Label__c, &quot;Contract Approved&quot;),
+     IMAGE(&quot;/resource/Dark_Purple&quot;, &quot;Contract Approved&quot;, 30, 30) &amp; &quot; Contract Approved &quot;,
+     &quot;&quot;) &amp;
+
+  IF(INCLUDES(Label__c, &quot;Hot Lead&quot;),
+     IMAGE(&quot;/resource/Red&quot;, &quot;Hot Lead&quot;, 30, 30) &amp; &quot; Hot Lead &quot;,
+     &quot;&quot;) &amp;
+
+  IF(INCLUDES(Label__c, &quot;Need More Info&quot;),
+     IMAGE(&quot;/resource/Orange&quot;, &quot;Need More Info&quot;, 30, 30) &amp; &quot; Need More Info &quot;,
+     &quot;&quot;) &amp;
+
+  IF(INCLUDES(Label__c, &quot;Cold Lead&quot;),
+     IMAGE(&quot;/resource/Blue&quot;, &quot;Cold Lead&quot;, 30, 30) &amp; &quot; Cold Lead &quot;,
+     &quot;&quot;) &amp;
+
+  IF(INCLUDES(Label__c, &quot;Warm Lead&quot;),
+     IMAGE(&quot;/resource/Pink&quot;, &quot;Warm Lead&quot;, 30, 30) &amp; &quot; Warm Lead &quot;,
+     &quot;&quot;) &amp;
+
+  IF(INCLUDES(Label__c, &quot;Assumptive Lead&quot;),
+     IMAGE(&quot;/resource/Grey&quot;, &quot;Assumptive Lead&quot;, 30, 30) &amp; &quot; Assumptive Lead &quot;,
+     &quot;&quot;) &amp;
+
+  IF(INCLUDES(Label__c, &quot;Sales Form Lead&quot;),
+     IMAGE(&quot;/resource/Dark_Purple&quot;, &quot;Sales Form Lead&quot;, 30, 30) &amp; &quot; Sales Form Lead &quot;,
+     &quot;&quot;) &amp;
+
+  IF(INCLUDES(Label__c, &quot;On Hold&quot;),
+     IMAGE(&quot;/resource/Hard_Blue&quot;, &quot;On Hold&quot;, 30, 30) &amp; &quot; On Hold&quot;,
+     &quot;&quot;) &amp;
+TRIM(
+  IF(INCLUDES(Label__c, &quot;Marijana to do&quot;),
+     IMAGE(&quot;/resource/Black&quot;, &quot;Marijana to do&quot;, 30, 30) &amp; &quot; Marijana to do &quot;,
+     &quot;&quot;) &amp;
+
+  IF(INCLUDES(Label__c, &quot;Natasa to do&quot;),
+     IMAGE(&quot;/resource/Black&quot;, &quot;Natasa to do&quot;, 30, 30) &amp; &quot; Natasa to do &quot;,
+     &quot;&quot;) &amp;
+
+  IF(INCLUDES(Label__c, &quot;Rania to do&quot;),
+     IMAGE(&quot;/resource/Black&quot;, &quot;Rania to do&quot;, 30, 30) &amp; &quot; Rania to do &quot;,
+     &quot;&quot;) &amp;
+
+  IF(INCLUDES(Label__c, &quot;Goran to do&quot;),
+     IMAGE(&quot;/resource/Black&quot;, &quot;Goran to do&quot;, 30, 30) &amp; &quot; Goran to do &quot;,
+     &quot;&quot;))
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Colored Labels</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

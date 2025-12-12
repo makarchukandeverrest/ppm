@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Stage__c</fullName>
+    <label>Stage</label>
+    <required>false</required>
+    <trackFeedHistory>true</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Contact Made</fullName>
+                <default>true</default>
+                <label>Contact Made</label>
+            </value>
+            <value>
+                <fullName>Information Verified</fullName>
+                <default>false</default>
+                <label>Information Verified</label>
+            </value>
+            <value>
+                <fullName>Contract Bid Package Sent</fullName>
+                <default>false</default>
+                <label>Contract Bid Package Sent</label>
+            </value>
+            <value>
+                <fullName>Client Showed Interest</fullName>
+                <default>false</default>
+                <label>Client Showed Interest</label>
+            </value>
+            <value>
+                <fullName>Need Contact Verification</fullName>
+                <default>false</default>
+                <label>Need Contact Verification</label>
+            </value>
+            <value>
+                <fullName>Contact Verified</fullName>
+                <default>false</default>
+                <label>Contact Verified</label>
+            </value>
+            <value>
+                <fullName>Contract Sent via DocuSign</fullName>
+                <default>false</default>
+                <label>Contract Sent via DocuSign</label>
+            </value>
+            <value>
+                <fullName>Proposal/Review</fullName>
+                <default>false</default>
+                <label>Contract Under Review</label>
+            </value>
+            <value>
+                <fullName>First Follow Up</fullName>
+                <default>false</default>
+                <label>First Follow Up</label>
+            </value>
+            <value>
+                <fullName>Second Follow Up</fullName>
+                <default>false</default>
+                <label>Second Follow Up</label>
+            </value>
+            <value>
+                <fullName>Third Follow Up</fullName>
+                <default>false</default>
+                <label>Third Follow Up</label>
+            </value>
+            <value>
+                <fullName>Negotiation Started</fullName>
+                <default>false</default>
+                <label>Negotiation Started</label>
+            </value>
+            <value>
+                <fullName>Closed - WON</fullName>
+                <default>false</default>
+                <label>Closed - WON</label>
+            </value>
+            <value>
+                <fullName>Closed - LOST</fullName>
+                <default>false</default>
+                <label>Closed - LOST</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

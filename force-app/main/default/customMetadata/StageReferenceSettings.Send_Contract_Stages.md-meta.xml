@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>Send Contract Stages</label>
+    <protected>false</protected>
+    <values>
+        <field>Stage_Names__c</field>
+        <value xsi:type="xsd:string">Contact Made,Information Verified,Contract Bid Package Sent,Client Showed Interest,Need Contact Verification,Contact Verified,Contract Sent via DocuSign,Contract Under Review,First Follow Up,Second Follow Up,Third Follow Up,Negotiation Started</value>
+    </values>
+</CustomMetadata>

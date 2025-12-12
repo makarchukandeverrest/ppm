@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FieldSrcTrgtRelationship xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <definitionCreationType>System</definitionCreationType>
+    <lookupFieldName>KA_All_Records_and_Fields_Def_index__dlm.rel_1734940859174_end__c</lookupFieldName>
+    <masterLabel>KA_All_Records_and_Fields_Def_index_SourceRecordId_map_KA_All_Records_and_Fields_Def_chunk_RecordId_1734940859174</masterLabel>
+    <owner>DataCloud</owner>
+    <relationshipCardinality>OneToOne</relationshipCardinality>
+    <sourceFieldName>KA_All_Records_and_Fields_Def_index__dlm.SourceRecordId__c</sourceFieldName>
+    <targetEntity xsi:nil="true"/>
+    <targetFieldName>KA_All_Records_and_Fields_Def_chunk__dlm.RecordId__c</targetFieldName>
+</FieldSrcTrgtRelationship>

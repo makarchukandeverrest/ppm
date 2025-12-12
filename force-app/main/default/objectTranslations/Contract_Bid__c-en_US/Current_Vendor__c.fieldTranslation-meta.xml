@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Current Vendor --></label>
+    <name>Current_Vendor__c</name>
+    <picklistValues>
+        <masterLabel>American Pools</masterLabel>
+        <translation><!-- American Pools --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Anchor Aquatics</masterLabel>
+        <translation><!-- Anchor Aquatics --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Aqua Safe</masterLabel>
+        <translation><!-- Aqua Safe --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>City Pools</masterLabel>
+        <translation><!-- City Pools --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Coastline Aquatics, LLC.</masterLabel>
+        <translation><!-- Coastline Aquatics, LLC. --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Continental Pools</masterLabel>
+        <translation><!-- Continental Pools --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Georgetown Aquatics</masterLabel>
+        <translation><!-- Georgetown Aquatics --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Happy Summers</masterLabel>
+        <translation><!-- Happy Summers --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>High Sierra</masterLabel>
+        <translation><!-- High Sierra --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>ISE Aquatics</masterLabel>
+        <translation><!-- ISE Aquatics --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Lighthouse Pool Management</masterLabel>
+        <translation><!-- Lighthouse Pool Management --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>MGN Pools</masterLabel>
+        <translation><!-- MGN Pools --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Millennium Pools</masterLabel>
+        <translation><!-- Millennium Pools --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>NVPools, Inc.</masterLabel>
+        <translation><!-- NVPools, Inc. --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Paradise Pools</masterLabel>
+        <translation><!-- Paradise Pools --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Premier Aquatics</masterLabel>
+        <translation><!-- Premier Aquatics --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>RPS Pools</masterLabel>
+        <translation><!-- RPS Pools --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>RSV Pools</masterLabel>
+        <translation><!-- RSV Pools --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Rubini Pool Services</masterLabel>
+        <translation><!-- Rubini Pool Services --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Splash Pools</masterLabel>
+        <translation><!-- Splash Pools --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Sunset Pools</masterLabel>
+        <translation><!-- Sunset Pools --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Titan Pools</masterLabel>
+        <translation><!-- Titan Pools --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>United Pool Management</masterLabel>
+        <translation><!-- United Pool Management --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>VIP Pools</masterLabel>
+        <translation><!-- VIP Pools --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Winkler</masterLabel>
+        <translation><!-- Winkler --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

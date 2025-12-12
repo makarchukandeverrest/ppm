@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Current_Vendor__c</fullName>
+    <label>Current Vendor</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>High Sierra</fullName>
+                <default>false</default>
+                <label>High Sierra</label>
+            </value>
+            <value>
+                <fullName>Continental Pools</fullName>
+                <default>false</default>
+                <label>Continental Pools</label>
+            </value>
+            <value>
+                <fullName>American Pools</fullName>
+                <default>false</default>
+                <label>American Pools</label>
+            </value>
+            <value>
+                <fullName>Aqua Safe</fullName>
+                <default>false</default>
+                <label>Aqua Safe</label>
+            </value>
+            <value>
+                <fullName>Premier Aquatics</fullName>
+                <default>false</default>
+                <label>Premier Aquatics</label>
+            </value>
+            <value>
+                <fullName>Paradise Pools</fullName>
+                <default>false</default>
+                <label>Paradise Pools</label>
+            </value>
+            <value>
+                <fullName>Sunset Pools</fullName>
+                <default>false</default>
+                <label>Sunset Pools</label>
+            </value>
+            <value>
+                <fullName>Winkler</fullName>
+                <default>false</default>
+                <label>Winkler</label>
+            </value>
+            <value>
+                <fullName>RSV Pools</fullName>
+                <default>false</default>
+                <label>RSV Pools</label>
+            </value>
+            <value>
+                <fullName>MGN Pools</fullName>
+                <default>false</default>
+                <label>MGN Pools</label>
+            </value>
+            <value>
+                <fullName>Anchor Aquatics</fullName>
+                <default>false</default>
+                <label>Anchor Aquatics</label>
+            </value>
+            <value>
+                <fullName>VIP Pools</fullName>
+                <default>false</default>
+                <label>VIP Pools</label>
+            </value>
+            <value>
+                <fullName>RPS Pools</fullName>
+                <default>false</default>
+                <label>RPS Pools</label>
+            </value>
+            <value>
+                <fullName>United Pool Management</fullName>
+                <default>false</default>
+                <label>United Pool Management</label>
+            </value>
+            <value>
+                <fullName>Happy Summers</fullName>
+                <default>false</default>
+                <label>Happy Summers</label>
+            </value>
+            <value>
+                <fullName>Splash Pools</fullName>
+                <default>false</default>
+                <label>Splash Pools</label>
+            </value>
+            <value>
+                <fullName>Millennium Pools</fullName>
+                <default>false</default>
+                <label>Millennium Pools</label>
+            </value>
+            <value>
+                <fullName>ISE Aquatics</fullName>
+                <default>false</default>
+                <label>ISE Aquatics</label>
+            </value>
+            <value>
+                <fullName>NVPools, Inc.</fullName>
+                <default>false</default>
+                <label>NVPools, Inc.</label>
+            </value>
+            <value>
+                <fullName>Coastline Aquatics, LLC.</fullName>
+                <default>false</default>
+                <label>Coastline Aquatics, LLC.</label>
+            </value>
+            <value>
+                <fullName>Lighthouse Pool Management</fullName>
+                <default>false</default>
+                <label>Lighthouse Pool Management</label>
+            </value>
+            <value>
+                <fullName>Georgetown Aquatics</fullName>
+                <default>false</default>
+                <label>Georgetown Aquatics</label>
+            </value>
+            <value>
+                <fullName>Titan Pools</fullName>
+                <default>false</default>
+                <label>Titan Pools</label>
+            </value>
+            <value>
+                <fullName>City Pools</fullName>
+                <default>false</default>
+                <label>City Pools</label>
+            </value>
+            <value>
+                <fullName>Rubini Pool Services</fullName>
+                <default>false</default>
+                <label>Rubini Pool Services</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
