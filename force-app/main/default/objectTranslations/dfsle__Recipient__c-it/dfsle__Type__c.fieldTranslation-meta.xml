@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help><!-- Type --></help>
+    <label><!-- Type --></label>
+    <name>dfsle__Type__c</name>
+    <picklistValues>
+        <masterLabel>Allow to Edit</masterLabel>
+        <translation>Consenti modifica</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>In Person Signer</masterLabel>
+        <translation>Firmatario di persona</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Needs to Sign</masterLabel>
+        <translation>Deve firmare</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Needs to View</masterLabel>
+        <translation>Deve visualizzare</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Receives a Copy</masterLabel>
+        <translation>Riceve una copia</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Seal</masterLabel>
+        <translation>Sigillo</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Specify Recipients</masterLabel>
+        <translation>Specificare i destinatari</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Update Recipients</masterLabel>
+        <translation>Aggiorna destinatari</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Witness</masterLabel>
+        <translation>Testimone</translation>
+    </picklistValues>
+</CustomFieldTranslation>

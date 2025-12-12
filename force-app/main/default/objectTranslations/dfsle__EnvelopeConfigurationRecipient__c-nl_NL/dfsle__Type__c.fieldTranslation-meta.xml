@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help><!-- Type --></help>
+    <label><!-- Type --></label>
+    <name>dfsle__Type__c</name>
+    <picklistValues>
+        <masterLabel>Allow to Edit</masterLabel>
+        <translation>Bewerken toestaan</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>In Person Signer</masterLabel>
+        <translation>Persoonlijke ondertekenaar</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Needs to Sign</masterLabel>
+        <translation>Moet ondertekenen</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Needs to View</masterLabel>
+        <translation>Moet zien</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Receives a Copy</masterLabel>
+        <translation>Kopie ontvangen</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Seal</masterLabel>
+        <translation>Zegel</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Specify Recipients</masterLabel>
+        <translation>Ontvangers opgeven</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Update Recipients</masterLabel>
+        <translation>Ontvangers bijwerken</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Witness</masterLabel>
+        <translation>Getuige</translation>
+    </picklistValues>
+</CustomFieldTranslation>

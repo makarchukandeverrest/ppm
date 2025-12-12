@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<WebLink xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Generatea0JWB00000193PV2AY</fullName>
+    <availability>online</availability>
+    <displayType>button</displayType>
+    <encodingKey>UTF-8</encodingKey>
+    <linkType>url</linkType>
+    <masterLabel>Send Proposal with Appointment</masterLabel>
+    <openType>replace</openType>
+    <protected>false</protected>
+    <url
+    >{!URLFOR($Site.BaseUrl + &apos;/apex/dfsle__gendocumentgenerator&apos;, null, [sId = Opportunity.Id, templateId = &apos;a0JWB00000193PV2AY&apos;, recordId = Opportunity.Id, title = &apos;Send Proposal with Appointment&apos;])}</url>
+</WebLink>

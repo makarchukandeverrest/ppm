@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Template Type --></label>
+    <name>dfsle__TemplateType__c</name>
+    <picklistValues>
+        <masterLabel>DocuSign Agreement Cloud Editor</masterLabel>
+        <translation>DocuSign Agreement Cloud 편집기</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Microsoft Word</masterLabel>
+        <translation>Microsoft Word</translation>
+    </picklistValues>
+</CustomFieldTranslation>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>勾選此核取方塊，即可傳送電子郵件提醒給尚未完成工作
+			的信封收件人。</help>
+    <label><!-- Remind signers via email --></label>
+    <name>dfsle__Remind__c</name>
+</CustomFieldTranslation>

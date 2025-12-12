@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Is Need More Info --></label>
+    <name>Is_Need_Mor_Info__c</name>
+</CustomFieldTranslation>

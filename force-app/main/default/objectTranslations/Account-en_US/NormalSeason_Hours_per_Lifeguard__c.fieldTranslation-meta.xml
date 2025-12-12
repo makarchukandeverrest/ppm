@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help><!-- Hours per week --></help>
+    <label><!-- Normal/Season Hours per Lifeguard --></label>
+    <name>NormalSeason_Hours_per_Lifeguard__c</name>
+</CustomFieldTranslation>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>Indica com quantos dias antes da expiração você quer que uma mensagem de email alerte os destinatários da aproximação de um prazo final
+			para realização. Esta mensagem é enviada apenas para destinatários que ainda não completaram a transação.</help>
+    <label><!-- Warn of expiration in N day(s) prior --></label>
+    <name>dfsle__ExpireWarnDays__c</name>
+</CustomFieldTranslation>

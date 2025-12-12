@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Is Quick Send --></label>
+    <name>dfsle__IsQuickSend__c</name>
+</CustomFieldTranslation>

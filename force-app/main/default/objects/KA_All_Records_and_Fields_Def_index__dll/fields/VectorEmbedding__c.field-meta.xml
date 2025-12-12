@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>VectorEmbedding__c</fullName>
+    <elementType>Float</elementType>
+    <label>Vector Embedding</label>
+    <mktDataLakeFieldAttributes>
+        <definitionCreationType>System</definitionCreationType>
+        <externalName>VectorEmbedding</externalName>
+        <isEventDate>false</isEventDate>
+        <isInternalOrganization>false</isInternalOrganization>
+        <isRecordModified>false</isRecordModified>
+        <usageTag>NONE</usageTag>
+    </mktDataLakeFieldAttributes>
+    <type>Array</type>
+</CustomField>

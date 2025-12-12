@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help><!-- Type --></help>
+    <label><!-- Type --></label>
+    <name>dfsle__Type__c</name>
+    <picklistValues>
+        <masterLabel>Allow to Edit</masterLabel>
+        <translation>允許編輯</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>In Person Signer</masterLabel>
+        <translation>現場親自簽署</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Needs to Sign</masterLabel>
+        <translation>需要簽署</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Needs to View</masterLabel>
+        <translation>必須檢視</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Receives a Copy</masterLabel>
+        <translation>接收複本</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Specify Recipients</masterLabel>
+        <translation>指定收件人</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Update Recipients</masterLabel>
+        <translation>更新收件人</translation>
+    </picklistValues>
+</CustomFieldTranslation>

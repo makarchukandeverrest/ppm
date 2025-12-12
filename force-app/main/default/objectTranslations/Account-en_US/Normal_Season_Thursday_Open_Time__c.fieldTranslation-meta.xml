@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Normal/Season Thursday Open Time --></label>
+    <name>Normal_Season_Thursday_Open_Time__c</name>
+</CustomFieldTranslation>

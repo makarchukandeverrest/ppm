@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>이 이메일 메시지 텍스트(최대 10,000자)를 편집하면 알림에 DocuSign 수신인을 위해 서명하라는 메시지가 나타납니다.</help>
+    <label><!-- Email message --></label>
+    <name>dfsle__EmailMessage__c</name>
+</CustomFieldTranslation>

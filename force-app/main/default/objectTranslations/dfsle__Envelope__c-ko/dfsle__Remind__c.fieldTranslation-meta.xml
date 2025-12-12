@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>작업을 아직 완료하지 않은 봉투의 수신인에게 전송된 이메일 미리 알림을 받으려면 이 상자를
+			선택하십시오.</help>
+    <label><!-- Remind signers via email --></label>
+    <name>dfsle__Remind__c</name>
+</CustomFieldTranslation>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>At_Risk__c</fullName>
+    <formula>IF( 
+  AND( 
+    CloseDate &lt;= TODAY() + 14, 
+    CloseDate &gt;= TODAY()
+  ), 
+  TRUE, 
+  FALSE 
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>At Risk</label>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

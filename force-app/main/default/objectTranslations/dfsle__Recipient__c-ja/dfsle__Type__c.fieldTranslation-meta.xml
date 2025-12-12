@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help><!-- Type --></help>
+    <label><!-- Type --></label>
+    <name>dfsle__Type__c</name>
+    <picklistValues>
+        <masterLabel>Allow to Edit</masterLabel>
+        <translation>編集を許可</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>In Person Signer</masterLabel>
+        <translation>同席する署名者</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Needs to Sign</masterLabel>
+        <translation>署名が必要</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Needs to View</masterLabel>
+        <translation>表示が必要</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Receives a Copy</masterLabel>
+        <translation>文書のコピーを受信</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Seal</masterLabel>
+        <translation>Seal</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Specify Recipients</masterLabel>
+        <translation>受信者の指定</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Update Recipients</masterLabel>
+        <translation>受信者の更新</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Witness</masterLabel>
+        <translation>立会人</translation>
+    </picklistValues>
+</CustomFieldTranslation>

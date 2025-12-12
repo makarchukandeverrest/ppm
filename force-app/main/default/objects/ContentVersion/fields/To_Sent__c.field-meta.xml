@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>To_Sent__c</fullName>
+    <defaultValue>true</defaultValue>
+    <description>Indicates whether the document should be sent when the send button is clicked. If checked, the document will be included in the sending process.</description>
+    <inlineHelpText>Select to mark this document for sending to client during mass contracts sending process</inlineHelpText>
+    <label>To Sent</label>
+    <trackHistory>false</trackHistory>
+    <type>Checkbox</type>
+</CustomField>

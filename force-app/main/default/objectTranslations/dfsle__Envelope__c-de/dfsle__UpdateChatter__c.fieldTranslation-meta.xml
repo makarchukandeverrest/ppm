@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>Aktivieren, um Chatter im DocuSign-Signier-Workflow anzuzeigen.</help>
+    <label><!-- Enable Chatter status updates --></label>
+    <name>dfsle__UpdateChatter__c</name>
+</CustomFieldTranslation>

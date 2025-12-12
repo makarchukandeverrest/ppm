@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>DocuSign 서명 워크플로 동안 Chatter를 보려면 클릭하십시오.</help>
+    <label><!-- Enable Chatter status updates --></label>
+    <name>dfsle__UpdateChatter__c</name>
+</CustomFieldTranslation>

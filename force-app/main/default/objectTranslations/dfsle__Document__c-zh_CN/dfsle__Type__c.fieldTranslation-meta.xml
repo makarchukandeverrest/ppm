@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help><!-- Document Type --></help>
+    <label><!-- Document Type --></label>
+    <name>dfsle__Type__c</name>
+    <picklistValues>
+        <masterLabel>Document</masterLabel>
+        <translation>文档</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>File</masterLabel>
+        <translation>文件</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Other</masterLabel>
+        <translation>其他</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Template</masterLabel>
+        <translation>範本</translation>
+    </picklistValues>
+</CustomFieldTranslation>

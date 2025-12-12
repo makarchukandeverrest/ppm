@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>Indiquer combien de jours avant l’expiration un message doit être envoyé aux destinataires pour les avertir qu’une échéance approche. Est envoyé uniquement aux destinataires qui n’ont pas encore complété la transaction.</help>
+    <label><!-- Warn of expiration in N day(s) prior --></label>
+    <name>dfsle__ExpireWarnDays__c</name>
+</CustomFieldTranslation>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>有时，您可能需要提醒收件人更快地完成信封。信封到期后，DocuSign 将作废该信封，并向发件人和收件人发送通知。</help>
+    <label><!-- Expire envelope --></label>
+    <name>dfsle__Expires__c</name>
+</CustomFieldTranslation>

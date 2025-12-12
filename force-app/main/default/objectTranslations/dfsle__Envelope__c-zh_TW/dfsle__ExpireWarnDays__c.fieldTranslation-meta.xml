@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>指定您要在到期日的多少天前傳送電子郵件提醒收件人
+			盡快完成文件。此通知將僅傳送給尚未完成交易的收件人。</help>
+    <label><!-- Warn of expiration in N day(s) prior --></label>
+    <name>dfsle__ExpireWarnDays__c</name>
+</CustomFieldTranslation>
