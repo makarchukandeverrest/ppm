@@ -1,0 +1,61 @@
+<template>
+    <template if:true={recordId}></template>
+    <lightning-card>
+        <template if:true={isUpdating}>
+            <div class="slds-is-relative" style="min-height:3rem;">
+                <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+            </div>
+        </template>
+        <template if:true={accountsWithFiles}>
+            <template for:each={accountsWithFiles} for:item="acc">
+                <div key={acc.accountId} class="slds-m-around_medium slds-box slds-theme_default">
+                    <div class="slds-grid slds-grid_vertical-align-center slds-gutters_x-small">
+                        <h2 class="slds-text-heading_small slds-m-right_small">{acc.accountName}</h2>
+                        <lightning-input type="checkbox"
+                                        label="New Client"
+                                        name="newClient"
+                                        data-account-id={acc.accountId}
+                                        onchange={handleCheckboxChange}
+                                        checked={acc.newClient}
+                                        field-level-help="Check to include new customer files with the email">
+                        </lightning-input>
+                    </div>
+
+                    <template if:true={acc.files}>
+                        <ul class="slds-list_dotted slds-m-top_small">
+                            <template for:each={acc.files} for:item="file">
+                                <li key={file.Id}>
+                                    <lightning-input type="checkbox"
+                                                    label={file.Title}
+                                                    data-file-id={file.Id}
+                                                    data-account-id={acc.accountId}
+                                                    onchange={handleCheckboxChange}
+                                                    checked={file.ToSent}>
+                                    </lightning-input>
+                                </li>
+                            </template>
+                        </ul>
+                    </template>
+                </div>
+            </template>
+        </template>
+
+        <div class="slds-m-around_medium">
+            <div class="slds-grid slds-gutters">
+                <div class="slds-col">
+                    <lightning-button variant="neutral" 
+                                      label="Refresh Data"
+                                      onclick={handleUpdate}
+                                      icon-name="utility:refresh">
+                    </lightning-button>
+                </div>
+                <div class="slds-col">
+                    <lightning-button variant="brand" 
+                                      label="Submit Selected Files via DocuSign"
+                                      onclick={handleSubmit}>
+                    </lightning-button>
+                </div>
+            </div>
+        </div>
+    </lightning-card>
+</template>
