@@ -53,10 +53,41 @@ public with sharing class BatchHttpSender implements Database.Batchable<HttpRequ
             }
         }
 
-        List<ContentVersion> versions = [
+        // First, resolve ContentDocuments by Title
+        List<ContentDocument> docs = [
             SELECT Id, Title
+            FROM ContentDocument
+            WHERE Title IN :contentTitles
+        ];
+
+        Set<Id> docIds = new Set<Id>();
+        for (ContentDocument doc : docs) {
+            docIds.add(doc.Id);
+        }
+
+        // Then, find links for those documents and keep only ones linked to Accounts (001 prefix)
+        List<ContentDocumentLink> links = [
+            SELECT ContentDocumentId, LinkedEntityId
+            FROM ContentDocumentLink
+            WHERE ContentDocumentId IN :docIds
+        ];
+
+        Set<Id> filteredDocIds = new Set<Id>();
+        for (ContentDocumentLink link : links) {
+            System.debug('link: ' + link);
+            System.debug('link.LinkedEntityId: ' + link.LinkedEntityId);
+            if (link.LinkedEntityId != null &&
+                String.valueOf(link.LinkedEntityId).startsWith('001')) {
+                filteredDocIds.add(link.ContentDocumentId);
+            }
+        }
+        System.debug('filteredDocIds: ' + filteredDocIds);
+        // Improved SOQL: Filter by Title AND presence of Account link via ContentDocumentLink
+        List<ContentVersion> versions = [
+            SELECT Id, Title, ContentDocumentId
             FROM ContentVersion
             WHERE Title IN :contentTitles
+            AND ContentDocumentId IN :filteredDocIds
         ];
 
         Map<String, ContentVersion> contentMap = new Map<String, ContentVersion>();
@@ -65,14 +96,24 @@ public with sharing class BatchHttpSender implements Database.Batchable<HttpRequ
         }
 
         if(!contentTitles.isEmpty()){
+            List<ContentVersion> versionsToUpdate = new List<ContentVersion>();
             for (String title : titleToEnvelopeId.keySet()) {
                 ContentVersion version = contentMap.get(title);
-                version.DocuSign_Envelope_Id__c = titleToEnvelopeId.get(title).toUpperCase();
-                version.To_Sent__c = false;
+                System.debug('title: ' + title);
+                System.debug('version: ' + version);
+                if (version != null) {
+                    version.DocuSign_Envelope_Id__c = titleToEnvelopeId.get(title).toUpperCase();
+                    version.To_Sent__c = false;
+                    versionsToUpdate.add(version);
+                } else {
+                    System.debug('Warning: ContentVersion not found for title "' + title + '" with Account link');
+                }
+            }
+            System.debug('versionsToUpdate: ' + versionsToUpdate);
+            if (!versionsToUpdate.isEmpty()) {
+                update versionsToUpdate;
             }
         }
-
-        update contentMap.values();
     }
 
     public void finish(Database.BatchableContext bc) {

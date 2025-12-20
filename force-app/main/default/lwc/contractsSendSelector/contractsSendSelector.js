@@ -16,14 +16,12 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     connectedCallback() {
         const urlParams = new URLSearchParams(window.location.search);
         this.recordId = urlParams.get('recordId');
-        console.log('recordId from URL:', this.recordId);
     }
 
     @wire(getAccountsWithFiles, { recordId: '$recordId' })
     wiredAccounts(result) {
         this.wiredAccountsResult = result;
         const { error, data } = result;
-        console.log('data', JSON.stringify(data));
         
         if (data) {
             this.accountsWithFiles = data;
@@ -65,6 +63,8 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     }
 
     async handleUpdate() {
+        this.accountsWithFiles = null;
+    await refreshApex(this.wiredAccountsResult);
         console.log('handleUpdate',this.recordId);
         
         try {
@@ -79,36 +79,74 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     }
 
     async handleSubmit() {
-        // try {
+        try {
+            const filteredData = this.accountsWithFiles
+                .map(account => {
+
+                    const accountCopy = { ...account };
+                    
+
+                    accountCopy.files = account.files.filter(file => file.ToSent === true);
+                    
+                    return accountCopy;
+                })
+                // remove accounts without selected files
+                .filter(account => account.files && account.files.length > 0);
+    
+            if (filteredData.length === 0) {
+                this.dispatchEvent(new ShowToastEvent({
+                    title: 'Warning',
+                    message: 'Please select at least one file to send',
+                    variant: 'warning',
+                    mode: 'dismissable'
+                }));
+                return;
+            }
+    
             this.dispatchEvent(new ShowToastEvent({
                 title: 'Processing',
-                message: 'Sending envelopes. You will be redirected.',
+                message: `Sending ${filteredData.reduce((sum, acc) => sum + acc.files.length, 0)} file(s) from ${filteredData.length} account(s)`,
                 variant: 'info',
                 mode: 'dismissable'
             }));
-            
-            await sendEnvelopeWithSignature({ accountsWithFilesJSON: JSON.stringify(this.accountsWithFiles) });
+    
+            // 3. Отправляем только отфильтрованные данные
+            await sendEnvelopeWithSignature({ 
+                accountsWithFilesJSON: JSON.stringify(filteredData),
+                recordId: this.recordId // Добавляем recordId если нужно в Apex
+            });
             
             this.error = undefined;
             
-            await this[NavigationMixin.Navigate]({
-                type: 'standard__objectPage',
-                attributes: {
-                    objectApiName: 'Contract_Bid__c',
-                    actionName: 'list'
-                }
-            });
+            // 4. Показываем success сообщение перед редиректом
+            this.dispatchEvent(new ShowToastEvent({
+                title: 'Success',
+                message: 'Envelopes sent successfully!',
+                variant: 'success',
+                mode: 'dismissable'
+            }));
             
-        // } catch (error) {
-        //     this.error = error;
-        //     // Make sure you have a proper logger imported
-        //     console.error('Error sending envelopes:', error);
-        //     this.dispatchEvent(new ShowToastEvent({
-        //         title: 'Error',
-        //         message: error.message,
-        //         variant: 'error',
-        //         mode: 'dismissable'
-        //     }));
-        // }
+            // 5. Редирект с небольшой задержкой, чтобы пользователь увидел сообщение
+            setTimeout(() => {
+                this[NavigationMixin.Navigate]({
+                    type: 'standard__objectPage',
+                    attributes: {
+                        objectApiName: 'Contract_Bid__c',
+                        actionName: 'list'
+                    }
+                });
+            }, 2000);
+            
+        } catch (error) {
+            console.error('Error sending envelopes:', error);
+            console.error('Error details:', JSON.stringify(error, null, 2));
+            
+            this.dispatchEvent(new ShowToastEvent({
+                title: 'Error',
+                message: error.body?.message || error.message || 'Error sending envelopes',
+                variant: 'error',
+                mode: 'dismissable'
+            }));
+        }
     }
 }

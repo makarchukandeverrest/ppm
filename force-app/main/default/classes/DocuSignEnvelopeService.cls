@@ -14,10 +14,28 @@ public with sharing class DocuSignEnvelopeService {
         List<Contract_Bid__c> contractsToUpdate = new List<Contract_Bid__c>();
         List<EmailMessage> emailMessages = new List<EmailMessage>();
         Set<Id> accountIds = new Set<Id>();
+        Set<Id> contentVersionIds = new Set<Id>();
 
         // Collect account IDs for query
         for (AccountWithFiles acc : accountWithFilesList) {
             accountIds.add(acc.accountId);
+            
+            // Збираємо Id версій файлів, які потрібно відправити
+            for (FileWrapper file : acc.files) {
+                if (file.ToSent) {
+                    contentVersionIds.add(file.Id); // Id тут — це Id ContentVersion
+                }
+            }
+        }
+
+        // Отримуємо контент файлів по їх Id вже на Apex, а не з LWC
+        Map<Id, ContentVersion> fileIdToVersion = new Map<Id, ContentVersion>();
+        if (!contentVersionIds.isEmpty()) {
+            fileIdToVersion = new Map<Id, ContentVersion>([
+                SELECT Id, Title, VersionData, FileExtension
+                FROM ContentVersion
+                WHERE Id IN :contentVersionIds
+            ]);
         }
 
         // Get all related Contract_Bid__c records and users
@@ -28,10 +46,16 @@ public with sharing class DocuSignEnvelopeService {
         for (AccountWithFiles acc : accountWithFilesList) {
             for (FileWrapper file : acc.files) {
                 if (file.ToSent) {
-                    String base64Doc = file.VersionDataBase64;
+                    ContentVersion mainCv = fileIdToVersion.get(file.Id);
+                    if (mainCv == null) {
+                        // Якщо з якоїсь причини версія не знайдена — пропускаємо файл
+                        continue;
+                    }
+
+                    String base64Doc = EncodingUtil.base64Encode(mainCv.VersionData);
                     String recipientEmail = acc.email;
                     String recipientName = acc.accountName;
-                    String title = file.Title;
+                    String title = mainCv.Title;
 
                     List<User> ccUsers = accountToUsersMap.get(acc.accountId);
                     if(romanUser != null){
@@ -99,7 +123,20 @@ public with sharing class DocuSignEnvelopeService {
         }
 
         // Get active contract stages
-        List<String> activeStages = getActiveContractStages();
+        Set<String> activeStages = new Set<String>();
+
+        StageReferenceSettings__mdt settings = [
+            SELECT Stage_Names__c
+            FROM StageReferenceSettings__mdt
+            WHERE DeveloperName = 'Active_Stages'
+            LIMIT 1
+        ];
+
+        if (settings != null && String.isNotBlank(settings.Stage_Names__c)) {
+            for (String s : settings.Stage_Names__c.split(',')) {
+                activeStages.add(s.trim());
+            }
+        }
 
         // Query Contract_Bid__c with related users
         List<Contract_Bid__c> contracts = [
@@ -139,25 +176,6 @@ public with sharing class DocuSignEnvelopeService {
         }
 
         return accountToUsersMap;
-    }
-
-    // Method to get active stages (extracted for reusability)
-    private static List<String> getActiveContractStages() {
-        Schema.DescribeFieldResult fieldResult = Contract_Bid__c.Stage__c.getDescribe();
-        List<Schema.PicklistEntry> picklistValues = fieldResult.getPicklistValues();
-        List<String> stagesToRemove = new List<String>{
-            'Contact Made', 'Conversation Started', 'Client Showed Interest', 
-            'Renewal', 'Closed - WON', 'Closed - LOST', 'Contract Sent via DocuSign'
-        };
-
-        List<String> activeStages = new List<String>();
-        for (Schema.PicklistEntry entry : picklistValues) {
-            if (entry.isActive() && !stagesToRemove.contains(entry.getValue())) {
-                activeStages.add(entry.getValue());
-            }
-        }
-
-        return activeStages;
     }
 
     public static String buildEnvelopeRequestBody(
@@ -264,27 +282,61 @@ public with sharing class DocuSignEnvelopeService {
             'emailSubject' => 'Please sign this document',
             'documents' => documents,
             'recipients' => new Map<String, Object>{
-                'signers' => new List<Object>{
-                    new Map<String, Object>{
-                        'email' => email,
-                        'name' => name,
-                        'recipientId' => '1',
-                        'tabs' => new Map<String, Object>{
-                            'signHereTabs' => new List<Object>{
-                                new Map<String, Object>{
-                                    'anchorString' => 'Please initial page(s) 2, 3, 4 and 5 of this contract where indicated. ',
-                                    'anchorYOffset' => '-10',
-                                    'anchorUnits' => 'pixels',
-                                    'anchorXOffset' => '0'
-                                }
-                            }
-                        }
+              'signers' => new List<Object>{
+                new Map<String, Object>{
+                  'email' => email,
+                  'name' => name,
+                  'recipientId' => '1',
+                  'tabs' => new Map<String, Object>{
+                    'signHereTabs' => new List<Object>{
+                      new Map<String, Object>{
+                        'anchorString' => 'Please initial page(s) 2, 3, 4 and 5 of this contract where indicated. ',
+                        'anchorYOffset' => '-10',
+                        'anchorUnits' => 'pixels',
+                        'anchorXOffset' => '0'
+                      }
+                    },
+                    // Use DocuSign built-in Full Name tab instead of generic text field
+                    'fullNameTabs' => new List<Object>{
+                      new Map<String, Object>{
+                        'anchorString' => 'Please initial page(s) 2, 3, 4 and 5 of this contract where indicated. ',
+                        'anchorYOffset' => '20',
+                        'anchorUnits' => 'pixels',
+                        'anchorXOffset' => '-40',
+                        'name' => 'Full Name',
+                        'tabLabel' => 'full_name'
+                      }
+                    },
+                    'dateSignedTabs' => new List<Object>{
+                      new Map<String, Object>{
+                        'anchorString' => 'Please initial page(s) 2, 3, 4 and 5 of this contract where indicated. ',
+                        'anchorYOffset' => '20',
+                        'anchorUnits' => 'pixels',
+                        'anchorXOffset' => '120',
+                        'name' => 'Date Signed',
+                        'tabLabel' => 'date_signed',
+                        'value' => ''
+                      }
+                    },
+                    'initialHereTabs' => new List<Object>{
+                      new Map<String, Object>{
+                        'anchorString' => 'Initial(s)',
+                        'anchorUnits' => 'pixels',
+                        'anchorXOffset' => '40',
+                        'anchorYOffset' => '10',
+                        'anchorMatchWholeWord' => true,
+                        'anchorCaseSensitive' => true,
+                        'anchorIgnoreIfNotPresent' => true,
+                        'scaleValue' => '0.6'
+                      }
                     }
-                },
-                'carbonCopies' => carbonCopies
+                  }
+                }
+              },
+              'carbonCopies' => carbonCopies
             },
             'status' => 'sent'
-        };
+          };
 
         return JSON.serialize(body);
     }

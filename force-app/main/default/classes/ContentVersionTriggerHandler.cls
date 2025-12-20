@@ -10,7 +10,6 @@ public class ContentVersionTriggerHandler extends TriggerHandler {
     protected override void afterUpdate(){
         // Filter records where specific fields have changed
         List<ContentVersion> docusignChangedVersions = new List<ContentVersion>();
-        List<ContentVersion> statusChangedVersions = new List<ContentVersion>();
         
         for(ContentVersion newCV : newList) {
             ContentVersion oldCV = oldMap.get(newCV.Id);
@@ -24,7 +23,7 @@ public class ContentVersionTriggerHandler extends TriggerHandler {
         // Call services only for relevant records
         if(!docusignChangedVersions.isEmpty()) {
             DocuSignNotificationService.handleEnvelopeStatusChange(docusignChangedVersions);
-            ContractBidStatusUpdater.updateStatus(statusChangedVersions);
+            ContractBidStatusUpdater.updateStatus(docusignChangedVersions);
         }
     }
 }
