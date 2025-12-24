@@ -1,0 +1,146 @@
+<template>
+    <lightning-card title="Send Latest Contracts" icon-name="standard:contract">
+        <template if:true={isLoading}>
+            <div class="slds-p-around_medium">
+                <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+            </div>
+        </template>
+
+        <template if:false={isLoading}>
+            <!-- Permission / access banner -->
+            <template if:true={accessError}>
+                <div class="slds-p-around_medium">
+                    <div class="slds-notify slds-notify_alert slds-alert_error" role="alert">
+                        <span class="slds-assistive-text">Error</span>
+                        <h2>{accessError}</h2>
+                    </div>
+                </div>
+            </template>
+
+            <template if:false={accessError}>
+                <!-- Email template -->
+                <div class="slds-p-around_medium slds-border_bottom">
+                    <lightning-combobox
+                        name="template"
+                        label="Email Template"
+                        placeholder="Select an email template"
+                        value={selectedTemplateId}
+                        options={templateOptions}
+                        onchange={handleTemplateChange}>
+                    </lightning-combobox>
+
+                    <template if:true={selectedTemplateId}>
+                        <div class="slds-m-top_medium">
+                            <lightning-input
+                                label="Subject"
+                                value={subject}
+                                onchange={handleSubjectChange}
+                                class="slds-m-bottom_small">
+                            </lightning-input>
+
+                            <label class="slds-form-element__label">Body</label>
+                            <lightning-input-rich-text
+                                value={body}
+                                onchange={handleBodyChange}>
+                            </lightning-input-rich-text>
+                        </div>
+                    </template>
+
+
+                </div>
+
+                <!-- Customers + contracts -->
+                <div class="slds-p-around_medium">
+                    <template if:true={customers.length}>
+                        <div class="slds-text-title_bold slds-m-bottom_small">
+                            Selected Customers ({customers.length})
+                        </div>
+
+                        <template for:each={customers} for:item="cust">
+                            <section key={cust.customerId} class="slds-box slds-m-bottom_small">
+                                <div class="slds-grid slds-wrap slds-grid_align-spread slds-m-bottom_x-small">
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_8-of-12">
+                                        <div class="slds-text-heading_small">{cust.customerName}</div>
+                                        <div class="slds-text-body_small slds-text-color_weak">
+                                            Email: {cust.customerEmail}
+                                        </div>
+                                    </div>
+
+                                    <div class="slds-col slds-size_1-of-1 slds-large-size_4-of-12 slds-text-align_right">
+                                        <lightning-button
+                                            variant="base"
+                                            label={cust.isExpandedLabel}
+                                            data-id={cust.customerId}
+                                            onclick={toggleCustomer}>
+                                        </lightning-button>
+                                    </div>
+                                </div>
+
+                                    <template if:true={cust.expanded}>
+                                        <template if:true={cust.contracts.length}>
+                                            <lightning-datatable
+                                                key-field="contentVersionId"
+                                                data={cust.contracts}
+                                                columns={contractColumns}
+                                                selected-rows={cust.selectedRows}
+                                                onrowselection={handleContractSelection}
+                                                data-customer-id={cust.customerId}>
+                                            </lightning-datatable>
+
+                                        <div class="slds-m-top_x-small slds-text-body_small slds-text-color_weak">
+                                            Only latest versions are shown (ContentVersion.IsLatest = true).
+                                        </div>
+                                    </template>
+
+                                    <template if:false={cust.contracts.length}>
+                                        <div class="slds-text-body_small slds-text-color_weak">
+                                            No latest contract versions found for this customer.
+                                        </div>
+                                    </template>
+                                </template>
+                            </section>
+                        </template>
+                    </template>
+
+                    <template if:false={customers.length}>
+                        <div class="slds-text-body_small slds-text-color_weak">
+                            No customers/contracts found for this Contract Bid.
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Actions -->
+                <div class="slds-p-around_medium slds-border_top slds-grid slds-grid_align-end slds-gutters_small">
+                    <div class="slds-col">
+                        <lightning-button
+                            variant="neutral"
+                            label="Refresh"
+                            onclick={loadData}>
+                        </lightning-button>
+                    </div>
+                    <div class="slds-col">
+                        <lightning-button
+                            variant="brand"
+                            label="Send"
+                            onclick={handleSend}
+                            disabled={sendDisabled}>
+                        </lightning-button>
+                    </div>
+                </div>
+
+                <!-- Send log -->
+                <template if:true={sendLog.length}>
+                    <div class="slds-p-around_medium">
+                        <div class="slds-text-title_bold slds-m-bottom_small">Send History</div>
+                        <lightning-datatable
+                            key-field="logId"
+                            data={sendLog}
+                            columns={logColumns}
+                            hide-checkbox-column>
+                        </lightning-datatable>
+                    </div>
+                </template>
+            </template>
+        </template>
+    </lightning-card>
+</template>

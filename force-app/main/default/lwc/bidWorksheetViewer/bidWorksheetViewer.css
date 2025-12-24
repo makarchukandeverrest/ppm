@@ -1,0 +1,21 @@
+.file-card {
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+.file-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.preview-container {
+    border: 1px solid #dddbda;
+    border-radius: 4px;
+    background-color: #fafaf9;
+    min-height: 250px;
+}
+
+.slds-button-group-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
