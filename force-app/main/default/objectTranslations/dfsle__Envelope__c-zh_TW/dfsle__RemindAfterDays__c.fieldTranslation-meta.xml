@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>指定傳送第一次提醒之前經過的天數</help>
+    <label><!-- Send reminder in N day(s) --></label>
+    <name>dfsle__RemindAfterDays__c</name>
+</CustomFieldTranslation>

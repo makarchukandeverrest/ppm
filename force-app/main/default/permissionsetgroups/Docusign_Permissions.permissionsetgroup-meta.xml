@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PermissionSetGroup xmlns="http://soap.sforce.com/2006/04/metadata">
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>Docusign Permissions</label>
+    <permissionSets>DocuSign_JWT</permissionSets>
+    <permissionSets>dfsle__CLM_Administrator</permissionSets>
+    <permissionSets>dfsle__CLM_Community_User</permissionSets>
+    <permissionSets>dfsle__CLM_User</permissionSets>
+    <permissionSets>dfsle__CLM_Viewer</permissionSets>
+    <permissionSets>dfsle__DocuSign_Administrator</permissionSets>
+    <permissionSets>dfsle__DocuSign_Generator</permissionSets>
+    <permissionSets>dfsle__DocuSign_Login</permissionSets>
+    <permissionSets>dfsle__DocuSign_Negotiator</permissionSets>
+    <permissionSets>dfsle__DocuSign_Sender</permissionSets>
+    <permissionSets>dfsle__DocuSign_User</permissionSets>
+    <status>Updated</status>
+</PermissionSetGroup>

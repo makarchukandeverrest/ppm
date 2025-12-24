@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Email_Platform__EmailTracking__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <deprecated>false</deprecated>
+    <description>Used for creating Reports on Email trackings</description>
+    <label>Email Tracking</label>
+    <referenceTo>Email_Platform__EmailTracking__c</referenceTo>
+    <relationshipLabel>Email Messages</relationshipLabel>
+    <relationshipName>Email_Messages</relationshipName>
+    <required>false</required>
+    <type>Lookup</type>
+</CustomField>

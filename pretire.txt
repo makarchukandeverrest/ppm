@@ -1,0 +1,41 @@
+{
+    "plugins": ["prettier-plugin-apex"],
+    "trailingComma": "none",
+    "singleQuote": true,
+    "tabWidth": 4,
+    "printWidth": 120,
+    "overrides": [
+        {
+            "files": "**/lwc/**/*.html",
+            "options": { "parser": "lwc" }
+        },
+        {
+            "files": "*.{cmp,page,component}",
+            "options": { "parser": "html" }
+        },
+        {
+            "files": "*.field-meta.xml",
+            "options": { "parser": "html" }
+        },
+        {
+            "files": "*.cls-meta.xml",
+            "options": { "parser": "html" }
+        },
+        {
+            "files": "*.js-meta.xml",
+            "options": { "parser": "html" }
+        },
+        {
+            "files": "*.permissionset-meta.xml",
+            "options": { "parser": "html" }
+        },
+        {
+            "files": "*.labels-meta.xml",
+            "options": { "parser": "html" }
+        },
+        {
+            "files": "*.globalValueSet-meta.xml",
+            "options": { "parser": "html" }
+        }
+    ]
+}

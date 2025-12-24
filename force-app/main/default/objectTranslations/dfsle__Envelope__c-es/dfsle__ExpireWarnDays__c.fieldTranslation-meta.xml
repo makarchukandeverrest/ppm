@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>Indique cuántos días antes de la caducidad desea que un mensaje de correo electrónico alerte a los destinatarios de que se acerca la fecha límite para la finalización. Este se enviará únicamente a los destinatarios que aún no hayan completado la transacción.</help>
+    <label><!-- Warn of expiration in N day(s) prior --></label>
+    <name>dfsle__ExpireWarnDays__c</name>
+</CustomFieldTranslation>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>이 트랜잭션이 만료될 때까지 남은 일 수를 나타냅니다.</help>
+    <label><!-- Expire/void envelope in N day(s) --></label>
+    <name>dfsle__ExpireAfterDays__c</name>
+</CustomFieldTranslation>

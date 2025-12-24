@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>며칠 후에 첫 번째 미리 알림을 전송할지 나타냅니다.</help>
+    <label><!-- Send reminder in N day(s) --></label>
+    <name>dfsle__RemindAfterDays__c</name>
+</CustomFieldTranslation>

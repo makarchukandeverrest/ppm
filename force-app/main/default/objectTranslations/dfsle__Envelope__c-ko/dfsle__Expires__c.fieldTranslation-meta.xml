@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>경우에 따라 봉투를 더 빠르게 완료해 달라고 수신인에게 요청해야 할 수 있습니다. 봉투가 만료되면 DocuSign에서 봉투를 무효화하고 발송인과 수신인 모두에게 알림을 보냅니다.</help>
+    <label><!-- Expire envelope --></label>
+    <name>dfsle__Expires__c</name>
+</CustomFieldTranslation>

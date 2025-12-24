@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help><!-- Document Type --></help>
+    <label><!-- Document Type --></label>
+    <name>dfsle__Type__c</name>
+    <picklistValues>
+        <masterLabel>Source Files</masterLabel>
+        <translation>Fichiers sources</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Template</masterLabel>
+        <translation>Modèle</translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Template Document</masterLabel>
+        <translation>Modèle de document</translation>
+    </picklistValues>
+</CustomFieldTranslation>

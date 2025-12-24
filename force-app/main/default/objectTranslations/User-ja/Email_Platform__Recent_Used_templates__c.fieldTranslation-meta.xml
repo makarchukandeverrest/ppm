@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Recent Used templates --></label>
+    <name>Email_Platform__Recent_Used_templates__c</name>
+</CustomFieldTranslation>

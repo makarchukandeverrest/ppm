@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>Selezionare questa casella di controllo per inviare un promemoria tramite email ai destinatari della busta che non hanno ancora completato
+			l&apos;attività.</help>
+    <label><!-- Remind signers via email --></label>
+    <name>dfsle__Remind__c</name>
+</CustomFieldTranslation>

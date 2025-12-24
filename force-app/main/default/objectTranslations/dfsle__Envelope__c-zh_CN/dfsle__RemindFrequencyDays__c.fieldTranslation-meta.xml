@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>指定在事务完成前提醒的频率（天）</help>
+    <label><!-- Remind every N day(s) until complete --></label>
+    <name>dfsle__RemindFrequencyDays__c</name>
+</CustomFieldTranslation>

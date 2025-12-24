@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>School_Off_Season_Total_Staff_Hours__c</fullName>
+    <externalId>false</externalId>
+    <formula>SchoolOff_Season_Number_of_Lifeguards__c *  School_Off_Season_Hours_per_Lifeguard__c</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <inlineHelpText>Total Staff Hours per week</inlineHelpText>
+    <label>School/Off Season Total Staff Hours</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>Ändern Sie den standardmäßig eingestellten Text im E-Mail-Betreff. Die Betreffzeile wird dem DocuSign-Empfänger
+			angezeigt, der die Dokumente zum Signieren erhält.</help>
+    <label><!-- Email subject --></label>
+    <name>dfsle__EmailSubject__c</name>
+</CustomFieldTranslation>

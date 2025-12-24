@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Recent Contract Bid --></label>
+    <name>Recent_Contract_Bid__c</name>
+    <relationshipLabel><!-- Customers --></relationshipLabel>
+</CustomFieldTranslation>

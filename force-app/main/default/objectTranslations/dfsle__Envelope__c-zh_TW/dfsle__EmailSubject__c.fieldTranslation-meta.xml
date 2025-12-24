@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>變更此預設的電子郵件主旨文字，這些文字將會顯示在 DocuSign 收件人簽署通知
+			的主旨行中。</help>
+    <label><!-- Email subject --></label>
+    <name>dfsle__EmailSubject__c</name>
+</CustomFieldTranslation>

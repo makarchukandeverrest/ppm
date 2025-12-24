@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Sending Experience --></label>
+    <name>dfsle__SendingExperience__c</name>
+    <picklistValues>
+        <masterLabel>edit</masterLabel>
+        <translation><!-- edit --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>quickSend</masterLabel>
+        <translation><!-- quickSend --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>send</masterLabel>
+        <translation><!-- send --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>tag</masterLabel>
+        <translation><!-- tag --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

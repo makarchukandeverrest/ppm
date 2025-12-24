@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FieldSrcTrgtRelationship xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <definitionCreationType>System</definitionCreationType>
+    <lookupFieldName>KA_All_Records_and_Fields_Def_chunk__dlm.rel_1734940855864_end__c</lookupFieldName>
+    <masterLabel>KA_All_Records_and_Fields_Def_chunk_SourceRecordId_map_ssot_KnowledgeArticleVersion_ssot_Id_1734940855864</masterLabel>
+    <owner>DataCloud</owner>
+    <relationshipCardinality>ManyToOne</relationshipCardinality>
+    <sourceFieldName>KA_All_Records_and_Fields_Def_chunk__dlm.SourceRecordId__c</sourceFieldName>
+    <targetEntity xsi:nil="true"/>
+    <targetFieldName>ssot__KnowledgeArticleVersion__dlm.ssot__Id__c</targetFieldName>
+</FieldSrcTrgtRelationship>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>Если этот флажок установлен, получателям конверта, не выполнившим назначенную задачу, отправляется напоминание
+			по электронной почте.</help>
+    <label><!-- Remind signers via email --></label>
+    <name>dfsle__Remind__c</name>
+</CustomFieldTranslation>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>Às vezes, você precisa incentivar seus destinatários a completar um envelope mais rapidamente. Após a expiração de um envelope, o DocuSign anula o envelope e envia uma notificação para o emitente e o destinatário.</help>
+    <label><!-- Expire envelope --></label>
+    <name>dfsle__Expires__c</name>
+</CustomFieldTranslation>

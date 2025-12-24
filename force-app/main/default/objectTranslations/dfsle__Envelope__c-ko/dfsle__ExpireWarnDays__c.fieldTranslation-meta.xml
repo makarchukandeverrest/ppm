@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>수신인에게 만료 기한이 
+			다가오고 있음을 알리기 위해 만료 며칠 전에 이메일 메시지를 보내는지를 나타냅니다. 트랜잭션을 아직 완료하지 않은 수신인에게만 전송됩니다.</help>
+    <label><!-- Warn of expiration in N day(s) prior --></label>
+    <name>dfsle__ExpireWarnDays__c</name>
+</CustomFieldTranslation>

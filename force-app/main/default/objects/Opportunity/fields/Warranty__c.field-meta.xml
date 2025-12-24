@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Warranty__c</fullName>
+    <label>Warranty</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>1 year from project completion</fullName>
+                <default>false</default>
+                <label>1 year from project completion</label>
+            </value>
+            <value>
+                <fullName>1 year from project completion + 1 year if the pool is still managed by PPM</fullName>
+                <default>false</default>
+                <label>1 year from project completion + 1 year if the pool is still managed by PPM</label>
+            </value>
+            <value>
+                <fullName>1 year warranty</fullName>
+                <default>false</default>
+                <label>1 year warranty</label>
+            </value>
+            <value>
+                <fullName>2 year from project completion + 1 year if the pool is managed by PPM</fullName>
+                <default>false</default>
+                <label>2 year from project completion + 1 year if the pool is managed by PPM</label>
+            </value>
+            <value>
+                <fullName>2 year from project completion + 1 year if the pool is still managed by PPM</fullName>
+                <default>false</default>
+                <label>2 year from project completion + 1 year if the pool is still managed by PPM</label>
+            </value>
+            <value>
+                <fullName>2 years from project completion</fullName>
+                <default>false</default>
+                <label>2 years from project completion</label>
+            </value>
+            <value>
+                <fullName>30 days from project completion</fullName>
+                <default>false</default>
+                <label>30 days from project completion</label>
+            </value>
+            <value>
+                <fullName>3 months from project completion</fullName>
+                <default>false</default>
+                <label>3 months from project completion</label>
+            </value>
+            <value>
+                <fullName>3 year plaster warranty</fullName>
+                <default>false</default>
+                <label>3 year plaster warranty</label>
+            </value>
+            <value>
+                <fullName>3 years from project completion</fullName>
+                <default>false</default>
+                <label>3 years from project completion</label>
+            </value>
+            <value>
+                <fullName>3 years warranty</fullName>
+                <default>false</default>
+                <label>3 years warranty</label>
+            </value>
+            <value>
+                <fullName>5 year product warranty and 1 year workmanship warranty</fullName>
+                <default>false</default>
+                <label>5 year product warranty and 1 year workmanship warranty</label>
+            </value>
+            <value>
+                <fullName>6 months from project completion</fullName>
+                <default>false</default>
+                <label>6 months from project completion</label>
+            </value>
+            <value>
+                <fullName>90 days from project completion</fullName>
+                <default>false</default>
+                <label>90 days from project completion</label>
+            </value>
+            <value>
+                <fullName>Covered through May 2026</fullName>
+                <default>false</default>
+                <label>Covered through May 2026</label>
+            </value>
+            <value>
+                <fullName>N/A</fullName>
+                <default>false</default>
+                <label>N/A</label>
+            </value>
+            <value>
+                <fullName>None</fullName>
+                <default>false</default>
+                <label>None</label>
+            </value>
+            <value>
+                <fullName>See above</fullName>
+                <default>false</default>
+                <label>See above</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

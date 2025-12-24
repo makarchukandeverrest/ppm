@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>指定交易到期前的剩餘天數。</help>
+    <label><!-- Expire/void envelope in N day(s) --></label>
+    <name>dfsle__ExpireAfterDays__c</name>
+</CustomFieldTranslation>

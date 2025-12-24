@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>트랜잭션이 완료될 때까지 반복해야 하는 미리 알림 빈도(일)를 나타냅니다.</help>
+    <label><!-- Remind every N day(s) until complete --></label>
+    <name>dfsle__RemindFrequencyDays__c</name>
+</CustomFieldTranslation>

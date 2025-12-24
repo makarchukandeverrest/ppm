@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help>В некоторых случаях требуется сообщить получателям, что им нужно завершить работу с конвертом быстрее. По истечении срока действия конверта служба DocuSign аннулирует его и посылает уведомление отправителю и получателю.</help>
+    <label><!-- Expire envelope --></label>
+    <name>dfsle__Expires__c</name>
+</CustomFieldTranslation>

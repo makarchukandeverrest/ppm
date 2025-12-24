@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Regional Manager(s) --></label>
+    <name>Regional_Manager_s__c</name>
+    <picklistValues>
+        <masterLabel>Dimitry Price — dimitry@premierswim.com</masterLabel>
+        <translation><!-- Dimitry Price — dimitry@premierswim.com --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Hamzah — Hamzah@premierswim.com</masterLabel>
+        <translation><!-- Hamzah — Hamzah@premierswim.com --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Roman Shestakov — roman@premierswim.com</masterLabel>
+        <translation><!-- Roman Shestakov — roman@premierswim.com --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Stanislav Kryshtalian — stanislav@premierswim.com</masterLabel>
+        <translation><!-- Stanislav Kryshtalian — stanislav@premierswim.com --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Stephanie — stephanie@premierswim.com</masterLabel>
+        <translation><!-- Stephanie — stephanie@premierswim.com --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

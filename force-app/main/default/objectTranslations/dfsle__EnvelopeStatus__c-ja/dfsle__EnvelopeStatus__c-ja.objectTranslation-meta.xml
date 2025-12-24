@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObjectTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <caseValues>
+        <plural>false</plural>
+        <value>Docusignステータス</value>
+    </caseValues>
+    <layouts>
+        <layout>DocuSign Envelope Status Layout</layout>
+        <sections>
+            <label>情報</label>
+            <section>Information</section>
+        </sections>
+        <sections>
+            <label><!-- Related Objects --></label>
+            <section>Related Objects</section>
+        </sections>
+        <sections>
+            <label>システム情報</label>
+            <section>System Information</section>
+        </sections>
+    </layouts>
+    <nameFieldLabel>Envelope#</nameFieldLabel>
+    <webLinks>
+        <label><!-- ViewEnvelope --></label>
+        <name>dfsle__ViewEnvelope</name>
+    </webLinks>
+</CustomObjectTranslation>
