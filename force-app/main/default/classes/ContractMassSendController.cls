@@ -363,49 +363,51 @@ public with sharing class ContractMassSendController {
             mail.setEntityAttachments(r.contentVersionIds);
             mail.setSaveAsActivity(true);
 
-            // CUSTOM CONTENT LOGIC
-            // If body is provided, we use it and merge fields manually.
-            // Otherwise we use the templateId.
-            if (String.isNotBlank(body)) {
+            // USE SALESFORCE NATIVE TEMPLATE RENDERING
+            // renderStoredEmailTemplate properly merges ALL fields
+            if (emailTemplateId != null) {
+                Messaging.SingleEmailMessage rendered = Messaging.renderStoredEmailTemplate(
+                    emailTemplateId,
+                    acc.Primary_Contact__c,  // whoId (Contact)
+                    acc.Id                   // whatId (Account)
+                );
                 
-                String mergedBody = body;
-                String mergedSubject = String.isNotBlank(subject) ? subject : '';
-
-                // Get Organization and User info for merge
-                Organization org = [SELECT Name FROM Organization LIMIT 1];
-                User currentUser = [SELECT FirstName, LastName FROM User WHERE Id = :UserInfo.getUserId() LIMIT 1];
-
-                // Merge Account fields
-                mergedBody = mergedBody.replace('{!Account.Name}', (acc.Name != null ? acc.Name : ''));
-                
-                // Merge Contact fields
-                String contactFullName = '';
-                String contactFirstName = '';
-                if (acc.Primary_Contact__r != null) {
-                    contactFirstName = acc.Primary_Contact__r.FirstName != null ? acc.Primary_Contact__r.FirstName : '';
-                    String contactLastName = acc.Primary_Contact__r.LastName != null ? acc.Primary_Contact__r.LastName : '';
-                    contactFullName = (contactFirstName + ' ' + contactLastName).trim();
+                // If user provided custom subject/body, use renderEmailTemplate to merge those
+                if (String.isNotBlank(body)) {
+                    List<String> bodiesToRender = new List<String>{ body };
+                    if (String.isNotBlank(subject)) {
+                        bodiesToRender.add(subject);
+                    }
+                    
+                    List<Messaging.RenderEmailTemplateBodyResult> renderResults = 
+                        Messaging.renderEmailTemplate(
+                            acc.Primary_Contact__c,  // whoId
+                            acc.Id,                  // whatId
+                            bodiesToRender
+                        );
+                    
+                    // Get rendered body
+                    if (renderResults[0].getSuccess()) {
+                        mail.setHtmlBody(renderResults[0].getMergedBody());
+                    } else {
+                        mail.setHtmlBody(body); // Fallback to unmerged
+                    }
+                    
+                    // Get rendered subject
+                    if (String.isNotBlank(subject) && renderResults.size() > 1 && renderResults[1].getSuccess()) {
+                        mail.setSubject(renderResults[1].getMergedBody());
+                    } else if (String.isNotBlank(subject)) {
+                        mail.setSubject(subject);
+                    } else {
+                        mail.setSubject(rendered.getSubject());
+                    }
+                } else {
+                    // Use fully rendered template
+                    mail.setSubject(rendered.getSubject());
+                    mail.setHtmlBody(rendered.getHtmlBody());
                 }
-                mergedBody = mergedBody.replace('{!Contact.Name}', contactFullName);
-                mergedBody = mergedBody.replace('{!Contact.FirstName}', contactFirstName);
-                
-                // Merge Organization fields
-                mergedBody = mergedBody.replace('{!Organization.Name}', org.Name != null ? org.Name : '');
-                
-                // Merge User fields
-                mergedBody = mergedBody.replace('{!User.FirstName}', currentUser.FirstName != null ? currentUser.FirstName : '');
-                mergedBody = mergedBody.replace('{!User.LastName}', currentUser.LastName != null ? currentUser.LastName : '');
-                
-                // Apply to subject as well
-                mergedSubject = mergedSubject.replace('{!Account.Name}', (acc.Name != null ? acc.Name : ''));
-                mergedSubject = mergedSubject.replace('{!Organization.Name}', org.Name != null ? org.Name : '');
-                mergedSubject = mergedSubject.replace('{!User.FirstName}', currentUser.FirstName != null ? currentUser.FirstName : '');
-
-                mail.setSubject(mergedSubject);
-                mail.setHtmlBody(mergedBody);
-            
             } else {
-                mail.setTemplateId(emailTemplateId);
+                throw new AuraHandledException('Email template is required.');
             }
 
             emails.add(mail);
