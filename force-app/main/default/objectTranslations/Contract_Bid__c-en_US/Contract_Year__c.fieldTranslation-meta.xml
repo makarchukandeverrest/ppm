@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- Contract Year --></label>
+    <name>Contract_Year__c</name>
+    <picklistValues>
+        <masterLabel>2021-2022</masterLabel>
+        <translation><!-- 2021-2022 --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>2022-2023</masterLabel>
+        <translation><!-- 2022-2023 --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>2023-2024</masterLabel>
+        <translation><!-- 2023-2024 --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>2024-2025</masterLabel>
+        <translation><!-- 2024-2025 --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>2025-2026</masterLabel>
+        <translation><!-- 2025-2026 --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>2026-2027</masterLabel>
+        <translation><!-- 2026-2027 --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>2027-2028</masterLabel>
+        <translation><!-- 2027-2028 --></translation>
+    </picklistValues>
+</CustomFieldTranslation>

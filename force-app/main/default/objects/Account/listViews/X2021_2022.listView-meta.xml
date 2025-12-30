@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>X2021_2022</fullName>
+    <columns>ACCOUNT.NAME</columns>
+    <columns>Contract_Periods__c</columns>
+    <columns>ACCOUNT.ADDRESS1_STREET</columns>
+    <columns>ACCOUNT.ADDRESS1_CITY</columns>
+    <columns>ACCOUNT.ADDRESS1_STATE</columns>
+    <columns>ACCOUNT.ADDRESS1_ZIP</columns>
+    <columns>Primary_Contact__c</columns>
+    <columns>Regional_Manager__c</columns>
+    <columns>Supervisor__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>Contract_Periods__c</field>
+        <operation>includes</operation>
+        <value>2021-2022</value>
+    </filters>
+    <label>2021-2022</label>
+</ListView>

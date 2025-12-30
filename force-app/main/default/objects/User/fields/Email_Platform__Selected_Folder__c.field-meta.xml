@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Email_Platform__Selected_Folder__c</fullName>
+    <deprecated>false</deprecated>
+    <description>Field that represents cached selected folder for filter.</description>
+    <externalId>false</externalId>
+    <label>Selected Folder</label>
+    <length>255</length>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

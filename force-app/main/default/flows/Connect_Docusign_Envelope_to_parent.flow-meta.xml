@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>63.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <name>Assign_source_id_to_account</name>
+        <label>Assign source id to account</label>
+        <locationX>50</locationX>
+        <locationY>395</locationY>
+        <assignmentItems>
+            <assignToReference>$Record.Account__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>$Record.dfsle__SourceId__c</elementReference>
+            </value>
+        </assignmentItems>
+    </assignments>
+    <assignments>
+        <name>Assign_source_id_to_opportunity</name>
+        <label>Assign source id to opportunity</label>
+        <locationX>314</locationX>
+        <locationY>395</locationY>
+        <assignmentItems>
+            <assignToReference>$Record.Deal__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>$Record.dfsle__SourceId__c</elementReference>
+            </value>
+        </assignmentItems>
+    </assignments>
+    <decisions>
+        <name>Check_object</name>
+        <label>Check object</label>
+        <locationX>314</locationX>
+        <locationY>287</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Account</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.dfsle__SourceId__c</leftValueReference>
+                <operator>StartsWith</operator>
+                <rightValue>
+                    <stringValue>001</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_source_id_to_account</targetReference>
+            </connector>
+            <label>Account</label>
+        </rules>
+        <rules>
+            <name>Opportunity</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.dfsle__SourceId__c</leftValueReference>
+                <operator>StartsWith</operator>
+                <rightValue>
+                    <stringValue>006</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Assign_source_id_to_opportunity</targetReference>
+            </connector>
+            <label>Opportunity</label>
+        </rules>
+    </decisions>
+    <environments>Default</environments>
+    <interviewLabel>Connect Docusign Envelope to parent {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Connect Docusign Envelope to parent</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>188</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Check_object</targetReference>
+        </connector>
+        <filterFormula>OR(AND(ISNEW(), !ISBLANK({!$Record.dfsle__SourceId__c})), ISCHANGED({!$Record.dfsle__SourceId__c}))</filterFormula>
+        <object>dfsle__Envelope__c</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordBeforeSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>

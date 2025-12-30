@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Report xmlns="http://soap.sforce.com/2006/04/metadata">
+    <columns>
+        <field>Contract_Bid__c$Name</field>
+    </columns>
+    <columns>
+        <field>Contract_Bid__c$Customer__c</field>
+    </columns>
+    <columns>
+        <field>Contract_Bid__c$Record_Manager__c</field>
+    </columns>
+    <columns>
+        <field>Contract_Bid__c$Colored_Stage__c</field>
+    </columns>
+    <columns>
+        <field>Contract_Bid__c$Colored_Labels__c</field>
+    </columns>
+    <columns>
+        <field>Contract_Bid__c$Lead_Owner__c</field>
+    </columns>
+    <filter>
+        <criteriaItems>
+            <column>Contract_Bid__c$Is_Marijana_To_Do__c</column>
+            <columnToColumn>false</columnToColumn>
+            <isUnlocked>true</isUnlocked>
+            <operator>equals</operator>
+            <value>1</value>
+        </criteriaItems>
+        <language>en_US</language>
+    </filter>
+    <format>Tabular</format>
+    <name>Marijana To Do</name>
+    <params>
+        <name>co</name>
+        <value>1</value>
+    </params>
+    <reportType>Contract_Bids__c</reportType>
+    <scope>organization</scope>
+    <showDetails>true</showDetails>
+    <showGrandTotal>true</showGrandTotal>
+    <showSubTotals>true</showSubTotals>
+    <timeFrameFilter>
+        <dateColumn>Contract_Bid__c$CreatedDate</dateColumn>
+        <interval>INTERVAL_CUSTOM</interval>
+    </timeFrameFilter>
+</Report>

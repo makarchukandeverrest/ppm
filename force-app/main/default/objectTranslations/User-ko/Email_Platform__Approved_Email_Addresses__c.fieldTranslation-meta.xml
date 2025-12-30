@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <help><!-- Enter one or more email addresses, separated by commas. Example: user1@example.com, user2@example.com --></help>
+    <label><!-- Approved Email Addresses --></label>
+    <name>Email_Platform__Approved_Email_Addresses__c</name>
+</CustomFieldTranslation>

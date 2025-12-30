@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomFieldTranslation xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label><!-- County --></label>
+    <name>County__c</name>
+    <picklistValues>
+        <masterLabel>Alexandria City</masterLabel>
+        <translation><!-- Alexandria City --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Anne Arundel County</masterLabel>
+        <translation><!-- Anne Arundel County --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Arlington County</masterLabel>
+        <translation><!-- Arlington County --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Baltimore City</masterLabel>
+        <translation><!-- Baltimore City --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Baltimore County</masterLabel>
+        <translation><!-- Baltimore County --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Carroll County</masterLabel>
+        <translation><!-- Carroll County --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Charles County</masterLabel>
+        <translation><!-- Charles County --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>DC</masterLabel>
+        <translation><!-- DC --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Fairfax County</masterLabel>
+        <translation><!-- Fairfax County --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Frederick County</masterLabel>
+        <translation><!-- Frederick County --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Harford County</masterLabel>
+        <translation><!-- Harford County --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Howard County</masterLabel>
+        <translation><!-- Howard County --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Loudoun County</masterLabel>
+        <translation><!-- Loudoun County --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Montgomery County</masterLabel>
+        <translation><!-- Montgomery County --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Prince George’s County</masterLabel>
+        <translation><!-- Prince George’s County --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Prince William County</masterLabel>
+        <translation><!-- Prince William County --></translation>
+    </picklistValues>
+    <picklistValues>
+        <masterLabel>Queen Anne’s County</masterLabel>
+        <translation><!-- Queen Anne’s County --></translation>
+    </picklistValues>
+</CustomFieldTranslation>
