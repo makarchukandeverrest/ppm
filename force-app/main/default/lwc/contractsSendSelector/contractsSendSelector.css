@@ -21,3 +21,23 @@
             margin-top: 8px;
         }
     }
+
+    /* Modal styles */
+    .slds-modal {
+        position: fixed;
+        z-index: 9001;
+    }
+
+    .slds-backdrop {
+        position: fixed;
+        z-index: 9000;
+    }
+
+    .preview-button {
+        flex-shrink: 0;
+    }
+
+    /* File list item alignment */
+    .slds-list_dotted li {
+        padding: 4px 0;
+    }
