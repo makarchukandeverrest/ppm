@@ -7,18 +7,8 @@ public with sharing class AccountFilesController {
         // 1. Get active stages for Contract_Bid__c
         Schema.DescribeFieldResult fieldResult = Contract_Bid__c.Stage__c.getDescribe();
         List<Schema.PicklistEntry> picklistValues = fieldResult.getPicklistValues();
-
-        List<String> activeStages = new List<String>();
-        List<String> stagesToRemove = new List<String>{
-            'Contact Made', 'Conversation Started', 'Client Showed Interest',  'Proposal/Review',
-            'Renewal', 'Closed - WON', 'Closed - LOST', 'Contract Sent via DocuSign'
-        };
-
-        for (Schema.PicklistEntry entry : picklistValues) {
-            if (entry.isActive() && !stagesToRemove.contains(entry.getValue())) {
-                activeStages.add(entry.getValue());
-            }
-        }
+        StageReferenceSettings__mdt stageReference = StageReferenceSettings__mdt.getInstance('Active_Stages');
+        List<String> activeStages = stageReference.Stage_Names__c.split(',');
 
         // 2. Build dynamic SOQL query based on recordId
         String soqlQuery = 'SELECT Id, Name, Customer__c, Stage__c, Customer__r.Name, Customer__r.Email__c, Renewal_Client__c ' +
@@ -29,7 +19,7 @@ public with sharing class AccountFilesController {
         if (String.isNotBlank(recordId)) {
             soqlQuery += ' AND Id = :recordId';
         }
-
+        System.debug(soqlQuery);
         Map<Id, Contract_Bid__c> contractMap = new Map<Id, Contract_Bid__c>((List<Contract_Bid__c>)Database.query(soqlQuery));
 
         // 3. Map AccountId -> Contract_Bid__c
@@ -71,14 +61,33 @@ public with sharing class AccountFilesController {
             docIdToAccountIdMap.put(docId, accountId);
         }
 
-        // 8. Get ContentVersions for the documents
-        List<ContentVersion> versions = [
-            SELECT Id, Title, VersionData, ContentDocumentId, FileExtension, To_Sent__c
-            FROM ContentVersion
-            WHERE ContentDocumentId IN :docIds 
-                AND (NOT(Title LIKE '%Welcome Letter%'))
-                AND FileType != 'SNOTE'
-        ];
+        // 8. Get ContentVersions for the documents (без VersionData, щоб не тягнути великі base64 в LWC)
+Set<Id> latestVersionIds = new Set<Id>();
+for (ContentDocument doc : docMap.values()) {
+    if (doc.LatestPublishedVersionId != null) {
+        latestVersionIds.add(doc.LatestPublishedVersionId);
+    }
+}
+
+List<ContentVersion> versions = [
+    SELECT Id, Title, ContentDocumentId, FileExtension, To_Sent__c
+    FROM ContentVersion
+    WHERE Id IN :latestVersionIds
+];
+
+List<ContentVersion> filteredVersions = new List<ContentVersion>();
+
+for (ContentVersion cv : versions) {
+    if (
+        cv.Title != null &&
+        !cv.Title.contains('Welcome Letter') &&
+        cv.FileExtension != 'snote'
+    ) {
+        filteredVersions.add(cv);
+    }
+}
+
+versions = filteredVersions;
 
         // 9. Map DocumentId -> ContentVersion
         Map<Id, ContentVersion> docIdToVersion = new Map<Id, ContentVersion>();
@@ -100,26 +109,25 @@ public with sharing class AccountFilesController {
         }
 
         // 11. Build the result
-        for (Id accountId : accountIdToFiles.keySet()) {
-            Contract_Bid__c contract = contractsByAccount.get(accountId);
-            List<FileWrapper> fileWrappers = new List<FileWrapper>();
+for (Id accountId : accountIdToFiles.keySet()) {
+    Contract_Bid__c contract = contractsByAccount.get(accountId);
+    List<FileWrapper> fileWrappers = new List<FileWrapper>();
 
-            for (ContentVersion cv : accountIdToFiles.get(accountId)) {
-                if(cv.VersionData != null){ //check if real file - not SharePoint link
-                    fileWrappers.add(new FileWrapper(cv));
-                }
-            }
-            if(!fileWrappers.isEmpty()){ // if files exist for the account
-                result.add(new AccountWithFiles(
-                    accountId,
-                    contract.Customer__r.Name,
-                    contract.Customer__r.Email__c,
-                    contract,
-                    fileWrappers,
-                    false //as deafult New Client checkbox on Contract Sender should be unchecked
-                ));
-            }
-        }
+    for (ContentVersion cv : accountIdToFiles.get(accountId)) {
+        fileWrappers.add(new FileWrapper(cv));
+    }
+
+    if (!fileWrappers.isEmpty()) {
+        result.add(new AccountWithFiles(
+            accountId,
+            contract.Customer__r.Name,
+            contract.Customer__r.Email__c,
+            contract,
+            fileWrappers,
+            false
+        ));
+    }
+}
 
         return result;
     }

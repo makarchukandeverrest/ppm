@@ -2,7 +2,6 @@ import { LightningElement, api, track, wire } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { CurrentPageReference, NavigationMixin } from 'lightning/navigation';
 import { CloseActionScreenEvent } from 'lightning/actions';
-import { FlowNavigationFinishEvent } from 'lightning/flowSupport';
 
 import getInitData from '@salesforce/apex/ContractMassSendController.getInitData';
 import sendContracts from '@salesforce/apex/ContractMassSendController.sendContracts';
@@ -42,9 +41,6 @@ export default class ContractMassSend extends NavigationMixin(LightningElement) 
     // Prevent duplicate loading
     hasLoaded = false;
 
-    // Track if no customers were provided at startup
-    noCustomersProvided = true;
-
     // customerId -> Set(contentVersionId)
     selectedContractVersionIdsByCustomer = new Map();
 
@@ -55,7 +51,6 @@ export default class ContractMassSend extends NavigationMixin(LightningElement) 
     handlePageRef(pageRef) {
         if (pageRef?.state?.ids && !this.inputIds.length) {
             this.inputIds = pageRef.state.ids.split(',');
-            this.noCustomersProvided = false;
             // Load data immediately
             this.loadData();
         }
@@ -84,7 +79,6 @@ export default class ContractMassSend extends NavigationMixin(LightningElement) 
                     .filter(id => !!id);
 
                 if (this.inputIds.length > 0) {
-                    this.noCustomersProvided = false;
                     this.loadData();
                 }
             } catch (error) {
@@ -101,7 +95,6 @@ export default class ContractMassSend extends NavigationMixin(LightningElement) 
                 }).filter(id => !!id);
 
                 if (this.inputIds.length > 0) {
-                    this.noCustomersProvided = false;
                     this.loadData();
                 }
             } catch (error) {
@@ -112,7 +105,6 @@ export default class ContractMassSend extends NavigationMixin(LightningElement) 
         // Priority 3: Direct Record ID (Quick Action)
         } else if (!this.inputIds.length && this.recordId) {
             this.inputIds = [this.recordId];
-            this.noCustomersProvided = false;
             this.loadData();
         
         // Priority 4: Selected Records (List View wrapper)
@@ -122,7 +114,6 @@ export default class ContractMassSend extends NavigationMixin(LightningElement) 
             this.selectedRecordIds.length
         ) {
             this.inputIds = [...this.selectedRecordIds];
-            this.noCustomersProvided = false;
             this.loadData();
         }
     }
@@ -139,10 +130,6 @@ export default class ContractMassSend extends NavigationMixin(LightningElement) 
     /* =====================================================
        UI HELPERS
     ===================================================== */
-    get noRecordsProvided() {
-        return this.noCustomersProvided;
-    }
-
     get sendDisabled() {
         if (this.isLoading) return true;
         if (!this.selectedTemplateId) return true;
@@ -325,12 +312,12 @@ export default class ContractMassSend extends NavigationMixin(LightningElement) 
             this.sendLog = res.logs || [];
             this.toast(
                 'Sent',
-                'Contracts were processed.',
+                'Contracts were processed. See Send History for details.',
                 'success'
             );
             
             // Close the component/tab
-            this.closeComponent();
+            // this.closeComponent();
 
         } catch (e) {
             this.toast('Error', this.normalizeError(e), 'error');
@@ -357,29 +344,18 @@ export default class ContractMassSend extends NavigationMixin(LightningElement) 
     }
     
     closeComponent() {
-        // Try Flow finish event first (for Screen Flow)
         try {
-            this.dispatchEvent(new FlowNavigationFinishEvent());
-            return;
-        } catch (e) {
-            console.log('Not in a Flow context');
-        }
-
-        // Try to close as a quick action/modal
-        try {
+            // Try to close as a quick action/modal
             this.dispatchEvent(new CloseActionScreenEvent());
-            return;
         } catch (e) {
-            console.log('Not a quick action context');
+            // If not a quick action, try to close the tab
+            this[NavigationMixin.Navigate]({
+                type: 'standard__objectPage',
+                attributes: {
+                    objectApiName: 'Contract_Bid__c',
+                    actionName: 'home'
+                }
+            });
         }
-
-        // If nothing else works, navigate away
-        this[NavigationMixin.Navigate]({
-            type: 'standard__objectPage',
-            attributes: {
-                objectApiName: 'Contract_Bid__c',
-                actionName: 'home'
-            }
-        });
     }
 }
