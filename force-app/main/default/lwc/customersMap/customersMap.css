@@ -1,0 +1,141 @@
+/* Mobile-first responsive styling for Customer Map component */
+
+/* Map container - ensure proper height and responsiveness */
+.map-container {
+    min-height: 300px;
+    height: 400px;
+    width: 100%;
+}
+
+/* Table container - ensure horizontal scrolling on mobile */
+.table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+}
+
+/* Clear button container - center on mobile, right-align on tablet+ */
+.clear-button-container {
+    text-align: center;
+}
+
+/* Page size container - stack vertically on mobile, horizontal on tablet+ */
+.page-size-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.page-size-controls {
+    width: 100%;
+}
+
+.page-size-info {
+    width: 100%;
+    text-align: center;
+}
+
+/* Page size buttons - stack on mobile */
+.page-size-button {
+    margin-bottom: 0.25rem;
+}
+
+/* Pagination container - stack vertically on mobile, horizontal on tablet+ */
+.pagination-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.pagination-info {
+    width: 100%;
+    text-align: center;
+}
+
+.pagination-buttons {
+    width: 100%;
+    text-align: center;
+}
+
+/* Pagination buttons - stack on mobile */
+.pagination-button {
+    margin-bottom: 0.25rem;
+}
+
+/* Mobile styles (max-width: 767px) */
+@media (max-width: 767px) {
+    .map-container {
+        min-height: 250px;
+        height: 300px;
+    }
+    
+    /* Ensure touch targets are at least 44x44px on mobile */
+    lightning-button {
+        min-height: 44px;
+    }
+}
+
+/* Tablet and above (min-width: 768px) */
+@media (min-width: 768px) {
+    .map-container {
+        min-height: 400px;
+        height: 500px;
+    }
+    
+    /* Clear button right-aligned on tablet+ */
+    .clear-button-container {
+        text-align: right;
+    }
+    
+    /* Page size container horizontal layout on tablet+ */
+    .page-size-container {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .page-size-controls {
+        width: auto;
+    }
+    
+    .page-size-info {
+        width: auto;
+        text-align: right;
+    }
+    
+    /* Remove bottom margin on page size buttons for tablet+ */
+    .page-size-button {
+        margin-bottom: 0;
+    }
+    
+    /* Pagination container horizontal layout on tablet+ */
+    .pagination-container {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .pagination-info {
+        width: auto;
+        text-align: left;
+    }
+    
+    .pagination-buttons {
+        width: auto;
+        text-align: right;
+    }
+    
+    /* Remove bottom margin on pagination buttons for tablet+ */
+    .pagination-button {
+        margin-bottom: 0;
+    }
+}
+
+/* Desktop (min-width: 1024px) */
+@media (min-width: 1024px) {
+    .map-container {
+        min-height: 500px;
+        height: 600px;
+    }
+}

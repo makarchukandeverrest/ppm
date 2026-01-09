@@ -1,0 +1,119 @@
+<template>
+    <lightning-card title="Bid Worksheet" icon-name="standard:file">
+
+        <!-- Loading -->
+        <template if:true={isLoading}>
+            <div class="slds-p-around_medium">
+                <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+            </div>
+        </template>
+
+        <!-- Content -->
+        <template if:false={isLoading}>
+
+            <!-- Files exist -->
+            <template if:true={hasFiles}>
+                <div class="slds-p-around_medium">
+
+                    <template for:each={files} for:item="file">
+                        <div key={file.contentVersionId}
+                             class="slds-box slds-m-bottom_small file-card">
+
+                            <!-- Vertical layout -->
+                            <div class="slds-grid slds-grid_vertical slds-gap_small">
+
+                                <!-- File info -->
+                                <div class="slds-media slds-media_center">
+                                    <div class="slds-media__figure">
+                                        <lightning-icon
+                                            icon-name={file.iconName}
+                                            size="small">
+                                        </lightning-icon>
+                                    </div>
+
+                                    <div class="slds-media__body">
+                                        <div class="slds-text-heading_small slds-truncate">
+                                            {file.title}
+                                        </div>
+
+                                        <div class="slds-text-body_small slds-text-color_weak">
+                                            {file.fileExtension}
+                                            • {file.formattedSize}
+                                            • Modified {file.formattedDate}
+                                        </div>
+
+                                        <div class="slds-text-body_small slds-text-color_weak">
+                                            Uploaded by {file.uploadedBy}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Action buttons (always below text) -->
+                                <div class="slds-button-group-row">
+                                    <lightning-button
+                                        variant="neutral"
+                                        label="Preview"
+                                        icon-name="utility:preview"
+                                        data-file-id={file.contentVersionId}
+                                        onclick={handlePreview}>
+                                    </lightning-button>
+
+                                    <lightning-button
+                                        variant="neutral"
+                                        label="Download"
+                                        icon-name="utility:download"
+                                        data-file-id={file.contentVersionId}
+                                        onclick={handleDownload}>
+                                    </lightning-button>
+
+                                    <lightning-button
+                                        variant="neutral"
+                                        label="Refresh"
+                                        icon-name="utility:refresh"
+                                        onclick={handleRefresh}>
+                                    </lightning-button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Footer note -->
+                    <div class="slds-m-top_small
+                                slds-text-body_small
+                                slds-text-color_weak
+                                slds-text-align_center">
+                        Showing latest .docx Bid Worksheets (files with "Bid" or "BW" in the title).
+                    </div>
+                </div>
+            </template>
+
+            <!-- No files -->
+            <template if:false={hasFiles}>
+                <div class="slds-p-around_medium">
+                    <div class="slds-text-align_center slds-text-color_weak">
+                        <lightning-icon
+                            icon-name="utility:file"
+                            size="large"
+                            class="slds-m-bottom_small">
+                        </lightning-icon>
+
+                        <div class="slds-text-body_regular">
+                            There are no Bid Worksheets associated and they need to be downloaded.
+                        </div>
+
+                        <div class="slds-m-top_small">
+                            <lightning-button
+                                variant="neutral"
+                                label="Refresh"
+                                icon-name="utility:refresh"
+                                onclick={handleRefresh}>
+                            </lightning-button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+        </template>
+    </lightning-card>
+</template>

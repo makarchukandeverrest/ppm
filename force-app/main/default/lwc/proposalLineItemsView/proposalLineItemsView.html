@@ -1,0 +1,276 @@
+<template>
+  <lightning-card title="JOB PROPOSAL" icon-name="standard:billing">
+    <div class="info-section">
+      <table class="slds-table slds-table_cell-buffer">
+        <tbody>
+          <tr>
+            <td colspan="2" class="estimate-header" rowspan="5">
+              <strong
+                >PREMIER POOL MANAGEMENT, INC.<br />12339 Carroll Ave., Suite
+                B<br />Rockville, MD 20852</strong
+              >
+            </td>
+            <td class="estimate-label">Estimate #</td>
+            <td class="estimate-value">{proposalDetails.referenceNumber}</td>
+          </tr>
+          <tr>
+            <td class="estimate-label">Date Ordered</td>
+            <td class="estimate-value">{proposalDetails.dateOrdered}</td>
+          </tr>
+          <tr>
+            <td class="estimate-label">Order Taken By</td>
+            <td class="estimate-value">{proposalDetails.orderTakenBy}</td>
+          </tr>
+          <tr>
+            <td class="estimate-label">Start Date</td>
+            <td class="estimate-value">{proposalDetails.startDate}</td>
+          </tr>
+          <tr>
+            <td class="estimate-label">Comments</td>
+            <td class="estimate-value">{proposalDetails.comments}</td>
+          </tr>
+          <tr>
+            <td colspan="4" class="spacer"></td>
+          </tr>
+          <tr>
+            <td class="customer-info" colspan="1">
+              <strong>Customer Info</strong><br />
+              {proposalDetails.accountName}<br />
+              {proposalDetails.billingStreet}<br />
+              {proposalDetails.billingCity}, {proposalDetails.billingState}
+              {proposalDetails.billingPostalCode}
+            </td>
+            <td colspan="3" class="estimate-header"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="spacer"></div>
+    <div
+      class="slds-scrollable"
+      style="
+        height: 60%;
+        max-height: 300px;
+        width: 100%;
+        overflow-x: auto;
+        overflow-y: auto;
+      "
+    >
+      <table class="slds-table slds-table_cell-buffer">
+        <thead class="fixed-header">
+          <tr class="slds-text-title_caps">
+            <!--<th scope="col" class="centered-header">To Delete?</th>-->
+            <th scope="col" class="item-column">Item</th>
+            <th scope="col" class="description-column">Description</th>
+            <th scope="col" class="centered-header">Quantity</th>
+            <th scope="col" class="centered-header">Unit Cost</th>
+            <th scope="col" class="centered-header">Total</th>
+            <!--<th scope="col" class="centered-header">Tax</th>-->
+          </tr>
+        </thead>
+        <tbody class="scrollable-body">
+          <template for:each={proposalLineItems} for:item="item">
+            <tr key={item.Id}>
+              <!--<td class="slds-cell-wrap centered-cell">
+                <lightning-input
+                  type="checkbox"
+                  data-id={item.Id}
+                  onchange={handleCheckboxChange}
+                ></lightning-input>
+              </td>-->
+              <td
+                class="slds-cell-wrap item-column"
+                data-id={item.Id}
+                data-field="Name"
+              >
+                <template if:true={item.isEditing}>
+                  <lightning-input
+                    type="text"
+                    value={item.Not_Id_Name__c}
+                    onchange={handleDescriptionChange}
+                    data-id={item.Id}
+                    data-field="Name"
+                    class="slds-input_height-auto"
+                  >
+                  </lightning-input>
+                </template>
+                <template if:false={item.isEditing}> {item.Not_Id_Name__c} </template>
+              </td>
+              <td
+                class="slds-cell-wrap description-column"
+                data-id={item.Id}
+                data-field="Description__c"
+              >
+                <template if:true={item.isEditing}>
+                  <lightning-input
+                    type="text"
+                    value={item.Description__c}
+                    onchange={handleDescriptionChange}
+                    data-id={item.Id}
+                    data-field="Description__c"
+                    class="slds-input_height-auto"
+                  >
+                  </lightning-input>
+                </template>
+                <template if:false={item.isEditing}>
+                  {item.Description__c}
+                </template>
+              </td>
+              <td
+                class="slds-cell-wrap centered-cell"
+                data-id={item.Id}
+                data-field="Quantity__c"
+              >
+                <template if:true={item.isEditing}>
+                  <lightning-input
+                    type="number"
+                    value={item.Quantity__c}
+                    onchange={handleQuantityChange}
+                    data-id={item.Id}
+                    data-field="Quantity__c"
+                    class="slds-input_height-auto"
+                  >
+                  </lightning-input>
+                </template>
+                <template if:false={item.isEditing}>
+                  {item.Quantity__c}
+                </template>
+              </td>
+              <td
+                class="slds-cell-wrap centered-cell"
+                data-id={item.Id}
+                data-field="Unit_Cost__c"
+              >
+                <template if:true={item.isEditing}>
+                  <lightning-input
+                    type="number"
+                    step="0.01"
+                    value={item.Unit_Cost__c}
+                    onchange={handleUnitCostChange}
+                    data-id={item.Id}
+                    data-field="Unit_Cost__c"
+                    class="slds-input_height-auto"
+                  >
+                  </lightning-input>
+                </template>
+                <template if:false={item.isEditing}>
+                  {item.Unit_Cost__c}
+                </template>
+              </td>
+              <td class="slds-cell-wrap centered-cell">
+                <lightning-formatted-number
+                  value={item.Total__c}
+                  format-style="currency"
+                ></lightning-formatted-number>
+              </td>
+              <!--<td
+                class="slds-cell-wrap centered-cell"
+                data-id={item.Id}
+                data-field="Tax__c"
+                onclick={handleCellClick}
+              >
+                <template if:true={item.isEditing}>
+                  <lightning-input
+                    type="text"
+                    value={item.Tax__c}
+                    onchange={handleTaxChange}
+                    data-id={item.Id}
+                    data-field="Tax__c"
+                    class="slds-input_height-auto"
+                  >
+                  </lightning-input>
+                </template>
+                <template if:false={item.isEditing}> {item.Tax__c} </template>
+              </td>-->
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
+    <div class="summary-section">
+      <table class="slds-table slds-table_cell-buffer">
+        <tbody>
+          <tr>
+            <td class="item-column"></td>
+            <td class="warranty">Warranty: {warranty}.</td>
+            <td class="summary-name"></td>
+            <td class="summary-name">Subtotal</td>
+            <td class="summary-value">
+              <lightning-formatted-number
+                value={subtotal}
+                format-style="currency"
+              ></lightning-formatted-number>
+            </td>
+          </tr>
+          <tr>
+            <td class="item-column"></td>
+            <td class="summary-name"></td>
+            <td class="summary-name"></td>
+            <td class="summary-name">Sales Tax</td>
+            <td class="summary-value">
+              <lightning-formatted-number
+                value={tax}
+                format-style="currency"
+              ></lightning-formatted-number>
+            </td>
+          </tr>
+          <tr>
+            <td class="item-column"></td>
+            <td class="summary-name"></td>
+            <td class="summary-name"></td>
+            <td class="summary-name">Total</td>
+            <td class="summary-value">
+              <lightning-formatted-number
+                value={total}
+                format-style="currency"
+              ></lightning-formatted-number>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="additional-notes">
+      <p><u>Additional Notes:</u></p>
+      <ul>
+        <li>* Please do not pay from this proposal. Invoice to follow.</li>
+        <li>* Job completion may be delayed due to parts availability.</li>
+        <li>* Additional charges may apply.</li>
+        <li>* Price valid for 30 days.</li>
+      </ul>
+    </div>
+    <div class="contact-info">
+      <p>Tel: (301)989-2200 * Fax: (301)989-2261</p>
+      <p><strong>www.premierswim.com</strong></p>
+    </div>
+    <!--<div slot="footer">
+      <template if:true={hasEditingItem}>
+        <lightning-button
+          variant="neutral"
+          label="Cancel"
+          onclick={handleCancel}
+          class="button-footer"
+        ></lightning-button>
+      </template>
+      <template if:true={hasEditingItem}
+        ><lightning-button
+          variant="brand"
+          label="Save"
+          onclick={handleSave}
+          class="button-footer"
+        ></lightning-button
+      ></template>
+      <lightning-button
+        variant="brand-outline"
+        label="Add New"
+        onclick={handleAddNew}
+        class="button-footer"
+      ></lightning-button>
+      <lightning-button
+        variant="brand"
+        label="Delete"
+        onclick={handleDelete}
+        disabled={isDeleteDisabled}
+      ></lightning-button>
+    </div>-->
+  </lightning-card>
+</template>
