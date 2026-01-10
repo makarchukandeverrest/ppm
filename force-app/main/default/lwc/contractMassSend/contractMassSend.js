@@ -134,8 +134,11 @@ export default class ContractMassSend extends NavigationMixin(LightningElement) 
         if (this.isLoading) return true;
         if (!this.selectedTemplateId) return true;
 
-        for (const setIds of this.selectedContractVersionIdsByCustomer.values()) {
-            if (setIds && setIds.size > 0) return false;
+        // Check if any contract is selected
+        for (const c of this.customers) {
+            if ((c.contracts || []).some(contract => contract.isSelected)) {
+                return false;
+            }
         }
         return true;
     }
@@ -143,7 +146,17 @@ export default class ContractMassSend extends NavigationMixin(LightningElement) 
     contractColumns = [
         { label: 'File Title', fieldName: 'title', type: 'text' },
         { label: 'Version', fieldName: 'versionNumber', type: 'number' },
-        { label: 'File Type', fieldName: 'fileExtension', type: 'text' }
+        { label: 'File Type', fieldName: 'fileExtension', type: 'text' },
+        {
+            type: 'button',
+            typeAttributes: {
+                label: 'Preview',
+                name: 'preview',
+                variant: 'base',
+                iconName: 'utility:preview',
+                iconPosition: 'left'
+            }
+        }
     ];
 
     logColumns = [
@@ -184,7 +197,10 @@ export default class ContractMassSend extends NavigationMixin(LightningElement) 
                 ...c,
                 expanded: true,
                 isExpandedLabel: c.expanded ? 'Collapse' : 'Expand',
-                selectedRows: (c.contracts || []).map(cv => cv.contentVersionId) // Pre-select all
+                contracts: (c.contracts || []).map(cv => ({
+                    ...cv,
+                    isSelected: true // Pre-select all contracts
+                }))
             }));
 
             this.sendLog = res.recentLogs || [];
@@ -249,25 +265,51 @@ export default class ContractMassSend extends NavigationMixin(LightningElement) 
         });
     }
 
-    handleContractSelection(event) {
+    // Handle contract checkbox change
+    handleContractCheckbox(event) {
+        const contractId = event.target.dataset.contractId;
         const customerId = event.target.dataset.customerId;
-        const selectedRows = event.detail.selectedRows || [];
+        const isChecked = event.target.checked;
 
-        const setIds = new Set(
-            selectedRows.map(r => r.contentVersionId)
-        );
-        this.selectedContractVersionIdsByCustomer.set(customerId, setIds);
-        
-        // Update the customer's selectedRows for UI binding
+        // Update customer contracts
         this.customers = this.customers.map(c => {
             if (c.customerId === customerId) {
                 return {
                     ...c,
-                    selectedRows: Array.from(setIds)
+                    contracts: c.contracts.map(contract => {
+                        if (contract.contentVersionId === contractId) {
+                            return { ...contract, isSelected: isChecked };
+                        }
+                        return contract;
+                    })
                 };
             }
             return c;
         });
+
+        // Update selection map
+        const setIds = this.selectedContractVersionIdsByCustomer.get(customerId) || new Set();
+        if (isChecked) {
+            setIds.add(contractId);
+        } else {
+            setIds.delete(contractId);
+        }
+        this.selectedContractVersionIdsByCustomer.set(customerId, setIds);
+    }
+
+    // Handle file preview - opens file in new browser tab
+    handlePreviewFile(event) {
+        const fileId = event.target.dataset.fileId || event.currentTarget.dataset.fileId;
+        
+        if (!fileId) {
+            console.error('No file ID found for preview');
+            return;
+        }
+
+        // Open Salesforce file preview in new tab using direct URL
+        const baseUrl = window.location.origin;
+        const previewUrl = `${baseUrl}/lightning/page/filePreview?selectedRecordId=${fileId}`;
+        window.open(previewUrl, '_blank');
     }
 
     /* =====================================================
@@ -280,9 +322,9 @@ export default class ContractMassSend extends NavigationMixin(LightningElement) 
             const payload = [];
 
             for (const c of this.customers) {
-                const setIds =
-                    this.selectedContractVersionIdsByCustomer.get(c.customerId);
-                const ids = setIds ? Array.from(setIds) : [];
+                const ids = (c.contracts || [])
+                    .filter(contract => contract.isSelected)
+                    .map(contract => contract.contentVersionId);
 
                 if (ids.length > 0) {
                     payload.push({

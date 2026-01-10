@@ -78,14 +78,35 @@
 
                                     <template if:true={cust.expanded}>
                                         <template if:true={cust.contracts.length}>
-                                            <lightning-datatable
-                                                key-field="contentVersionId"
-                                                data={cust.contracts}
-                                                columns={contractColumns}
-                                                selected-rows={cust.selectedRows}
-                                                onrowselection={handleContractSelection}
-                                                data-customer-id={cust.customerId}>
-                                            </lightning-datatable>
+                                            <ul class="slds-list_dotted slds-m-top_small">
+                                                <template for:each={cust.contracts} for:item="contract">
+                                                    <li key={contract.contentVersionId} class="slds-m-bottom_x-small">
+                                                        <div class="slds-grid slds-grid_vertical-align-center">
+                                                            <lightning-input 
+                                                                type="checkbox"
+                                                                label={contract.title}
+                                                                data-contract-id={contract.contentVersionId}
+                                                                data-customer-id={cust.customerId}
+                                                                checked={contract.isSelected}
+                                                                onchange={handleContractCheckbox}
+                                                                class="slds-m-right_small">
+                                                            </lightning-input>
+                                                            <span class="slds-text-body_small slds-text-color_weak slds-m-right_small">
+                                                                (v{contract.versionNumber}, {contract.fileExtension})
+                                                            </span>
+                                                            <button 
+                                                                type="button"
+                                                                class="slds-button slds-button_neutral slds-button_small"
+                                                                data-file-id={contract.contentDocumentId}
+                                                                data-version-id={contract.contentVersionId}
+                                                                onclick={handlePreviewFile}>
+                                                                <lightning-icon icon-name="utility:preview" size="x-small" class="slds-m-right_xx-small"></lightning-icon>
+                                                                Preview
+                                                            </button>
+                                                        </div>
+                                                    </li>
+                                                </template>
+                                            </ul>
 
                                         <div class="slds-m-top_x-small slds-text-body_small slds-text-color_weak">
                                             Only latest versions are shown (ContentVersion.IsLatest = true).

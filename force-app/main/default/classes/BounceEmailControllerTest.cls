@@ -43,25 +43,43 @@ private class BounceEmailControllerTest {
     );
   }
 
+  // Helper method to create EmailMessage record
+  private static EmailMessage createEmailMessage(
+    Id relatedToId,
+    String toAddress
+  ) {
+    EmailMessage em = new EmailMessage();
+    em.RelatedToId = relatedToId;
+    em.ToAddress = toAddress;
+    em.Subject = 'Test Email';
+    em.TextBody = 'Test body';
+    em.Status = '3'; // Bounced status
+    return em;
+  }
+
   @IsTest
   static void testHandleBouncedContractBidPackage_ByAccountId() {
     // Get test data
-    Contact testContact = [
-      SELECT Id, Email, AccountId
-      FROM Contact
-      WHERE LastName = 'Contact'
+    Account testAccount = [
+      SELECT Id
+      FROM Account
+      WHERE Name = 'Test Account'
       LIMIT 1
     ];
 
-    // Set EmailBouncedDate to simulate bounce
-    testContact.EmailBouncedDate = Datetime.now();
-    update testContact;
-
     Test.startTest();
 
-    // Call method with contact that has AccountId
-    List<Contact> contacts = new List<Contact>{ testContact };
-    BounceEmailController.handleBouncedContractBidPackage(contacts);
+    // Create EmailMessage with RelatedToId pointing to Account
+    EmailMessage bouncedEmail = createEmailMessage(
+      testAccount.Id,
+      'contact@example.com'
+    );
+    insert bouncedEmail;
+
+    // Call handler method
+    BounceEmailFromEmailMessageHandler.handle(
+      new List<EmailMessage>{ bouncedEmail }
+    );
 
     Test.stopTest();
 
@@ -83,7 +101,7 @@ private class BounceEmailControllerTest {
   static void testHandleBouncedContractBidPackage_EmptyList() {
     Test.startTest();
     // Test with empty list
-    BounceEmailController.handleBouncedContractBidPackage(new List<Contact>());
+    BounceEmailFromEmailMessageHandler.handle(new List<EmailMessage>());
     Test.stopTest();
 
     // No assertions needed, just making sure no errors occur
@@ -99,33 +117,32 @@ private class BounceEmailControllerTest {
       WHERE Name = 'Test Account'
       LIMIT 1
     ];
-    Contact testContact = [
-      SELECT Id, Email, AccountId
-      FROM Contact
-      WHERE LastName = 'Contact'
-      LIMIT 1
-    ];
 
-    // Create Contract_Bid__c with non-matching stage
+    // Create Contract_Bid__c with stage that is already 'Need Contact Verification'
+    // Handler only updates contracts where Stage__c != 'Need Contact Verification'
     Contract_Bid__c nonMatchingContract = new Contract_Bid__c(
       Name = 'Non-Matching Contract',
       Customer__c = testAcc.Id,
-      Stage__c = 'Closed - WON'
+      Stage__c = 'Need Contact Verification'
     );
     insert nonMatchingContract;
 
     Test.startTest();
 
-    // Set EmailBouncedDate to simulate bounce
-    testContact.EmailBouncedDate = Datetime.now();
-    update testContact;
+    // Create EmailMessage with RelatedToId pointing to Account
+    EmailMessage bouncedEmail = createEmailMessage(
+      testAcc.Id,
+      'contact@example.com'
+    );
+    insert bouncedEmail;
 
-    List<Contact> contacts = new List<Contact>{ testContact };
-    BounceEmailController.handleBouncedContractBidPackage(contacts);
+    BounceEmailFromEmailMessageHandler.handle(
+      new List<EmailMessage>{ bouncedEmail }
+    );
 
     Test.stopTest();
 
-    // Verify non-matching contract was NOT updated
+    // Verify contract with 'Need Contact Verification' stage was NOT updated
     Contract_Bid__c unchangedContract = [
       SELECT Id, Stage__c
       FROM Contract_Bid__c
@@ -133,33 +150,25 @@ private class BounceEmailControllerTest {
       LIMIT 1
     ];
     System.assertEquals(
-      'Closed - WON',
+      'Need Contact Verification',
       unchangedContract.Stage__c,
-      'Contract Bid with non-matching stage should not be updated'
+      'Contract Bid with "Need Contact Verification" stage should not be updated again'
     );
   }
 
   @IsTest
   static void testHandleBouncedContractBidPackage_MultipleContacts() {
     // Get test data
-    Contact testContact = [
-      SELECT Id, Email, AccountId
-      FROM Contact
-      WHERE LastName = 'Contact'
+    Account testAccount = [
+      SELECT Id
+      FROM Account
+      WHERE Name = 'Test Account'
       LIMIT 1
     ];
 
-    // Create another contact with different account
+    // Create another account
     Account anotherAccount = new Account(Name = 'Another Account');
     insert anotherAccount;
-
-    Contact anotherContact = new Contact(
-      FirstName = 'Another',
-      LastName = 'Contact',
-      Email = 'another@example.com',
-      AccountId = anotherAccount.Id
-    );
-    insert anotherContact;
 
     // Create Contract_Bid__c for anotherAccount
     Contract_Bid__c anotherContract = new Contract_Bid__c(
@@ -171,13 +180,20 @@ private class BounceEmailControllerTest {
 
     Test.startTest();
 
-    // Set EmailBouncedDate for both contacts
-    testContact.EmailBouncedDate = Datetime.now();
-    anotherContact.EmailBouncedDate = Datetime.now();
-    update new List<Contact>{ testContact, anotherContact };
+    // Create EmailMessages for both accounts
+    EmailMessage bouncedEmail1 = createEmailMessage(
+      testAccount.Id,
+      'contact@example.com'
+    );
+    EmailMessage bouncedEmail2 = createEmailMessage(
+      anotherAccount.Id,
+      'another@example.com'
+    );
+    insert new List<EmailMessage>{ bouncedEmail1, bouncedEmail2 };
 
-    List<Contact> contacts = new List<Contact>{ testContact, anotherContact };
-    BounceEmailController.handleBouncedContractBidPackage(contacts);
+    BounceEmailFromEmailMessageHandler.handle(
+      new List<EmailMessage>{ bouncedEmail1, bouncedEmail2 }
+    );
 
     Test.stopTest();
 
@@ -195,43 +211,35 @@ private class BounceEmailControllerTest {
 
   @IsTest
   static void testHandleBouncedContractBidPackage_NoMatchingAccounts() {
-    // Create contact without AccountId (orphan contact)
-    // Since we only use Contact.AccountId to find accounts, this contact won't match any accounts
-    Contact orphanContact = new Contact(
-      FirstName = 'Orphan',
-      LastName = 'Contact',
-      Email = 'orphan@example.com'
-      // No AccountId - so no account will be found
-    );
-    insert orphanContact;
-
+    // Create EmailMessage with no RelatedToId and email that doesn't match any Contact
     Test.startTest();
 
-    // Set EmailBouncedDate to simulate bounce
-    orphanContact.EmailBouncedDate = Datetime.now();
-    update orphanContact;
+    EmailMessage bouncedEmail = createEmailMessage(null, 'orphan@example.com');
+    insert bouncedEmail;
 
-    List<Contact> contacts = new List<Contact>{ orphanContact };
-    BounceEmailController.handleBouncedContractBidPackage(contacts);
+    BounceEmailFromEmailMessageHandler.handle(
+      new List<EmailMessage>{ bouncedEmail }
+    );
 
     Test.stopTest();
 
-    // Verify no new contracts were updated (only existing ones from setup)
+    // Verify no contracts were updated (handler should return early when no AccountIds found)
     List<Contract_Bid__c> updatedContracts = [
       SELECT Id, Stage__c
       FROM Contract_Bid__c
       WHERE Stage__c = 'Need Contact Verification'
     ];
-    // Should only have the ones from setup, not new ones
-    System.assert(
-      updatedContracts.size() <= 1,
-      'No new contracts should be updated for orphan contact without AccountId'
+    // Should be 0 since handler returns early when no AccountIds resolved
+    System.assertEquals(
+      0,
+      updatedContracts.size(),
+      'No contracts should be updated when no AccountIds can be resolved'
     );
   }
 
   @IsTest
   static void testHandleBouncedContractBidPackage_ContactWithoutEmail() {
-    // Create contact without email
+    // Get test account
     Account testAcc = [
       SELECT Id
       FROM Account
@@ -239,25 +247,20 @@ private class BounceEmailControllerTest {
       LIMIT 1
     ];
 
-    Contact contactNoEmail = new Contact(
-      FirstName = 'No',
-      LastName = 'Email',
-      AccountId = testAcc.Id
-    );
-    insert contactNoEmail;
-
     Test.startTest();
 
-    // Set EmailBouncedDate to simulate bounce
-    contactNoEmail.EmailBouncedDate = Datetime.now();
-    update contactNoEmail;
+    // Create EmailMessage with RelatedToId pointing to Account (primary method)
+    // This should work even without ToAddress
+    EmailMessage bouncedEmail = createEmailMessage(testAcc.Id, null);
+    insert bouncedEmail;
 
-    List<Contact> contacts = new List<Contact>{ contactNoEmail };
-    BounceEmailController.handleBouncedContractBidPackage(contacts);
+    BounceEmailFromEmailMessageHandler.handle(
+      new List<EmailMessage>{ bouncedEmail }
+    );
 
     Test.stopTest();
 
-    // Should still find account by AccountId
+    // Should find account by RelatedToId
     Contract_Bid__c updatedContract = [
       SELECT Id, Stage__c
       FROM Contract_Bid__c
@@ -267,28 +270,32 @@ private class BounceEmailControllerTest {
     System.assertEquals(
       'Need Contact Verification',
       updatedContract.Stage__c,
-      'Contract Bid should be updated even if contact has no email (found by AccountId)'
+      'Contract Bid should be updated when RelatedToId points to Account'
     );
   }
 
   @IsTest
   static void testHandleBouncedContractBidPackage_ContactWithoutId() {
-    // Create contact without Id (new, not inserted)
-    Contact newContact = new Contact(
-      FirstName = 'New',
-      LastName = 'Contact',
-      Email = 'new@example.com'
-    );
-
+    // Create EmailMessage with null RelatedToId and no matching email
     Test.startTest();
 
-    List<Contact> contacts = new List<Contact>{ newContact };
-    BounceEmailController.handleBouncedContractBidPackage(contacts);
+    EmailMessage bouncedEmail = createEmailMessage(
+      null,
+      'nonexistent@example.com'
+    );
+    insert bouncedEmail;
+
+    BounceEmailFromEmailMessageHandler.handle(
+      new List<EmailMessage>{ bouncedEmail }
+    );
 
     Test.stopTest();
 
-    // Should handle gracefully without errors
-    System.assert(true, 'Method should handle contact without Id');
+    // Should handle gracefully without errors (returns early when no AccountIds found)
+    System.assert(
+      true,
+      'Method should handle EmailMessage without RelatedToId and no matching email'
+    );
   }
 
   @IsTest
@@ -307,26 +314,23 @@ private class BounceEmailControllerTest {
     testAcc.Regional_Manager__c = regionalManager.Id;
     update testAcc;
 
-    Contact testContact = [
-      SELECT Id, Email, AccountId
-      FROM Contact
-      WHERE LastName = 'Contact'
-      LIMIT 1
-    ];
-
     // Note: CustomNotificationType cannot be created via DML in test classes
-    // The method will handle its absence gracefully via try-catch
+    // The method will handle its absence gracefully
     // If CustomNotificationType exists in org, notifications will be sent
     // If not, the method will continue without errors
 
     Test.startTest();
 
-    // Set EmailBouncedDate to simulate bounce
-    testContact.EmailBouncedDate = Datetime.now();
-    update testContact;
+    // Create EmailMessage with RelatedToId pointing to Account
+    EmailMessage bouncedEmail = createEmailMessage(
+      testAcc.Id,
+      'contact@example.com'
+    );
+    insert bouncedEmail;
 
-    List<Contact> contacts = new List<Contact>{ testContact };
-    BounceEmailController.handleBouncedContractBidPackage(contacts);
+    BounceEmailFromEmailMessageHandler.handle(
+      new List<EmailMessage>{ bouncedEmail }
+    );
 
     Test.stopTest();
 
@@ -357,21 +361,18 @@ private class BounceEmailControllerTest {
     testAcc.Regional_Manager__c = null;
     update testAcc;
 
-    Contact testContact = [
-      SELECT Id, Email, AccountId
-      FROM Contact
-      WHERE LastName = 'Contact'
-      LIMIT 1
-    ];
-
     Test.startTest();
 
-    // Set EmailBouncedDate to simulate bounce
-    testContact.EmailBouncedDate = Datetime.now();
-    update testContact;
+    // Create EmailMessage with RelatedToId pointing to Account
+    EmailMessage bouncedEmail = createEmailMessage(
+      testAcc.Id,
+      'contact@example.com'
+    );
+    insert bouncedEmail;
 
-    List<Contact> contacts = new List<Contact>{ testContact };
-    BounceEmailController.handleBouncedContractBidPackage(contacts);
+    BounceEmailFromEmailMessageHandler.handle(
+      new List<EmailMessage>{ bouncedEmail }
+    );
 
     Test.stopTest();
 
@@ -390,9 +391,8 @@ private class BounceEmailControllerTest {
   }
 
   @IsTest
-  static void testHandleBouncedContractBidPackage_PrimaryContactNotUsed() {
-    // This test verifies that Primary_Contact__c and Email__c (formula field) are NOT used
-    // We only use Contact.AccountId (standard field) to find accounts
+  static void testHandleBouncedContractBidPackage_ByContractBidRelatedToId() {
+    // Test that RelatedToId can point to Contract_Bid__c (not just Account)
     Account testAcc = [
       SELECT Id
       FROM Account
@@ -400,23 +400,9 @@ private class BounceEmailControllerTest {
       LIMIT 1
     ];
 
-    // Create a contact that is NOT linked to testAcc via AccountId
-    Contact unlinkedContact = new Contact(
-      FirstName = 'Unlinked',
-      LastName = 'Contact',
-      Email = 'unlinked@example.com'
-    );
-    insert unlinkedContact;
-
-    // Set this contact as Primary_Contact__c on testAcc
-    // This would make Account.Email__c (formula) = unlinkedContact.Email
-    // But we should NOT use this to find accounts
-    testAcc.Primary_Contact__c = unlinkedContact.Id;
-    update testAcc;
-
     // Create Contract_Bid__c for testAcc
     Contract_Bid__c testContract = new Contract_Bid__c(
-      Name = 'Primary Contact Test Contract',
+      Name = 'Contract Bid RelatedTo Test',
       Customer__c = testAcc.Id,
       Stage__c = 'Information Verified'
     );
@@ -424,26 +410,81 @@ private class BounceEmailControllerTest {
 
     Test.startTest();
 
-    // Set EmailBouncedDate for unlinkedContact
-    unlinkedContact.EmailBouncedDate = Datetime.now();
-    update unlinkedContact;
+    // Create EmailMessage with RelatedToId pointing to Contract_Bid__c
+    EmailMessage bouncedEmail = createEmailMessage(
+      testContract.Id,
+      'contact@example.com'
+    );
+    insert bouncedEmail;
 
-    List<Contact> contacts = new List<Contact>{ unlinkedContact };
-    BounceEmailController.handleBouncedContractBidPackage(contacts);
+    BounceEmailFromEmailMessageHandler.handle(
+      new List<EmailMessage>{ bouncedEmail }
+    );
 
     Test.stopTest();
 
-    // Verify contract was NOT updated (because we only use AccountId, not Primary_Contact__c or Email__c)
-    Contract_Bid__c unchangedContract = [
+    // Verify contract was updated (handler resolves Account via Contract_Bid__c.Customer__c)
+    Contract_Bid__c updatedContract = [
       SELECT Id, Stage__c
       FROM Contract_Bid__c
-      WHERE Name = 'Primary Contact Test Contract'
+      WHERE Name = 'Contract Bid RelatedTo Test'
       LIMIT 1
     ];
     System.assertEquals(
-      'Information Verified',
-      unchangedContract.Stage__c,
-      'Contract Bid should NOT be updated when contact is only linked via Primary_Contact__c (Email__c is formula field)'
+      'Need Contact Verification',
+      updatedContract.Stage__c,
+      'Contract Bid should be updated when RelatedToId points to Contract_Bid__c'
+    );
+  }
+
+  @IsTest
+  static void testHandleBouncedContractBidPackage_FallbackByEmail() {
+    // Test fallback mechanism: when RelatedToId is null, use Contact.Email from ToAddress
+    Account testAcc = [
+      SELECT Id
+      FROM Account
+      WHERE Name = 'Test Account'
+      LIMIT 1
+    ];
+
+    Contact testContact = [
+      SELECT Id, Email, AccountId
+      FROM Contact
+      WHERE LastName = 'Contact'
+      LIMIT 1
+    ];
+
+    // Create Contract_Bid__c for testAcc
+    Contract_Bid__c testContract = new Contract_Bid__c(
+      Name = 'Fallback Email Test Contract',
+      Customer__c = testAcc.Id,
+      Stage__c = 'Information Verified'
+    );
+    insert testContract;
+
+    Test.startTest();
+
+    // Create EmailMessage with null RelatedToId but ToAddress matching Contact.Email
+    EmailMessage bouncedEmail = createEmailMessage(null, testContact.Email);
+    insert bouncedEmail;
+
+    BounceEmailFromEmailMessageHandler.handle(
+      new List<EmailMessage>{ bouncedEmail }
+    );
+
+    Test.stopTest();
+
+    // Verify contract was updated via fallback (Contact.Email -> AccountId)
+    Contract_Bid__c updatedContract = [
+      SELECT Id, Stage__c
+      FROM Contract_Bid__c
+      WHERE Name = 'Fallback Email Test Contract'
+      LIMIT 1
+    ];
+    System.assertEquals(
+      'Need Contact Verification',
+      updatedContract.Stage__c,
+      'Contract Bid should be updated via fallback when RelatedToId is null but ToAddress matches Contact.Email'
     );
   }
 }

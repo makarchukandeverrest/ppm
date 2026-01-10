@@ -11,7 +11,9 @@ public class ContentVersionFromItemsSharePointBatch implements Database.Batchabl
             SELECT Id, Name__c, MimeType__c, IsFolder__c, CreationDate__c,UniqueId__c, Path__c
             FROM Items_SharePoint__x
             WHERE CreationDate__c >= :cutoff
-            AND IsFolder__c = false AND MimeType__c = 'application/pdf'
+            AND IsFolder__c = false 
+            AND (MimeType__c = 'application/pdf' 
+                 OR MimeType__c = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
         ];
     }
 
@@ -40,7 +42,7 @@ public class ContentVersionFromItemsSharePointBatch implements Database.Batchabl
                         Title = fileName,
                         PathOnClient = '/' + fileName,
                         VersionData = fileBody,
-                        To_Sent__c = true,
+                        To_Sent__c = (item.MimeType__c == 'application/pdf'),
                         DocuSign_Envelope_Status__c = 'Start',
                         SharePoint_External_Id__c = item.UniqueId__c
                     );

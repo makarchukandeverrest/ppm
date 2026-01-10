@@ -4,7 +4,7 @@ public class AccountFilesControllerTest {
   private static Account createTestAccount(String name, String email) {
     Account acc = new Account(Name = name);
 
-    Contact con = new Contact(FirstName = 'Test Contact', Email = email);
+    Contact con = new Contact(FirstName = 'Test Contact', LastName = 'Test Contact', Email = email);
     insert con;
     acc.Primary_Contact__c = con.Id;
     insert acc;

@@ -52,10 +52,78 @@
                 <div class="slds-col">
                     <lightning-button variant="brand" 
                                       label="Submit Selected Files via DocuSign"
-                                      onclick={handleSubmit}>
+                                      onclick={openConfirmationModal}>
                     </lightning-button>
                 </div>
             </div>
         </div>
     </lightning-card>
+
+    <!-- Confirmation Modal -->
+    <template if:true={showConfirmationModal}>
+        <section role="dialog" tabindex="-1" aria-modal="true" aria-labelledby="modal-heading-01" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" onclick={closeConfirmationModal}>
+                    <lightning-icon icon-name="utility:close" alternative-text="Close" size="small" variant="inverse"></lightning-icon>
+                    <span class="slds-assistive-text">Close</span>
+                </button>
+                <div class="slds-modal__header">
+                    <h1 id="modal-heading-01" class="slds-modal__title slds-hyphenate">Confirm Selected Contracts</h1>
+                    <p class="slds-m-top_x-small slds-text-body_small">Review the contracts you have selected to send via DocuSign</p>
+                </div>
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+                    <template if:true={hasSelectedFiles}>
+                        <template for:each={selectedFilesForModal} for:item="acc">
+                            <div key={acc.accountId} class="slds-m-bottom_medium">
+                                <h3 class="slds-text-heading_small slds-m-bottom_x-small">
+                                    <lightning-icon icon-name="standard:account" size="small" class="slds-m-right_x-small"></lightning-icon>
+                                    {acc.accountName}
+                                    <template if:true={acc.newClient}>
+                                        <lightning-badge label="New Client" class="slds-m-left_x-small"></lightning-badge>
+                                    </template>
+                                </h3>
+                                <ul class="slds-list_dotted slds-m-left_medium">
+                                    <template for:each={acc.selectedFiles} for:item="file">
+                                        <li key={file.Id} class="slds-m-bottom_xx-small">
+                                            <div class="slds-grid slds-grid_vertical-align-center">
+                                                <span class="slds-m-right_small">{file.Title}</span>
+                                                <lightning-button 
+                                                    variant="base"
+                                                    label="Preview"
+                                                    icon-name="utility:preview"
+                                                    data-file-id={file.ContentDocumentId}
+                                                    onclick={handlePreviewFile}
+                                                    class="preview-button">
+                                                </lightning-button>
+                                            </div>
+                                        </li>
+                                    </template>
+                                </ul>
+                            </div>
+                        </template>
+                    </template>
+                    <template if:false={hasSelectedFiles}>
+                        <div class="slds-align_absolute-center slds-p-around_large">
+                            <p class="slds-text-color_weak">No files selected for sending</p>
+                        </div>
+                    </template>
+                </div>
+                <div class="slds-modal__footer">
+                    <lightning-button 
+                        variant="neutral" 
+                        label="Cancel" 
+                        onclick={closeConfirmationModal}>
+                    </lightning-button>
+                    <lightning-button 
+                        variant="brand" 
+                        label="Send Contracts" 
+                        onclick={handleConfirmSubmit}
+                        disabled={noFilesSelected}
+                        class="slds-m-left_x-small">
+                    </lightning-button>
+                </div>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open" onclick={closeConfirmationModal}></div>
+    </template>
 </template>
