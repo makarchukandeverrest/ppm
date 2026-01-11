@@ -677,5 +677,4 @@ private class ContractMassSendControllerTest {
             Test.stopTest();
         }
     }
-
 }

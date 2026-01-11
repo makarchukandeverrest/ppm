@@ -11,6 +11,7 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     error;
     wiredAccountsResult;
     @track isUpdating = false;
+<<<<<<< HEAD
     @track showConfirmationModal = false;
     @api recordId;
 
@@ -166,31 +167,66 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     }
 
     async handleSubmit() {
-    try {
-        this.dispatchEvent(new ShowToastEvent({
-            title: 'Processing',
-            message: 'Sending envelopes...',
-            variant: 'info'
-        }));
-
-        await sendEnvelopeWithSignature({
-            accountsWithFilesJSON: JSON.stringify(this.accountsWithFiles)
-        });
-
-        await this[NavigationMixin.Navigate]({
-            type: 'standard__objectPage',
-            attributes: {
-                objectApiName: 'Contract_Bid__c',
-                actionName: 'list'
+        try {
+            const filteredData = this.accountsWithFiles
+                .map(account => {
+                    const accountCopy = { ...account };
+                    accountCopy.files = account.files.filter(file => file.ToSent === true);
+                    return accountCopy;
+                })
+                // remove accounts without selected files
+                .filter(account => account.files && account.files.length > 0);
+    
+            if (filteredData.length === 0) {
+                this.dispatchEvent(new ShowToastEvent({
+                    title: 'Warning',
+                    message: 'Please select at least one file to send',
+                    variant: 'warning',
+                    mode: 'dismissable'
+                }));
+                return;
             }
-        });
-    } catch (error) {
-        console.error(error);
-        this.dispatchEvent(new ShowToastEvent({
-            title: 'Error',
-            message: error?.body?.message || error.message,
-            variant: 'error'
-        }));
+    
+            this.dispatchEvent(new ShowToastEvent({
+                title: 'Processing',
+                message: `Sending ${filteredData.reduce((sum, acc) => sum + acc.files.length, 0)} file(s) from ${filteredData.length} account(s)`,
+                variant: 'info',
+                mode: 'dismissable'
+            }));
+    
+            await sendEnvelopeWithSignature({ 
+                accountsWithFilesJSON: JSON.stringify(filteredData)
+            });
+            
+            this.error = undefined;
+            
+            this.dispatchEvent(new ShowToastEvent({
+                title: 'Success',
+                message: 'Envelopes sent successfully!',
+                variant: 'success',
+                mode: 'dismissable'
+            }));
+            
+            setTimeout(() => {
+                this[NavigationMixin.Navigate]({
+                    type: 'standard__objectPage',
+                    attributes: {
+                        objectApiName: 'Contract_Bid__c',
+                        actionName: 'list'
+                    }
+                });
+            }, 2000);
+            
+        } catch (error) {
+            console.error('Error sending envelopes:', error);
+            console.error('Error details:', JSON.stringify(error, null, 2));
+            
+            this.dispatchEvent(new ShowToastEvent({
+                title: 'Error',
+                message: error.body?.message || error.message || 'Error sending envelopes',
+                variant: 'error',
+                mode: 'dismissable'
+            }));
+        }
     }
-}
 }

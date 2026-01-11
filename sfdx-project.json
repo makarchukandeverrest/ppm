@@ -5,7 +5,7 @@
       "default": true
     }
   ],
-  "name": "ppm-sb",
+  "name": "ppm-prod",
   "namespace": "",
   "sfdcLoginUrl": "https://login.salesforce.com",
   "sourceApiVersion": "65.0"

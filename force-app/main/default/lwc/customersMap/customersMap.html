@@ -1,0 +1,190 @@
+<template>
+    <lightning-card title={cardTitle} icon-name="standard:account">
+        <div class="slds-p-around_medium">
+            <!-- Search Section -->
+            <div class="slds-m-bottom_medium">
+                <div class="slds-grid slds-wrap slds-gutters">
+                    <!-- Name/Email Search -->
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                        <lightning-input
+                            label="Customer Name or Email"
+                            type="search"
+                            value={searchTerm}
+                            onchange={handleSearch}
+                            placeholder="Search by customer name or email...">
+                        </lightning-input>
+                    </div>
+                    
+                    <!-- Contract Periods Filter -->
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                        <lightning-combobox
+                            data-name="contractPeriodFilter"
+                            label="Contract Periods"
+                            value={selectedContractPeriods}
+                            placeholder="Select Contract Periods"
+                            options={contractPeriodOptions}
+                            onchange={handleContractPeriodsChange}
+                            multi-select>
+                        </lightning-combobox>
+                    </div>
+                    
+                    <!-- County Picklist -->
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                        <lightning-combobox
+                            name="countyFilter"
+                            label="County"
+                            value={selectedCounty}
+                            placeholder="Select County"
+                            options={countyOptions}
+                            onchange={handleCountyChange}>
+                        </lightning-combobox>
+                    </div>
+                    
+                    <!-- Regional Manager Picklist -->
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                        <lightning-combobox
+                            data-name="regionalManagerFilter"
+                            label="Regional Manager"
+                            value={selectedRegionalManager}
+                            placeholder="Select Regional Manager"
+                            options={regionalManagerOptions}
+                            onchange={handleRegionalManagerChange}>
+                        </lightning-combobox>
+                    </div>
+                    
+                    <!-- Clear Button -->
+                    <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                        <div class="clear-button-container">
+                            <lightning-button
+                                label="Clear All Filters"
+                                onclick={handleClearSearch}
+                                variant="neutral"
+                                class="slds-m-top_x-small">
+                            </lightning-button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="slds-text-body_small slds-text-color_weak slds-m-top_small">
+                    <template if:true={hasActiveFilters}>
+                        <span class="slds-m-left_x-small">(Filters applied)</span>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Map Section -->
+            <div class="slds-m-bottom_medium">
+                <h3 class="slds-text-heading_small slds-m-bottom_small">Customer Locations Map</h3>
+                <template if:true={hasFilteredMarkers}>
+                    <div class="map-container">
+                        <lightning-map
+                            map-markers={filteredMapMarkers}
+                            markers-title="Customers"
+                            onmarkerselect={handleMarkerSelect}
+                            selected-marker-value={selectedMarkerValue}
+                            list-view="hidden"
+                            zoom-level={zoomLevel}
+                            center={center}
+                            options={mapOptions}>
+                        </lightning-map>
+                    </div>
+                </template>
+                <template if:false={hasFilteredMarkers}>
+                    <div class="slds-text-align_center slds-p-vertical_medium">
+                        <template if:true={hasActiveFilters}>
+                            <p class="slds-text-body_regular">No customer locations match your search criteria.</p>
+                            <p class="slds-text-body_regular slds-m-top_x-small">Try adjusting your filters or clear them to see all customers.</p>
+                        </template>
+                        <template if:false={hasActiveFilters}>
+                            <p class="slds-text-body_regular">No customer locations available to display on the map.</p>
+                            <p class="slds-text-body_regular slds-m-top_x-small">Ensure customers have valid billing address coordinates.</p>
+                        </template>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Data Table Section -->
+            <div>
+                <h3 class="slds-text-heading_small slds-m-bottom_small">Customer Details</h3>
+                
+                <!-- Page size buttons -->
+                <div class="slds-m-bottom_small">
+                    <div class="page-size-container">
+                        <div class="page-size-controls">
+                            <div class="slds-grid slds-grid_vertical-align-center slds-gutters_xx-small">
+                                <span class="slds-text-body_small slds-m-right_x-small slds-show_medium">Rows per page:</span>
+                                <span class="slds-text-body_small slds-m-right_x-small slds-hide_medium">Rows:</span>
+                                <lightning-button-group>
+                                    <lightning-button label="10" data-size="10" onclick={handlePageSizeClick} class="page-size-button"></lightning-button>
+                                    <lightning-button label="20" data-size="20" onclick={handlePageSizeClick} class="page-size-button"></lightning-button>
+                                    <lightning-button label="50" data-size="50" onclick={handlePageSizeClick} class="page-size-button"></lightning-button>
+                                    <lightning-button label="100" data-size="100" onclick={handlePageSizeClick} class="page-size-button"></lightning-button>
+                                    <lightning-button label="200" data-size="200" onclick={handlePageSizeClick} class="page-size-button"></lightning-button>
+                                    <lightning-button label="500" data-size="500" onclick={handlePageSizeClick} class="page-size-button"></lightning-button>
+                                </lightning-button-group>
+                            </div>
+                        </div>
+                        <div class="page-size-info">
+                            <div class="slds-text-body_small slds-text-color_weak">
+                                <span class="slds-show_medium">Showing page {currentPage} of {totalPages} &mdash; {totalRecords} records</span>
+                                <span class="slds-hide_medium">Page {currentPage} of {totalPages} ({totalRecords} records)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <template if:true={hasFilteredCustomers}>
+                    <!-- Removed the style attribute with literal value -->
+                    <div class="table-container slds-scrollable_x">
+                        <lightning-datatable
+                            key-field="Id"
+                            data={pagedCustomers}
+                            columns={columns}
+                            sorted-by="Name"
+                            sorted-direction="asc"
+                            hide-checkbox-column="true"
+                            show-row-number-column="true"
+                            is-loading={isLoading}
+                            onrowaction={handleRowAction}>
+                        </lightning-datatable>
+                    </div>
+
+                    <!-- Pagination controls -->
+                    <div class="slds-m-top_small">
+                        <div class="pagination-container">
+                            <div class="pagination-info">
+                                <div class="slds-text-body_small slds-text-color_weak">
+                                    Page {currentPage} of {totalPages}
+                                </div>
+                            </div>
+                            <div class="pagination-buttons">
+                                <lightning-button-group>
+                                    <lightning-button label="First" onclick={handleFirstPage} disabled={isFirstPage} class="pagination-button"></lightning-button>
+                                    <lightning-button label="Previous" onclick={handlePreviousPage} disabled={isFirstPage} class="pagination-button"></lightning-button>
+                                    <lightning-button label="Next" onclick={handleNextPage} disabled={isLastPage} class="pagination-button"></lightning-button>
+                                    <lightning-button label="Last" onclick={handleLastPage} disabled={isLastPage} class="pagination-button"></lightning-button>
+                                </lightning-button-group>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+                <template if:false={hasFilteredCustomers}>
+                    <div class="slds-text-align_center slds-p-vertical_medium">
+                        <template if:true={hasActiveFilters}>
+                            <p>No customer records match your search criteria.</p>
+                            <p>Try adjusting your filters or clear them to see all customers.</p>
+                            <lightning-button
+                                label="Clear All Filters"
+                                onclick={handleClearSearch}
+                                variant="brand">
+                            </lightning-button>
+                        </template>
+                        <template if:false={hasActiveFilters}>
+                            <p>No customer records found.</p>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </lightning-card>
+</template>

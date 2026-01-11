@@ -28,16 +28,8 @@ public with sharing class ContractBidStatusUpdater {
             String status = docIdToStatus.get(link.ContentDocumentId);
             if (status == null) continue;
 
-            Schema.DescribeFieldResult fieldResult = Contract_Bid__c.Stage__c.getDescribe();
-            List<Schema.PicklistEntry> picklistEntries = fieldResult.getPicklistValues();
-            List<String> validStages = new List<String>();
-            Integer startIdx = Math.max(0, picklistEntries.size() - 5);
-            for (Integer i = startIdx; i < picklistEntries.size(); i++) {
-                Schema.PicklistEntry entry = picklistEntries[i];
-                if(entry.isActive()){
-                    validStages.add(entry.getValue());
-                }
-            }
+            StageReferenceSettings__mdt stageReference = StageReferenceSettings__mdt.getInstance('Send_Contract_Stages');
+            List<String> validStages = stageReference.Stage_Names__c.split(',');
             
             List<Contract_Bid__c> bids = [
                 SELECT Id, Name, Stage__c
@@ -49,11 +41,10 @@ public with sharing class ContractBidStatusUpdater {
 
                 if (status == 'Completed') {
                     bid.Stage__c = 'Closed - WON';
-                } else if (status == 'Declined' || status == 'Voided') {
-                    bid.Stage__c = 'Closed - LOST';
                 } else if (status == 'Delivered') {
                     bid.Stage__c = 'Proposal/Review';
                 }
+                // NOT handling Declined or Voided statuses
                 bidsToUpdate.add(bid);
             }
         }
