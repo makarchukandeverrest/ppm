@@ -3,10 +3,11 @@ public class AccountFilesControllerTest {
     
     // ---------- Helpers ----------
     private static Account createTestAccount(String name, String email) {
-        Account acc = new Account(
-            Name = name,
-            Email__c = email // assuming custom field
-        );
+        Account acc = new Account(Name = name);
+
+        Contact con = new Contact(FirstName = 'Test Contact', LastName = 'Test Contact', Email = email);
+        insert con;
+        acc.Primary_Contact__c = con.Id;
         insert acc;
         return acc;
     }
@@ -65,8 +66,8 @@ public class AccountFilesControllerTest {
         Test.startTest();
         List<AccountWithFiles> results = AccountFilesController.getAccountsWithFiles(null);
         Test.stopTest();
-        for(AccountWithFiles a : results){
-            if(a.accountName == 'Acme Corp'){
+        for (AccountWithFiles a : results) {
+            if (a.accountName == 'Acme Corp') {
                 System.assertEquals(acc.Id, a.accountId, 'Account Id should match');
                 System.assertEquals(acc.Name, a.accountName, 'Account Name should match');
                 System.assertEquals(acc.Email__c, a.email, 'Account Email should match');

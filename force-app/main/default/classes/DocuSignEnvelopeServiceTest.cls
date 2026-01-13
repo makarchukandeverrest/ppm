@@ -1,6 +1,5 @@
 @IsTest
 private class DocuSignEnvelopeServiceTest {
-
     @TestSetup
     static void setupTestData() {
         // Create User to act as Record Manager
@@ -19,11 +18,16 @@ private class DocuSignEnvelopeServiceTest {
         );
         insert recordManager;
 
-        Account acc = new Account(
-            Name = 'Test Account',
-            Email__c = 'test@example.com'
-        );
+        Account acc = new Account(Name = 'Test Account');
         insert acc;
+
+        Contact con = new Contact(
+            FirstName = 'Test Contact',
+            Email = 'test@example.com'
+        );
+
+        acc.Primary_Contact__c = con.Id;
+        update acc;
 
         Contract_Bid__c cb = new Contract_Bid__c(
             Name = 'Test Contract Bid',
@@ -68,16 +72,30 @@ private class DocuSignEnvelopeServiceTest {
         insert linkWelcome;
     }
 
-
     @IsTest
     static void testSendEnvelopeWithSignature_success() {
         // Arrange
         Account acc = [SELECT Id, Name, Email__c FROM Account LIMIT 1];
-        Contract_Bid__c cb = [SELECT Id, Name, Stage__c FROM Contract_Bid__c LIMIT 1];
+            Contract_Bid__c cb = [
+            SELECT Id, Name, Stage__c
+            FROM Contract_Bid__c
+            LIMIT 1
+        ];
         // Ensure Stage__c is active so service logic can include it when needed
 
-        ContentVersion cv = [SELECT Id, ContentDocumentId, Title, VersionData, To_Sent__c, FileExtension, DocuSign_Envelope_Status__c FROM ContentVersion LIMIT 1];
-        ContentDocumentLink link =  new ContentDocumentLink(
+        ContentVersion cv = [
+            SELECT
+                Id,
+                ContentDocumentId,
+                Title,
+                VersionData,
+                To_Sent__c,
+                FileExtension,
+                DocuSign_Envelope_Status__c
+            FROM ContentVersion
+            LIMIT 1
+        ];
+        ContentDocumentLink link = new ContentDocumentLink(
             ContentDocumentId = cv.ContentDocumentId,
             LinkedEntityId = acc.Id,
             ShareType = 'V',
@@ -87,14 +105,14 @@ private class DocuSignEnvelopeServiceTest {
         FileWrapper fw = new FileWrapper(cv);
 
         List<AccountWithFiles> accWithFiles = new List<AccountWithFiles>{
-            new AccountWithFiles(
-                acc.Id,
-                acc.Name,
-                acc.Email__c,
-                cb,
-                new List<FileWrapper>{ fw },
-                true
-            )
+        new AccountWithFiles(
+            acc.Id,
+            acc.Name,
+            acc.Email__c,
+            cb,
+            new List<FileWrapper>{ fw },
+            true
+        )
         };
         String accountsJson = JSON.serialize(accWithFiles);
 
@@ -103,10 +121,14 @@ private class DocuSignEnvelopeServiceTest {
 
         // Act
         Test.startTest();
-            DocuSignEnvelopeService.sendEnvelopeWithSignature(accountsJson);
+        DocuSignEnvelopeService.sendEnvelopeWithSignature(accountsJson);
         Test.stopTest();
         // Assert
-        Contract_Bid__c cbAfter = [SELECT Stage__c FROM Contract_Bid__c WHERE Id = :cb.Id];
+        Contract_Bid__c cbAfter = [
+            SELECT Stage__c
+            FROM Contract_Bid__c
+            WHERE Id = :cb.Id
+        ];
         System.assertEquals('Contract Sent via DocuSign', cbAfter.Stage__c);
 
         Integer emailCount = [
@@ -116,7 +138,6 @@ private class DocuSignEnvelopeServiceTest {
         ];
         System.assertEquals(1, emailCount, 'One EmailMessage should be created');
     }
-    
 
     // Mock for HttpCallout
     private class DocuSignMockResponseGenerator implements HttpCalloutMock {
@@ -128,5 +149,4 @@ private class DocuSignEnvelopeServiceTest {
             return res;
         }
     }
-    
 }

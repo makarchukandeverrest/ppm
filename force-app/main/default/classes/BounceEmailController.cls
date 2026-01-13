@@ -1,66 +1,62 @@
 public with sharing class BounceEmailController {
-    public static void handleBouncedContractBidPackage(List<EmailMessage> emails) {
-        if (emails == null || emails.isEmpty()) {
+
+    public static void handleBouncedContractBidPackage(List<Contact> contacts) {
+        System.debug('=== BounceEmailController.handleBouncedContractBidPackage START ===');
+
+        if (contacts == null || contacts.isEmpty()) {
+            System.debug('No contacts received');
             return;
         }
 
-        List<Account> accounts = new List<Account>();
-        List<Contact> contacts = new List<Contact>();
+        System.debug('Incoming contacts size: ' + contacts.size());
+
+        Set<Id> contactIds = new Set<Id>();
         Set<Id> accountsId = new Set<Id>();
-        List<String> recipientEmails = new List<String>();
 
-        // Extract recipient emails
-        for (EmailMessage e : emails) {
-            if (e.ToAddress != null) {
-                recipientEmails.add(e.ToAddress);
+        for (Contact c : contacts) {
+            System.debug('Processing Contact: ' + c.Id + ' AccountId=' + c.AccountId);
+            if (c.Id != null) {
+                contactIds.add(c.Id);
             }
         }
 
-        // Query Accounts by email
-        accounts = [SELECT Id, Name, Email__c FROM Account WHERE Email__c IN :recipientEmails];
+        System.debug('Collected ContactIds: ' + contactIds);
 
-        // Build dynamic WHERE clause for Contacts
-        String dynamicWhereClause = '';
-        for (String email : recipientEmails) {
-            if (!String.isEmpty(dynamicWhereClause)) {
-                dynamicWhereClause += ' OR ';
-            }
-            dynamicWhereClause += 'Email__c LIKE \'%' + String.escapeSingleQuotes(email) + '%\'';
+        if (contactIds.isEmpty()) {
+            System.debug('No ContactIds collected');
+            return;
         }
 
-        // Query Contacts
-        String query = 'SELECT Id, Name, Email FROM Contact WHERE Email IN :recipientEmails';
-        if (!String.isEmpty(dynamicWhereClause)) {
-            query += ' OR (' + dynamicWhereClause + ')';
-        }
-        contacts = Database.query(query);
+        List<Contact> contactsWithAccount = [
+            SELECT Id, AccountId
+            FROM Contact
+            WHERE Id IN :contactIds AND AccountId != NULL
+        ];
 
-        // Find Accounts related to Contacts
-        List<Account> accountsByContacts = new List<Account>();
-        if (!contacts.isEmpty()) {
-            accountsByContacts = [
-                SELECT Id, Name, Primary_Contact__c
-                FROM Account
-                WHERE Primary_Contact__c IN :contacts
-            ];
+        System.debug('Contacts with AccountId: ' + contactsWithAccount.size());
+
+        for (Contact c : contactsWithAccount) {
+            accountsId.add(c.AccountId);
         }
 
-        // Combine all Accounts
-        if (!accountsByContacts.isEmpty()) {
-            accounts.addAll(accountsByContacts);
-        }
+        System.debug('Collected AccountIds: ' + accountsId);
 
-        if (!accounts.isEmpty()) {
-            for (Account a : accounts) {
-                accountsId.add(a.Id);
-            }
+        if (!accountsId.isEmpty()) {
             changeContractBidStage(accountsId);
-            notifyManagers(emails);
+            notifyManagersForContacts(accountsId);
+        } else {
+            System.debug('No AccountIds found → skipping stage update & notification');
         }
+
+        System.debug('=== BounceEmailController.handleBouncedContractBidPackage END ===');
     }
 
     private static void changeContractBidStage(Set<Id> accountsId) {
+        System.debug('--- changeContractBidStage START ---');
+        System.debug('AccountIds: ' + accountsId);
+
         if (accountsId == null || accountsId.isEmpty()) {
+            System.debug('No AccountIds received');
             return;
         }
 
@@ -73,29 +69,38 @@ public with sharing class BounceEmailController {
                 OR Stage__c = 'Contract Bid Package Sent')
         ];
 
+        System.debug('ContractBids found for update: ' + contractBids.size());
+
         if (contractBids.isEmpty()) {
+            System.debug('No ContractBids in target stages');
             return;
         }
 
-        // Update contract bids
         for (Contract_Bid__c c : contractBids) {
+            System.debug('Updating ContractBid ' + c.Id + ' Stage from ' + c.Stage__c);
             c.Stage__c = 'Need Contact Verification';
         }
 
         try {
             update contractBids;
+            System.debug('ContractBids updated successfully');
         } catch (DmlException e) {
-            // Log error if needed
+            System.debug('ERROR updating ContractBids: ' + e.getMessage());
         }
+
+        System.debug('--- changeContractBidStage END ---');
     }
 
-    private static void notifyManagers(List<EmailMessage> mailToNotify) {
-        if (mailToNotify == null || mailToNotify.isEmpty()) {
+    private static void notifyManagersForContacts(Set<Id> accountIds) {
+        System.debug('--- notifyManagersForContacts START ---');
+        System.debug('AccountIds: ' + accountIds);
+
+        if (accountIds == null || accountIds.isEmpty()) {
+            System.debug('No AccountIds received');
             return;
         }
 
         try {
-            // Fetch the Custom Notification Type by API Name
             CustomNotificationType notificationType = [
                 SELECT Id, DeveloperName
                 FROM CustomNotificationType
@@ -103,32 +108,54 @@ public with sharing class BounceEmailController {
                 LIMIT 1
             ];
 
-            // Send notifications for each email
-            for (EmailMessage email : mailToNotify) {
+            System.debug('NotificationType Id: ' + notificationType.Id);
+
+            List<Account> accounts = [
+                SELECT Id, Regional_Manager__c, Name
+                FROM Account
+                WHERE Id IN :accountIds AND Regional_Manager__c != NULL
+            ];
+
+            System.debug('Accounts with Regional Manager: ' + accounts.size());
+
+            if (accounts.isEmpty()) {
+                System.debug('No accounts with Regional Manager found');
+                return;
+            }
+
+            Set<String> notificationKeys = new Set<String>();
+
+            for (Account acc : accounts) {
+                System.debug(
+                'Account ' + acc.Id +
+                ' Name=' + acc.Name +
+                ' RM=' + acc.Regional_Manager__c
+                );
+
+                String key = acc.Id + '_' + acc.Regional_Manager__c;
+                if (notificationKeys.contains(key)) {
+                    System.debug('Duplicate notification skipped for key ' + key);
+                    continue;
+                }
+
                 Messaging.CustomNotification notification = new Messaging.CustomNotification();
                 notification.setTitle('Email Bounced');
-                notification.setBody('An email has bounced.');
+                notification.setBody('Email bounced for account: ' + acc.Name);
                 notification.setNotificationTypeId(notificationType.Id);
-
-                Id target;
-
-                for (Id i : email.ToIds) {
-                    String idString = String.valueOf(i);
-                    target = i;
-                }
-
-                if (email != null && email.ToIds != null) {
-                    notification.setTargetId(target);
-                }
+                notification.setTargetId(acc.Id);
 
                 try {
-                    notification.send(new Set<String>{ email.FromId });
+                    notification.send(new Set<String>{ acc.Regional_Manager__c });
+                    notificationKeys.add(key);
+                    System.debug('Notification sent to RM ' + acc.Regional_Manager__c);
                 } catch (Exception ex) {
-                    // Handle notification sending error
+                    System.debug('ERROR sending notification: ' + ex.getMessage());
                 }
             }
         } catch (Exception e) {
-            // Handle query or other exceptions
+            System.debug('ERROR in notifyManagersForContacts: ' + e.getMessage());
         }
+
+        System.debug('--- notifyManagersForContacts END ---');
     }
 }

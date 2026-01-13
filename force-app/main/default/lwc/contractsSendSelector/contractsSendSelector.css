@@ -1,23 +1,85 @@
 .header-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.checkbox-align {
+    margin-left: 16px;
+}
+
+/* For mobile responsiveness */
+@media (max-width: 480px) {
+    .header-container {
+        flex-direction: column;
+        align-items: flex-start;
     }
     
     .checkbox-align {
-        margin-left: 16px;
+        margin-left: 0;
+        margin-top: 8px;
     }
-    
-    /* For mobile responsiveness */
-    @media (max-width: 480px) {
-        .header-container {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        
-        .checkbox-align {
-            margin-left: 0;
-            margin-top: 8px;
-        }
-    }
+}
+
+/* Modal styles */
+.slds-modal {
+    position: fixed;
+    z-index: 9001;
+}
+
+.slds-backdrop {
+    position: fixed;
+    z-index: 9000;
+}
+
+.preview-button {
+    flex-shrink: 0;
+}
+
+/* File list item alignment */
+.slds-list_dotted li {
+    padding: 4px 0;
+}
+
+/* Filter section styles */
+.filter-section {
+    background: linear-gradient(135deg, #f4f6f9 0%, #e8ecf1 100%);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 8px;
+    border: 1px solid #d8dde6;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.filter-section h3 {
+    color: #16325c;
+    font-weight: 600;
+}
+
+/* Filter field styling */
+.filter-section lightning-combobox,
+.filter-section lightning-input {
+    --sds-c-input-radius-border: 4px;
+}
+
+/* Active filter indicator */
+.filter-active {
+    border-left: 3px solid #0070d2;
+}
+
+/* Account card enhancements */
+.slds-box.slds-theme_default {
+    transition: box-shadow 0.2s ease;
+}
+
+.slds-box.slds-theme_default:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Filter info badges */
+.slds-text-body_small .slds-m-right_medium,
+.slds-text-body_small span {
+    display: inline-flex;
+    align-items: center;
+}
