@@ -10,6 +10,7 @@ public with sharing class ProposalTriggerHandler extends TriggerHandler{
     protected override void beforeInsert(){
         ProposalStatusDefiner.updateStatus(this.newList);
         ProposalCustomerAssigner.assignCustomer(this.newList);
+        ProposalRegionalManagerAssigner.assignManagers(this.newList);
 	}
 
     protected override void beforeUpdate(){
