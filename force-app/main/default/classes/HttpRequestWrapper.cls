@@ -4,9 +4,6 @@ public class HttpRequestWrapper {
     public String body;
     public Map<String, String> headers;
 
-    public Id contentVersionId;
-    public Id contractBidId;
-
     public HttpRequest toRequest() {
         HttpRequest req = new HttpRequest();
         req.setEndpoint(endpoint);
