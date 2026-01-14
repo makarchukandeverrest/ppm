@@ -1,5 +1,6 @@
-import { LightningElement,wire,track,api  } from 'lwc';
+import { LightningElement, wire, track, api } from 'lwc';
 import getAccountsWithFiles from '@salesforce/apex/AccountFilesController.getAccountsWithFiles';
+import getFilterOptions from '@salesforce/apex/AccountFilesController.getFilterOptions';
 import sendEnvelopeWithSignature from '@salesforce/apex/DocuSignEnvelopeService.sendEnvelopeWithSignature';
 import { refreshApex } from '@salesforce/apex';
 
@@ -8,12 +9,24 @@ import { NavigationMixin } from 'lightning/navigation';
 
 export default class ContractsSendSelector extends NavigationMixin(LightningElement) {
     @track accountsWithFiles;
+    @track allAccountsWithFiles; // Store original data for reference
     error;
     wiredAccountsResult;
     @track isUpdating = false;
-<<<<<<< HEAD
     @track showConfirmationModal = false;
     @api recordId;
+
+    // Filter state
+    @track selectedRegionalManager = '';
+    @track selectedCounty = '';
+    @track customerNameFilter = '';
+    @track selectedSupervisor = '';
+
+    // Filter options
+    @track regionalManagerOptions = [];
+    @track countyOptions = [];
+    @track supervisorOptions = [];
+    @track filtersLoaded = false;
 
     connectedCallback() {
         // If recordId is not set via @api, try to get it from URL
@@ -24,8 +37,36 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
         }
     }
 
+    // Load filter options
+    @wire(getFilterOptions)
+    wiredFilterOptions({ error, data }) {
+        if (data) {
+            // Add empty option at the beginning for each filter
+            this.regionalManagerOptions = [
+                { label: '-- All --', value: '' },
+                ...data.regionalManagers.map(opt => ({ label: opt.label, value: opt.value }))
+            ];
+            this.countyOptions = [
+                { label: '-- All --', value: '' },
+                ...data.counties.map(opt => ({ label: opt.label, value: opt.value }))
+            ];
+            this.supervisorOptions = [
+                { label: '-- All --', value: '' },
+                ...data.supervisors.map(opt => ({ label: opt.label, value: opt.value }))
+            ];
+            this.filtersLoaded = true;
+        } else if (error) {
+            console.error('Error loading filter options:', error);
+        }
+    }
 
-    @wire(getAccountsWithFiles, { recordId: '$recordId' })
+    @wire(getAccountsWithFiles, { 
+        recordId: '$recordId',
+        regionalManagerId: '$selectedRegionalManager',
+        county: '$selectedCounty',
+        customerName: '$customerNameFilter',
+        supervisorId: '$selectedSupervisor'
+    })
     wiredAccounts(result) {
         this.wiredAccountsResult = result;
 
@@ -34,8 +75,9 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
 
         if (data) {
             this.accountsWithFiles = data;
+            this.allAccountsWithFiles = data;
 
-            if (Array.isArray(data) && data.length === 0) {
+            if (Array.isArray(data) && data.length === 0 && !this.hasActiveFilters) {
                 this.dispatchEvent(
                     new ShowToastEvent({
                         title: 'Info',
@@ -57,6 +99,51 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
                 })
             );
         }
+    }
+
+    // Check if any filters are active
+    get hasActiveFilters() {
+        return this.selectedRegionalManager || 
+               this.selectedCounty || 
+               this.customerNameFilter || 
+               this.selectedSupervisor;
+    }
+
+    // Getter for disabling Clear Filters button
+    get hasNoActiveFilters() {
+        return !this.hasActiveFilters;
+    }
+
+    // Getter for showing "no results" message with filters
+    get showNoResultsWithFilters() {
+        return this.hasActiveFilters && 
+               this.accountsWithFiles && 
+               this.accountsWithFiles.length === 0;
+    }
+
+    // Handle filter changes
+    handleRegionalManagerChange(event) {
+        this.selectedRegionalManager = event.detail.value;
+    }
+
+    handleCountyChange(event) {
+        this.selectedCounty = event.detail.value;
+    }
+
+    handleCustomerNameChange(event) {
+        this.customerNameFilter = event.detail.value;
+    }
+
+    handleSupervisorChange(event) {
+        this.selectedSupervisor = event.detail.value;
+    }
+
+    // Clear all filters
+    clearFilters() {
+        this.selectedRegionalManager = '';
+        this.selectedCounty = '';
+        this.customerNameFilter = '';
+        this.selectedSupervisor = '';
     }
 
     // Getter: returns only accounts that have selected files
@@ -153,7 +240,7 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     }
 
     async handleUpdate() {
-        console.log('handleUpdate',this.recordId);
+        console.log('handleUpdate', this.recordId);
         
         try {
             this.isUpdating = true;
@@ -168,64 +255,29 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
 
     async handleSubmit() {
         try {
-            const filteredData = this.accountsWithFiles
-                .map(account => {
-                    const accountCopy = { ...account };
-                    accountCopy.files = account.files.filter(file => file.ToSent === true);
-                    return accountCopy;
-                })
-                // remove accounts without selected files
-                .filter(account => account.files && account.files.length > 0);
-    
-            if (filteredData.length === 0) {
-                this.dispatchEvent(new ShowToastEvent({
-                    title: 'Warning',
-                    message: 'Please select at least one file to send',
-                    variant: 'warning',
-                    mode: 'dismissable'
-                }));
-                return;
-            }
-    
             this.dispatchEvent(new ShowToastEvent({
                 title: 'Processing',
-                message: `Sending ${filteredData.reduce((sum, acc) => sum + acc.files.length, 0)} file(s) from ${filteredData.length} account(s)`,
-                variant: 'info',
-                mode: 'dismissable'
+                message: 'Sending envelopes...',
+                variant: 'info'
             }));
-    
-            await sendEnvelopeWithSignature({ 
-                accountsWithFilesJSON: JSON.stringify(filteredData)
+
+            await sendEnvelopeWithSignature({
+                accountsWithFilesJSON: JSON.stringify(this.accountsWithFiles)
             });
-            
-            this.error = undefined;
-            
-            this.dispatchEvent(new ShowToastEvent({
-                title: 'Success',
-                message: 'Envelopes sent successfully!',
-                variant: 'success',
-                mode: 'dismissable'
-            }));
-            
-            setTimeout(() => {
-                this[NavigationMixin.Navigate]({
-                    type: 'standard__objectPage',
-                    attributes: {
-                        objectApiName: 'Contract_Bid__c',
-                        actionName: 'list'
-                    }
-                });
-            }, 2000);
-            
+
+            await this[NavigationMixin.Navigate]({
+                type: 'standard__objectPage',
+                attributes: {
+                    objectApiName: 'Contract_Bid__c',
+                    actionName: 'list'
+                }
+            });
         } catch (error) {
-            console.error('Error sending envelopes:', error);
-            console.error('Error details:', JSON.stringify(error, null, 2));
-            
+            console.error(error);
             this.dispatchEvent(new ShowToastEvent({
                 title: 'Error',
-                message: error.body?.message || error.message || 'Error sending envelopes',
-                variant: 'error',
-                mode: 'dismissable'
+                message: error?.body?.message || error.message,
+                variant: 'error'
             }));
         }
     }
