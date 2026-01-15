@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Supervisor__c</fullName>
+    <externalId>false</externalId>
+    <formula>IF(
+    ISBLANK(Account.Supervisor__c),
+    &quot;&quot;,
+    HYPERLINK(
+        &quot;/&quot; &amp; Account.Supervisor__c,
+        Account.Supervisor__r.FirstName &amp; &quot; &quot; &amp;
+        Account.Supervisor__r.LastName,
+        &quot;_self&quot;
+    )
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Supervisor</label>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Regional_Manager__c</fullName>
+    <externalId>false</externalId>
+    <formula>IF(
+    ISBLANK(Account.Regional_Manager__c),
+    &quot;&quot;,
+    HYPERLINK(
+        &quot;/&quot; &amp; Account.Regional_Manager__c,
+        Account.Regional_Manager__r.FirstName &amp; &quot; &quot; &amp;
+        Account.Regional_Manager__r.LastName,
+        &quot;_self&quot;
+    )
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Regional Manager</label>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

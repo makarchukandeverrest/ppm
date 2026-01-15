@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Regional_Manager_s__c</fullName>
+    <label>Regional Manager(s)</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackTrending>false</trackTrending>
+    <type>MultiselectPicklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>roman@premierswim.com</fullName>
+                <default>false</default>
+                <label>Roman Shestakov — roman@premierswim.com</label>
+            </value>
+            <value>
+                <fullName>stanislav@premierswim.com</fullName>
+                <default>false</default>
+                <label>Stanislav Kryshtalian — stanislav@premierswim.com</label>
+            </value>
+            <value>
+                <fullName>dimitry@premierswim.com</fullName>
+                <default>false</default>
+                <label>Dimitry Price — dimitry@premierswim.com</label>
+            </value>
+            <value>
+                <fullName>stephanie@premierswim.com</fullName>
+                <default>false</default>
+                <label>Stephanie — stephanie@premierswim.com</label>
+            </value>
+            <value>
+                <fullName>hamzah@premierswim.com</fullName>
+                <default>false</default>
+                <label>Hamzah — Hamzah@premierswim.com</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+    <visibleLines>4</visibleLines>
+</CustomField>

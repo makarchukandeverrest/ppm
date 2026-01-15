@@ -2,7 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>SharePoint_External_Id__c</fullName>
     <caseSensitive>true</caseSensitive>
-    <externalId>true</externalId>
+    <externalId>false</externalId>
     <label>SharePoint External Id</label>
     <length>255</length>
     <required>false</required>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>School_Off_Season_Hours_per_Lifeguard__c</fullName>
+    <externalId>false</externalId>
+    <inlineHelpText>Hours per week</inlineHelpText>
+    <label>School/Off Season Hours per Lifeguard</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <trackFeedHistory>false</trackFeedHistory>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>
