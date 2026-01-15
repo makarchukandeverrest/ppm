@@ -1,18 +1,12 @@
 public with sharing class DocuSignNotificationService {
-
+    
     public static void handleEnvelopeStatusChange(List<ContentVersion> newVersions) {
 
-        System.debug('=== DocuSignNotificationService START ===');
-
-        if (newVersions == null || newVersions.isEmpty()) {
-            System.debug('EXIT: No ContentVersions');
-            return;
-        }
-
+        // Detect sandbox safely
         Boolean isSandbox = [SELECT IsSandbox FROM Organization LIMIT 1].IsSandbox;
 
-        List<Task> tasksToInsert = new List<Task>();
         List<Messaging.SingleEmailMessage> emailsToSend = new List<Messaging.SingleEmailMessage>();
+        List<Task> tasksToInsert = new List<Task>();
 
         // -------------------------------------------------
         // 1️⃣ Resolve REAL ContentVersions by EnvelopeId
@@ -77,84 +71,24 @@ public with sharing class DocuSignNotificationService {
             return;
         }
 
-        // -------------------------
-        // 2. Read ContentDocumentLinks
-        // -------------------------
-        System.debug('🔍 Checking ContentDocumentLinks for ' + contentDocIds.size() + ' ContentDocuments');
-        
+        // Find Accounts via ContentDocumentLink
         List<ContentDocumentLink> links = [
-            SELECT LinkedEntityId, ContentDocumentId, ShareType, Visibility
+            SELECT LinkedEntityId, ContentDocumentId
             FROM ContentDocumentLink
             WHERE ContentDocumentId IN :contentDocIds
         ];
 
-        System.debug('Found ' + links.size() + ' total ContentDocumentLinks');
-
         Map<Id, Id> contentDocToAccount = new Map<Id, Id>();
-        Map<Id, Id> contentDocToEmail   = new Map<Id, Id>();
-        Map<Id, Id> contentDocToUser    = new Map<Id, Id>();
         Set<Id> accountIds = new Set<Id>();
 
-        // Group links by ContentDocument
-        Map<Id, List<ContentDocumentLink>> docToLinks = new Map<Id, List<ContentDocumentLink>>();
-        for (ContentDocumentLink l : links) {
-            if (!docToLinks.containsKey(l.ContentDocumentId)) {
-                docToLinks.put(l.ContentDocumentId, new List<ContentDocumentLink>());
-            }
-            docToLinks.get(l.ContentDocumentId).add(l);
-        }
-
-        // Analyze each ContentDocument's links
-        for (Id docId : contentDocIds) {
-            List<ContentDocumentLink> docLinks = docToLinks.get(docId);
-            if (docLinks == null || docLinks.isEmpty()) {
-                System.debug('⚠️ ContentDocument ' + docId + ' has NO ContentDocumentLinks!');
-                continue;
-            }
-            
-            System.debug('📎 ContentDocument ' + docId + ' has ' + docLinks.size() + ' links:');
-            
-            List<Id> accountLinks = new List<Id>();
-            List<Id> userLinks = new List<Id>();
-            List<Id> emailLinks = new List<Id>();
-            
-            for (ContentDocumentLink l : docLinks) {
-                String prefix = String.valueOf(l.LinkedEntityId).substring(0, 3);
-                System.debug('   Link to: ' + l.LinkedEntityId + ' (prefix: ' + prefix + ')');
-
-                if (prefix == '001') { // Account
-                    contentDocToAccount.put(l.ContentDocumentId, l.LinkedEntityId);
-                    accountIds.add(l.LinkedEntityId);
-                    accountLinks.add(l.LinkedEntityId);
-                }
-                else if (prefix == '02s') { // EmailMessage
-                    contentDocToEmail.put(l.ContentDocumentId, l.LinkedEntityId);
-                    emailLinks.add(l.LinkedEntityId);
-                }
-                else if (prefix == '005') { // User
-                    contentDocToUser.put(l.ContentDocumentId, l.LinkedEntityId);
-                    userLinks.add(l.LinkedEntityId);
-                }
-            }
-            
-            System.debug('   ✅ Account links: ' + accountLinks.size() + ' - ' + accountLinks);
-            System.debug('   ⚠️ User links: ' + userLinks.size() + ' - ' + userLinks);
-            System.debug('   ⚠️ EmailMessage links: ' + emailLinks.size() + ' - ' + emailLinks);
-            
-            if (accountLinks.isEmpty()) {
-                System.debug('   ⚠️⚠️⚠️ NO ACCOUNT LINK for ContentDocument ' + docId + '!');
+        for(ContentDocumentLink l : links){
+            if(String.valueOf(l.LinkedEntityId).startsWith('001')){
+                contentDocToAccount.put(l.ContentDocumentId, l.LinkedEntityId);
+                accountIds.add(l.LinkedEntityId);
             }
         }
 
-        System.debug('📊 Summary:');
-        System.debug('   Direct Account links found: ' + accountIds.size() + ' - ' + accountIds);
-        System.debug('   EmailMessage links found: ' + contentDocToEmail.size() + ' - ' + contentDocToEmail.values());
-        System.debug('   User links found: ' + contentDocToUser.size() + ' - ' + contentDocToUser.values());
-
-        // -------------------------
-        // 3. Resolve Account via EmailMessage → Contract_Bid__c
-        // -------------------------
-        if (accountIds.isEmpty() && !contentDocToEmail.isEmpty()) {
+        if(accountIds.isEmpty()) return;
 
             List<EmailMessage> emails = [
                 SELECT Id, RelatedToId
@@ -218,22 +152,16 @@ public with sharing class DocuSignNotificationService {
             LIMIT 1
         ];
 
-        if (settings != null && String.isNotBlank(settings.Stage_Names__c)) {
-            for (String s : settings.Stage_Names__c.split(',')) {
+        if(settings != null && String.isNotBlank(settings.Stage_Names__c)){
+            for(String s : settings.Stage_Names__c.split(',')){
                 activeStages.add(s.trim());
             }
         }
 
-        System.debug('Active Stages: ' + activeStages);
-
-        if (activeStages.isEmpty()) {
-            System.debug('EXIT: No active stages');
+        if(activeStages.isEmpty())
             return;
-        }
 
-        // -------------------------
-        // 5. Load Contract Bids
-        // -------------------------
+        // Find Contract Bids with active stages
         List<Contract_Bid__c> bids = [
             SELECT Id, Name, Customer__c,
                    Record_Manager__c,
@@ -245,55 +173,25 @@ public with sharing class DocuSignNotificationService {
         ];
 
         Map<Id, Contract_Bid__c> accountToBid = new Map<Id, Contract_Bid__c>();
-        for (Contract_Bid__c b : bids) {
+        for(Contract_Bid__c b : bids){
             accountToBid.put(b.Customer__c, b);
         }
 
-        System.debug('Resolved Contract Bids: ' + accountToBid.keySet());
-
-        // -------------------------
-        // 6. Create Tasks + Emails
-        // -------------------------
-        System.debug('🔍 Processing ' + realVersions.size() + ' ContentVersions for Tasks/Emails');
-        
-        for (ContentVersion cv : realVersions) {
-            System.debug('--- Processing ContentVersion: ' + cv.Id + ' ---');
-            System.debug('   ContentDocumentId: ' + cv.ContentDocumentId);
+        // Generate Tasks + Emails
+        for(ContentVersion cv : newVersions){
 
             Id accId = contentDocToAccount.get(cv.ContentDocumentId);
-            System.debug('   Account from direct link: ' + accId);
-
-            if (accId == null) {
-                accId = accountIds.isEmpty() ? null : accountIds.iterator().next();
-                System.debug('   Account from fallback: ' + accId);
-            }
-
-            if (accId == null) {
-                System.debug('   ⚠️⚠️⚠️ NO ACCOUNT FOUND for ContentVersion ' + cv.Id);
-                System.debug('   ⚠️ ContentDocument ' + cv.ContentDocumentId + ' has no Account link!');
-            } else if (!accountToBid.containsKey(accId)) {
-                System.debug('   ⚠️ Account ' + accId + ' found but no Contract_Bid__c with active stage');
-            }
-
-            if (accId == null || !accountToBid.containsKey(accId)) {
-                System.debug('SKIP CV ' + cv.Id + ' — no Account / Bid');
-                continue;
-            }
-            
-            System.debug('   ✅ Account found: ' + accId);
+            if(accId == null || !accountToBid.containsKey(accId)) continue;
 
             Contract_Bid__c bid = accountToBid.get(accId);
             String status = cv.DocuSign_Envelope_Status__c;
 
-            System.debug('Processing CV ' + cv.Id + ' for Bid ' + bid.Id);
-
-            // Email (PROD only)
-            if (!isSandbox && String.isNotBlank(bid.Record_Manager__r.Email)) {
+            // Email (only PROD)
+            if(!isSandbox && String.isNotBlank(bid.Record_Manager__r.Email)){
                 Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
                 mail.setToAddresses(new String[]{ bid.Record_Manager__r.Email });
-                mail.setSubject(
-                    'DocuSign Envelope for Contract Bid "' + bid.Name + '" changed status to ' + status
-                );
+                mail.setSubject('DocuSign Envelope for Contract Bid "' + bid.Name +
+                                '" changed status to ' + status);
                 mail.setPlainTextBody(
                     'Hello,\n\n' +
                     'The DocuSign envelope has changed status to "' + status + '".\n\n' +
@@ -305,10 +203,10 @@ public with sharing class DocuSignNotificationService {
             }
 
             // Task
-            if (bid.Record_Manager__c != null) {
+			if(bid.Record_Manager__r != null){
                 Task t = new Task();
                 t.OwnerId = bid.Record_Manager__c;
-                t.WhatId  = bid.Id;
+                t.WhatId = bid.Id;
                 t.Subject = 'DocuSign Envelope status changed to ' + status;
                 t.Description =
                     'DocuSign envelope for "' + bid.Name +
@@ -316,27 +214,19 @@ public with sharing class DocuSignNotificationService {
                 t.Status = 'Completed';
                 t.Priority = 'Normal';
                 t.ActivityDate = Date.today();
-
+    
                 tasksToInsert.add(t);
-
-                System.debug('TASK prepared for Bid ' + bid.Id);
-            }
+			}
         }
 
-        // -------------------------
-        // 7. Persist
-        // -------------------------
-        if (!emailsToSend.isEmpty() && !isSandbox) {
+        // Send Emails (PROD only)
+        if(!emailsToSend.isEmpty() && !isSandbox){
             Messaging.sendEmail(emailsToSend);
         }
 
-        if (!tasksToInsert.isEmpty()) {
+        // Insert Tasks
+        if(!tasksToInsert.isEmpty()){
             insert tasksToInsert;
-            System.debug('TASKS INSERTED: ' + tasksToInsert.size());
-        } else {
-            System.debug('NO TASKS TO INSERT');
         }
-
-        System.debug('=== DocuSignNotificationService END ===');
     }
 }

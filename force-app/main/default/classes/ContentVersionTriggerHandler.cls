@@ -1,6 +1,7 @@
 public class ContentVersionTriggerHandler extends TriggerHandler {
-    List<ContentVersion> newList;
-    Map<Id, ContentVersion> oldMap;
+
+    private List<ContentVersion> newList;
+    private Map<Id, ContentVersion> oldMap;
 
     // DocuSign statuses that should trigger task creation
     private static final Set<String> TASK_TRIGGER_STATUSES = new Set<String>{
@@ -8,8 +9,8 @@ public class ContentVersionTriggerHandler extends TriggerHandler {
     };
 
     public ContentVersionTriggerHandler(){
-        this.newList = (List<ContentVersion>)Trigger.new;
-        this.oldMap = (Map<Id, ContentVersion>)Trigger.oldMap;
+        newList = (List<ContentVersion>) Trigger.new;
+        oldMap = (Map<Id, ContentVersion>) Trigger.oldMap;
     }
 
     protected override void afterInsert(){
@@ -118,7 +119,6 @@ public class ContentVersionTriggerHandler extends TriggerHandler {
         System.debug('=== ContentVersionTriggerHandler.afterUpdate START ===');
         System.debug('Total ContentVersions updated: ' + newList.size());
         
-<<<<<<< HEAD
         if(newList == null || newList.isEmpty()){
             System.debug('No records to process');
             return;
@@ -131,111 +131,53 @@ public class ContentVersionTriggerHandler extends TriggerHandler {
         
         // Filter records where specific fields have changed
         List<ContentVersion> docusignChangedVersions = new List<ContentVersion>();
-        
-        for(ContentVersion newCV : newList) {
-            ContentVersion oldCV = oldMap.get(newCV.Id);
-            
-            System.debug('--- Analyzing ContentVersion: ' + newCV.Id + ' ---');
-            System.debug('Title: ' + newCV.Title);
-            System.debug('DocuSign_Envelope_Id__c: ' + newCV.DocuSign_Envelope_Id__c);
-            
-            // 🔍 CHECK 1: VersionNumber change (new ContentVersion created?)
-            if(newCV.VersionNumber != oldCV.VersionNumber) {
-                System.debug('⚠️ VERSION NUMBER CHANGED: ' + oldCV.VersionNumber + ' → ' + newCV.VersionNumber);
-                System.debug('⚠️ NEW ContentVersion CREATED by DocuSign!');
-            } else {
-                System.debug('✅ VersionNumber unchanged: ' + newCV.VersionNumber);
+
+        for(ContentVersion newCV : newList){
+
+            ContentVersion oldCV = oldMap != null ? oldMap.get(newCV.Id) : null;
+
+            System.debug('--------------------------------');
+            System.debug('Processing CV Id: ' + newCV.Id);
+
+            String newStatus = newCV.DocuSign_Envelope_Status__c != null
+                ? newCV.DocuSign_Envelope_Status__c.trim()
+                : null;
+
+            String oldStatus = oldCV != null && oldCV.DocuSign_Envelope_Status__c != null
+                ? oldCV.DocuSign_Envelope_Status__c.trim()
+                : null;
+
+            Boolean newToSent = newCV.To_Sent__c == true;
+            Boolean oldToSent = oldCV != null && oldCV.To_Sent__c == true;
+
+            System.debug('New DocuSign Status: ' + newStatus);
+            System.debug('Old DocuSign Status: ' + oldStatus);
+            System.debug('New To_Sent: ' + newToSent);
+            System.debug('Old To_Sent: ' + oldToSent);
+
+            Boolean shouldCreateTask = false;
+
+            // ✅ Case 1: DocuSign status changed into trigger-status
+            if(
+                newStatus != null &&
+                newStatus != oldStatus &&
+                TASK_TRIGGER_STATUSES.contains(newStatus)
+            ){
+                System.debug('✓ Status changed into trigger status: ' + newStatus);
+                shouldCreateTask = true;
             }
-            
-            // 🔍 CHECK 2: ContentDocumentId change (new ContentDocument created?)
-            if(newCV.ContentDocumentId != oldCV.ContentDocumentId) {
-                System.debug('⚠️ CONTENT DOCUMENT ID CHANGED: ' + oldCV.ContentDocumentId + ' → ' + newCV.ContentDocumentId);
-                System.debug('⚠️ NEW ContentDocument CREATED!');
-            } else {
-                System.debug('✅ ContentDocumentId unchanged: ' + newCV.ContentDocumentId);
+
+            // ✅ Case 2: To_Sent flag switched false -> true
+            if(newToSent && !oldToSent){
+                System.debug('✓ To_Sent changed to TRUE');
+                shouldCreateTask = true;
             }
-            
-            // 🔍 CHECK 3: FirstPublishLocationId change
-            if(newCV.FirstPublishLocationId != oldCV.FirstPublishLocationId) {
-                System.debug('⚠️ FIRST PUBLISH LOCATION ID CHANGED:');
-                System.debug('   Old: ' + oldCV.FirstPublishLocationId);
-                System.debug('   New: ' + newCV.FirstPublishLocationId);
-                
-                // Determine entity type
-                if(newCV.FirstPublishLocationId != null) {
-                    String prefix = String.valueOf(newCV.FirstPublishLocationId).substring(0, 3);
-                    if(prefix == '005') {
-                        System.debug('   ⚠️ FirstPublishLocationId set to USER ID');
-                    } else if(prefix == '02s') {
-                        System.debug('   ⚠️ FirstPublishLocationId set to EMAILMESSAGE ID');
-                    } else if(prefix == '001') {
-                        System.debug('   ✅ FirstPublishLocationId set to ACCOUNT ID');
-                    }
-                }
-            } else {
-                System.debug('✅ FirstPublishLocationId unchanged: ' + newCV.FirstPublishLocationId);
-                if(newCV.FirstPublishLocationId != null) {
-                    String prefix = String.valueOf(newCV.FirstPublishLocationId).substring(0, 3);
-                    if(prefix == '005') {
-                        System.debug('   ⚠️ FirstPublishLocationId is USER ID (may cause issues)');
-                    } else if(prefix == '02s') {
-                        System.debug('   ⚠️ FirstPublishLocationId is EMAILMESSAGE ID (may cause issues)');
-                    }
-                }
-            }
-            
-            // 🔍 CHECK 4: ContentDocumentLinks for this ContentDocument
-            if(newCV.ContentDocumentId != null) {
-                List<ContentDocumentLink> allLinks = [
-                    SELECT Id, LinkedEntityId, ShareType, Visibility
-                    FROM ContentDocumentLink
-                    WHERE ContentDocumentId = :newCV.ContentDocumentId
-                ];
-                
-                System.debug('📎 ContentDocumentLinks for ContentDocument ' + newCV.ContentDocumentId + ': ' + allLinks.size());
-                
-                List<Id> accountLinks = new List<Id>();
-                List<Id> userLinks = new List<Id>();
-                List<Id> emailLinks = new List<Id>();
-                
-                for(ContentDocumentLink link : allLinks) {
-                    String prefix = String.valueOf(link.LinkedEntityId).substring(0, 3);
-                    if(prefix == '001') {
-                        accountLinks.add(link.LinkedEntityId);
-                    } else if(prefix == '005') {
-                        userLinks.add(link.LinkedEntityId);
-                    } else if(prefix == '02s') {
-                        emailLinks.add(link.LinkedEntityId);
-                    }
-                }
-                
-                System.debug('   Account links: ' + accountLinks.size() + ' - ' + accountLinks);
-                System.debug('   User links: ' + userLinks.size() + ' - ' + userLinks);
-                System.debug('   EmailMessage links: ' + emailLinks.size() + ' - ' + emailLinks);
-                
-                if(accountLinks.isEmpty()) {
-                    System.debug('   ⚠️ NO ACCOUNT LINK FOUND! This may cause issues.');
-                } else {
-                    System.debug('   ✅ Account link exists');
-                }
-            }
-            
-            // For DocuSign notifications - only when DocuSign status changes
-            if(newCV.DocuSign_Envelope_Status__c != oldCV.DocuSign_Envelope_Status__c) {
-                System.debug('✅ DocuSign Status CHANGED: ' + oldCV.DocuSign_Envelope_Status__c + ' → ' + newCV.DocuSign_Envelope_Status__c);
+
+            if(shouldCreateTask){
                 docusignChangedVersions.add(newCV);
+                System.debug('→ Marked for processing');
             } else {
                 System.debug('ℹ️ DocuSign Status unchanged: ' + newCV.DocuSign_Envelope_Status__c);
-            }
-            
-            // Also check To_Sent change
-            Boolean newToSent = newCV.To_Sent__c == true;
-            Boolean oldToSent = oldCV.To_Sent__c == true;
-            if(newToSent && !oldToSent) {
-                System.debug('✅ To_Sent CHANGED to TRUE');
-                if(!docusignChangedVersions.contains(newCV)) {
-                    docusignChangedVersions.add(newCV);
-                }
             }
             
             System.debug('--- End Analysis for ContentVersion: ' + newCV.Id + ' ---');
@@ -345,11 +287,6 @@ public class ContentVersionTriggerHandler extends TriggerHandler {
                 titles.add(cv.Title);
                 titleToSize.put(cv.Title, Integer.valueOf(cv.ContentSize));
             }
-        }
-        
-        if(titles.isEmpty()) {
-            System.debug('Cannot match duplicates - missing Title or ContentSize');
-            return;
         }
         
         // Find original ContentVersions with EnvelopeId

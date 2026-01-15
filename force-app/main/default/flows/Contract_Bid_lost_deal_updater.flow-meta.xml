@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>65.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <name>Assign_Lost_Reason</name>
+        <label>Assign Lost Reason</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>Get_Contract_Bid.Lost_Reason__c</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>FormattedReason</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Update_Reason_of_Lost</targetReference>
+        </connector>
+    </assignments>
+    <choices>
+        <name>Happy_with_Current_Vendor</name>
+        <choiceText>Happy with Current Vendor</choiceText>
+        <dataType>String</dataType>
+        <value>
+            <stringValue>Happy with Current Vendor</stringValue>
+        </value>
+    </choices>
+    <choices>
+        <name>Happy_with_Current_Vendor_Unhappy_with_Our_Service_Poor_Customer_Service_Communi</name>
+        <choiceText>Happy with Current Vendor Unhappy with Our Service Poor Customer Service / Communication Pricing / Cost Concerns Reason Unknown Other (Specify)</choiceText>
+        <dataType>String</dataType>
+        <value>
+            <stringValue>Happy with Current Vendor Unhappy with Our Service Poor Customer Service / Communication Pricing / Cost Concerns Reason Unknown Other (Specify)</stringValue>
+        </value>
+    </choices>
+    <choices>
+        <name>Other_Specify</name>
+        <choiceText>Other (Specify)</choiceText>
+        <dataType>String</dataType>
+        <value>
+            <stringValue>Other (Specify)</stringValue>
+        </value>
+    </choices>
+    <choices>
+        <name>Poor_Customer_Service_Communication</name>
+        <choiceText>Poor Customer Service / Communication</choiceText>
+        <dataType>String</dataType>
+        <value>
+            <stringValue>Poor Customer Service / Communication</stringValue>
+        </value>
+    </choices>
+    <choices>
+        <name>Pricing_Cost_Concerns</name>
+        <choiceText>Pricing / Cost Concerns</choiceText>
+        <dataType>String</dataType>
+        <value>
+            <stringValue>Pricing / Cost Concerns</stringValue>
+        </value>
+    </choices>
+    <choices>
+        <name>Reason_Unknown</name>
+        <choiceText>Reason Unknown</choiceText>
+        <dataType>String</dataType>
+        <value>
+            <stringValue>Reason Unknown</stringValue>
+        </value>
+    </choices>
+    <choices>
+        <name>Unhappy_with_Our_Service</name>
+        <choiceText>Unhappy with Our Service</choiceText>
+        <dataType>String</dataType>
+        <value>
+            <stringValue>Unhappy with Our Service</stringValue>
+        </value>
+    </choices>
+    <customProperties>
+        <name>ScreenProgressIndicator</name>
+        <value>
+            <stringValue>{&quot;location&quot;:&quot;top&quot;,&quot;type&quot;:&quot;simple&quot;}</stringValue>
+        </value>
+    </customProperties>
+    <environments>Default</environments>
+    <interviewLabel>Contract Bid lost deal updater {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Contract Bid lost deal updater</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>Flow</processType>
+    <recordLookups>
+        <name>Get_Contract_Bid</name>
+        <label>Get Contract Bid</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Type_Lost_Deal_Reason</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>contractBidId</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Contract_Bid__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordUpdates>
+        <name>Update_Reason_of_Lost</name>
+        <label>Update Reason of Lost</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <inputReference>Get_Contract_Bid</inputReference>
+    </recordUpdates>
+    <screens>
+        <name>Type_Lost_Deal_Reason</name>
+        <label>Type Lost Deal Reason</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Assign_Lost_Reason</targetReference>
+        </connector>
+        <fields>
+            <name>Alert</name>
+            <fieldText>&lt;p&gt;⚠️⚠️&amp;nbsp;&lt;strong&gt;ATTENTION!&lt;/strong&gt;&amp;nbsp;⚠️⚠️&lt;/p&gt;&lt;p&gt;Fill the form for bid lost&lt;/p&gt;&lt;p&gt;‼️ Required for process completion ‼️&lt;/p&gt;</fieldText>
+            <fieldType>DisplayText</fieldType>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Losst_Reason</name>
+            <choiceReferences>Happy_with_Current_Vendor</choiceReferences>
+            <choiceReferences>Unhappy_with_Our_Service</choiceReferences>
+            <choiceReferences>Poor_Customer_Service_Communication</choiceReferences>
+            <choiceReferences>Pricing_Cost_Concerns</choiceReferences>
+            <choiceReferences>Reason_Unknown</choiceReferences>
+            <choiceReferences>Other_Specify</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Losst Reason</fieldText>
+            <fieldType>DropdownBox</fieldType>
+            <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
+            <isRequired>false</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <fields>
+            <name>Description</name>
+            <fieldText>Description</fieldText>
+            <fieldType>LargeTextArea</fieldType>
+            <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
+            <isRequired>false</isRequired>
+            <styleProperties>
+                <verticalAlignment>
+                    <stringValue>top</stringValue>
+                </verticalAlignment>
+                <width>
+                    <stringValue>12</stringValue>
+                </width>
+            </styleProperties>
+        </fields>
+        <showFooter>true</showFooter>
+        <showHeader>false</showHeader>
+    </screens>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Get_Contract_Bid</targetReference>
+        </connector>
+    </start>
+    <status>Active</status>
+    <textTemplates>
+        <name>FormattedReason</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>{!Losst_Reason} :
+{!Description}</text>
+    </textTemplates>
+    <variables>
+        <name>contractBidId</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>true</isOutput>
+    </variables>
+</Flow>
