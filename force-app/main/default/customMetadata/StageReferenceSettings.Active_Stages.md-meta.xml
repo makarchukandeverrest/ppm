@@ -4,6 +4,6 @@
     <protected>false</protected>
     <values>
         <field>Stage_Names__c</field>
-        <value xsi:type="xsd:string">Information Verified,Contract Bid Package Sent,Client Showed Interest,Need Contact Verification,Contact Verified,Contract Sent via DocuSign,Contract Under Review,First Follow Up,Second Follow Up,Third Follow Up,Negotiation Started</value>
+        <value xsi:type="xsd:string">Information Verified,Contract Bid Package Sent,Client Showed Interest,Need Contact Verification,Contact Verified and Updated,Contract Sent via DocuSign,Contract Under Review,First Follow Up,Second Follow Up,Third Follow Up,Negotiation Started</value>
     </values>
 </CustomMetadata>
