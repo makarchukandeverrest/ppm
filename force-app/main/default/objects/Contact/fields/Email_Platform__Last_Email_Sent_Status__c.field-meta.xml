@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Email_Platform__Last_Email_Sent_Status__c</fullName>
+    <deprecated>false</deprecated>
+    <label>Last Email Sent Status</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Delivered</fullName>
+                <default>false</default>
+                <label>Delivered</label>
+            </value>
+            <value>
+                <fullName>Hard Bounced</fullName>
+                <default>false</default>
+                <label>Hard Bounced</label>
+            </value>
+            <value>
+                <fullName>Soft Bounced</fullName>
+                <default>false</default>
+                <label>Soft Bounced</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
