@@ -29,7 +29,7 @@ private class MapCustomersControllerTest {
                 BillingCountry = 'USA',
                 BillingLatitude = 34.0522,
                 BillingLongitude = -118.2437,
-                Email__c = 'customer' + i + '@example.com',
+                // Email__c = 'customer' + i + '@example.com',
                 County__c = 'Montgomery County',
                 Contract_Periods__c  = '2021-2022'
             );
