@@ -1,10 +1,6 @@
 @IsTest(seeAllData=false)
 private class ProposalRegionalManagerAssignerTest {
 
-    /**
-     * Создаёт пользователя с alias, равным переданному значению.
-     * Так метод становится предсказуемым и повторно используемым. [web:2][web:11]
-     */
     private static User createUserWithAlias(String aliasValue) {
         // Берём любой профиль с типом Standard
         Profile p = [
