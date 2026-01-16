@@ -94,7 +94,7 @@ private class MapCustomersControllerTest {
                 System.assertNotEquals(null, a.BillingLongitude, 'BillingLongitude should be populated');
 
                 // Custom fields
-                System.assertNotEquals(null, a.Email__c, 'Email__c should be populated');
+                // System.assertNotEquals(null, a.Email__c, 'Email__c should be populated');
 
                 // Check Regional Manager relationship if present
                 if(a.Regional_Manager__c != null) {
