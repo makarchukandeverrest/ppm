@@ -28,6 +28,7 @@
     </actionOverrides>
     <brand>
         <headerColor>#0070D2</headerColor>
+        <logo>dc01ea_ad72feb2cb764ac094a984fb54f3</logo>
         <logoVersion>1</logoVersion>
         <shouldOverrideOrgTheme>false</shouldOverrideOrgTheme>
     </brand>
@@ -40,6 +41,7 @@
     <label>Premier Pool Sales App</label>
     <navType>Standard</navType>
     <tabs>standard-home</tabs>
+    <tabs>Global_Inbox</tabs>
     <tabs>standard-Account</tabs>
     <tabs>Contract_Bid__c</tabs>
     <tabs>standard-Opportunity</tabs>
@@ -49,6 +51,7 @@
     <tabs>Docusign_Usage</tabs>
     <tabs>standard-Dashboard</tabs>
     <tabs>standard-report</tabs>
+    <tabs>Customers_Map</tabs>
     <uiType>Lightning</uiType>
     <utilityBar>Premier_Pool_Sales_App_UtilityBar</utilityBar>
 </CustomApplication>
