@@ -80,7 +80,7 @@
         <getFirstRecordOnly>false</getFirstRecordOnly>
         <object>Account</object>
         <queriedFields>Id</queriedFields>
-        <queriedFields>Email2__c</queriedFields>
+        <queriedFields>Email__c</queriedFields>
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordLookups>
     <screens>
