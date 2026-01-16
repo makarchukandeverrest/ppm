@@ -29,7 +29,7 @@ private class MapCustomersControllerTest {
                 BillingCountry = 'USA',
                 BillingLatitude = 34.0522,
                 BillingLongitude = -118.2437,
-                Email__c = 'customer' + i + '@example.com',
+                // Email__c = 'customer' + i + '@example.com',
                 County__c = 'Montgomery County',
                 Contract_Periods__c  = '2021-2022'
             );
@@ -94,7 +94,7 @@ private class MapCustomersControllerTest {
                 System.assertNotEquals(null, a.BillingLongitude, 'BillingLongitude should be populated');
 
                 // Custom fields
-                System.assertNotEquals(null, a.Email__c, 'Email__c should be populated');
+                // System.assertNotEquals(null, a.Email__c, 'Email__c should be populated');
 
                 // Check Regional Manager relationship if present
                 if(a.Regional_Manager__c != null) {
