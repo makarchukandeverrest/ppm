@@ -8,67 +8,9 @@ public with sharing class DocuSignNotificationService {
         List<Messaging.SingleEmailMessage> emailsToSend = new List<Messaging.SingleEmailMessage>();
         List<Task> tasksToInsert = new List<Task>();
 
-        // -------------------------------------------------
-        // 1️⃣ Resolve REAL ContentVersions by EnvelopeId
-        // -------------------------------------------------
-        Set<String> envelopeIds = new Set<String>();
-        for (ContentVersion cv : newVersions) {
-            if (String.isNotBlank(cv.DocuSign_Envelope_Id__c)) {
-                envelopeIds.add(cv.DocuSign_Envelope_Id__c);
-            }
-        }
-
-        if (envelopeIds.isEmpty()) {
-            System.debug('EXIT: No EnvelopeIds');
-            return;
-        }
-
-        List<ContentVersion> realVersions = [
-            SELECT Id, ContentDocumentId, Title, DocuSign_Envelope_Status__c, DocuSign_Envelope_Id__c,
-                   VersionNumber, CreatedDate, FirstPublishLocationId
-            FROM ContentVersion
-            WHERE DocuSign_Envelope_Id__c IN :envelopeIds
-            ORDER BY CreatedDate DESC
-        ];
-        
-        System.debug('🔍 Found ' + realVersions.size() + ' ContentVersions with EnvelopeIds: ' + envelopeIds);
-        
-        // Log all versions found
-        for(ContentVersion cv : realVersions) {
-            System.debug('   ContentVersion ID: ' + cv.Id);
-            System.debug('      Title: ' + cv.Title);
-            System.debug('      ContentDocumentId: ' + cv.ContentDocumentId);
-            System.debug('      VersionNumber: ' + cv.VersionNumber);
-            System.debug('      CreatedDate: ' + cv.CreatedDate);
-            System.debug('      FirstPublishLocationId: ' + cv.FirstPublishLocationId);
-            System.debug('      DocuSign_Envelope_Status__c: ' + cv.DocuSign_Envelope_Status__c);
-        }
-        
-        // Check if multiple versions exist (DocuSign may have created new one)
-        if(realVersions.size() > 1) {
-            System.debug('⚠️ MULTIPLE ContentVersions found for same EnvelopeId!');
-            System.debug('   Latest version: ' + realVersions[0].Id + ' (Created: ' + realVersions[0].CreatedDate + ')');
-            System.debug('   Older versions: ' + (realVersions.size() - 1));
-        }
-
-        // -------------------------------------------------
-        // 1.5 Collect ContentDocumentIds from REAL versions
-        // -------------------------------------------------
         Set<Id> contentDocIds = new Set<Id>();
-        for (ContentVersion cv : realVersions) {
-            if (cv.ContentDocumentId != null) {
-                contentDocIds.add(cv.ContentDocumentId);
-            }
-        }
-
-        if (contentDocIds.isEmpty()) {
-            System.debug('EXIT: No ContentDocumentIds');
-            return;
-        }
-
-        if (realVersions.isEmpty()) {
-            System.debug('EXIT: No real ContentVersions found');
-            return;
+        for(ContentVersion c : newVersions){
+            contentDocIds.add(c.ContentDocumentId);
         }
 
         // Find Accounts via ContentDocumentLink
@@ -90,59 +32,7 @@ public with sharing class DocuSignNotificationService {
 
         if(accountIds.isEmpty()) return;
 
-            List<EmailMessage> emails = [
-                SELECT Id, RelatedToId
-                FROM EmailMessage
-                WHERE Id IN :contentDocToEmail.values()
-            ];
-
-            Set<Id> contractIds = new Set<Id>();
-            for (EmailMessage em : emails) {
-                if (em.RelatedToId != null &&
-                    String.valueOf(em.RelatedToId).startsWith('a0b')) {
-                    contractIds.add(em.RelatedToId);
-                }
-            }
-
-            System.debug('Resolved Contract_Bid__c IDs from EmailMessage: ' + contractIds);
-
-            if (!contractIds.isEmpty()) {
-                List<Contract_Bid__c> bidsFromEmail = [
-                    SELECT Id, Customer__c
-                    FROM Contract_Bid__c
-                    WHERE Id IN :contractIds
-                ];
-
-                for (Contract_Bid__c b : bidsFromEmail) {
-                    if (b.Customer__c != null) {
-                        accountIds.add(b.Customer__c);
-                    }
-                }
-            }
-        }
-
-        System.debug('Final AccountIds to process: ' + accountIds);
-
-        if (accountIds.isEmpty()) {
-            System.debug('⚠️ Fallback: trying to resolve Account via Contract_Bid__c');
-
-            List<Contract_Bid__c> recentBids = [
-                SELECT Id, Customer__c
-                FROM Contract_Bid__c
-                WHERE CreatedById = :UserInfo.getUserId()
-                ORDER BY CreatedDate DESC
-                LIMIT 1
-            ];
-
-            if (!recentBids.isEmpty()) {
-                accountIds.add(recentBids[0].Customer__c);
-                System.debug('✅ Fallback Account resolved: ' + recentBids[0].Customer__c);
-            }
-        }
-
-        // -------------------------
-        // 4. Load Active Stages
-        // -------------------------
+        // Load Active Stages from Custom Metadata
         Set<String> activeStages = new Set<String>();
 
         StageReferenceSettings__mdt settings = [
