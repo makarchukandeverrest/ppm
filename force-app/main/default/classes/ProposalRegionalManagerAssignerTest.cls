@@ -2,7 +2,6 @@
 private class ProposalRegionalManagerAssignerTest {
 
     private static User createUserWithAlias(String aliasValue) {
-        // Берём любой профиль с типом Standard
         Profile p = [
             SELECT Id
             FROM Profile
