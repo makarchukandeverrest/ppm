@@ -10,57 +10,20 @@ jobs:
   validate:
     name: Validate Salesforce Metadata
     runs-on: ubuntu-latest
-    
+    container: 
+      image: salesforce/cli:latest-slim
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
         with:
-          node-version: '20'
-
-      - name: Install Salesforce CLI
-        run: |
-          npm install -g @salesforce/cli
-          sf --version
-
+          fetch-depth: 0
       - name: Authenticate to Dev Sandbox (for validation)
         continue-on-error: true
         run: |
-          if [ -n "${{ secrets.SF_DEV_SFDX_URL }}" ]; then
-            echo "${{ secrets.SF_DEV_SFDX_URL }}" > /tmp/sfdx-url.txt
-            sf org login sfdx-url \
-              --sfdx-url-file /tmp/sfdx-url.txt \
-              --alias dev \
-              --set-default-username \
-              --no-prompt
-            sf config set target-org=dev
-            sf org display --target-org dev
-          else
-            echo "No SF_DEV_SFDX_URL secret found, skipping authentication"
-          fi
-        env:
-          SF_DEV_SFDX_URL: ${{ secrets.SF_DEV_SFDX_URL }}
-
-      - name: Validate Metadata Syntax
-        continue-on-error: true
+          echo ${{ secrets.SF_DEV_SFDX_URL }} | sf org login sfdx-url -s -u
+      - name: Validate with tests
         run: |
-          if sf org display --target-org dev > /dev/null 2>&1; then
-            echo "Validating metadata with authenticated org..."
-            sf project deploy start \
-              --source-dir force-app \
-              --target-org dev \
-              --dry-run \
-              --ignore-warnings || exit 1
-          else
-            echo "No authenticated org available, skipping metadata validation"
-            echo "Note: Full validation requires authenticated org. Consider adding SF_DEV_SFDX_URL secret."
-          fi
-
-      - name: Check Apex Syntax (Basic)
+          sf project deploy validate -d force-app -l RunLocalTests -w 30
+      - name: Logout from Dev Sandbox
         run: |
-          # Basic syntax check without org - just verify files exist and are readable
-          echo "Checking Apex files structure..."
-          find force-app/main/default/classes -name "*.cls" -type f | head -5 || echo "No Apex classes found"
-          echo "Note: Full Apex validation requires authenticated org"
+          sfdx auth:logout --all --noprompt
