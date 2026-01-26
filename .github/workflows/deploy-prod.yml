@@ -21,8 +21,15 @@ jobs:
         with:
           ref: master
 
-      - name: Setup Salesforce CLI
-        uses: salesforce-actions/setup-sfdx@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Salesforce CLI
+        run: |
+          npm install -g @salesforce/cli
+          sf --version
 
       - name: Authenticate to Production
         run: |
