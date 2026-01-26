@@ -37,9 +37,14 @@ jobs:
           sf org login sfdx-url \
             --sfdx-url-file /tmp/sfdx-url.txt \
             --alias prod \
-            --set-default-username
+            --set-default-org \
+            --no-prompt
         env:
           SF_PROD_SFDX_URL: ${{ secrets.SF_PROD_SFDX_URL }}
+
+      - name: Verify Authentication
+        run: |
+          sf org display --target-org prod || exit 1
 
       - name: Validate Deployment (Dry Run)
         run: |
