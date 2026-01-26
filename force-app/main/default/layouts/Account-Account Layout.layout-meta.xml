@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <Layout xmlns="http://soap.sforce.com/2006/04/metadata">
     <customButtons>SendWithDocuSign</customButtons>
     <excludeButtons>DataDotComCompanyHierarchy</excludeButtons>
@@ -73,6 +73,18 @@
             <layoutItems>
                 <behavior>Edit</behavior>
                 <field>County__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Current_Customer__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Contract_Start_Date__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Contract_End_Date__c</field>
             </layoutItems>
         </layoutColumns>
         <layoutColumns>
