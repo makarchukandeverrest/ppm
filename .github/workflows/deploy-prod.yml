@@ -1,0 +1,67 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "deploy" to confirm production deployment'
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    
+    if: github.event.inputs.confirm == 'deploy'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Setup Salesforce CLI
+        uses: salesforce-actions/setup-sfdx@v2
+
+      - name: Authenticate to Production
+        run: |
+          echo "${{ secrets.SF_PROD_SFDX_URL }}" > /tmp/sfdx-url.txt
+          sf org login sfdx-url \
+            --sfdx-url-file /tmp/sfdx-url.txt \
+            --alias prod \
+            --set-default-username
+        env:
+          SF_PROD_SFDX_URL: ${{ secrets.SF_PROD_SFDX_URL }}
+
+      - name: Validate Deployment (Dry Run)
+        run: |
+          sf project deploy start \
+            --source-dir force-app \
+            --target-org prod \
+            --dry-run \
+            --wait 10
+
+      - name: Deploy to Production
+        run: |
+          sf project deploy start \
+            --source-dir force-app \
+            --target-org prod \
+            --wait 10
+
+      - name: Run Apex Tests
+        run: |
+          sf apex run test \
+            --target-org prod \
+            --code-coverage \
+            --result-format human \
+            --wait 10
+
+      - name: Deployment Summary
+        if: always()
+        run: |
+          echo "## 🚀 Production Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Deployed from branch: **${{ github.ref }}**" >> $GITHUB_STEP_SUMMARY
+          echo "Commit: **${{ github.sha }}**" >> $GITHUB_STEP_SUMMARY
+          echo "Triggered by: **${{ github.actor }}**" >> $GITHUB_STEP_SUMMARY

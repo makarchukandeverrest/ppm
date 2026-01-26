@@ -1,0 +1,33 @@
+name: Validate Changes
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - master
+
+jobs:
+  validate:
+    name: Validate Salesforce Metadata
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Salesforce CLI
+        uses: salesforce-actions/setup-sfdx@v2
+
+      - name: Validate Metadata Syntax
+        run: |
+          sf project deploy start \
+            --source-dir force-app \
+            --dry-run \
+            --ignore-warnings || exit 1
+
+      - name: Check Apex Syntax
+        run: |
+          sf project deploy start \
+            --source-dir force-app/main/default/classes \
+            --dry-run \
+            --ignore-warnings || exit 1
