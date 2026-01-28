@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
-    <apiVersion>66.0</apiVersion>
+    <apiVersion>65.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
     <decisions>
         <name>Decision_1</name>
@@ -12,7 +12,8 @@
             <name>Owner_Is_not_manager</name>
             <conditionLogic>and</conditionLogic>
             <conditions>
-                <leftValueReference>$Record.Regional_Manager__c</leftValueReference>
+                <leftValueReference
+        >$Record.Regional_Manager__c</leftValueReference>
                 <operator>NotEqualTo</operator>
                 <rightValue>
                     <elementReference>$Record.OwnerId</elementReference>
@@ -26,7 +27,8 @@
     </decisions>
     <description>Assign owner from Regional Manager field</description>
     <environments>Default</environments>
-    <interviewLabel>Set Owner from Regional Manager {!$Flow.CurrentDateTime}</interviewLabel>
+    <interviewLabel
+  >Set Owner from Regional Manager {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Set Owner from Regional Manager</label>
     <processMetadataValues>
         <name>BuilderType</name>
