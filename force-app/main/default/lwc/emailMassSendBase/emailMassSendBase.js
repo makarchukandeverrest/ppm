@@ -6,6 +6,7 @@ import { CloseActionScreenEvent } from "lightning/actions";
 import getInitData from "@salesforce/apex/ContractMassSendController.getInitData";
 import sendContracts from "@salesforce/apex/ContractMassSendController.sendContracts";
 import getTemplateDetails from "@salesforce/apex/ContractMassSendController.getTemplateDetails";
+import previewEmail from "@salesforce/apex/ContractMassSendController.previewEmail";
 
 export default class EmailMassSendBase extends NavigationMixin(
   LightningElement
@@ -43,6 +44,13 @@ export default class EmailMassSendBase extends NavigationMixin(
 
   // Prevent duplicate loading
   hasLoaded = false;
+
+  hoveredPreviewSubject;
+  hoveredPreviewBody;
+  hoveredCustomerId;
+  isHoveredPreviewLoading = false;
+  mergeFieldError = false;
+  mergeFieldErrorMessage;
 
   // customerId -> Set(contentVersionId) (used in contracts mode)
   selectedContractVersionIdsByCustomer = new Map();
@@ -193,6 +201,7 @@ export default class EmailMassSendBase extends NavigationMixin(
         ...c,
         expanded: true,
         isExpandedLabel: c.expanded ? "Expand" : "Collapse",
+        isHovered: false,
         // In contracts mode we also expect contracts array with selection flags
         contracts: (c.contracts || []).map((cv) => ({
           ...cv,
@@ -407,6 +416,52 @@ export default class EmailMassSendBase extends NavigationMixin(
         }
       });
     }
+  }
+
+  async handlePreviewHover(event) {
+    const customerId = event.currentTarget.dataset.customerId;
+    this.hoveredCustomerId = customerId;
+    this.isHoveredPreviewLoading = true;
+
+    this.customers = this.customers.map((c) => ({
+      ...c,
+      isHovered: c.customerId === customerId
+    }));
+
+    try {
+      const res = await previewEmail({
+        emailTemplateId: this.selectedTemplateId,
+        customerId: customerId,
+        contactId: null,
+        subject: this.subject,
+        body: this.body
+      });
+
+      this.hoveredPreviewSubject = res.subject;
+      this.hoveredPreviewBody = res.body;
+      this.mergeFieldError = !!res.mergeFieldError;
+      this.mergeFieldErrorMessage = this.mergeFieldError
+        ? "Some merge fields could not be resolved. The preview may be missing data."
+        : null;
+
+      // тут можно показать popover
+    } finally {
+      this.isHoveredPreviewLoading = false;
+    }
+  }
+
+  handlePreviewLeave() {
+    this.hoveredCustomerId = null;
+    this.hoveredPreviewSubject = null;
+    this.hoveredPreviewBody = null;
+
+    this.mergeFieldError = false;
+    this.mergeFieldErrorMessage = null;
+
+    this.customers = this.customers.map((c) => ({
+      ...c,
+      isHovered: false
+    }));
   }
 
   get isSimpleMode() {

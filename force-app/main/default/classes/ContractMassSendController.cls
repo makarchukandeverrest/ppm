@@ -536,4 +536,181 @@ public with sharing class ContractMassSendController {
     resp.logs = logs;
     return resp;
   }
+
+  /* =========================================================
+       PREVIEW (MERGED SUBJECT/BODY)
+       ========================================================= */
+  @AuraEnabled(cacheable=true)
+  public static Map<String, Object> previewEmail(
+    Id emailTemplateId,
+    Id customerId,
+    Id contactId,
+    String subject,
+    String body
+  ) {
+    System.debug(
+      LOG +
+        'previewEmail START: ' +
+        ' emailTemplateId=' +
+        emailTemplateId +
+        ' customerId=' +
+        customerId +
+        ' contactId=' +
+        contactId +
+        ' subject=' +
+        subject
+    );
+
+    if (emailTemplateId == null) {
+      throw new AuraHandledException('Email template is required for preview.');
+    }
+
+    // Resolve Account
+    Account acc;
+    if (customerId != null) {
+      acc = [
+        SELECT
+          Id,
+          Primary_Contact__c,
+          Primary_Contact__r.Email,
+          Primary_Contact__r.FirstName,
+          Primary_Contact__r.LastName
+        FROM Account
+        WHERE Id = :customerId
+        LIMIT 1
+      ];
+    }
+    if (acc == null) {
+      throw new AuraHandledException('Unable to resolve Account for preview.');
+    }
+
+    // Resolve Contact
+    Contact who;
+    if (contactId != null) {
+      who = [
+        SELECT Id, Email, FirstName, LastName
+        FROM Contact
+        WHERE Id = :contactId
+        LIMIT 1
+      ];
+    } else if (acc.Primary_Contact__c != null) {
+      who = acc.Primary_Contact__r;
+    }
+    if (who == null) {
+      throw new AuraHandledException('Unable to resolve Contact for preview.');
+    }
+
+    Id whoId = who.Id;
+    Id whatId = acc.Id;
+
+    String finalSubject;
+    String finalBody;
+    Boolean mergeFieldError = false;
+
+    // Если нет кастомного body – сначала пробуем обычный рендер шаблона
+    if (String.isBlank(body)) {
+      try {
+        Messaging.SingleEmailMessage renderedTemplate = Messaging.renderStoredEmailTemplate(
+          emailTemplateId,
+          whoId,
+          whatId
+        );
+
+        finalSubject = renderedTemplate != null
+          ? renderedTemplate.getSubject()
+          : null;
+        finalBody = renderedTemplate != null
+          ? renderedTemplate.getHtmlBody()
+          : null;
+
+        return new Map<String, Object>{
+          'subject' => finalSubject,
+          'body' => finalBody,
+          'mergeFieldError' => false
+        };
+      } catch (Exception ex) {
+        System.debug(
+          LOG +
+            'previewEmail renderStoredEmailTemplate error: ' +
+            ex.getMessage()
+        );
+        mergeFieldError = true;
+      }
+    }
+
+    // Здесь работаем с пользовательским subject/body (или fallback)
+    String rawBody = body;
+    String rawSubject = subject;
+
+    // Если body пустой, забираем HtmlValue/Body из шаблона без рендера (как в getTemplateDetails)
+    if (String.isBlank(rawBody)) {
+      EmailTemplate t = [
+        SELECT Subject, HtmlValue, Body
+        FROM EmailTemplate
+        WHERE Id = :emailTemplateId
+        LIMIT 1
+      ];
+      rawSubject = String.isNotBlank(subject) ? subject : t.Subject;
+      rawBody = String.isNotBlank(t.HtmlValue) ? t.HtmlValue : t.Body;
+    }
+
+    try {
+      // Пытаемся мерджить как раньше
+      List<String> bodiesToRender = new List<String>{ rawBody };
+      if (!String.isBlank(rawSubject)) {
+        bodiesToRender.add(rawSubject);
+      }
+
+      List<Messaging.RenderEmailTemplateBodyResult> results = Messaging.renderEmailTemplate(
+        whoId,
+        whatId,
+        bodiesToRender
+      );
+
+      // Body
+      if (!results.isEmpty() && results[0].getSuccess()) {
+        finalBody = results[0].getMergedBody();
+      } else {
+        finalBody = rawBody;
+      }
+
+      // Subject
+      if (!String.isBlank(rawSubject)) {
+        if (results.size() > 1 && results[1].getSuccess()) {
+          finalSubject = results[1].getMergedBody();
+        } else {
+          finalSubject = rawSubject;
+        }
+      }
+    } catch (Exception ex) {
+      System.debug(
+        LOG + 'previewEmail renderEmailTemplate error: ' + ex.getMessage()
+      );
+      mergeFieldError = true;
+
+      // Базовый текст = сырой текст без рендера
+      finalBody = rawBody;
+      finalSubject = rawSubject;
+
+      // Пример: чистим только Case.*, остальное оставляем как placeholder
+      if (finalBody != null) {
+        finalBody = finalBody.replaceAll(
+          '\\{\\{\\{?Case\\.([^}]+)\\}\\}?',
+          '[Case.$1]'
+        );
+      }
+      if (finalSubject != null) {
+        finalSubject = finalSubject.replaceAll(
+          '\\{\\{\\{?Case\\.([^}]+)\\}\\}?',
+          '[Case.$1]'
+        );
+      }
+    }
+
+    return new Map<String, Object>{
+      'subject' => finalSubject,
+      'body' => finalBody,
+      'mergeFieldError' => mergeFieldError
+    };
+  }
 }
