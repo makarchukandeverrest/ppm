@@ -1,8 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Current_Vendor__c</fullName>
     <label>Current Vendor</label>
     <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
     <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>
     <type>Picklist</type>
@@ -109,6 +110,16 @@
                 <fullName>Coastline Aquatics, LLC.</fullName>
                 <default>false</default>
                 <label>Coastline Aquatics, LLC.</label>
+            </value>
+            <value>
+                <fullName>DRD Pools</fullName>
+                <default>false</default>
+                <label>DRD Pools</label>
+            </value>
+            <value>
+                <fullName>Crystal Aquatics</fullName>
+                <default>false</default>
+                <label>Crystal Aquatics</label>
             </value>
         </valueSetDefinition>
     </valueSet>
