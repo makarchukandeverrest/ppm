@@ -12,6 +12,8 @@ jobs:
   deploy:
     name: Deploy to Production
     runs-on: ubuntu-latest
+    container: 
+      image: salesforce/cli:latest-slim
     
     if: github.event.inputs.confirm == 'deploy'
     
@@ -21,27 +23,9 @@ jobs:
         with:
           ref: master
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install Salesforce CLI
-        run: |
-          npm install -g @salesforce/cli
-          sf --version
-
       - name: Authenticate to Production
         run: |
-          echo "${{ secrets.SF_PROD_SFDX_URL }}" > /tmp/sfdx-url.txt
-          sf org login sfdx-url \
-            --sfdx-url-file /tmp/sfdx-url.txt \
-            --alias prod \
-            --set-default-username \
-            --no-prompt
-          sf config set target-org=prod
-        env:
-          SF_PROD_SFDX_URL: ${{ secrets.SF_PROD_SFDX_URL }}
+          echo ${{ secrets.SF_PROD_SFDX_URL }} | sf org login sfdx-url -s -u
 
       - name: Verify Authentication
         run: |
