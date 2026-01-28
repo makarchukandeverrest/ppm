@@ -33,26 +33,15 @@ jobs:
 
       - name: Validate Deployment (Dry Run)
         run: |
-          sf project deploy start \
-            --source-dir force-app \
-            --target-org prod \
-            --dry-run \
-            --wait 10
+          sf project deploy start --source-dir force-app --dry-run --wait 10
 
       - name: Deploy to Production
         run: |
-          sf project deploy start \
-            --source-dir force-app \
-            --target-org prod \
-            --wait 10
+          sf project deploy start --source-dir force-app --wait 10
 
       - name: Run Apex Tests
         run: |
-          sf apex run test \
-            --target-org prod \
-            --code-coverage \
-            --result-format human \
-            --wait 10
+          sf apex run test --code-coverage --result-format human --wait 10
 
       - name: Deployment Summary
         if: always()
