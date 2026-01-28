@@ -275,6 +275,9 @@
         <quickActionListItems>
             <quickActionName>FeedItem.PollPost</quickActionName>
         </quickActionListItems>
+        <quickActionListItems>
+            <quickActionName>FeedItem.ContentNote</quickActionName>
+        </quickActionListItems>
     </quickActionList>
     <relatedLists>
         <fields>OPPORTUNITY.NAME</fields>
