@@ -424,14 +424,24 @@ public with sharing class ContractMassSendController {
       }
       mail.setSaveAsActivity(true);
 
-      // Добавьте эти 4 строки:
+      // Отправка от email текущего пользователя через Org-Wide Address
       User currentUser = [
         SELECT Email
         FROM User
         WHERE Id = :UserInfo.getUserId()
         LIMIT 1
       ];
-      mail.setFrom(currentUser.Email);
+      List<OrgWideEmailAddress> oweaList = [
+        SELECT Id
+        FROM OrgWideEmailAddress
+        WHERE Address = :currentUser.Email AND IsVerified = TRUE
+        LIMIT 1
+      ];
+      if (!oweaList.isEmpty()) {
+        mail.setOrgWideEmailAddressId(oweaList[0].Id);
+        mail.setSenderDisplayName(currentUser.Email + ' (Salesforce)');
+      }
+      mail.setReplyTo(currentUser.Email); // Ответы всегда пользователю
       mail.setReplyTo(currentUser.Email);
       mail.setSenderDisplayName(currentUser.Email);
 
