@@ -419,6 +419,22 @@ public with sharing class ContractMassSendController {
       Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
       mail.setTargetObjectId(acc.Primary_Contact__c);
       mail.setWhatId(acc.Id);
+      if (r.contentVersionIds != null && !r.contentVersionIds.isEmpty()) {
+        mail.setEntityAttachments(r.contentVersionIds);
+      }
+      mail.setSaveAsActivity(true);
+
+      // Добавьте эти 4 строки:
+      User currentUser = [
+        SELECT Email
+        FROM User
+        WHERE Id = :UserInfo.getUserId()
+        LIMIT 1
+      ];
+      mail.setFrom(currentUser.Email);
+      mail.setReplyTo(currentUser.Email);
+      mail.setSenderDisplayName(currentUser.Email);
+
       // Attach contracts only in "with contracts" mode
       if (r.contentVersionIds != null && !r.contentVersionIds.isEmpty()) {
         mail.setEntityAttachments(r.contentVersionIds);
