@@ -86,6 +86,10 @@
                 <behavior>Edit</behavior>
                 <field>Contract_End_Date__c</field>
             </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Stage__c</field>
+            </layoutItems>
         </layoutColumns>
         <layoutColumns>
             <layoutItems>
