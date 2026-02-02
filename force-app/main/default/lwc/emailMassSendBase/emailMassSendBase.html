@@ -1,0 +1,286 @@
+<template>
+  <lightning-card title="Send Emails" icon-name="standard:email">
+    <template if:true={isLoading}>
+      <div class="slds-p-around_medium">
+        <lightning-spinner
+          alternative-text="Loading"
+          size="small"
+        ></lightning-spinner>
+      </div>
+    </template>
+
+    <template if:false={isLoading}>
+      <!-- Permission / access banner -->
+      <template if:true={accessError}>
+        <div class="slds-p-around_medium">
+          <div
+            class="slds-notify slds-notify_alert slds-alert_error"
+            role="alert"
+          >
+            <span class="slds-assistive-text">Error</span>
+            <h2>{accessError}</h2>
+          </div>
+        </div>
+      </template>
+
+      <template if:false={accessError}>
+        <!-- Email template -->
+        <div class="slds-p-around_medium slds-border_bottom">
+          <lightning-combobox
+            name="template"
+            label="Email Template"
+            placeholder="Select an email template"
+            value={selectedTemplateId}
+            options={templateOptions}
+            onchange={handleTemplateChange}
+          >
+          </lightning-combobox>
+
+          <template if:true={selectedTemplateId}>
+            <div class="slds-m-top_medium">
+              <lightning-input
+                label="Subject"
+                value={subject}
+                onchange={handleSubjectChange}
+                class="slds-m-bottom_small"
+              >
+              </lightning-input>
+
+              <label class="slds-form-element__label">Body</label>
+              <lightning-input-rich-text
+                value={body}
+                onchange={handleBodyChange}
+              >
+              </lightning-input-rich-text>
+            </div>
+          </template>
+        </div>
+
+        <!-- Customers list (shared for both modes) -->
+        <div class="slds-p-around_medium">
+          <template if:true={customers.length}>
+            <div class="slds-text-title_bold slds-m-bottom_small">
+              Selected Customers ({customers.length})
+            </div>
+
+            <template for:each={customers} for:item="cust">
+              <section
+                key={cust.customerId}
+                class="slds-box slds-m-bottom_small"
+              >
+                <div
+                  class="slds-grid slds-wrap slds-grid_align-spread slds-m-bottom_x-small"
+                >
+                  <div
+                    class="slds-col slds-size_1-of-1 slds-large-size_8-of-12"
+                  >
+                    <div class="slds-text-heading_small">
+                      {cust.customerName}
+
+                      <!-- Иконка превью -->
+                      <lightning-button-icon
+                        icon-name="utility:document_preview"
+                        alternative-text="Preview email"
+                        variant="bare"
+                        class="slds-m-left_x-small"
+                        data-customer-id={cust.customerId}
+                        onmouseenter={handlePreviewHover}
+                        onmouseleave={handlePreviewLeave}
+                      >
+                      </lightning-button-icon>
+                    </div>
+                    <div class="slds-text-body_small slds-text-color_weak">
+                      Email: {cust.customerEmail}
+                    </div>
+
+                    <!-- Блок превью по hover -->
+                    <template if:true={cust.isHovered}>
+                      <div
+                        class="slds-box slds-m-top_small slds-theme_default slds-text-body_small"
+                        style="position: relative; z-index: 10"
+                      >
+                        <div
+                          class="slds-grid slds-grid_vertical-align-center slds-m-bottom_x-small"
+                        >
+                          <div class="slds-text-title_bold">Preview</div>
+                          <template if:true={mergeFieldError}>
+                            <div
+                              class="slds-notify slds-notify_alert slds-theme_warning slds-m-left_small"
+                              role="alert"
+                            >
+                              <span class="slds-assistive-text">Warning</span>
+                              <span
+                                class="slds-icon_container slds-icon-utility-warning slds-m-right_xx-small"
+                              >
+                                <lightning-icon
+                                  icon-name="utility:warning"
+                                  size="x-small"
+                                  alternative-text="Warning"
+                                ></lightning-icon>
+                              </span>
+                              <h2 class="slds-truncate">
+                                {mergeFieldErrorMessage}
+                              </h2>
+                            </div>
+                          </template>
+                        </div>
+                        <template if:true={isHoveredPreviewLoading}>
+                          <lightning-spinner
+                            alternative-text="Loading preview"
+                            size="x-small"
+                          ></lightning-spinner>
+                        </template>
+                        <template if:false={isHoveredPreviewLoading}>
+                          <div class="slds-m-bottom_x-small">
+                            <span class="slds-text-title_bold">Subject: </span>
+                            <span>{hoveredPreviewSubject}</span>
+                          </div>
+                          <lightning-formatted-rich-text
+                            value={hoveredPreviewBody}
+                          ></lightning-formatted-rich-text>
+                        </template>
+                      </div>
+                    </template>
+                  </div>
+
+                  <div
+                    class="slds-col slds-size_1-of-1 slds-large-size_4-of-12 slds-text-align_right"
+                  >
+                    <lightning-button
+                      variant="base"
+                      label={cust.isExpandedLabel}
+                      data-id={cust.customerId}
+                      onclick={toggleCustomer}
+                    >
+                    </lightning-button>
+                  </div>
+                </div>
+
+                <!-- Expanded content differs by mode -->
+                <template if:true={cust.expanded}>
+                  <!-- Simple mode: text only -->
+                  <template if:true={isSimpleMode}>
+                    <div class="slds-text-body_small slds-text-color_weak">
+                      Emails will be sent to this customer using the selected
+                      template.
+                    </div>
+                  </template>
+
+                  <!-- Contracts mode: contracts list -->
+                  <template if:true={isContractsMode}>
+                    <template if:true={cust.contracts.length}>
+                      <ul class="slds-list_dotted slds-m-top_small">
+                        <template for:each={cust.contracts} for:item="contract">
+                          <li
+                            key={contract.contentVersionId}
+                            class="slds-m-bottom_x-small"
+                          >
+                            <div
+                              class="slds-grid slds-grid_vertical-align-center"
+                            >
+                              <lightning-input
+                                type="checkbox"
+                                label={contract.title}
+                                data-contract-id={contract.contentVersionId}
+                                data-customer-id={cust.customerId}
+                                checked={contract.isSelected}
+                                onchange={handleContractCheckbox}
+                                class="slds-m-right_small"
+                              >
+                              </lightning-input>
+                              <span
+                                class="slds-text-body_small slds-text-color_weak slds-m-right_small"
+                              >
+                                (v{contract.versionNumber},
+                                {contract.fileExtension})
+                              </span>
+                              <button
+                                type="button"
+                                class="slds-button slds-button_neutral slds-button_small"
+                                data-file-id={contract.contentDocumentId}
+                                data-version-id={contract.contentVersionId}
+                                onclick={handlePreviewFile}
+                              >
+                                <lightning-icon
+                                  icon-name="utility:preview"
+                                  size="x-small"
+                                  class="slds-m-right_xx-small"
+                                ></lightning-icon>
+                                Preview
+                              </button>
+                            </div>
+                          </li>
+                        </template>
+                      </ul>
+
+                      <div
+                        class="slds-m-top_x-small slds-text-body_small slds-text-color_weak"
+                      >
+                        Only latest versions are shown (ContentVersion.IsLatest
+                        = true).
+                      </div>
+                    </template>
+
+                    <template if:false={cust.contracts.length}>
+                      <div class="slds-text-body_small slds-text-color_weak">
+                        No latest contract versions found for this customer.
+                      </div>
+                    </template>
+                  </template>
+                </template>
+              </section>
+            </template>
+          </template>
+
+          <template if:false={customers.length}>
+            <div class="slds-text-body_small slds-text-color_weak">
+              <template if:true={isSimpleMode}> No customers found. </template>
+              <template if:true={isContractsMode}>
+                No customers/contracts found.
+              </template>
+            </div>
+          </template>
+        </div>
+
+        <!-- Actions -->
+        <div
+          class="slds-p-around_medium slds-border_top slds-grid slds-grid_align-end slds-gutters_small"
+        >
+          <div class="slds-col">
+            <lightning-button
+              variant="neutral"
+              label="Refresh"
+              onclick={loadData}
+            >
+            </lightning-button>
+          </div>
+          <div class="slds-col">
+            <lightning-button
+              variant="brand"
+              label="Send"
+              onclick={handleSend}
+              disabled={sendDisabled}
+            >
+            </lightning-button>
+          </div>
+        </div>
+
+        <!-- Send log -->
+        <template if:true={sendLog.length}>
+          <div class="slds-p-around_medium">
+            <div class="slds-text-title_bold slds-m-bottom_small">
+              Send History
+            </div>
+            <lightning-datatable
+              key-field="logId"
+              data={sendLog}
+              columns={logColumns}
+              hide-checkbox-column
+            >
+            </lightning-datatable>
+          </div>
+        </template>
+      </template>
+    </template>
+  </lightning-card>
+</template>

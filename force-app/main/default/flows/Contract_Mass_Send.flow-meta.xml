@@ -1,7 +1,23 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>65.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <name>Assign_Sample_Id</name>
+        <label>Assign Sample Id</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>LastId_Sample</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Get_last_Id</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Get_last_Id</targetReference>
+        </connector>
+    </assignments>
     <assignments>
         <name>id_to_JSON_assignment</name>
         <label>id to JSON assignment</label>
@@ -11,7 +27,57 @@
             <assignToReference>Customers_Email</assignToReference>
             <operator>Add</operator>
             <value>
-                <stringValue>{&quot;email&quot;:&quot;{!For_Each_Id.Email__c}&quot;,&quot;accountId&quot;:&quot;{!For_Each_Id.Id}&quot;},</stringValue>
+                <stringValue
+        >{&quot;email&quot;:&quot;{!For_Each_Id.Email__c}&quot;,&quot;accountId&quot;:&quot;{!For_Each_Id.Id}&quot;},</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>For_Each_Id</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Set_Bids_Customers</name>
+        <label>Set Bids Customers</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>CustomerIds</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference
+        >Get_Bids_Customers.Customer__c</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Get_Bids_Customers</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>Set_Customers</name>
+        <label>Set Customers</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>Recipients</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Get_Bid_Customers</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>For_Each_Id</targetReference>
+        </connector>
+    </assignments>
+    <assignments>
+        <name>SetCustomers</name>
+        <label>SetCustomers</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>Recipients</assignToReference>
+            <operator>Assign</operator>
+            <value>
+                <elementReference>Get_Customers</elementReference>
             </value>
         </assignmentItems>
         <connector>
@@ -21,24 +87,96 @@
     <customProperties>
         <name>ScreenProgressIndicator</name>
         <value>
-            <stringValue>{&quot;location&quot;:&quot;top&quot;,&quot;type&quot;:&quot;simple&quot;}</stringValue>
+            <stringValue
+      >{&quot;location&quot;:&quot;top&quot;,&quot;type&quot;:&quot;simple&quot;}</stringValue>
         </value>
     </customProperties>
+    <decisions>
+        <name>Check_Record_Type</name>
+        <label>Check Record Type</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>For_Each_Id</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Customer</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>LastId_Sample</leftValueReference>
+                <operator>StartsWith</operator>
+                <rightValue>
+                    <stringValue>001</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Customers</targetReference>
+            </connector>
+            <label>Customer</label>
+        </rules>
+        <rules>
+            <name>Contract_Bid</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>LastId_Sample</leftValueReference>
+                <operator>StartsWith</operator>
+                <rightValue>
+                    <stringValue>a0b</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Contract_Bids</targetReference>
+            </connector>
+            <label>Contract Bid</label>
+        </rules>
+    </decisions>
     <environments>Default</environments>
-    <interviewLabel>Mass Send Contracts {!$Flow.CurrentDateTime}</interviewLabel>
+    <interviewLabel
+  >Mass Send Contracts {!$Flow.CurrentDateTime}</interviewLabel>
+    <isAdditionalPermissionRequiredToRun
+  >true</isAdditionalPermissionRequiredToRun>
     <label>Contract Mass Send</label>
     <loops>
         <name>For_Each_Id</name>
         <label>For Each Id</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <collectionReference>Get_Customers</collectionReference>
+        <collectionReference>Recipients</collectionReference>
         <iterationOrder>Asc</iterationOrder>
         <nextValueConnector>
             <targetReference>id_to_JSON_assignment</targetReference>
         </nextValueConnector>
         <noMoreValuesConnector>
             <targetReference>Send_Email</targetReference>
+        </noMoreValuesConnector>
+    </loops>
+    <loops>
+        <name>Get_Bids_Customers</name>
+        <label>Get Bids Customers</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <collectionReference>Get_Contract_Bids</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Set_Bids_Customers</targetReference>
+        </nextValueConnector>
+        <noMoreValuesConnector>
+            <targetReference>Get_Bid_Customers</targetReference>
+        </noMoreValuesConnector>
+    </loops>
+    <loops>
+        <name>Get_last_Id</name>
+        <label>Get last Id</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <collectionReference>ids</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>Assign_Sample_Id</targetReference>
+        </nextValueConnector>
+        <noMoreValuesConnector>
+            <targetReference>Check_Record_Type</targetReference>
         </noMoreValuesConnector>
     </loops>
     <processMetadataValues>
@@ -61,13 +199,58 @@
     </processMetadataValues>
     <processType>Flow</processType>
     <recordLookups>
+        <name>Get_Bid_Customers</name>
+        <label>Get Bid Customers</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Set_Customers</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>In</operator>
+            <value>
+                <elementReference>CustomerIds</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>Account</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Contract_Bids</name>
+        <label>Get Contract Bids</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Bids_Customers</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>In</operator>
+            <value>
+                <elementReference>ids</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>Contract_Bid__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
         <name>Get_Customers</name>
         <label>Get Customers</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
-            <targetReference>For_Each_Id</targetReference>
+            <targetReference>SetCustomers</targetReference>
         </connector>
         <filterLogic>and</filterLogic>
         <filters>
@@ -92,8 +275,8 @@
         <allowFinish>true</allowFinish>
         <allowPause>true</allowPause>
         <fields>
-            <name>ContractMassSend</name>
-            <extensionName>c:contractMassSend</extensionName>
+            <name>TestMassSend</name>
+            <extensionName>c:emailMassSendBase</extensionName>
             <fieldType>ComponentInstance</fieldType>
             <inputParameters>
                 <name>customersData</name>
@@ -101,7 +284,14 @@
                     <elementReference>Customers_Email</elementReference>
                 </value>
             </inputParameters>
-            <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
+            <inputParameters>
+                <name>mode</name>
+                <value>
+                    <elementReference>Mode</elementReference>
+                </value>
+            </inputParameters>
+            <inputsOnNextNavToAssocScrn
+      >UseStoredValues</inputsOnNextNavToAssocScrn>
             <isRequired>true</isRequired>
             <storeOutputAutomatically>true</storeOutputAutomatically>
             <styleProperties>
@@ -120,10 +310,17 @@
         <locationX>0</locationX>
         <locationY>0</locationY>
         <connector>
-            <targetReference>Get_Customers</targetReference>
+            <targetReference>Get_last_Id</targetReference>
         </connector>
     </start>
-    <status>Draft</status>
+    <status>Active</status>
+    <variables>
+        <name>CustomerIds</name>
+        <dataType>String</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
     <variables>
         <name>Customers_Email</name>
         <dataType>String</dataType>
@@ -137,5 +334,30 @@
         <isCollection>true</isCollection>
         <isInput>true</isInput>
         <isOutput>true</isOutput>
+    </variables>
+    <variables>
+        <name>LastId_Sample</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
+    <variables>
+        <name>Mode</name>
+        <dataType>String</dataType>
+        <isCollection>false</isCollection>
+        <isInput>true</isInput>
+        <isOutput>true</isOutput>
+        <value>
+            <stringValue>simple</stringValue>
+        </value>
+    </variables>
+    <variables>
+        <name>Recipients</name>
+        <dataType>SObject</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+        <objectType>Account</objectType>
     </variables>
 </Flow>
