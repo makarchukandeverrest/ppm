@@ -4,6 +4,22 @@
         <itemInstances>
             <componentInstance>
                 <componentInstanceProperties>
+                    <name>hideUpdateButton</name>
+                    <value>false</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>variant</name>
+                    <value>linear</value>
+                </componentInstanceProperties>
+                <componentName
+        >runtime_sales_pathassistant:pathAssistant</componentName>
+                <identifier
+        >runtime_sales_pathassistant_pathAssistant</identifier>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
                     <name>collapsed</name>
                     <value>false</value>
                 </componentInstanceProperties>
@@ -267,6 +283,16 @@
                 </fieldInstanceProperties>
                 <fieldItem>Record.Contract_End_Date__c</fieldItem>
                 <identifier>RecordContract_End_Date__cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Stage__c</fieldItem>
+                <identifier>RecordStage__cField</identifier>
             </fieldInstance>
         </itemInstances>
         <name>Facet-a733ad25-2fac-4feb-8ba3-bfaa7cd6d969</name>
