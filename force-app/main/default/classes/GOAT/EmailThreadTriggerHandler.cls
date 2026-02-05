@@ -1,4 +1,4 @@
-public with sharing class EmailThreadTriggerHandler extends TriggerHandler{
+public without sharing class EmailThreadTriggerHandler extends TriggerHandler{
     List<Email_Platform__Email_Thread__c> newList;
     Map<Id,Email_Platform__Email_Thread__c> oldMap;
 
