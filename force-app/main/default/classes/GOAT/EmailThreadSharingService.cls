@@ -1,4 +1,4 @@
-public with sharing class EmailThreadSharingService {
+public inherited sharing class EmailThreadSharingService {
   public static void grantAccessToEmailThread(
     List<Email_Platform__Email_Thread__c> newList
   ) {
