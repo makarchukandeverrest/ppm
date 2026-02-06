@@ -24,7 +24,7 @@
             </layoutItems>
             <layoutItems>
                 <behavior>Edit</behavior>
-                <field>Current_Vendor__c</field>
+                <field>Current_Vendor_Object__c</field>
             </layoutItems>
             <layoutItems>
                 <behavior>Edit</behavior>
