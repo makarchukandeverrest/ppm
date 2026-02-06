@@ -264,10 +264,15 @@ public with sharing class ContractMassSendController {
 
     /* ---------- Email Templates ---------- */
     res.templates = new List<TemplateDto>();
+
     for (EmailTemplate t : [
-      SELECT Id, Name
+      SELECT Id, Name, Folder.Name
       FROM EmailTemplate
-      WHERE IsActive = TRUE
+      WHERE
+        IsActive = TRUE
+        AND TemplateType = 'custom'
+        AND (Folder.Name = 'Premier Pool Templates'
+        OR OwnerId = :UserInfo.getUserId())
       ORDER BY Name
       LIMIT 200
     ]) {

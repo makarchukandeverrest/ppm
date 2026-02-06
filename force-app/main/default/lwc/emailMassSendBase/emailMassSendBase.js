@@ -418,6 +418,22 @@ export default class EmailMassSendBase extends NavigationMixin(
     }
   }
 
+  async handlePreviewClick(event) {
+    const customerId = event.currentTarget.dataset.customerId;
+
+    // If this customer's preview is already open, close it on second click
+    const currentCustomer = this.customers.find(
+      (c) => c.customerId === customerId
+    );
+    if (currentCustomer && currentCustomer.isHovered) {
+      this.handlePreviewLeave();
+      return;
+    }
+
+    // Otherwise load and show preview (reuse hover handler logic)
+    await this.handlePreviewHover(event);
+  }
+
   async handlePreviewHover(event) {
     const customerId = event.currentTarget.dataset.customerId;
     this.hoveredCustomerId = customerId;
