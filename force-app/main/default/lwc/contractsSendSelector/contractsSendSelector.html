@@ -61,6 +61,77 @@
             </div>
         </div>
 
+        <!-- Reminders and Expiration row -->
+        <div class="slds-m-around_medium top-sections-row">
+            <!-- Reminders Section -->
+            <div class="reminders-section">
+                <h3 class="slds-text-heading_small slds-m-bottom_small">
+                    <lightning-icon icon-name="utility:reminder" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                    Reminders
+                </h3>
+                <div class="slds-grid slds-gutters slds-wrap">
+                    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 slds-m-bottom_small">
+                        <lightning-combobox
+                            name="automaticReminder"
+                            label="Automatic Reminders"
+                            value={automaticReminderValue}
+                            options={automaticReminderOptions}
+                            onchange={handleAutomaticReminderChange}
+                            placeholder="Select frequency">
+                        </lightning-combobox>
+                    </div>
+                    <template if:true={showCustomReminderInput}>
+                        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 slds-m-bottom_small">
+                            <lightning-input
+                                type="number"
+                                name="customReminderDays"
+                                label="Custom (days)"
+                                value={customReminderDays}
+                                onchange={handleCustomReminderDaysChange}
+                                min="1"
+                                step="1"
+                                placeholder="Enter days">
+                            </lightning-input>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Expiration Section -->
+            <div class="expiration-section">
+                <h3 class="slds-text-heading_small slds-m-bottom_small">
+                    <lightning-icon icon-name="utility:expiration" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                    Expiration
+                </h3>
+                <div class="slds-grid slds-gutters slds-wrap">
+                    <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                        <lightning-input
+                            type="date"
+                            name="envelopeExpires"
+                            label="Envelope expires"
+                            value={envelopeExpiresDate}
+                            min={envelopeExpiresMinDate}
+                            onchange={handleEnvelopeExpiresChange}
+                            field-level-help="Select a date after Feb 8, 2026. Format: Dec 31, 2024">
+                        </lightning-input>
+                    </div>
+                    <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+                        <lightning-input
+                            type="number"
+                            name="daysBeforeExpires"
+                            label="Days before envelope expires:"
+                            value={daysBeforeExpires}
+                            onchange={handleDaysBeforeExpiresChange}
+                            min="1"
+                            step="1"
+                            placeholder="120"
+                            class="days-before-single-line">
+                        </lightning-input>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <template if:true={isUpdating}>
             <div class="slds-is-relative" style="min-height:3rem;">
                 <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
@@ -78,9 +149,9 @@
         <template if:true={accountsWithFiles}>
             <template for:each={accountsWithFiles} for:item="acc">
                 <div key={acc.accountId} class="slds-m-around_medium slds-box slds-theme_default">
-                    <div class="slds-grid slds-grid_vertical-align-center slds-gutters_x-small slds-wrap">
-                        <div class="slds-col slds-grow">
-                            <h2 class="slds-text-heading_small">{acc.accountName}</h2>
+                    <div class="slds-grid slds-gutters_x-small slds-wrap account-card-grid">
+                        <div class="slds-col slds-grow account-name-col">
+                            <h2 class="slds-text-heading_small customer-name-heading">{acc.accountName}</h2>
                             <div class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">
                                 <template if:true={acc.regionalManagerName}>
                                     <span class="slds-m-right_medium">
@@ -101,34 +172,85 @@
                                     </span>
                                 </template>
                             </div>
+                            <template if:true={acc.files}>
+                                <ul class="slds-list_dotted slds-m-top_small account-files-list">
+                                    <template for:each={acc.files} for:item="file">
+                                        <li key={file.Id}>
+                                            <lightning-input type="checkbox"
+                                                            label={file.Title}
+                                                            data-file-id={file.Id}
+                                                            data-account-id={acc.accountId}
+                                                            onchange={handleCheckboxChange}
+                                                            checked={file.ToSent}>
+                                            </lightning-input>
+                                        </li>
+                                    </template>
+                                </ul>
+                            </template>
                         </div>
-                        <div class="slds-col slds-shrink-none">
-                            <lightning-input type="checkbox"
-                                            label="New Client"
-                                            name="newClient"
-                                            data-account-id={acc.accountId}
-                                            onchange={handleCheckboxChange}
-                                            checked={acc.newClient}
-                                            field-level-help="Check to include new customer files with the email">
-                            </lightning-input>
+                        <div class="slds-col slds-shrink-none account-right-col">
+                            <div class="account-reminder-block">
+                                <lightning-combobox
+                                    name="accountReminder"
+                                    label="Reminder"
+                                    value={acc.reminderValue}
+                                    options={automaticReminderOptions}
+                                    data-account-id={acc.accountId}
+                                    onchange={handleAccountReminderChange}
+                                    placeholder="Select frequency"
+                                    class="account-reminder-picklist">
+                                </lightning-combobox>
+                                <template if:true={acc.reminderIsCustom}>
+                                    <lightning-input
+                                        type="number"
+                                        name="accountReminderCustomDays"
+                                        label="Days"
+                                        value={acc.reminderCustomDays}
+                                        data-account-id={acc.accountId}
+                                        onchange={handleAccountReminderCustomDaysChange}
+                                        min="1"
+                                        step="1"
+                                        placeholder="Days"
+                                        class="account-reminder-days">
+                                    </lightning-input>
+                                </template>
+                            </div>
+                            <div class="account-expiration-block">
+                                <lightning-input
+                                    type="date"
+                                    name="accountEnvelopeExpires"
+                                    label="Envelope expires"
+                                    value={acc.envelopeExpiresDate}
+                                    min={envelopeExpiresMinDate}
+                                    data-account-id={acc.accountId}
+                                    onchange={handleAccountEnvelopeExpiresChange}
+                                    class="account-envelope-date">
+                                </lightning-input>
+                                <lightning-input
+                                    type="number"
+                                    name="accountDaysBeforeExpires"
+                                    label="Days before expires"
+                                    value={acc.daysBeforeExpires}
+                                    data-account-id={acc.accountId}
+                                    onchange={handleAccountDaysBeforeExpiresChange}
+                                    min="1"
+                                    step="1"
+                                    placeholder="120"
+                                    class="account-days-before days-before-single-line">
+                                </lightning-input>
+                            </div>
+                            <div class="account-new-client">
+                                <lightning-input type="checkbox"
+                                                label="New Client"
+                                                name="newClient"
+                                                data-account-id={acc.accountId}
+                                                onchange={handleCheckboxChange}
+                                                checked={acc.newClient}
+                                                field-level-help="Check to include new customer files with the email">
+                                </lightning-input>
+                            </div>
                         </div>
                     </div>
-
-                    <template if:true={acc.files}>
-                        <ul class="slds-list_dotted slds-m-top_small">
-                            <template for:each={acc.files} for:item="file">
-                                <li key={file.Id}>
-                                    <lightning-input type="checkbox"
-                                                    label={file.Title}
-                                                    data-file-id={file.Id}
-                                                    data-account-id={acc.accountId}
-                                                    onchange={handleCheckboxChange}
-                                                    checked={file.ToSent}>
-                                    </lightning-input>
-                                </li>
-                            </template>
-                        </ul>
-                    </template>
                 </div>
             </template>
         </template>
@@ -149,7 +271,7 @@
                     </lightning-button>
                 </div>
             </div>
-        </div>
+        </div>R
     </lightning-card>
 
     <!-- Confirmation Modal -->
