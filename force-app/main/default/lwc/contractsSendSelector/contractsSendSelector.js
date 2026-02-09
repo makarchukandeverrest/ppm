@@ -175,7 +175,7 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
 
     _enrichAccountsWithReminders(accounts) {
         const mainValue = this.automaticReminderValue || '';
-        const mainCustomDays = this.automaticReminderValue === 'custom' ? (this.customReminderDays || '') : '';
+        const mainCustomDays = mainValue === 'custom' ? (this.customReminderDays || '') : '';
         const mainEnvelopeDate = this.envelopeExpiresDate || '';
         const mainDaysBefore = this.daysBeforeExpires || '120';
         return accounts.map(acc => ({
@@ -252,9 +252,7 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
         const str = (num === '' || isNaN(num)) ? '' : String(Math.max(1, num));
         let updatedAccounts = JSON.parse(JSON.stringify(this.accountsWithFiles));
         updatedAccounts.forEach(acc => {
-            if (acc.accountId === accountId) {
-                acc.reminderCustomDays = str;
-            }
+            if (acc.accountId === accountId) acc.reminderCustomDays = str;
         });
         this.accountsWithFiles = updatedAccounts;
     }
@@ -445,8 +443,12 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
                 variant: 'info'
             }));
 
+            const payload = this.accountsWithFiles.map(acc => ({
+                ...acc,
+                reminderValue: acc.reminderValue === 'custom' ? (acc.reminderCustomDays || '') : (acc.reminderValue || '')
+            }));
             await sendEnvelopeWithSignature({
-                accountsWithFilesJSON: JSON.stringify(this.accountsWithFiles)
+                accountsWithFilesJSON: JSON.stringify(payload)
             });
 
             await this[NavigationMixin.Navigate]({

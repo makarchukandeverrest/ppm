@@ -62,7 +62,8 @@ public with sharing class DocuSignEnvelopeService {
                         ccUsers.add(romanUser); // Always add Roman as CC
                     }
                     
-                    String body = buildEnvelopeRequestBody(base64Doc, title, recipientEmail, recipientName, acc.newClient, ccUsers, acc.accountId);
+                    String body = buildEnvelopeRequestBody(base64Doc, title, recipientEmail, recipientName, acc.newClient, ccUsers, acc.accountId,
+                        acc.reminderValue, acc.daysBeforeExpires);
 
                     HttpRequestWrapper w = new HttpRequestWrapper();
                     w.endpoint = 'callout:ArtemDocuDevCredential/restapi/v2.1/accounts/78090461/envelopes'; 
@@ -179,8 +180,9 @@ public with sharing class DocuSignEnvelopeService {
     }
 
     public static String buildEnvelopeRequestBody(
-        String base64Doc, String docName, String email, String name, 
-        Boolean isNewCustomer, List<User> ccUsers, Id accountId
+        String base64Doc, String docName, String email, String name,
+        Boolean isNewCustomer, List<User> ccUsers, Id accountId,
+        String reminderValue, String daysBeforeExpires
     ) {
         List<Object> documents = new List<Object>();
 
@@ -337,6 +339,31 @@ public with sharing class DocuSignEnvelopeService {
             },
             'status' => 'sent'
           };
+
+        // Only add notification when at least one value is set; reminderValue is already the final number
+        Boolean hasReminder = String.isNotBlank(reminderValue);
+        Boolean hasExpiration = String.isNotBlank(daysBeforeExpires);
+
+        if (hasReminder || hasExpiration) {
+            Map<String, Object> notificationMap = new Map<String, Object>{
+                'useAccountDefaults' => false
+            };
+            if (hasExpiration) {
+                notificationMap.put('expirations', new Map<String, Object>{
+                    'expireEnabled' => true,
+                    'expireAfter' => daysBeforeExpires,
+                    'expireWarn' => '20'
+                });
+            }
+            if (hasReminder) {
+                notificationMap.put('reminders', new Map<String, Object>{
+                    'reminderEnabled' => true,
+                    'reminderDelay' => '3',
+                    'reminderFrequency' => reminderValue
+                });
+            }
+            body.put('notification', notificationMap);
+        }
 
         return JSON.serialize(body);
     }
