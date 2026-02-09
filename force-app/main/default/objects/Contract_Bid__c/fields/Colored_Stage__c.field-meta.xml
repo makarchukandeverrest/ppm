@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Colored_Stage__c</fullName>
+    <externalId>false</externalId>
+    <formula>CASE(Stage__c,
+  &quot;Contact Made&quot;, 
+    IMAGE(&quot;/resource/Light_Green&quot;, &quot;Contact Made&quot;, 30, 30) &amp; &quot; Contact Made&quot;,
+  
+  &quot;Information Verified&quot;, 
+    IMAGE(&quot;/resource/Green&quot;, &quot;Information Verified&quot;, 30, 30) &amp; &quot; Information Verified&quot;,
+  
+  &quot;Contract Bid Package Sent&quot;, 
+    IMAGE(&quot;/resource/Hard_Yellow&quot;, &quot;Contract Bid Package Sent&quot;, 30, 30) &amp; &quot; Contract Bid Package Sent&quot;,
+  
+  &quot;Client Showed Interest&quot;, 
+    IMAGE(&quot;/resource/Biryuza&quot;, &quot;Client Showed Interest&quot;, 30, 30) &amp; &quot; Client Showed Interest&quot;,
+  
+  &quot;Need Contact Verification&quot;, 
+    IMAGE(&quot;/resource/Red&quot;, &quot;Need Contact Verification&quot;, 30, 30) &amp; &quot; Need Contact Verification&quot;,
+  
+  &quot;Contact Verified&quot;, 
+    IMAGE(&quot;/resource/Emerald_Green&quot;, &quot;Contact Verified&quot;, 30, 30) &amp; &quot; Contact Verified&quot;,
+  
+  &quot;Contract Sent Via Docusign&quot;, 
+    IMAGE(&quot;/resource/Purple&quot;, &quot;Contract Sent Via Docusign&quot;, 30, 30) &amp; &quot; Contract Sent Via Docusign&quot;,
+  
+  &quot;Proposal/Review&quot;, 
+    IMAGE(&quot;/resource/Dark_Purple&quot;, &quot;Contract Under Review&quot;, 30, 30) &amp; &quot; Contract Under Review&quot;,
+  
+  &quot;First Follow Up&quot;, 
+    IMAGE(&quot;/resource/Light_Grey&quot;, &quot;First Follow Up&quot;, 30, 30) &amp; &quot; First Follow Up&quot;,
+  
+  &quot;Second Follow Up&quot;, 
+    IMAGE(&quot;/resource/Blue&quot;, &quot;Second Follow Up&quot;, 30, 30) &amp; &quot; Second Follow Up&quot;,
+  
+  &quot;Third Follow Up&quot;, 
+    IMAGE(&quot;/resource/Hard_Blue&quot;, &quot;Third Follow Up&quot;, 30, 30) &amp; &quot; Third Follow Up&quot;,
+  
+  &quot;Negotiations Started&quot;, 
+    IMAGE(&quot;/resource/Red_Orange&quot;, &quot;Negotiations Started&quot;, 30, 30) &amp; &quot; Negotiations Started&quot;,
+  
+  &quot;Closed - WON&quot;, 
+    IMAGE(&quot;/resource/Green&quot;, &quot;Closed – WON&quot;, 30, 30) &amp; &quot; Closed – WON&quot;,
+ 
+  &quot;Closed - LOST&quot;, 
+    IMAGE(&quot;/resource/Red&quot;, &quot;Closed – LOST&quot;, 30, 30) &amp; &quot; Closed – LOST&quot;,
+  
+  &quot;&quot; 
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Colored Stage</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>
