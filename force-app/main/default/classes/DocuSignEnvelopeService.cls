@@ -345,25 +345,41 @@ public with sharing class DocuSignEnvelopeService {
         Boolean hasExpiration = String.isNotBlank(daysBeforeExpires);
 
         if (hasReminder || hasExpiration) {
+
+            Integer warnDays = 0;
+            if (hasExpiration) {
+                if (Integer.valueOf(daysBeforeExpires) >= 7) {
+                    warnDays = 7;
+                } else if (Integer.valueOf(daysBeforeExpires) > 1) {
+                    warnDays = 1;
+                } else {
+                    warnDays = 0;
+                }
+            }
+        
             Map<String, Object> notificationMap = new Map<String, Object>{
                 'useAccountDefaults' => false
             };
+        
             if (hasExpiration) {
                 notificationMap.put('expirations', new Map<String, Object>{
                     'expireEnabled' => true,
-                    'expireAfter' => daysBeforeExpires,
-                    'expireWarn' => '20'
+                    'expireAfter'   => daysBeforeExpires,
+                    'expireWarn'    => String.valueOf(warnDays)
                 });
             }
+        
             if (hasReminder) {
                 notificationMap.put('reminders', new Map<String, Object>{
-                    'reminderEnabled' => true,
-                    'reminderDelay' => '3',
+                    'reminderEnabled'   => true,
+                    'reminderDelay'     => '3',
                     'reminderFrequency' => reminderValue
                 });
             }
+        
             body.put('notification', notificationMap);
         }
+        
 
         return JSON.serialize(body);
     }
