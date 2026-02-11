@@ -52,9 +52,40 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.filter-section h3 {
+.filter-section h3,
+.reminders-section h3,
+.expiration-section h3 {
     color: #16325c;
     font-weight: 600;
+}
+
+/* Reminders + Expiration row: side by side on medium+ */
+.top-sections-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+@media (min-width: 768px) {
+    .top-sections-row {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.reminders-section,
+.expiration-section {
+    background: linear-gradient(135deg, #f4f6f9 0%, #e8ecf1 100%);
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid #d8dde6;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.reminders-section lightning-combobox,
+.reminders-section lightning-input,
+.expiration-section lightning-input {
+    --sds-c-input-radius-border: 4px;
 }
 
 /* Filter field styling */
@@ -82,4 +113,75 @@
 .slds-text-body_small span {
     display: inline-flex;
     align-items: center;
+}
+
+/* Account card: name left, reminder + expiration + New Client at max right */
+.account-card-grid {
+    align-items: flex-start;
+}
+
+.account-name-col {
+    min-width: 0;
+}
+
+.customer-name-heading {
+    margin: 0;
+}
+
+.account-right-col {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    min-width: 200px;
+}
+
+.account-reminder-block {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.account-reminder-block lightning-combobox {
+    min-width: 120px;
+}
+
+.account-reminder-block .account-reminder-days {
+    width: 70px;
+}
+
+.account-expiration-block {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.account-expiration-block lightning-input {
+    --sds-c-input-radius-border: 4px;
+}
+
+.account-expiration-block .account-envelope-date {
+    min-width: 140px;
+}
+
+/* Keep "Days before expires" label on one line (no two-line wrapping) */
+.days-before-single-line {
+    min-width: 200px;
+}
+
+.account-expiration-block .account-days-before {
+    min-width: 200px;
+}
+
+.account-reminder-block lightning-combobox,
+.account-reminder-block lightning-input {
+    --sds-c-input-radius-border: 4px;
+}
+
+.account-new-client {
+    margin-top: 4px;
 }
