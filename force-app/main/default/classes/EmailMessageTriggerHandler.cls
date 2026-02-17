@@ -39,4 +39,28 @@ public with sharing class EmailMessageTriggerHandler extends TriggerHandler {
     );
 }
 
+protected override void afterInsert() {
+    List<EmailMessage> docuSignEmails = new List<EmailMessage>();
+
+    for (EmailMessage em : newMap.values()) {
+        if (em == null) continue;
+
+        String fromAddress = em.FromAddress;
+        String subject     = em.Subject;
+
+        if (fromAddress != null && subject != null
+            && fromAddress.contains('@docusign.net')
+            && subject.contains('Completed:')
+            && em.HasAttachment == true) {
+
+            docuSignEmails.add(em);
+        }
+    }
+
+    if (!docuSignEmails.isEmpty()) {
+        DocuSignSignedFileAssigner.assignDocuments(docuSignEmails);
+    }
+}
+
+
 }
