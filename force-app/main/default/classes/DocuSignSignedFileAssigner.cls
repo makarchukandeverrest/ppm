@@ -53,24 +53,12 @@ public with sharing class DocuSignSignedFileAssigner {
             if (String.isBlank(cv.Title)) {
                 continue;
             }
-
-            String title = cv.Title;
-            String ext   = cv.FileExtension;
-
-            if (!String.isBlank(ext)) {
-                String suffix = '.' + ext;
-                if (title.endsWith(suffix)) {
-                    title = title.left(title.length() - suffix.length());
-                }
-            }
-
-            baseTitles.add(title);
+            baseTitles.add(cv.Title);
         }
 
         if (baseTitles.isEmpty()) {
             return;
         }
-
         // 5. Find ContentVersion with the same titles (original files on Accounts)
         List<ContentVersion> accountSideVersions = [
             SELECT Id, ContentDocumentId, Title, IsLatest
