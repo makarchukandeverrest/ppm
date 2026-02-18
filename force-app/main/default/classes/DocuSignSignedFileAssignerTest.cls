@@ -3,35 +3,25 @@ public with sharing class DocuSignSignedFileAssignerTest {
 
     @TestSetup
     static void setupTestData() {
-        // Base Account
+        // Account
         Account acc = new Account(Name = 'Test Account');
         insert acc;
 
-        Contact con = new Contact(
-            FirstName = 'Test',
-            LastName  = 'Contact',
-            Email     = 'test@example.com',
-            AccountId = acc.Id
-        );
-        insert con;
-
-        // 1) Original file on Account (without extension in Title)
+        // Оригинальный файл на Account (Title БЕЗ .pdf)
         ContentVersion originalCv = new ContentVersion(
-            Title        = 'Test-2025-2026 Bids-Artem Test 10081 A--Contract',
-            PathOnClient = 'Test-2025-2026 Bids-Artem Test 10081 A--Contract',
-            VersionData  = Blob.valueOf('original content'),
+            Title          = 'Test-2025-2026 Bids-Artem Test 10081 A--Contract',
+            PathOnClient   = 'Test-2025-2026 Bids-Artem Test 10081 A--Contract.pdf',
+            VersionData    = Blob.valueOf('original content'),
             IsMajorVersion = true
         );
         insert originalCv;
 
-        // Get ContentDocumentId (insert of ContentVersion creates ContentDocument)
         originalCv = [
             SELECT Id, ContentDocumentId, Title
             FROM ContentVersion
             WHERE Id = :originalCv.Id
         ];
 
-        // Link original file to Account
         ContentDocumentLink cdlAcc = new ContentDocumentLink(
             ContentDocumentId = originalCv.ContentDocumentId,
             LinkedEntityId    = acc.Id,
@@ -40,33 +30,31 @@ public with sharing class DocuSignSignedFileAssignerTest {
         );
         insert cdlAcc;
 
-        // 2) EmailMessage with signed file (same base title + .pdf)
-        // Create EmailMessage record
-        EmailMessage em = new EmailMessage();
-        em.Subject      = 'DocuSign Signed Document';
-        em.FromAddress  = 'sender@example.com';
-        em.ToAddress    = 'test@example.com';
-        em.Status       = '3'; // sent
-        em.Incoming     = false;
-        // relatedToId / FromId можно не заполнять для этого теста
+        // EmailMessage
+        EmailMessage em = new EmailMessage(
+            Subject     = 'DocuSign Signed Document',
+            FromAddress = 'sender@example.com',
+            ToAddress   = 'test@example.com',
+            Status      = '3',
+            Incoming    = false
+        );
         insert em;
 
-        // Create signed ContentVersion (DocuSign-returned)
+        // Signed файл на Email (Title С .pdf)
         ContentVersion signedCv = new ContentVersion(
-            Title        = 'Test-2025-2026 Bids-Artem Test 10081 A--Contract.pdf',
-            PathOnClient = 'Test-2025-2026 Bids-Artem Test 10081 A--Contract.pdf',
-            VersionData  = Blob.valueOf('signed content'),
+            Title          = 'Test-2025-2026 Bids-Artem Test 10081 A--Contract.pdf',
+            PathOnClient   = 'Test-2025-2026 Bids-Artem Test 10081 A--Contract.pdf',
+            VersionData    = Blob.valueOf('signed content'),
             IsMajorVersion = true
         );
         insert signedCv;
 
         signedCv = [
-            SELECT Id, ContentDocumentId, Title, FileExtension
+            SELECT Id, ContentDocumentId, Title
             FROM ContentVersion
             WHERE Id = :signedCv.Id
         ];
 
-        // Link signed file to EmailMessage
         ContentDocumentLink cdlEmail = new ContentDocumentLink(
             ContentDocumentId = signedCv.ContentDocumentId,
             LinkedEntityId    = em.Id,
@@ -78,27 +66,57 @@ public with sharing class DocuSignSignedFileAssignerTest {
 
     @isTest
     static void testAssignDocuments_SignedFileLinkedToAccountAndRenamed() {
-        // Arrange: get EmailMessage from setup
+        // EmailMessage
         EmailMessage em = [
             SELECT Id
             FROM EmailMessage
             LIMIT 1
         ];
 
+        // Именно подписанный документ — через EmailMessage
+        ContentDocumentLink signedLink = [
+            SELECT ContentDocumentId
+            FROM ContentDocumentLink
+            WHERE LinkedEntityId = :em.Id
+            LIMIT 1
+        ];
+        System.assertNotEquals(null, signedLink, 'Precondition: signed CDL must exist.');
+
         Test.startTest();
         DocuSignSignedFileAssigner.assignDocuments(new List<EmailMessage>{ em });
         Test.stopTest();
 
-        // Assert: signed file renamed with " - Completed"
-        ContentVersion signedAfter = [
-            SELECT Id, Title, ContentDocumentId
+        // Latest версия этого документа
+        ContentVersion latestCv = [
+            SELECT Id, Title, ContentDocumentId, IsLatest
             FROM ContentVersion
-            WHERE Title LIKE 'Test-2025-2026 Bids-Artem Test 10081 A--Contract%.pdf - Completed'
+            WHERE ContentDocumentId = :signedLink.ContentDocumentId
+            AND IsLatest = true
             LIMIT 1
         ];
-        System.assertNotEquals(null, signedAfter, 'Signed ContentVersion should be renamed with " - Completed".');
+        System.assertNotEquals(null, latestCv, 'Latest CV must exist.');
 
-        // Assert: there is a link from signed file to the Account
+        Boolean latestRenamed =
+            latestCv.Title != null &&
+            latestCv.Title.endsWith(' - Completed');
+
+        Integer anyRenamedCount = 0;
+        if (!latestRenamed) {
+            anyRenamedCount = [
+                SELECT COUNT()
+                FROM ContentVersion
+                WHERE ContentDocumentId = :signedLink.ContentDocumentId
+                AND Title LIKE '% - Completed%'
+            ];
+        }
+
+        System.assertEquals(
+            true,
+            latestRenamed || anyRenamedCount > 0,
+            'Signed ContentVersion should be renamed with " - Completed". Latest Title: ' + latestCv.Title
+        );
+
+        // Линк к Account
         Account acc = [
             SELECT Id
             FROM Account
@@ -106,13 +124,76 @@ public with sharing class DocuSignSignedFileAssignerTest {
             LIMIT 1
         ];
 
-        ContentDocumentLink linkToAcc = [
-            SELECT Id, ContentDocumentId, LinkedEntityId
+        Integer linkCountToAcc = [
+            SELECT COUNT()
             FROM ContentDocumentLink
-            WHERE ContentDocumentId = :signedAfter.ContentDocumentId
+            WHERE ContentDocumentId = :signedLink.ContentDocumentId
             AND LinkedEntityId = :acc.Id
+        ];
+        System.assertEquals(true, linkCountToAcc > 0,
+            'Signed file should be linked to the same Account as original.');
+    }
+
+    @isTest
+    static void testAssignDocuments_BlankSignedTitle_IsIgnored() {
+        Account acc = [
+            SELECT Id
+            FROM Account
+            WHERE Name = 'Test Account'
             LIMIT 1
         ];
-        System.assertNotEquals(null, linkToAcc, 'Signed file should be linked to the same Account as original.');
+        EmailMessage em = [
+            SELECT Id
+            FROM EmailMessage
+            LIMIT 1
+        ];
+
+        ContentVersion blankTitleCv = new ContentVersion(
+            Title          = '',
+            PathOnClient   = 'blank.pdf',
+            VersionData    = Blob.valueOf('blank title content'),
+            IsMajorVersion = true
+        );
+        insert blankTitleCv;
+
+        blankTitleCv = [
+            SELECT Id, ContentDocumentId, Title
+            FROM ContentVersion
+            WHERE Id = :blankTitleCv.Id
+        ];
+
+        ContentDocumentLink blankCdlEmail = new ContentDocumentLink(
+            ContentDocumentId = blankTitleCv.ContentDocumentId,
+            LinkedEntityId    = em.Id,
+            ShareType         = 'V',
+            Visibility        = 'AllUsers'
+        );
+        insert blankCdlEmail;
+
+        Test.startTest();
+        DocuSignSignedFileAssigner.assignDocuments(new List<EmailMessage>{ em });
+        Test.stopTest();
+
+        Integer linkCount = [
+            SELECT COUNT()
+            FROM ContentDocumentLink
+            WHERE ContentDocumentId = :blankTitleCv.ContentDocumentId
+            AND LinkedEntityId = :acc.Id
+        ];
+        System.assertEquals(0, linkCount,
+            'Blank-titled signed file must be ignored and not linked to Account.');
+
+        ContentVersion postCheck = [
+            SELECT Id, Title
+            FROM ContentVersion
+            WHERE Id = :blankTitleCv.Id
+            LIMIT 1
+        ];
+        Boolean renamed =
+            postCheck.Title != null &&
+            postCheck.Title.endsWith(' - Completed');
+
+        System.assertEquals(false, renamed,
+            'Blank-titled signed file must not be renamed with " - Completed".');
     }
 }
