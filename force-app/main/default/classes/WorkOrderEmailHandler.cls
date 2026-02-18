@@ -159,7 +159,16 @@ public with sharing class WorkOrderEmailHandler implements Messaging.InboundEmai
                 System.debug('Comment is blank or not provided, FeedItem will NOT be created');
             }
 
-            // 7) Обновляем WorkOrder
+            // 7) Обрабатываем вложения
+            System.debug('Calling handleAttachments for WorkOrder Id: ' + woToUpdate.Id);
+            System.debug('email.binaryAttachments size: ' +
+                         (email.binaryAttachments == null ? 'null' : String.valueOf(email.binaryAttachments.size())));
+            System.debug('email.textAttachments size: ' +
+                         (email.textAttachments == null ? 'null' : String.valueOf(email.textAttachments.size())));
+
+            handleAttachments(email.binaryAttachments, email.textAttachments, woToUpdate.Id);
+
+            // 8) Обновляем WorkOrder
             System.debug('Updating WorkOrder: ' + woToUpdate.Id);
             update woToUpdate;
             System.debug('WorkOrder updated successfully');
@@ -177,4 +186,129 @@ public with sharing class WorkOrderEmailHandler implements Messaging.InboundEmai
 
         System.debug('=== processEmail END ===');
     }
+
+    private void handleAttachments(
+        List<Messaging.InboundEmail.BinaryAttachment> binaryAttachments,
+        List<Messaging.InboundEmail.TextAttachment> textAttachments,
+        Id parentId
+    ) {
+        System.debug('=== handleAttachments START, parentId = ' + parentId);
+
+        if (parentId == null) {
+            System.debug('parentId is null, skipping attachments handling');
+            System.debug('=== handleAttachments END (no parent) ===');
+            return;
+        }
+
+        System.debug('Incoming binaryAttachments is ' +
+                     (binaryAttachments == null ? 'null' : 'size = ' + binaryAttachments.size()));
+        System.debug('Incoming textAttachments is ' +
+                     (textAttachments == null ? 'null' : 'size = ' + textAttachments.size()));
+
+        List<ContentVersion> contentVersionsToInsert = new List<ContentVersion>();
+
+        // Binary attachments
+        if (binaryAttachments != null && !binaryAttachments.isEmpty()) {
+            Integer idx = 0;
+            for (Messaging.InboundEmail.BinaryAttachment b : binaryAttachments) {
+                System.debug('Processing BinaryAttachment index ' + idx + ': ' + b);
+                idx++;
+                if (b == null) {
+                    System.debug('BinaryAttachment is null, skipping');
+                    continue;
+                }
+                System.debug('BinaryAttachment.fileName = ' + b.fileName +
+                             ', body is ' + (b.body == null ? 'null' : 'not null') +
+                             ', mimeTypeSubType = ' + b.mimeTypeSubType);
+
+                if (b.body == null) {
+                    System.debug('BinaryAttachment.body is null, skipping');
+                    continue;
+                }
+
+                ContentVersion cv = new ContentVersion();
+                cv.Title        = String.isNotBlank(b.fileName) ? b.fileName : 'binary-attachment';
+                cv.PathOnClient = cv.Title;
+                cv.VersionData  = b.body; // Blob
+                System.debug('Prepared ContentVersion (binary), Title=' + cv.Title);
+                contentVersionsToInsert.add(cv);
+            }
+        }
+
+        // Text attachments
+        if (textAttachments != null && !textAttachments.isEmpty()) {
+            Integer idx2 = 0;
+            for (Messaging.InboundEmail.TextAttachment t : textAttachments) {
+                System.debug('Processing TextAttachment index ' + idx2 + ': ' + t);
+                idx2++;
+                if (t == null) {
+                    System.debug('TextAttachment is null, skipping');
+                    continue;
+                }
+                System.debug('TextAttachment.fileName = ' + t.fileName +
+                             ', body length = ' + (t.body == null ? 'null' : String.valueOf(t.body.length())) +
+                             ', mimeTypeSubType = ' + t.mimeTypeSubType);
+
+                if (String.isBlank(t.body)) {
+                    System.debug('TextAttachment.body is blank, skipping');
+                    continue;
+                }
+
+                ContentVersion cv = new ContentVersion();
+                cv.Title        = String.isNotBlank(t.fileName) ? t.fileName : 'text-attachment';
+                cv.PathOnClient = cv.Title;
+                cv.VersionData  = Blob.valueOf(t.body); // String -> Blob
+                System.debug('Prepared ContentVersion (text), Title=' + cv.Title);
+                contentVersionsToInsert.add(cv);
+            }
+        }
+
+        if (contentVersionsToInsert.isEmpty()) {
+            System.debug('No attachments to convert into ContentVersion');
+            System.debug('=== handleAttachments END (nothing to insert) ===');
+            return;
+        }
+
+        System.debug('Inserting ' + contentVersionsToInsert.size() + ' ContentVersion records');
+        insert contentVersionsToInsert;
+        System.debug('ContentVersion insert completed');
+
+        // Перечитать, чтобы получить ContentDocumentId
+        List<ContentVersion> insertedVersions = [
+            SELECT Id, ContentDocumentId, Title
+            FROM ContentVersion
+            WHERE Id IN :contentVersionsToInsert
+        ];
+        System.debug('Queried back ' + insertedVersions.size() + ' ContentVersion records with ContentDocumentId');
+
+        List<ContentDocumentLink> links = new List<ContentDocumentLink>();
+        for (ContentVersion cv : insertedVersions) {
+            System.debug('Processing inserted ContentVersion Id=' + cv.Id +
+                         ', Title=' + cv.Title +
+                         ', ContentDocumentId=' + cv.ContentDocumentId);
+
+            if (cv.ContentDocumentId == null) {
+                System.debug('ContentDocumentId is null, skipping link creation');
+                continue;
+            }
+
+            ContentDocumentLink cdl = new ContentDocumentLink();
+            cdl.LinkedEntityId    = parentId;
+            cdl.ContentDocumentId = cv.ContentDocumentId;
+            cdl.ShareType         = 'V';          // Viewer
+            cdl.Visibility        = 'AllUsers';
+            links.add(cdl);
+        }
+
+        if (!links.isEmpty()) {
+            System.debug('Inserting ' + links.size() + ' ContentDocumentLink records');
+            insert links;
+            System.debug('ContentDocumentLink insert completed');
+        } else {
+            System.debug('No ContentDocumentLink records to insert');
+        }
+
+        System.debug('=== handleAttachments END ===');
+    }
+
 }
