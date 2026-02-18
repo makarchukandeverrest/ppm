@@ -9,7 +9,7 @@
             <fieldName>Name</fieldName>
             <matchingMethod>Exact</matchingMethod>
         </matchingRuleItems>
-        <ruleStatus>Active</ruleStatus>
+        <ruleStatus>Inactive</ruleStatus>
     </matchingRules>
     <matchingRules>
         <fullName>Improved_Default_Account_Mathing_Rule</fullName>
