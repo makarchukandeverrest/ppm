@@ -87,6 +87,10 @@
                 <behavior>Readonly</behavior>
                 <field>Regional_Manager__c</field>
             </layoutItems>
+            <layoutItems>
+                <behavior>Readonly</behavior>
+                <field>Past_Due_Days__c</field>
+            </layoutItems>
         </layoutColumns>
         <layoutColumns>
             <layoutItems>
