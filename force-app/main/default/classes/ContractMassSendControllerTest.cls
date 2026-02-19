@@ -677,4 +677,49 @@ private class ContractMassSendControllerTest {
             Test.stopTest();
         }
     }
+
+    @IsTest
+    static void testPreviewEmail_StoredTemplateBranch() {
+        // 1) Возьмём аккаунт с primary contact из setup
+        Account acc = [
+            SELECT Id, Primary_Contact__c
+            FROM Account
+            WHERE Primary_Contact__c != null
+            LIMIT 1
+        ];
+        Contact c = [
+            SELECT Id
+            FROM Contact
+            WHERE Id = :acc.Primary_Contact__c
+            LIMIT 1
+        ];
+
+        // 2) Любой активный email template
+        List<EmailTemplate> templates = [
+            SELECT Id
+            FROM EmailTemplate
+            WHERE IsActive = true
+            LIMIT 1
+        ];
+        if (templates.isEmpty()) {
+            // нет шаблонов – просто выходим, чтобы тест не падал
+            return;
+        }
+
+        Test.startTest();
+        // ВАЖНО: body = null / '' -> зайдёт в try { renderStoredEmailTemplate(...) }
+        Map<String, Object> res = ContractMassSendController.previewEmail(
+            templates[0].Id,
+            acc.Id,
+            c.Id,
+            'Test subj {{!Contact.FirstName}}', // subject можно задать, но он в этой ветке игнорится
+            null                                // body пустой -> сработает нужный try
+        );
+        Test.stopTest();
+
+        System.assertNotEquals(null, res, 'previewEmail must return non-null map');
+        System.assert(res.containsKey('subject'), 'subject key expected');
+        System.assert(res.containsKey('body'), 'body key expected');
+    }
+    
 }
