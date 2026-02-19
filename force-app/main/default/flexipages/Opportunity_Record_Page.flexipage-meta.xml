@@ -566,6 +566,12 @@
         </itemInstances>
         <itemInstances>
             <componentInstance>
+                <componentName>dfsle:Status</componentName>
+                <identifier>dfsle_Status</identifier>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
                 <componentInstanceProperties>
                     <name>label</name>
                     <value>Tabs</value>
