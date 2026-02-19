@@ -77,7 +77,7 @@
         <offset>0</offset>
         <versionString>2.0.1</versionString>
     </actionCalls>
-    <apiVersion>66.0</apiVersion>
+    <apiVersion>65.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
     <environments>Default</environments>
     <formulas>
