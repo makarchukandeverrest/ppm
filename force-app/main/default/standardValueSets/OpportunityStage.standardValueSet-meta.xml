@@ -2,9 +2,9 @@
 <StandardValueSet xmlns="http://soap.sforce.com/2006/04/metadata">
     <sorted>false</sorted>
     <standardValue>
-        <fullName>Pending</fullName>
+        <fullName>Opportunity Qualified – Proposal Requested</fullName>
         <default>false</default>
-        <label>Pending</label>
+        <label>Opportunity Qualified – Proposal Requested</label>
         <closed>false</closed>
         <forecastCategory>Pipeline</forecastCategory>
         <probability>10</probability>

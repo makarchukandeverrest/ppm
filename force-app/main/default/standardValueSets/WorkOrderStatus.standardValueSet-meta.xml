@@ -33,9 +33,15 @@
         <groupingString>OnHold</groupingString>
     </standardValue>
     <standardValue>
+        <fullName>Work Order Completed</fullName>
+        <default>false</default>
+        <label>Work Order Completed</label>
+        <groupingString>InProgress</groupingString>
+    </standardValue>
+    <standardValue>
         <fullName>Completed</fullName>
         <default>false</default>
-        <label>Completed</label>
+        <label>Invoice Created</label>
         <groupingString>Completed</groupingString>
     </standardValue>
     <standardValue>
