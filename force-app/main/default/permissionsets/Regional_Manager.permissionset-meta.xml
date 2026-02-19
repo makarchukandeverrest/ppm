@@ -691,6 +691,11 @@
         <field>Contract_Bid__c.Version__c</field>
         <readable>true</readable>
     </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>WorkOrder.Service_Team_Member__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
     <hasActivationRequired>false</hasActivationRequired>
     <label>Regional Manager</label>
     <objectPermissions>

@@ -19,14 +19,8 @@ public with sharing class ProposalLineItemController {
 
   @AuraEnabled
   public static void updateProposalLineItems(List<Deal_Line_Item__c> items) {
-    try {
-      if (items != null && !items.isEmpty()) {
-        Database.update(items);
-      }
-    } catch (Exception e) {
-      throw new AuraHandledException(
-        'Failed to update proposal line items: ' + e.getMessage()
-      );
+    if (items != null && !items.isEmpty()) {
+      Database.update(items);
     }
   }
 
@@ -34,36 +28,24 @@ public with sharing class ProposalLineItemController {
   public static List<Id> createProposalLineItems(
     List<Deal_Line_Item__c> items
   ) {
-    try {
-      if (items != null && !items.isEmpty()) {
-        Database.insert(items);
-        return new List<Id>(new Map<Id, Deal_Line_Item__c>(items).keySet());
-      }
-      return new List<Id>();
-    } catch (Exception e) {
-      throw new AuraHandledException(
-        'Failed to create proposal line items: ' + e.getMessage()
-      );
+    if (items != null && !items.isEmpty()) {
+      Database.insert(items);
+      return new List<Id>(new Map<Id, Deal_Line_Item__c>(items).keySet());
     }
+    return new List<Id>();
   }
 
   @AuraEnabled
   public static void deleteProposalLineItems(List<Id> ids) {
-    try {
-      if (ids != null && !ids.isEmpty()) {
-        List<Deal_Line_Item__c> itemsToDelete = [
-          SELECT Id
-          FROM Deal_Line_Item__c
-          WHERE Id IN :ids
-        ];
-        if (!itemsToDelete.isEmpty()) {
-          Database.delete(itemsToDelete);
-        }
+    if (ids != null && !ids.isEmpty()) {
+      List<Deal_Line_Item__c> itemsToDelete = [
+        SELECT Id
+        FROM Deal_Line_Item__c
+        WHERE Id IN :ids
+      ];
+      if (!itemsToDelete.isEmpty()) {
+        Database.delete(itemsToDelete);
       }
-    } catch (Exception e) {
-      throw new AuraHandledException(
-        'Error deleting proposal line items: ' + e.getMessage()
-      );
     }
   }
 }

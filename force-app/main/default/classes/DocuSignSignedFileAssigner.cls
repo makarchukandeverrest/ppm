@@ -6,7 +6,7 @@ public with sharing class DocuSignSignedFileAssigner {
             return;
         }
 
-        // 1. Collect EmailMessage Ids
+        // 1. Собираем Id email'ов
         Set<Id> emailIds = new Set<Id>();
         for (EmailMessage em : docuSignEmails) {
             if (em != null && em.Id != null) {
@@ -17,7 +17,7 @@ public with sharing class DocuSignSignedFileAssigner {
             return;
         }
 
-        // 2. Files related to EmailMessage (signed DocuSign documents)
+        // 2. Находим файлы, прикреплённые к этим EmailMessage (подписанные DocuSign)
         List<ContentDocumentLink> emailLinks = [
             SELECT Id, ContentDocumentId, LinkedEntityId, ShareType, Visibility
             FROM ContentDocumentLink
@@ -35,9 +35,9 @@ public with sharing class DocuSignSignedFileAssigner {
             return;
         }
 
-        // 3. Latest versions of signed files
+        // 3. Берём последние версии подписанных файлов
         List<ContentVersion> signedVersions = [
-            SELECT Id, ContentDocumentId, Title, FileExtension, IsLatest
+            SELECT Id, ContentDocumentId, Title, IsLatest
             FROM ContentVersion
             WHERE ContentDocumentId IN :signedDocIds
             AND IsLatest = true
@@ -46,67 +46,65 @@ public with sharing class DocuSignSignedFileAssigner {
             return;
         }
 
-        // 4. Collect base titles of signed files (without extension)
-        Set<String> baseTitles = new Set<String>();
+        // 4. Собираем baseTitles для подписанных файлов (Title без расширения)
+        Set<String> signedBaseTitles = new Set<String>();
 
         for (ContentVersion cv : signedVersions) {
             if (String.isBlank(cv.Title)) {
                 continue;
             }
-
-            String title = cv.Title;
-            String ext   = cv.FileExtension;
-
-            if (!String.isBlank(ext)) {
-                String suffix = '.' + ext;
-                if (title.endsWith(suffix)) {
-                    title = title.left(title.length() - suffix.length());
-                }
+            String baseTitle = normalizeTitle(cv.Title);
+            if (!String.isBlank(baseTitle)) {
+                signedBaseTitles.add(baseTitle);
             }
-
-            baseTitles.add(title);
         }
-
-        if (baseTitles.isEmpty()) {
+        if (signedBaseTitles.isEmpty()) {
             return;
         }
 
-        // 5. Find ContentVersion with the same titles (original files on Accounts)
+        // 5. Ищем исходные файлы (latest) по тем же baseTitles
+        //    Здесь сравниваем уже нормализованный Title (без расширения)
         List<ContentVersion> accountSideVersions = [
             SELECT Id, ContentDocumentId, Title, IsLatest
             FROM ContentVersion
             WHERE IsLatest = true
-            AND Title IN :baseTitles
         ];
         if (accountSideVersions.isEmpty()) {
             return;
         }
 
-        // 6. Collect ContentDocumentIds of these original files
+        // 6. Фильтруем accountSideVersions в Apex по baseTitle
+        //    И собираем ContentDocumentId этих файлов
         Set<Id> accountSideDocIds = new Set<Id>();
+        Map<Id, String> docIdToBaseTitle = new Map<Id, String>();
+
         for (ContentVersion cv : accountSideVersions) {
-            accountSideDocIds.add(cv.ContentDocumentId);
+            if (String.isBlank(cv.Title)) {
+                continue;
+            }
+            String baseTitle = normalizeTitle(cv.Title);
+            if (signedBaseTitles.contains(baseTitle)) {
+                accountSideDocIds.add(cv.ContentDocumentId);
+                docIdToBaseTitle.put(cv.ContentDocumentId, baseTitle);
+            }
         }
         if (accountSideDocIds.isEmpty()) {
             return;
         }
 
-        // 7. Get all links for these ContentDocuments to find which are linked to Accounts
+        // 7. Линки этих доков, чтобы найти Account
         List<ContentDocumentLink> allLinksForAccountSideDocs = [
             SELECT Id, ContentDocumentId, LinkedEntityId, ShareType, Visibility
             FROM ContentDocumentLink
             WHERE ContentDocumentId IN :accountSideDocIds
         ];
 
-        // Map ContentDocumentId → AccountId
         Map<Id, Id> docIdToAccountId = new Map<Id, Id>();
         for (ContentDocumentLink cdl : allLinksForAccountSideDocs) {
             if (cdl.LinkedEntityId == null) {
                 continue;
             }
-
             String linkedIdStr = String.valueOf(cdl.LinkedEntityId);
-            // Account Ids start with '001'
             if (linkedIdStr.startsWith('001')) {
                 if (!docIdToAccountId.containsKey(cdl.ContentDocumentId)) {
                     docIdToAccountId.put(cdl.ContentDocumentId, cdl.LinkedEntityId);
@@ -117,16 +115,18 @@ public with sharing class DocuSignSignedFileAssigner {
             return;
         }
 
-        // 8. Map baseTitle → AccountId based on original files
+        // 8. baseTitle -> AccountId
         Map<String, Id> baseTitleToAccountId = new Map<String, Id>();
 
-        for (ContentVersion cv : accountSideVersions) {
-            Id accId = docIdToAccountId.get(cv.ContentDocumentId);
+        for (Id docId : accountSideDocIds) {
+            Id accId = docIdToAccountId.get(docId);
             if (accId == null) {
                 continue;
             }
-
-            String baseTitle = cv.Title; // original title without extension
+            String baseTitle = docIdToBaseTitle.get(docId);
+            if (String.isBlank(baseTitle)) {
+                continue;
+            }
             if (!baseTitleToAccountId.containsKey(baseTitle)) {
                 baseTitleToAccountId.put(baseTitle, accId);
             }
@@ -135,9 +135,9 @@ public with sharing class DocuSignSignedFileAssigner {
             return;
         }
 
-        // 9. Update Title and create ContentDocumentLink from signed files to Accounts
+        // 9. Переименовываем подписанные и линкуем к Account
         List<ContentDocumentLink> newLinks = new List<ContentDocumentLink>();
-        List<ContentVersion>     versionsToUpdate = new List<ContentVersion>();
+        List<ContentVersion> versionsToUpdate = new List<ContentVersion>();
 
         for (ContentVersion signedCv : signedVersions) {
 
@@ -145,13 +145,9 @@ public with sharing class DocuSignSignedFileAssigner {
                 continue;
             }
 
-            // Recalculate base title for signed file
-            String signedBaseTitle = signedCv.Title;
-            if (!String.isBlank(signedCv.FileExtension)) {
-                String suffix = '.' + signedCv.FileExtension;
-                if (signedBaseTitle.endsWith(suffix)) {
-                    signedBaseTitle = signedBaseTitle.left(signedBaseTitle.length() - suffix.length());
-                }
+            String signedBaseTitle = normalizeTitle(signedCv.Title);
+            if (String.isBlank(signedBaseTitle)) {
+                continue;
             }
 
             Id accId = baseTitleToAccountId.get(signedBaseTitle);
@@ -159,25 +155,24 @@ public with sharing class DocuSignSignedFileAssigner {
                 continue;
             }
 
-            // 9.1. Change Title: append " - Completed"
+            // 9.1. Переименовать
             String newTitle = signedCv.Title;
             if (!newTitle.endsWith(' - Completed')) {
                 newTitle += ' - Completed';
             }
 
-            ContentVersion cvForUpdate = new ContentVersion(
+            versionsToUpdate.add(new ContentVersion(
                 Id    = signedCv.Id,
                 Title = newTitle
-            );
-            versionsToUpdate.add(cvForUpdate);
+            ));
 
-            // 9.2. Link signed file to Account
-            ContentDocumentLink link = new ContentDocumentLink();
-            link.ContentDocumentId = signedCv.ContentDocumentId;
-            link.LinkedEntityId    = accId;
-            link.ShareType         = 'V';
-            link.Visibility        = 'AllUsers';
-            newLinks.add(link);
+            // 9.2. Линкануть к Account
+            newLinks.add(new ContentDocumentLink(
+                ContentDocumentId = signedCv.ContentDocumentId,
+                LinkedEntityId    = accId,
+                ShareType         = 'V',
+                Visibility        = 'AllUsers'
+            ));
         }
 
         if (!versionsToUpdate.isEmpty()) {
@@ -186,5 +181,17 @@ public with sharing class DocuSignSignedFileAssigner {
         if (!newLinks.isEmpty()) {
             insert newLinks;
         }
+    }
+
+    // Вспомогательный метод: обрезает расширение по последней точке
+    private static String normalizeTitle(String title) {
+        if (String.isBlank(title)) {
+            return null;
+        }
+        Integer dotIdx = title.lastIndexOf('.');
+        if (dotIdx > 0) {
+            return title.left(dotIdx);
+        }
+        return title;
     }
 }
