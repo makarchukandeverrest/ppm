@@ -9,7 +9,7 @@
         <developerName>Test</developerName>
         <isActive>true</isActive>
         <localPart>work_order_service</localPart>
-        <runAsUser>bohdan.pyrih@everrest.org</runAsUser>
+        <runAsUser>bohdan.pyrih@everrest.org.dev</runAsUser>
     </emailServicesAddresses>
     <functionInactiveAction>Discard</functionInactiveAction>
     <functionName>Work Order Service</functionName>
