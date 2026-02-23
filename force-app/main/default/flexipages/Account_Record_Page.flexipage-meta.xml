@@ -288,8 +288,26 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
+                <fieldItem>Record.Stage__c</fieldItem>
+                <identifier>RecordStage__cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
                 <fieldItem>Record.Pool_Identifier__c</fieldItem>
-                <identifier>RecordPool_Identifier_cField</identifier>
+                <identifier>RecordPool_Identifier__cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldItem>Record.Trust_Level__c</fieldItem>
+                <identifier>RecordTrust_Level__cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldItem>Record.Colored_Trust_Level__c</fieldItem>
+                <identifier>RecordColored_Trust_Level__cField</identifier>
             </fieldInstance>
         </itemInstances>
         <name>Facet-a733ad25-2fac-4feb-8ba3-bfaa7cd6d969</name>
