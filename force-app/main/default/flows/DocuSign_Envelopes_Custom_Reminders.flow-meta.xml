@@ -1,41 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
     <actionCalls>
-        <name>Copy_1_of_Visit_Property_Action</name>
-        <label>Copy 1 of Visit Property Action</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <actionName>NewTask</actionName>
-        <actionType>quickAction</actionType>
-        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
-        <inputParameters>
-            <name>Subject</name>
-            <value>
-                <elementReference>PhoneCallSubject</elementReference>
-            </value>
-        </inputParameters>
-        <inputParameters>
-            <name>OwnerId</name>
-            <value>
-                <elementReference>$Record.Deal__r.Regional_Manager__r.Id</elementReference>
-            </value>
-        </inputParameters>
-        <inputParameters>
-            <name>WhoId</name>
-            <value>
-                <elementReference>$Record.Deal__r.Id</elementReference>
-            </value>
-        </inputParameters>
-        <inputParameters>
-            <name>WhatId</name>
-            <value>
-                <elementReference>$Record.Deal__r.Id</elementReference>
-            </value>
-        </inputParameters>
-        <nameSegment>NewTask</nameSegment>
-        <offset>0</offset>
-    </actionCalls>
-    <actionCalls>
         <name>New_Task_Action_1</name>
         <label>Visit Property Action</label>
         <locationX>0</locationX>
@@ -70,8 +35,224 @@
         <nameSegment>NewTask</nameSegment>
         <offset>0</offset>
     </actionCalls>
+    <actionCalls>
+        <name>Phone_Call_Task</name>
+        <label>Phone Call Task</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>NewTask</actionName>
+        <actionType>quickAction</actionType>
+        <connector>
+            <targetReference>New_Task_Action_1</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>Subject</name>
+            <value>
+                <elementReference>PhoneCallSubject</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>OwnerId</name>
+            <value>
+                <elementReference>$Record.Deal__r.Regional_Manager__r.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>WhatId</name>
+            <value>
+                <elementReference>$Record.Deal__r.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>NewTask</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
+        <name>Send_Reminder_1</name>
+        <label>Send Reminder 1</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>recipientAddresses</name>
+            <value>
+                <collectionElements>
+                    <elementReference>Get_Recipients.dfsle__Email__c</elementReference>
+                </collectionElements>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>ccAddresses</name>
+            <value>
+                <collectionElements>
+                    <elementReference>$Record.Deal__r.Regional_Manager__r.Email</elementReference>
+                </collectionElements>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderType</name>
+            <value>
+                <inputConfiguratorMode>Custom</inputConfiguratorMode>
+                <stringValue>OrgWideEmailAddress</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderAddress</name>
+            <value>
+                <inputConfiguratorMode>Custom</inputConfiguratorMode>
+                <stringValue>sf_workorders@premierswim.com</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>composeEmailContent</name>
+            <value>
+                <stringValue>True</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>ReminderSubject</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <inputConfiguratorMode>Custom</inputConfiguratorMode>
+                <stringValue>&lt;p&gt;{!Reminder1Body}&lt;/p&gt;</stringValue>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+        <offset>0</offset>
+        <versionString>2.0.1</versionString>
+    </actionCalls>
+    <actionCalls>
+        <name>Send_Reminder_2</name>
+        <label>Send Reminder 2</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>recipientAddresses</name>
+            <value>
+                <collectionElements>
+                    <elementReference>Get_Recipients.dfsle__Email__c</elementReference>
+                </collectionElements>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>ccAddresses</name>
+            <value>
+                <collectionElements>
+                    <elementReference>$Record.Deal__r.Regional_Manager__r.Email</elementReference>
+                </collectionElements>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderType</name>
+            <value>
+                <inputConfiguratorMode>Custom</inputConfiguratorMode>
+                <stringValue>OrgWideEmailAddress</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderAddress</name>
+            <value>
+                <inputConfiguratorMode>Custom</inputConfiguratorMode>
+                <stringValue>sf_workorders@premierswim.com</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>composeEmailContent</name>
+            <value>
+                <stringValue>True</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>ReminderSubject</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <inputConfiguratorMode>Custom</inputConfiguratorMode>
+                <stringValue>&lt;p&gt;{!Reminder2Body}&lt;/p&gt;</stringValue>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+        <offset>0</offset>
+        <versionString>2.0.1</versionString>
+    </actionCalls>
+    <actionCalls>
+        <name>Send_Reminder_3</name>
+        <label>Send Reminder 3</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>recipientAddresses</name>
+            <value>
+                <collectionElements>
+                    <elementReference>Get_Recipients.dfsle__Email__c</elementReference>
+                </collectionElements>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>ccAddresses</name>
+            <value>
+                <collectionElements>
+                    <elementReference>$Record.Deal__r.Regional_Manager__r.Email</elementReference>
+                </collectionElements>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderType</name>
+            <value>
+                <inputConfiguratorMode>Custom</inputConfiguratorMode>
+                <stringValue>OrgWideEmailAddress</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderAddress</name>
+            <value>
+                <inputConfiguratorMode>Custom</inputConfiguratorMode>
+                <stringValue>sf_workorders@premierswim.com</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>composeEmailContent</name>
+            <value>
+                <stringValue>True</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>ReminderSubject</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <inputConfiguratorMode>Custom</inputConfiguratorMode>
+                <stringValue>&lt;p&gt;{!Reminder3Body}&lt;/p&gt;</stringValue>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+        <offset>0</offset>
+        <versionString>2.0.1</versionString>
+    </actionCalls>
     <apiVersion>66.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <description>Version for DEBUG</description>
     <environments>Default</environments>
     <formulas>
         <name>PhoneCallSubject</name>
@@ -107,9 +288,159 @@ $Record.Deal__r.Name &amp;
         </value>
     </processMetadataValues>
     <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Get_Recipients</name>
+        <label>Get Recipients</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Send_Reminder_1</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>dfsle__Envelope__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>dfsle__Role__c</field>
+            <operator>Contains</operator>
+            <value>
+                <stringValue>Recipient</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>dfsle__Recipient__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Recipients_2</name>
+        <label>Get Recipients 2</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Send_Reminder_2</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>dfsle__Envelope__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>dfsle__Role__c</field>
+            <operator>Contains</operator>
+            <value>
+                <stringValue>Recipient</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>dfsle__Recipient__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Recipients_3</name>
+        <label>Get Recipients 3</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Send_Reminder_3</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>dfsle__Envelope__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>dfsle__Role__c</field>
+            <operator>Contains</operator>
+            <value>
+                <stringValue>Recipient</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>dfsle__Recipient__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Regional_Manager</name>
+        <label>Get Regional Manager</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Recipients</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Deal__r.Regional_Manager__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>User</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Regional_Manager_2</name>
+        <label>Get Regional Manager 2</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Recipients_2</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Deal__r.Regional_Manager__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>User</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Regional_Manager_3</name>
+        <label>Regional Manager 3</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Recipients_3</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.Deal__r.Regional_Manager__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>User</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
     <start>
         <locationX>0</locationX>
         <locationY>0</locationY>
+        <connector>
+            <targetReference>Phone_Call_Task</targetReference>
+        </connector>
         <filterLogic>and</filterLogic>
         <filters>
             <field>Status__c</field>
@@ -122,6 +453,9 @@ $Record.Deal__r.Name &amp;
         <recordTriggerType>Create</recordTriggerType>
         <scheduledPaths>
             <name>X3_Days_after_Proposal</name>
+            <connector>
+                <targetReference>Get_Regional_Manager</targetReference>
+            </connector>
             <label>3 Days after Proposal</label>
             <offsetNumber>-3</offsetNumber>
             <offsetUnit>Days</offsetUnit>
@@ -130,6 +464,9 @@ $Record.Deal__r.Name &amp;
         </scheduledPaths>
         <scheduledPaths>
             <name>X4_Days_After_Reminder_1</name>
+            <connector>
+                <targetReference>Get_Regional_Manager_2</targetReference>
+            </connector>
             <label>4 Days After Reminder 1</label>
             <offsetNumber>7</offsetNumber>
             <offsetUnit>Days</offsetUnit>
@@ -138,6 +475,9 @@ $Record.Deal__r.Name &amp;
         </scheduledPaths>
         <scheduledPaths>
             <name>X3_Days_After_Reminder_1</name>
+            <connector>
+                <targetReference>Regional_Manager_3</targetReference>
+            </connector>
             <label>3 Days After Reminder 2</label>
             <offsetNumber>10</offsetNumber>
             <offsetUnit>Days</offsetUnit>
@@ -146,9 +486,6 @@ $Record.Deal__r.Name &amp;
         </scheduledPaths>
         <scheduledPaths>
             <name>X4_Days_After_All_Reminders</name>
-            <connector>
-                <targetReference>Copy_1_of_Visit_Property_Action</targetReference>
-            </connector>
             <label>4 Days After All Reminders</label>
             <offsetNumber>14</offsetNumber>
             <offsetUnit>Days</offsetUnit>
@@ -157,9 +494,6 @@ $Record.Deal__r.Name &amp;
         </scheduledPaths>
         <scheduledPaths>
             <name>X1_Day_After_First_Activty</name>
-            <connector>
-                <targetReference>New_Task_Action_1</targetReference>
-            </connector>
             <label>1 Day After First Activty</label>
             <offsetNumber>15</offsetNumber>
             <offsetUnit>Days</offsetUnit>
@@ -169,4 +503,24 @@ $Record.Deal__r.Name &amp;
         <triggerType>RecordAfterSave</triggerType>
     </start>
     <status>Draft</status>
+    <textTemplates>
+        <name>Reminder1Body</name>
+        <isViewedAsPlainText>false</isViewedAsPlainText>
+        <text>&lt;p&gt;Hi {!Get_Recipients.Name},&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Just a quick note to confirm that the repair and supplies proposal came through on your end.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;If you didn’t receive it or would like it to be resent, I’m glad to do so. Please let me know if you have any questions or would like to review any items together.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Thank you,&lt;/p&gt;&lt;p&gt;{!Get_Regional_Manager.Name}&lt;/p&gt;</text>
+    </textTemplates>
+    <textTemplates>
+        <name>Reminder2Body</name>
+        <isViewedAsPlainText>false</isViewedAsPlainText>
+        <text>&lt;p&gt;Hi {!Get_Recipients_2.Name},&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Just a quick note to confirm that the repair and supplies proposal came through on your end.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;If you didn’t receive it or would like it to be resent, I’m glad to do so. Please let me know if you have any questions or would like to review any items together.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Thank you,&lt;/p&gt;&lt;p&gt;{!Get_Regional_Manager_2.Name}&lt;/p&gt;</text>
+    </textTemplates>
+    <textTemplates>
+        <name>Reminder3Body</name>
+        <isViewedAsPlainText>false</isViewedAsPlainText>
+        <text>&lt;p&gt;Hi {!Get_Recipients_3.Name},&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Just following up on my previous email.&lt;/p&gt;&lt;p&gt;If helpful, I’d be glad to schedule a quick call or site visit to walk through the proposed repairs and supplies, answer any questions, and align on priorities.&lt;/p&gt;&lt;p&gt;Please let me know what works best for you.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Thank you,&lt;/p&gt;&lt;p&gt;{!Regional_Manager_3.Name}&lt;/p&gt;</text>
+    </textTemplates>
+    <textTemplates>
+        <name>ReminderSubject</name>
+        <isViewedAsPlainText>false</isViewedAsPlainText>
+        <text>&lt;p&gt;{!$Record.Account__r.Name} – Pool Repairs &amp;amp; Supplies Proposal&lt;/p&gt;</text>
+    </textTemplates>
 </Flow>
