@@ -5,7 +5,7 @@
     <displayType>button</displayType>
     <encodingKey>UTF-8</encodingKey>
     <linkType>url</linkType>
-    <masterLabel>Send Proposal with Appointment</masterLabel>
+    <masterLabel>Send Proposal with Provisions</masterLabel>
     <openType>replace</openType>
     <protected>false</protected>
     <url>{!URLFOR($Site.BaseUrl + &apos;/apex/dfsle__gendocumentgenerator&apos;, null, [sId = Opportunity.Id, templateId = &apos;a0JVv000006Zca1MAC&apos;, recordId = Opportunity.Id, title = &apos;Proposal with Appointment&apos;])}</url>
