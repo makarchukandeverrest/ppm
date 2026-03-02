@@ -3,11 +3,11 @@ public with sharing class DocuSignSignedFileAssignerTest {
 
     @TestSetup
     static void setupTestData() {
-        // Account
+        // 1. Account
         Account acc = new Account(Name = 'Test Account');
         insert acc;
 
-        // Original file on Account (Title WITHOUT .pdf)
+        // 2. Оригинальный файл на Account (Title БЕЗ .pdf в Title, но с .pdf в PathOnClient)
         ContentVersion originalCv = new ContentVersion(
             Title          = 'Test-2025-2026 Bids-Artem Test 10081 A--Contract',
             PathOnClient   = 'Test-2025-2026 Bids-Artem Test 10081 A--Contract.pdf',
@@ -16,13 +16,15 @@ public with sharing class DocuSignSignedFileAssignerTest {
         );
         insert originalCv;
 
-        // Reload to get ContentDocumentId
+        // Получаем ContentDocumentId
         originalCv = [
             SELECT Id, ContentDocumentId, Title
             FROM ContentVersion
             WHERE Id = :originalCv.Id
+            LIMIT 1
         ];
 
+        // Линкуем оригинальный файл к Account
         ContentDocumentLink cdlAcc = new ContentDocumentLink(
             ContentDocumentId = originalCv.ContentDocumentId,
             LinkedEntityId    = acc.Id,
@@ -31,17 +33,17 @@ public with sharing class DocuSignSignedFileAssignerTest {
         );
         insert cdlAcc;
 
-        // EmailMessage (minimal valid fields)
+        // 3. EmailMessage (минимально валидный)
         EmailMessage em = new EmailMessage(
             Subject     = 'DocuSign Signed Document',
             FromAddress = 'sender@example.com',
             ToAddress   = 'test@example.com',
-            Status      = '3',      // "Read" in many orgs
+            Status      = '3',      // типичное значение "Read"/"Sent"[web:26]
             Incoming    = false
         );
         insert em;
 
-        // Signed file on Email (Title WITH .pdf)
+        // 4. Подписанный файл на Email (Title С .pdf)
         ContentVersion signedCv = new ContentVersion(
             Title          = 'Test-2025-2026 Bids-Artem Test 10081 A--Contract.pdf',
             PathOnClient   = 'Test-2025-2026 Bids-Artem Test 10081 A--Contract.pdf',
@@ -54,8 +56,10 @@ public with sharing class DocuSignSignedFileAssignerTest {
             SELECT Id, ContentDocumentId, Title
             FROM ContentVersion
             WHERE Id = :signedCv.Id
+            LIMIT 1
         ];
 
+        // Линкуем подписанный файл к Email
         ContentDocumentLink cdlEmail = new ContentDocumentLink(
             ContentDocumentId = signedCv.ContentDocumentId,
             LinkedEntityId    = em.Id,
@@ -66,31 +70,60 @@ public with sharing class DocuSignSignedFileAssignerTest {
     }
 
     @IsTest
-    static void testAssignDocuments_SignedFileLinkedToAccountAndRenamed() {
+    static void testAssignDocuments_Positive_LinkAndRename() {
+        // Берём тестовый Account и Email
+        Account acc = [
+            SELECT Id, Name
+            FROM Account
+            WHERE Name = 'Test Account'
+            LIMIT 1
+        ];
+
         EmailMessage em = [
             SELECT Id
             FROM EmailMessage
             LIMIT 1
         ];
-    
+
+        // Находим подписанный файл ДО запуска логики
+        ContentVersion signedBefore = [
+            SELECT Id, Title, ContentDocumentId
+            FROM ContentVersion
+            WHERE Title = 'Test-2025-2026 Bids-Artem Test 10081 A--Contract.pdf'
+            LIMIT 1
+        ];
+
         Test.startTest();
         DocuSignSignedFileAssigner.assignDocuments(new List<EmailMessage>{ em });
         Test.stopTest();
-    
-        // вместо жёсткой проверки — просто убеждаемся,
-        // что код отработал без исключений и что вообще есть хоть какие-то ContentVersion
-        Integer cvCount = [
+
+        // 1. Проверяем, что файл ПРИВЯЗАН к Account (через ContentDocumentLink)
+        Integer linkCount = [
             SELECT COUNT()
+            FROM ContentDocumentLink
+            WHERE ContentDocumentId = :signedBefore.ContentDocumentId
+            AND LinkedEntityId = :acc.Id
+        ];
+        System.assertEquals(
+            1,
+            linkCount,
+            'Signed file must be linked to the Account.'
+        );
+
+        // 2. Проверяем, что файл ПЕРЕИМЕНОВАН (Title заканчивается на " - Completed")
+        ContentVersion signedAfter = [
+            SELECT Id, Title
             FROM ContentVersion
+            WHERE Id = :signedBefore.Id
+            LIMIT 1
         ];
         System.assertEquals(
             true,
-            cvCount >= 0,
-            'Dummy assert so test always passes.'
+            signedAfter.Title != null &&
+            signedAfter.Title.endsWith(' - Completed'),
+            'Signed file Title must be renamed with " - Completed".'
         );
     }
-    
-    
 
     @IsTest
     static void testAssignDocuments_BlankSignedTitle_IsIgnored() {
@@ -106,7 +139,7 @@ public with sharing class DocuSignSignedFileAssignerTest {
             LIMIT 1
         ];
 
-        // Signed file with blank title attached to the same email
+        // Signed file with BLANK title attached to the same email
         ContentVersion blankTitleCv = new ContentVersion(
             Title          = '',
             PathOnClient   = 'blank.pdf',
@@ -119,6 +152,7 @@ public with sharing class DocuSignSignedFileAssignerTest {
             SELECT Id, ContentDocumentId, Title
             FROM ContentVersion
             WHERE Id = :blankTitleCv.Id
+            LIMIT 1
         ];
 
         ContentDocumentLink blankCdlEmail = new ContentDocumentLink(
@@ -133,7 +167,7 @@ public with sharing class DocuSignSignedFileAssignerTest {
         DocuSignSignedFileAssigner.assignDocuments(new List<EmailMessage>{ em });
         Test.stopTest();
 
-        // Must not be linked to Account
+        // 1. Не должен быть залинкован к Account
         Integer linkCount = [
             SELECT COUNT()
             FROM ContentDocumentLink
@@ -146,7 +180,7 @@ public with sharing class DocuSignSignedFileAssignerTest {
             'Blank-titled signed file must be ignored and not linked to Account.'
         );
 
-        // Must not be renamed
+        // 2. Не должен быть переименован
         ContentVersion postCheck = [
             SELECT Id, Title
             FROM ContentVersion
@@ -162,5 +196,19 @@ public with sharing class DocuSignSignedFileAssignerTest {
             renamed,
             'Blank-titled signed file must not be renamed with " - Completed".'
         );
+    }
+
+    @IsTest
+    static void testAssignDocuments_NullAndEmptyInput_EarlyReturn() {
+        Test.startTest();
+        // null
+        DocuSignSignedFileAssigner.assignDocuments(null);
+
+        // пустой список
+        DocuSignSignedFileAssigner.assignDocuments(new List<EmailMessage>());
+        Test.stopTest();
+
+        // Если сюда дошли без исключений — ок.
+        System.assertEquals(true, true, 'Method must safely handle null and empty input.');
     }
 }
