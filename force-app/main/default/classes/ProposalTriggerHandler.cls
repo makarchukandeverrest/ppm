@@ -21,7 +21,7 @@ public without sharing class ProposalTriggerHandler extends TriggerHandler{
             }
         }
         if(!oppsWithChangedAccount.isEmpty()){
-            OpportunityContactSyncHandler.assignContacts(oppsWithChangedAccount);
+            OpportunityContactSyncService.assignContacts(oppsWithChangedAccount);
         }
 
         ProposalStatusDefiner.handleStatusChange(newList, oldMap);

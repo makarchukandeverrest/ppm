@@ -1,4 +1,4 @@
-public without sharing class ProposalStatusDefiner {
+public inherited sharing class ProposalStatusDefiner {
 
     // Not allow change Opportunity status backwards
     public static void handleStatusChange(List<Opportunity> newOppList, Map<Id, Opportunity> oldOppMap) {
