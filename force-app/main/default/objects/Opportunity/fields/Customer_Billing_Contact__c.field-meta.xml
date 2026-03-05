@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Customer_Billing_Contact__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <label>Customer Billing Contact</label>
+    <referenceTo>Contact</referenceTo>
+    <relationshipLabel>Proposals (Customer Billing Contact)</relationshipLabel>
+    <relationshipName>Proposals3</relationshipName>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>
