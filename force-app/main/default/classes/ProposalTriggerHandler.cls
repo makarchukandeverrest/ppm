@@ -1,4 +1,4 @@
-public with sharing class ProposalTriggerHandler extends TriggerHandler{
+public without sharing class ProposalTriggerHandler extends TriggerHandler{
     List<Opportunity> newList;
     Map<Id,Opportunity> oldMap;
 

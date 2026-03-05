@@ -1,4 +1,4 @@
-public with sharing class ProposalCustomerAssigner {
+public without sharing class ProposalCustomerAssigner {
     public static void assignCustomer(List<Opportunity> opps){
         Set<String> accountNames = new Set<String>();
         for(Opportunity opp : opps){

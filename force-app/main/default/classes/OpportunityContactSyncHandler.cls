@@ -1,4 +1,4 @@
-public with sharing class OpportunityContactSyncHandler {
+public without sharing class OpportunityContactSyncHandler {
     public static void assignContacts(List<Opportunity> opps) {
         for(Opportunity opp : opps){
             if(opp.AccountId != null){
