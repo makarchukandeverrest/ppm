@@ -14,6 +14,16 @@ public with sharing class ProposalTriggerHandler extends TriggerHandler{
 	}
 
     protected override void beforeUpdate(){
+        List<Opportunity> oppsWithChangedAccount = new List<Opportunity>();
+        for(Opportunity opp : newList){
+            if(opp.AccountId != oldMap.get(opp.Id).AccountId){
+                oppsWithChangedAccount.add(opp);
+            }
+        }
+        if(!oppsWithChangedAccount.isEmpty()){
+            OpportunityContactSyncHandler.assignContacts(oppsWithChangedAccount);
+        }
+
         ProposalStatusDefiner.handleStatusChange(newList, oldMap);
     }
 }

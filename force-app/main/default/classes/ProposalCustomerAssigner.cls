@@ -17,7 +17,14 @@ public with sharing class ProposalCustomerAssigner {
             if(opp.Name != null && opp.Account_QuickBooks_Id__c == null){
                 opp.AccountId = accountMap.get(opp.Name.substringBefore(':').trim());
             }
+            if(opp.AccountId != null){
+                opp.Customer_Billing_Contact__c = opp.Account.Billing_Contact__c;
+                opp.Customer_Maintenance_Contact__c = opp.Account.Maintenance_Contact__c;
+                opp.Customer_Primary_Contact__c = opp.Account.Primary_Contact__c;
+                opp.Customer_Secondary_Contact__c = opp.Account.Secondary_Contact__c;
+            }
         }
+        
 
     }
 }
