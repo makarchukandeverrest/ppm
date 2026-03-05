@@ -49,6 +49,8 @@
     <showDetails>true</showDetails>
     <showGrandTotal>true</showGrandTotal>
     <showSubTotals>true</showSubTotals>
+    <sortColumn>WorkOrder$Days_Since_Created__c</sortColumn>
+    <sortOrder>Desc</sortOrder>
     <timeFrameFilter>
         <dateColumn>WorkOrder$CreatedDate</dateColumn>
         <interval>INTERVAL_CURRENT</interval>
