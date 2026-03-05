@@ -150,34 +150,25 @@ public with sharing class InvoiceQuickBooksProposalLinker {
                     String accountName = extractAccountName(invoice.Name);
                     if (String.isNotBlank(accountName)) {
                         List<Account> matches = potentialAccountsByFragment.get(accountName);
-
+                
                         if (matches != null && !matches.isEmpty()) {
-                            Account bestMatch = null;
                             String target = accountName.toLowerCase();
-
-                            //Full match first
+                            Account exactMatch;
+                            
+                            //Find exact match Account
                             for (Account acc : matches) {
                                 if (acc.Name != null && acc.Name.toLowerCase() == target) {
-                                    bestMatch = acc;
+                                    exactMatch = acc;
                                     break;
                                 }
                             }
-
-                            //Best fuzzy match
-                            if (bestMatch == null) {
-                                for (Account acc : matches) {
-                                    if (acc.Name == null) continue;
-
-                                    if (bestMatch == null) {
-                                        bestMatch = acc;
-                                    } else if (acc.Name.length() > bestMatch.Name.length()) {
-                                        bestMatch = acc;
-                                    }
+                
+                            if (exactMatch != null) {
+                                invoice.Customer__c = exactMatch.Id;
+                            } else { //Best fuzzy match
+                                if (matches.size() == 1) {
+                                    invoice.Customer__c = matches[0].Id;
                                 }
-                            }
-
-                            if (bestMatch != null) {
-                                invoice.Customer__c = bestMatch.Id;
                             }
                         }
                     }
