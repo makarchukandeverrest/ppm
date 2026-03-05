@@ -21,7 +21,6 @@ public inherited sharing class ProposalStatusDefiner {
             return;
         }
     
-        // Собираем Id связанных записей (без дубликатов)
         Set<Id> proposalIds  = new Set<Id>();
         Set<Id> workOrderIds = new Set<Id>();
     
