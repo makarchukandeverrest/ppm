@@ -11,27 +11,30 @@ public with sharing class InvoiceQuickBooksProposalLinker {
             Set<String> proposalQuickBooksIds = new Set<String>();
             Set<String> workOrderQuickBooksIds = new Set<String>();
             Set<String> proposalReferenceNumbers = new Set<String>();
-            List<String> accountNames = new List<String>();
+            Set<String> accountNameFragments = new Set<String>();
 
             Map<String, Id> quickBooksIdToOpportunityId = new Map<String, Id>();
             Map<String, Id> referenceNumberToOpportunityId = new Map<String, Id>();
             Map<String, Id> quickBooksIdToWorkOrderId = new Map<String, Id>();
 
+            Map<String, List<Account>> potentialAccountsByFragment = new Map<String, List<Account>>();
+
             for (Invoice__c invoice : newList) {
-                // Safe account name extraction
-                if (String.isNotBlank(invoice.Name) && invoice.Name.contains(':')) {
-                    accountNames.add(invoice.Name.split(':')[0].trim());
+                if (String.isNotBlank(invoice.Name)) {
+                    String accountName = extractAccountName(invoice.Name);
+                    if (String.isNotBlank(accountName)) {
+                        accountNameFragments.add(accountName.trim());
+                    }
                 }
-                
+
                 if (String.isNotBlank(invoice.Proposal_QuickBooks_Id__c)) {
                     proposalQuickBooksIds.add(invoice.Proposal_QuickBooks_Id__c);
                 }
-                
+
                 if (String.isNotBlank(invoice.WorkOrder_QuickBooks_Id__c)) {
                     workOrderQuickBooksIds.add(invoice.WorkOrder_QuickBooks_Id__c);
                 }
-                
-                // IMPROVED MEMO__C PROCESSING
+
                 if (String.isNotBlank(invoice.Memo__c)) {
                     String referenceNumber = extractReferenceNumber(invoice.Memo__c);
                     if (String.isNotBlank(referenceNumber)) {
@@ -40,84 +43,144 @@ public with sharing class InvoiceQuickBooksProposalLinker {
                 }
             }
 
-            // Get accounts
-            List<Account> accounts = [SELECT Id, Name FROM Account WHERE Name IN :accountNames LIMIT 10000];
-            Map<String, Id> nameToAccount = new Map<String, Id>();
-            for (Account a : accounts) {
-                nameToAccount.put(a.Name, a.Id);
+            if (!accountNameFragments.isEmpty()) {
+                List<String> conditions = new List<String>();
+
+                for (String fragment : accountNameFragments) {
+                    String safeFragment = String.escapeSingleQuotes(fragment.trim());
+                    if (String.isNotBlank(safeFragment)) {
+                        conditions.add('Name LIKE \'%' + safeFragment + '%\'');
+                    }
+                }
+
+                if (!conditions.isEmpty()) {
+                    String query = 'SELECT Id, Name FROM Account WHERE ' +
+                                   String.join(conditions, ' OR ') +
+                                   ' LIMIT 5000';
+
+                    List<Account> potentialAccounts = Database.query(query);
+
+                    for (Account acc : potentialAccounts) {
+                        String accNameLower = acc.Name != null ? acc.Name.toLowerCase() : '';
+                        for (String fragment : accountNameFragments) {
+                            String fragmentLower = fragment.toLowerCase();
+                            if (accNameLower.contains(fragmentLower)) {
+                                if (!potentialAccountsByFragment.containsKey(fragment)) {
+                                    potentialAccountsByFragment.put(fragment, new List<Account>());
+                                }
+                                potentialAccountsByFragment.get(fragment).add(acc);
+                                //Brake for cases when one name can match multiple fragments
+                                break;
+                            }
+                        }
+                    }
+                }
             }
 
-            // Opportunity lookup logic
             if (!proposalQuickBooksIds.isEmpty()) {
                 for (Opportunity opp : [
-                    SELECT Id, QuickBooks_Id__c, Reference_Number__c 
-                    FROM Opportunity 
+                    SELECT Id, QuickBooks_Id__c, Reference_Number__c
+                    FROM Opportunity
                     WHERE QuickBooks_Id__c IN :proposalQuickBooksIds
                     LIMIT 10000
                 ]) {
-                    quickBooksIdToOpportunityId.put(opp.QuickBooks_Id__c, opp.Id);
+                    if (String.isNotBlank(opp.QuickBooks_Id__c)) {
+                        quickBooksIdToOpportunityId.put(opp.QuickBooks_Id__c, opp.Id);
+                    }
                     if (String.isNotBlank(opp.Reference_Number__c)) {
                         referenceNumberToOpportunityId.put(opp.Reference_Number__c, opp.Id);
                     }
                 }
             }
-            
-            // ALWAYS search by reference numbers, even if QuickBooks Ids exist
+
             if (!proposalReferenceNumbers.isEmpty()) {
                 for (Opportunity opp : [
-                    SELECT Id, Reference_Number__c 
-                    FROM Opportunity 
+                    SELECT Id, Reference_Number__c
+                    FROM Opportunity
                     WHERE Reference_Number__c IN :proposalReferenceNumbers
                     LIMIT 10000
                 ]) {
-                    referenceNumberToOpportunityId.put(opp.Reference_Number__c, opp.Id);
+                    if (String.isNotBlank(opp.Reference_Number__c)) {
+                        referenceNumberToOpportunityId.put(opp.Reference_Number__c, opp.Id);
+                    }
                 }
             }
 
-            // Get Work Orders
+            // Work Orders
             if (!workOrderQuickBooksIds.isEmpty()) {
                 for (WorkOrder wo : [
-                    SELECT Id, AccountId, Quick_Books_Id__c 
-                    FROM WorkOrder  
-                    WHERE Quick_Books_Id__c IN :workOrderQuickBooksIds AND AccountId != null
+                    SELECT Id, AccountId, Quick_Books_Id__c
+                    FROM WorkOrder
+                    WHERE Quick_Books_Id__c IN :workOrderQuickBooksIds
+                          AND AccountId != null
                     LIMIT 10000
                 ]) {
-                    quickBooksIdToWorkOrderId.put(wo.Quick_Books_Id__c, wo.Id);
+                    if (String.isNotBlank(wo.Quick_Books_Id__c)) {
+                        quickBooksIdToWorkOrderId.put(wo.Quick_Books_Id__c, wo.Id);
+                    }
                 }
             }
 
-            // Process invoices
             for (Invoice__c invoice : newList) {
+
                 // Work Order assignment
-                if (String.isNotBlank(invoice.WorkOrder_QuickBooks_Id__c) && 
+                if (String.isNotBlank(invoice.WorkOrder_QuickBooks_Id__c) &&
                     quickBooksIdToWorkOrderId.containsKey(invoice.WorkOrder_QuickBooks_Id__c)) {
+
                     invoice.Work_Order__c = quickBooksIdToWorkOrderId.get(invoice.WorkOrder_QuickBooks_Id__c);
                 }
 
                 // Proposal assignment
                 if (String.isNotBlank(invoice.Proposal_QuickBooks_Id__c) &&
                     quickBooksIdToOpportunityId.containsKey(invoice.Proposal_QuickBooks_Id__c)) {
+
                     invoice.Proposal__c = quickBooksIdToOpportunityId.get(invoice.Proposal_QuickBooks_Id__c);
+
                 } else if (String.isNotBlank(invoice.Memo__c)) {
                     String referenceNumber = extractReferenceNumber(invoice.Memo__c);
-                    if (String.isNotBlank(referenceNumber) && 
+                    if (String.isNotBlank(referenceNumber) &&
                         referenceNumberToOpportunityId.containsKey(referenceNumber)) {
+
                         invoice.Proposal__c = referenceNumberToOpportunityId.get(referenceNumber);
                     }
                 }
 
-                // Customer assignment
+                // Customer fuzzy assignment
                 if (String.isNotBlank(invoice.Name)) {
                     String accountName = extractAccountName(invoice.Name);
-                    if (String.isNotBlank(accountName) && nameToAccount.containsKey(accountName)) {
-                        invoice.Customer__c = nameToAccount.get(accountName);
+                    if (String.isNotBlank(accountName)) {
+                        List<Account> matches = potentialAccountsByFragment.get(accountName);
+                
+                        if (matches != null && !matches.isEmpty()) {
+                            String target = accountName.toLowerCase();
+                            Account exactMatch;
+                            
+                            //Find exact match Account
+                            for (Account acc : matches) {
+                                if (acc.Name != null && acc.Name.toLowerCase() == target) {
+                                    exactMatch = acc;
+                                    break;
+                                }
+                            }
+                
+                            if (exactMatch != null) {
+                                invoice.Customer__c = exactMatch.Id;
+                            } else { //Best fuzzy match
+                                if (matches.size() == 1) {
+                                    invoice.Customer__c = matches[0].Id;
+                                }
+                            }
+                        }
                     }
                 }
             }
-            
+
         } catch (Exception e) {
-            System.debug('Error in InvoiceQuickBooksProposalLinker: ' + e.getMessage() + 
-                        ' StackTrace: ' + e.getStackTraceString());
+            System.debug(
+                'Error in InvoiceQuickBooksProposalLinker: ' +
+                e.getMessage() +
+                ' StackTrace: ' + e.getStackTraceString()
+            );
         }
     }
 
@@ -126,19 +189,19 @@ public with sharing class InvoiceQuickBooksProposalLinker {
      */
     private String extractReferenceNumber(String memo) {
         if (String.isBlank(memo)) return null;
-        
+
         try {
-            // Look for patterns: "Estimate 12345:", "12345:", etc.
+            // Patterns: "Estimate 12345:", "12345:", etc.
             Pattern pattern = Pattern.compile('(?:Estimate)?\\s*(\\d+)(?::|\\s|$)');
             Matcher matcher = pattern.matcher(memo);
-            
+
             if (matcher.find()) {
                 return matcher.group(1);
             }
         } catch (Exception e) {
             System.debug('Error extracting reference number from memo: ' + memo + ' - ' + e.getMessage());
         }
-        
+
         return null;
     }
 
@@ -147,18 +210,15 @@ public with sharing class InvoiceQuickBooksProposalLinker {
      */
     private String extractAccountName(String invoiceName) {
         if (String.isBlank(invoiceName)) return null;
-        
+
         try {
             if (invoiceName.contains(':')) {
                 return invoiceName.split(':')[0].trim();
-            } else if (invoiceName.contains('Contract') || invoiceName.contains('Service')) {
-                // Logic for other formats if needed
-                return invoiceName;
             }
         } catch (Exception e) {
             System.debug('Error extracting account name from: ' + invoiceName + ' - ' + e.getMessage());
         }
-        
+
         return null;
     }
 }
