@@ -178,8 +178,46 @@ public with sharing class DocuSignSignedFileAssigner {
         if (!versionsToUpdate.isEmpty()) {
             update versionsToUpdate;
         }
+
         if (!newLinks.isEmpty()) {
-            insert newLinks;
+            // Собираем пары (ContentDocumentId, AccountId), которые хотим создать
+            Set<String> pairs = new Set<String>();
+            for (ContentDocumentLink l : newLinks) {
+                pairs.add(l.ContentDocumentId + '|' + l.LinkedEntityId);
+            }
+
+            // Читаем уже существующие линки для этих docId на эти же Account
+            Set<Id> docIds = new Set<Id>();
+            Set<Id> accIds = new Set<Id>();
+            for (ContentDocumentLink l : newLinks) {
+                docIds.add(l.ContentDocumentId);
+                accIds.add(l.LinkedEntityId);
+            }
+
+            List<ContentDocumentLink> existing = [
+                SELECT ContentDocumentId, LinkedEntityId
+                FROM ContentDocumentLink
+                WHERE ContentDocumentId IN :docIds
+                AND LinkedEntityId IN :accIds
+            ];
+
+            Set<String> existingPairs = new Set<String>();
+            for (ContentDocumentLink e : existing) {
+                existingPairs.add(e.ContentDocumentId + '|' + e.LinkedEntityId);
+            }
+
+            // Оставляем только те, которых ещё нет
+            List<ContentDocumentLink> filtered = new List<ContentDocumentLink>();
+            for (ContentDocumentLink l : newLinks) {
+                String key = l.ContentDocumentId + '|' + l.LinkedEntityId;
+                if (!existingPairs.contains(key)) {
+                    filtered.add(l);
+                }
+            }
+
+            if (!filtered.isEmpty()) {
+                insert filtered;
+            }
         }
     }
 
