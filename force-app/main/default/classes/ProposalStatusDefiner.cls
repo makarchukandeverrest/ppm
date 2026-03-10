@@ -16,30 +16,55 @@ public inherited sharing class ProposalStatusDefiner {
         }
     }
 
-    // For Invoice trigger
-    public static void updateStatus(List<Invoice__c> invoiceList) {
-        Set<Id> proposalIds = new Set<Id>();
-        for (Invoice__c i : invoiceList) {
-            if (i.Proposal__c != null) {
-                proposalIds.add(i.Proposal__c);
-            }
-        }
-        if (proposalIds.isEmpty()) {
+    public static void updateStatus(List<Invoice__c> invoices) {
+        if (invoices == null || invoices.isEmpty()) {
             return;
         }
-
-        List<Opportunity> proposalsToUpdate = [
-            SELECT Id, Is_Active__c, StageName
-            FROM Opportunity
-            WHERE Id IN :proposalIds
-        ];
-
-        for (Opportunity p : proposalsToUpdate) {
-                p.StageName = 'Invoiced - WO Completed';
+    
+        Set<Id> proposalIds  = new Set<Id>();
+        Set<Id> workOrderIds = new Set<Id>();
+    
+        for (Invoice__c inv : invoices) {
+            if (inv.Proposal__c != null) {
+                proposalIds.add(inv.Proposal__c);
+            }
+            if (inv.Work_Order__c != null) {
+                workOrderIds.add(inv.Work_Order__c);
+            }
         }
-
-        if (!proposalsToUpdate.isEmpty()) {
-            update proposalsToUpdate;
+    
+        // Proposals update
+        if (!proposalIds.isEmpty()) {
+            List<Opportunity> proposalsToUpdate = [
+                SELECT Id, StageName
+                FROM Opportunity
+                WHERE Id IN :proposalIds
+            ];
+    
+            for (Opportunity opp : proposalsToUpdate) {
+                opp.StageName = 'Invoiced - WO Completed';
+            }
+    
+            if (!proposalsToUpdate.isEmpty()) {
+                update proposalsToUpdate;
+            }
+        }
+    
+        // Work Orders Update
+        if (!workOrderIds.isEmpty()) {
+            List<WorkOrder> workOrdersToUpdate = [
+                SELECT Id, Status
+                FROM WorkOrder
+                WHERE Id IN :workOrderIds
+            ];
+    
+            for (WorkOrder wo : workOrdersToUpdate) {
+                wo.Status = 'Invoice Created';
+            }
+    
+            if (!workOrdersToUpdate.isEmpty()) {
+                update workOrdersToUpdate;
+            }
         }
     }
 
