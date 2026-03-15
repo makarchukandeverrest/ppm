@@ -1,0 +1,31 @@
+<template>
+    <lightning-card title="Customer Time Range" icon-name="standard:clock">
+        <div class="slds-p-around_medium">
+            <div class="slds-grid slds-gutters slds-wrap">
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                    <lightning-input
+                        type="time"
+                        label="Start Time"
+                        value={startTime}
+                        onchange={handleStartTimeChange}>
+                    </lightning-input>
+                </div>
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                    <lightning-input
+                        type="time"
+                        label="End Time"
+                        value={endTime}
+                        onchange={handleEndTimeChange}>
+                    </lightning-input>
+                </div>
+            </div>
+            <div class="slds-m-top_medium">
+                <lightning-button
+                    variant="brand"
+                    label="Save"
+                    onclick={handleSave}>
+                </lightning-button>
+            </div>
+        </div>
+    </lightning-card>
+</template>
