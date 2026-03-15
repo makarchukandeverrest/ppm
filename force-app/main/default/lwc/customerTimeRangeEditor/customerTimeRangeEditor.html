@@ -1,31 +1,96 @@
 <template>
-    <lightning-card title="Customer Time Range" icon-name="standard:clock">
-        <div class="slds-p-around_medium">
-            <div class="slds-grid slds-gutters slds-wrap">
-                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
-                    <lightning-input
-                        type="time"
-                        label="Start Time"
-                        value={startTime}
-                        onchange={handleStartTimeChange}>
-                    </lightning-input>
-                </div>
-                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
-                    <lightning-input
-                        type="time"
-                        label="End Time"
-                        value={endTime}
-                        onchange={handleEndTimeChange}>
-                    </lightning-input>
-                </div>
-            </div>
-            <div class="slds-m-top_medium">
-                <lightning-button
-                    variant="brand"
-                    label="Save"
-                    onclick={handleSave}>
-                </lightning-button>
-            </div>
+    <lightning-card class="compact-card">
+        <div class="card-body">
+            <template if:true={showForm}>
+                <template if:true={isLoading}>
+                    <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+                </template>
+                <template if:false={isLoading}>
+                    <div class={sectionClass}>
+                        <h3 class="slds-section__title">
+                            <button
+                                type="button"
+                                class="slds-button slds-section__title-action section-title-bg"
+                                aria-controls="customer-time-range-section"
+                                aria-expanded={sectionOpen}
+                                aria-label={sectionToggleLabel}
+                                onclick={handleSectionToggle}>
+                                <span class={chevronClass} aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" class="section-chevron-svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                                </span>
+                                <span class="slds-truncate" title={sectionTitle}>{sectionTitle}</span>
+                            </button>
+                        </h3>
+                        <div id="customer-time-range-section" class="slds-section__content" role="region" aria-label={sectionTitle}>
+                            <template if:true={isEditing}>
+                                <div class="slds-grid slds-wrap slds-gutters">
+                                    <template for:each={currentFieldsWithValues} for:item="field">
+                                        <div key={field.apiName} class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                                            <template if:true={field.isTime}>
+                                                <lightning-input
+                                                    type="time"
+                                                    label={field.label}
+                                                    value={field.value}
+                                                    data-api-name={field.apiName}
+                                                    onchange={handleFieldChange}>
+                                                </lightning-input>
+                                            </template>
+                                            <template if:true={field.isNumber}>
+                                                <lightning-input
+                                                    type="number"
+                                                    label={field.label}
+                                                    value={field.value}
+                                                    data-api-name={field.apiName}
+                                                    onchange={handleFieldChange}>
+                                                </lightning-input>
+                                            </template>
+                                            <template if:true={field.isReadonly}>
+                                                <span class="slds-form-element__label">{field.label}</span>
+                                                <div class="slds-form-element__control slds-p-top_xx-small">{field.displayValue}</div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
+                                <div class="slds-m-top_small slds-button-group button-row">
+                                    <lightning-button
+                                        variant="brand"
+                                        label="Save"
+                                        onclick={handleSave}
+                                        disabled={isSaving}>
+                                    </lightning-button>
+                                    <lightning-button
+                                        variant="neutral"
+                                        label="Cancel"
+                                        onclick={handleCancel}
+                                        disabled={isSaving}>
+                                    </lightning-button>
+                                </div>
+                            </template>
+                            <template if:false={isEditing}>
+                                <div class="slds-grid slds-wrap slds-gutters">
+                                    <template for:each={currentFieldsWithValues} for:item="field">
+                                        <div key={field.apiName} class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
+                                            <span class="slds-form-element__label">{field.label}</span>
+                                            <div class="slds-form-element__control slds-p-top_xx-small">{field.displayValue}</div>
+                                        </div>
+                                    </template>
+                                </div>
+                                <div class="slds-m-top_small button-row">
+                                    <lightning-button
+                                        variant="brand"
+                                        label="Edit"
+                                        onclick={handleEdit}
+                                        icon-name="utility:edit">
+                                    </lightning-button>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </template>
+            <template if:false={showForm}>
+                <p class="slds-text-body_regular slds-text-color_weak">Set Time Range to &quot;Normal&quot; or &quot;School&quot; in the page properties to edit fields.</p>
+            </template>
         </div>
     </lightning-card>
 </template>

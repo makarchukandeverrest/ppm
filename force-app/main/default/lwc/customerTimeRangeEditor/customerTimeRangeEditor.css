@@ -1,1 +1,20 @@
-/* Customer Time Range Editor styles */
+/* Default Salesforce section title background */
+.section-title-bg {
+    background-color: var(--slds-g-color-neutral-base-95, #f3f3f3);
+}
+
+/* Стрелка секции */
+.section-chevron {
+    display: inline-flex;
+    align-items: center;
+    width: 1.50rem;
+    height: 1.50rem;
+}
+.section-chevron-svg {
+    width: 1.50rem;
+    height: 1.50rem;
+    flex-shrink: 0;
+}
+.section-chevron-collapsed .section-chevron-svg {
+    transform: rotate(0deg);
+}
