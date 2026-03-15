@@ -59,7 +59,7 @@ public inherited sharing class ProposalStatusDefiner {
             ];
     
             for (WorkOrder wo : workOrdersToUpdate) {
-                wo.Status = 'Invoice Created';
+                wo.Status = 'Completed';
             }
     
             if (!workOrdersToUpdate.isEmpty()) {
