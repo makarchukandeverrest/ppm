@@ -178,14 +178,34 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
         const mainCustomDays = mainValue === 'custom' ? (this.customReminderDays || '') : '';
         const mainEnvelopeDate = this.envelopeExpiresDate || '';
         const mainDaysBefore = this.daysBeforeExpires || '120';
-        return accounts.map(acc => ({
-            ...acc,
-            reminderValue: mainValue,
-            reminderCustomDays: mainCustomDays,
-            reminderIsCustom: mainValue === 'custom',
-            envelopeExpiresDate: mainEnvelopeDate,
-            daysBeforeExpires: mainDaysBefore
-        }));
+
+        return accounts.map(acc => {
+            // Prefer the flattened DTO ebdDueDate, but fall back to the
+            // Contract_Bid__c.EBD_Due_Date__c if needed.
+            const ebdDate =
+                acc.ebdDueDate ||
+                (acc.contract && acc.contract.EBD_Due_Date__c) ||
+                '';
+                console.log('EBD DATE '+ebdDate);
+                
+            // If we have an EBD due date, use that date as the default
+            // envelope expiry for this row and derive the number of days
+            // from today up to that date. Otherwise fall back to the
+            // component‑level defaults.
+            const accountEnvelopeDate = ebdDate || mainEnvelopeDate;
+            const accountDaysBefore = accountEnvelopeDate
+                ? this._computeDaysFromExpiresDate(accountEnvelopeDate)
+                : mainDaysBefore;
+
+            return {
+                ...acc,
+                reminderValue: mainValue,
+                reminderCustomDays: mainCustomDays,
+                reminderIsCustom: mainValue === 'custom',
+                envelopeExpiresDate: accountEnvelopeDate,
+                daysBeforeExpires: accountDaysBefore
+            };
+        });
     }
 
     _syncAllAccountsReminderToMain() {
