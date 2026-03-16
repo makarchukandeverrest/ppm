@@ -10,4 +10,23 @@ public with sharing class AccountTriggerHandler extends TriggerHandler{
     protected override void beforeInsert(){
         QuickBooksAccountChecker.filterAccounts(newList);
 	}
+
+    protected override void afterUpdate(){
+        List<Account> accountsWithChangedRegionalManager = new List<Account>();
+
+        for (Account acc : newList) {
+            Account oldAcc = oldMap.get(acc.Id);
+            if (oldAcc == null) {
+                continue;
+            }
+
+            if (acc.Regional_Manager__c != oldAcc.Regional_Manager__c) {
+                accountsWithChangedRegionalManager.add(acc);
+            }
+        }
+        System.debug('accountsWithChangedRegionalManager '+accountsWithChangedRegionalManager);
+        if(!accountsWithChangedRegionalManager.isEmpty()) {
+            CustomerRegionalManagerService.assignOwnerByCustomer(accountsWithChangedRegionalManager);
+        }
+    }
 }
