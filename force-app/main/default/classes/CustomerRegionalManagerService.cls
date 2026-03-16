@@ -1,20 +1,34 @@
 public inherited sharing class CustomerRegionalManagerService {
     public static void assignOwnerByCustomer(List<WorkOrder> newWorkOrders) {
-        for(WorkOrder wo : newWorkOrders) {
-            if(wo.AccountId != null && wo.Account.Regional_Manager__c != null) {
-                wo.OwnerId = wo.Account.Regional_Manager__c;
+        List<WorkOrder> workOrdersToUpdate = new List<WorkOrder>();
+        for (WorkOrder wo : newWorkOrders) {
+            if (wo.AccountId != null && wo.Account.Regional_Manager__c != null) {
+                WorkOrder woClone = new WorkOrder(
+                    Id = wo.Id,
+                    OwnerId = wo.Account.Regional_Manager__c
+                );
+                workOrdersToUpdate.add(woClone);
             }
         }
-        update newWorkOrders;
+        if (!workOrdersToUpdate.isEmpty()) {
+            update workOrdersToUpdate;
+        }
     }
 
     public static void assignOwnerByCustomer(List<Invoice__c> newInvoices) {
-        for(Invoice__c i : newInvoices) {
-            if(i.Customer__c != null && i.Customer__r.Regional_Manager__c != null) {
-                i.OwnerId = i.Customer__r.Regional_Manager__c;
+        List<Invoice__c> invoicesToUpdate = new List<Invoice__c>();
+        for (Invoice__c i : newInvoices) {
+            if (i.Customer__c != null && i.Customer__r.Regional_Manager__c != null) {
+                Invoice__c invClone = new Invoice__c(
+                    Id = i.Id,
+                    OwnerId = i.Customer__r.Regional_Manager__c
+                );
+                invoicesToUpdate.add(invClone);
             }
         }
-        update newInvoices;
+        if (!invoicesToUpdate.isEmpty()) {
+            update invoicesToUpdate;
+        }
     }
 
     public static void assignOwnerByCustomer(List<Account> newAccounts) {
