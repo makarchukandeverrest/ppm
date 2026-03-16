@@ -326,6 +326,16 @@
                 <identifier>RecordEmail_cField</identifier>
             </fieldInstance>
         </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>readonly</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.OwnerId</fieldItem>
+                <identifier>RecordOwnerIdField</identifier>
+            </fieldInstance>
+        </itemInstances>
         <name>Facet-51c9ef8e-5820-43b0-9af4-e7d5dc440451</name>
         <type>Facet</type>
     </flexiPageRegions>
@@ -982,6 +992,26 @@
                 </componentInstanceProperties>
                 <componentName>runtime_sales_merge:mergeCandidatesPreviewCard</componentName>
                 <identifier>runtime_sales_merge_mergeCandidatesPreviewCard</identifier>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>timeRangeLabel</name>
+                    <value>Normal</value>
+                </componentInstanceProperties>
+                <componentName>customerTimeRangeEditor</componentName>
+                <identifier>c_customerTimeRangeEditor</identifier>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>timeRangeLabel</name>
+                    <value>school</value>
+                </componentInstanceProperties>
+                <componentName>customerTimeRangeEditor</componentName>
+                <identifier>c_customerTimeRangeEditor2</identifier>
             </componentInstance>
         </itemInstances>
         <itemInstances>
