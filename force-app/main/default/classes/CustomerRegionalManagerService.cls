@@ -17,11 +17,21 @@ public inherited sharing class CustomerRegionalManagerService {
              WHERE Id IN :accountIds]
         );
 
+        List<WorkOrder> workOrdersToUpdate = new List<WorkOrder>();
+
         for (WorkOrder wo : newWorkOrders) {
             Account acc = accById.get(wo.AccountId);
             if (acc != null && acc.Regional_Manager__c != null) {
-                wo.OwnerId = acc.Regional_Manager__c;
+                WorkOrder woClone = new WorkOrder(
+                    Id      = wo.Id,
+                    OwnerId = acc.Regional_Manager__c
+                );
+                workOrdersToUpdate.add(woClone);
             }
+        }
+
+        if (!workOrdersToUpdate.isEmpty()) {
+            update workOrdersToUpdate;
         }
     }
 
