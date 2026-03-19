@@ -35,7 +35,7 @@ public inherited sharing class CustomerRegionalManagerService {
         }
     }
 
-    public static void assignOwnerByCustomerAfter(List<Invoice__c> triggerNew) {
+    public static void assignOwnerByCustomer(List<Invoice__c> triggerNew) {
         Set<Id> customerIds = new Set<Id>();
         for (Invoice__c i : triggerNew) {
             if (i.Customer__c != null) {
