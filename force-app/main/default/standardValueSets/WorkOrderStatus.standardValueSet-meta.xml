@@ -39,15 +39,15 @@
         <groupingString>InProgress</groupingString>
     </standardValue>
     <standardValue>
-        <fullName>Completed</fullName>
-        <default>false</default>
-        <label>Invoice Created</label>
-        <groupingString>Completed</groupingString>
-    </standardValue>
-    <standardValue>
         <fullName>Canceled</fullName>
         <default>false</default>
         <label>Canceled</label>
         <groupingString>Canceled</groupingString>
+    </standardValue>
+    <standardValue>
+        <fullName>Invoice Created</fullName>
+        <default>false</default>
+        <label>Invoice Created</label>
+        <groupingString>Completed</groupingString>
     </standardValue>
 </StandardValueSet>

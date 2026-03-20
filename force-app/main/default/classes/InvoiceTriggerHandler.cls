@@ -11,6 +11,7 @@ public with sharing class InvoiceTriggerHandler extends TriggerHandler{
 
     protected override void afterInsert(){
         ProposalStatusDefiner.updateStatus(this.newList);
+        CustomerRegionalManagerService.assignOwnerByCustomer(this.newList);
 	}
 
     protected override void beforeUpdate(){

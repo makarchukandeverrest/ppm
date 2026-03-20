@@ -1,33 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Report xmlns="http://soap.sforce.com/2006/04/metadata">
-    <aggregates>
-        <calculatedFormula>RowCount / PARENTGROUPVAL(RowCount, GRAND_SUMMARY)</calculatedFormula>
-        <datatype>percent</datatype>
-        <developerName>FORMULA1</developerName>
-        <downGroupingContext>BucketField_46263486</downGroupingContext>
-        <isActive>true</isActive>
-        <isCrossBlock>false</isCrossBlock>
-        <masterLabel>Rate</masterLabel>
-        <scale>2</scale>
-    </aggregates>
-    <buckets>
-        <bucketType>picklist</bucketType>
-        <developerName>BucketField_46263486</developerName>
-        <masterLabel>Completed Statuses</masterLabel>
-        <nullTreatment>n</nullTreatment>
-        <otherBucketLabel>Other</otherBucketLabel>
-        <sourceColumnName>WorkOrder$Status</sourceColumnName>
-        <useOther>true</useOther>
-        <values>
-            <sourceValues>
-                <sourceValue>Work Order Completed</sourceValue>
-            </sourceValues>
-            <sourceValues>
-                <sourceValue>Completed</sourceValue>
-            </sourceValues>
-            <value>Completed</value>
-        </values>
-    </buckets>
     <buckets>
         <bucketType>picklist</bucketType>
         <developerName>BucketField_96357421</developerName>
@@ -68,7 +40,7 @@
             <columnToColumn>false</columnToColumn>
             <isUnlocked>true</isUnlocked>
             <operator>equals</operator>
-            <value>,Proposal Approved / WO Created,WO Sent to RM / SM,Assigned to Service Team,In Progress,Pending,Work Order Completed,Completed,Canceled</value>
+            <value>,Proposal Approved / WO Created,WO Sent to RM / SM,Assigned to Service Team,In Progress,Pending,Work Order Completed,Canceled</value>
         </criteriaItems>
         <criteriaItems>
             <column>WorkOrder$StartDate</column>
@@ -87,11 +59,6 @@
         <language>en_US</language>
     </filter>
     <format>Summary</format>
-    <groupingsDown>
-        <dateGranularity>Day</dateGranularity>
-        <field>BucketField_46263486</field>
-        <sortOrder>Asc</sortOrder>
-    </groupingsDown>
     <name>Completion Rate</name>
     <params>
         <name>co</name>
