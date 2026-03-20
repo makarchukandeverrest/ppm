@@ -8,6 +8,7 @@ public with sharing class WorkOrderTriggerHandler extends TriggerHandler{
     protected override void afterInsert(){
         WorkOrderLineItemCreator.createWorkOrderLineItems(this.newList);
         ProposalStatusDefiner.updateStatus(this.newList);
+        CustomerRegionalManagerService.assignOwnerByCustomer(this.newList);
 	}
 
     protected override void beforeInsert(){
