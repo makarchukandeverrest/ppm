@@ -108,13 +108,13 @@ public with sharing class AccountFilesController {
         StageReferenceSettings__mdt stageReference = StageReferenceSettings__mdt.getInstance('Active_Stages');
         List<String> activeStages = stageReference.Stage_Names__c.split(',');
 
-        // 2. Build dynamic SOQL query - include all Account filter fields
+        // 2. Build dynamic SOQL query - include all Account filter fields and EBD due date
         String soqlQuery = 'SELECT Id, Name, Customer__c, Stage__c, ' +
                            'Customer__r.Name, Customer__r.Email__c, ' +
                            'Customer__r.BillingCountry, ' +
                            'Customer__r.Supervisor__c, Customer__r.Supervisor__r.Name, ' +
                            'Customer__r.Regional_Manager__c, Customer__r.Regional_Manager__r.Name, ' +
-                           'Customer__r.County__c, ' +
+                           'Customer__r.County__c, EBD_Due_Date__c, ' +
                            'Renewal_Client__c ' +
                            'FROM Contract_Bid__c ' +
                            'WHERE Stage__c IN :activeStages';
@@ -260,7 +260,8 @@ public with sharing class AccountFilesController {
                     contract.Customer__r.Email__c,
                     contract,
                     fileWrappers,
-                    false
+                    false,
+                    String.valueOf(contract.EBD_Due_Date__c)
                 );
                 // Add filter-related fields from Account
                 awf.regionalManagerName = contract.Customer__r.Regional_Manager__r != null 
