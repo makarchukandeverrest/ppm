@@ -712,6 +712,7 @@ private class ContractMassSendControllerTest {
             templates[0].Id,
             acc.Id,
             c.Id,
+            null,
             'Test subj {{!Contact.FirstName}}', // subject можно задать, но он в этой ветке игнорится
             null                                // body пустой -> сработает нужный try
         );

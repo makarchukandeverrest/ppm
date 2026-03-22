@@ -336,6 +336,7 @@ export default class EmailMassSendBase extends NavigationMixin(
           if (ids.length > 0) {
             payload.push({
               customerId: c.customerId,
+              workOrderId: c.workOrderId || null,
               contentVersionIds: ids
             });
           }
@@ -353,7 +354,8 @@ export default class EmailMassSendBase extends NavigationMixin(
         // Simple mode: send per-customer without specific contracts
         for (const c of this.customers) {
           payload.push({
-            customerId: c.customerId
+            customerId: c.customerId,
+            workOrderId: c.workOrderId || null
           });
         }
 
@@ -444,11 +446,16 @@ export default class EmailMassSendBase extends NavigationMixin(
       isHovered: c.customerId === customerId
     }));
 
+    const previewCustomer = this.customers.find(
+      (c) => c.customerId === customerId
+    );
+
     try {
       const res = await previewEmail({
         emailTemplateId: this.selectedTemplateId,
         customerId: customerId,
         contactId: null,
+        workOrderId: previewCustomer?.workOrderId || null,
         subject: this.subject,
         body: this.body
       });

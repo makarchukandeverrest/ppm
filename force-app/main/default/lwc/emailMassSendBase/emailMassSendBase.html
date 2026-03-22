@@ -92,6 +92,30 @@
                       Email: {cust.customerEmail}
                     </div>
 
+                    <template if:true={cust.primaryContactMissing}>
+                      <div
+                        class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error slds-m-top_x-small"
+                        role="alert"
+                      >
+                        <span class="slds-assistive-text">Error</span>
+                        <span
+                          class="slds-icon_container slds-icon-utility-error slds-m-right_x-small"
+                        >
+                          <lightning-icon
+                            icon-name="utility:error"
+                            size="x-small"
+                            alternative-text=""
+                            variant="inverse"
+                          ></lightning-icon>
+                        </span>
+                        <span>
+                          Primary Contact is not set or is not visible on this
+                          account. Set a Primary Contact for reliable send and
+                          merge, or ensure you can access that contact record.
+                        </span>
+                      </div>
+                    </template>
+
                     <!-- Блок превью по hover -->
                     <template if:true={cust.isHovered}>
                       <div
