@@ -1,5 +1,7 @@
 public with sharing class ContractMassSendController {
   private static final String LOG = '🟦 [ContractMassSend] ';
+  /** Email templates shown when mass-send is launched from Work Order records */
+  private static final String WORK_ORDER_EMAIL_TEMPLATE_FOLDER = 'Service Team Templates';
 
   @TestVisible
   private static Boolean testBypassPermissions = false;
@@ -192,8 +194,7 @@ public with sharing class ContractMassSendController {
         WHERE
           IsActive = TRUE
           AND TemplateType = 'custom'
-          AND (Folder.Name = 'Service Team Templates'
-          OR OwnerId = :UserInfo.getUserId())
+          AND Folder.Name = : WORK_ORDER_EMAIL_TEMPLATE_FOLDER
         ORDER BY Name
         LIMIT 200
       ]) {
