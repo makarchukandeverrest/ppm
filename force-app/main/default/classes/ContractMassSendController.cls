@@ -10,6 +10,11 @@ public with sharing class ContractMassSendController {
     // Original: return testBypassPermissions || FeatureManagement.checkPermission('Mass_Contract_Send');
   }
 
+  private static Boolean isServiceTeamMemberId(Id recordId) {
+    return recordId != null &&
+      recordId.getSobjectType() == Service_Team_Member__c.SObjectType;
+  }
+
   /* =========================================================
        DTOs
     ========================================================= */
@@ -140,7 +145,67 @@ public with sharing class ContractMassSendController {
           customerIds.add(cb.Customer__c);
         }
       }
-    } else {
+    }
+    else if (sobjectType == 'WorkOrder') {
+      // Service Team Members from line items + Work Order header lookup
+      for (Quick_Book_Work_Order_Line_Item__c qbwo : [
+        SELECT Service_Team_Member__c
+        FROM Quick_Book_Work_Order_Line_Item__c
+        WHERE Work_Order__c IN :inputIds
+      ]) {
+        customerIds.add(qbwo.Service_Team_Member__c);
+      }
+
+      if (customerIds.isEmpty()) {
+        res.customers = new List<CustomerDto>();
+        System.debug(LOG + 'EXIT: no Service Team Members on Work Order line items');
+        return res;
+      }
+
+      /* ---------- Service Team Members (email only, no files) ---------- */
+      Map<Id, Service_Team_Member__c> stmById = new Map<Id, Service_Team_Member__c>(
+        [
+          SELECT Id, Name, Email__c
+          FROM Service_Team_Member__c
+          WHERE Id IN :customerIds
+        ]
+      );
+
+      res.customers = new List<CustomerDto>();
+      for (Id stmId : customerIds) {
+        Service_Team_Member__c stm = stmById.get(stmId);
+        if (stm == null) {
+          continue;
+        }
+        CustomerDto dto = new CustomerDto();
+        dto.customerId = stm.Id;
+        dto.customerName = stm.Name;
+        dto.customerEmail = stm.Email__c;
+        dto.contracts = new List<ContractDto>();
+        res.customers.add(dto);
+      }
+
+      res.templates = new List<TemplateDto>();
+      for (EmailTemplate t : [
+        SELECT Id, Name, Folder.Name
+        FROM EmailTemplate
+        WHERE
+          IsActive = TRUE
+          AND TemplateType = 'custom'
+          AND (Folder.Name = 'Service Team Templates'
+          OR OwnerId = :UserInfo.getUserId())
+        ORDER BY Name
+        LIMIT 200
+      ]) {
+        res.templates.add(new TemplateDto(t.Id, t.Name));
+      }
+      res.recentLogs = new List<LogRowDto>();
+
+      System.debug(LOG + 'Work Order / STM recipients = ' + res.customers.size());
+      System.debug(LOG + 'getInitData END');
+      return res;
+    }
+    else {
       // Unsupported type
       System.debug(LOG + 'Unsupported SObjectType');
     }
@@ -350,13 +415,18 @@ public with sharing class ContractMassSendController {
       List<SendReqRow>.class
     );
 
-    Set<Id> customerIds = new Set<Id>();
+    Set<Id> accountIds = new Set<Id>();
+    Set<Id> stmIds = new Set<Id>();
     Set<Id> cvIds = new Set<Id>();
 
     for (SendReqRow r : rows) {
-      customerIds.add(r.customerId);
-      if (r.contentVersionIds != null) {
-        cvIds.addAll(r.contentVersionIds);
+      if (isServiceTeamMemberId(r.customerId)) {
+        stmIds.add(r.customerId);
+      } else {
+        accountIds.add(r.customerId);
+        if (r.contentVersionIds != null) {
+          cvIds.addAll(r.contentVersionIds);
+        }
       }
     }
 
@@ -380,19 +450,31 @@ public with sharing class ContractMassSendController {
       }
     }
 
-    Map<Id, Account> accById = new Map<Id, Account>(
-      [
-        SELECT
-          Id,
-          Name,
-          Primary_Contact__c,
-          Primary_Contact__r.Email,
-          Primary_Contact__r.FirstName,
-          Primary_Contact__r.LastName
-        FROM Account
-        WHERE Id IN :customerIds
-      ]
-    );
+    Map<Id, Account> accById = accountIds.isEmpty()
+      ? new Map<Id, Account>()
+      : new Map<Id, Account>(
+          [
+            SELECT
+              Id,
+              Name,
+              Primary_Contact__c,
+              Primary_Contact__r.Email,
+              Primary_Contact__r.FirstName,
+              Primary_Contact__r.LastName
+            FROM Account
+            WHERE Id IN :accountIds
+          ]
+        );
+
+    Map<Id, Service_Team_Member__c> stmById = stmIds.isEmpty()
+      ? new Map<Id, Service_Team_Member__c>()
+      : new Map<Id, Service_Team_Member__c>(
+          [
+            SELECT Id, Name, Email__c
+            FROM Service_Team_Member__c
+            WHERE Id IN :stmIds
+          ]
+        );
 
     List<Messaging.SingleEmailMessage> emails = new List<Messaging.SingleEmailMessage>();
     List<LogRowDto> logs = new List<LogRowDto>();
@@ -401,6 +483,106 @@ public with sharing class ContractMassSendController {
     Integer emailIndex = 0;
 
     for (SendReqRow r : rows) {
+      if (isServiceTeamMemberId(r.customerId)) {
+        Service_Team_Member__c stm = stmById.get(r.customerId);
+        if (stm == null) {
+          LogRowDto log = new LogRowDto();
+          log.customerName = 'Unknown';
+          log.status = 'Failed';
+          log.message = 'Service Team Member not found.';
+          logs.add(log);
+          continue;
+        }
+        if (String.isBlank(stm.Email__c)) {
+          LogRowDto log = new LogRowDto();
+          log.customerName = stm.Name;
+          log.status = 'Failed';
+          log.message = 'Service Team Member has no email.';
+          logs.add(log);
+          continue;
+        }
+
+        Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+        mail.setToAddresses(new List<String>{ stm.Email__c });
+        mail.setWhatId(stm.Id);
+        mail.setSaveAsActivity(true);
+
+        User currentUserStm = [
+          SELECT Email
+          FROM User
+          WHERE Id = :UserInfo.getUserId()
+          LIMIT 1
+        ];
+        List<OrgWideEmailAddress> oweaListStm = [
+          SELECT Id
+          FROM OrgWideEmailAddress
+          WHERE Address = :currentUserStm.Email AND IsVerified = TRUE
+          LIMIT 1
+        ];
+        if (!oweaListStm.isEmpty()) {
+          mail.setOrgWideEmailAddressId(oweaListStm[0].Id);
+          mail.setSenderDisplayName(currentUserStm.Email + ' (Salesforce)');
+        }
+        mail.setReplyTo(currentUserStm.Email);
+        mail.setSenderDisplayName(currentUserStm.Email);
+
+        Id whoForMerge = UserInfo.getUserId();
+        if (emailTemplateId != null) {
+          Messaging.SingleEmailMessage rendered = Messaging.renderStoredEmailTemplate(
+            emailTemplateId,
+            whoForMerge,
+            stm.Id
+          );
+
+          if (String.isNotBlank(body)) {
+            List<String> bodiesToRender = new List<String>{ body };
+            if (String.isNotBlank(subject)) {
+              bodiesToRender.add(subject);
+            }
+
+            List<Messaging.RenderEmailTemplateBodyResult> renderResults = Messaging.renderEmailTemplate(
+              whoForMerge,
+              stm.Id,
+              bodiesToRender
+            );
+
+            if (renderResults[0].getSuccess()) {
+              mail.setHtmlBody(renderResults[0].getMergedBody());
+            } else {
+              mail.setHtmlBody(body);
+            }
+
+            if (
+              String.isNotBlank(subject) &&
+              renderResults.size() > 1 &&
+              renderResults[1].getSuccess()
+            ) {
+              mail.setSubject(renderResults[1].getMergedBody());
+            } else if (String.isNotBlank(subject)) {
+              mail.setSubject(subject);
+            } else {
+              mail.setSubject(rendered.getSubject());
+            }
+          } else {
+            mail.setSubject(rendered.getSubject());
+            mail.setHtmlBody(rendered.getHtmlBody());
+          }
+        } else {
+          throw new AuraHandledException('Email template is required.');
+        }
+
+        emails.add(mail);
+
+        LogRowDto stmLog = new LogRowDto();
+        stmLog.customerName = stm.Name;
+        stmLog.status = 'Sending';
+        stmLog.message = 'Email is being sent...';
+        logs.add(stmLog);
+        emailIndexToLogs.put(emailIndex, new List<LogRowDto>{ stmLog });
+        emailIndex++;
+        continue;
+      }
+
       Account acc = accById.get(r.customerId);
 
       if (acc == null || acc.Primary_Contact__c == null) {
@@ -596,43 +778,57 @@ public with sharing class ContractMassSendController {
       throw new AuraHandledException('Email template is required for preview.');
     }
 
-    // Resolve Account
-    Account acc;
-    if (customerId != null) {
-      acc = [
-        SELECT
-          Id,
-          Primary_Contact__c,
-          Primary_Contact__r.Email,
-          Primary_Contact__r.FirstName,
-          Primary_Contact__r.LastName
-        FROM Account
+    Id whoId;
+    Id whatId;
+
+    if (customerId != null && isServiceTeamMemberId(customerId)) {
+      Service_Team_Member__c stm = [
+        SELECT Id, Name, Email__c
+        FROM Service_Team_Member__c
         WHERE Id = :customerId
         LIMIT 1
       ];
-    }
-    if (acc == null) {
-      throw new AuraHandledException('Unable to resolve Account for preview.');
-    }
+      whoId = UserInfo.getUserId();
+      whatId = stm.Id;
+    } else {
+      // Resolve Account
+      Account acc;
+      if (customerId != null) {
+        acc = [
+          SELECT
+            Id,
+            Primary_Contact__c,
+            Primary_Contact__r.Email,
+            Primary_Contact__r.FirstName,
+            Primary_Contact__r.LastName
+          FROM Account
+          WHERE Id = :customerId
+          LIMIT 1
+        ];
+      }
+      if (acc == null) {
+        throw new AuraHandledException('Unable to resolve Account for preview.');
+      }
 
-    // Resolve Contact
-    Contact who;
-    if (contactId != null) {
-      who = [
-        SELECT Id, Email, FirstName, LastName
-        FROM Contact
-        WHERE Id = :contactId
-        LIMIT 1
-      ];
-    } else if (acc.Primary_Contact__c != null) {
-      who = acc.Primary_Contact__r;
-    }
-    if (who == null) {
-      throw new AuraHandledException('Unable to resolve Contact for preview.');
-    }
+      // Resolve Contact
+      Contact who;
+      if (contactId != null) {
+        who = [
+          SELECT Id, Email, FirstName, LastName
+          FROM Contact
+          WHERE Id = :contactId
+          LIMIT 1
+        ];
+      } else if (acc.Primary_Contact__c != null) {
+        who = acc.Primary_Contact__r;
+      }
+      if (who == null) {
+        throw new AuraHandledException('Unable to resolve Contact for preview.');
+      }
 
-    Id whoId = who.Id;
-    Id whatId = acc.Id;
+      whoId = who.Id;
+      whatId = acc.Id;
+    }
 
     String finalSubject;
     String finalBody;
