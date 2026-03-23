@@ -77,7 +77,7 @@ private class DocuSignEnvelopeServiceTest {
         // Arrange
         Account acc = [SELECT Id, Name, Email__c FROM Account LIMIT 1];
             Contract_Bid__c cb = [
-            SELECT Id, Name, Stage__c
+            SELECT Id, Name, Stage__c, EBD_Due_Date__c
             FROM Contract_Bid__c
             LIMIT 1
         ];
@@ -105,14 +105,15 @@ private class DocuSignEnvelopeServiceTest {
         FileWrapper fw = new FileWrapper(cv);
 
         List<AccountWithFiles> accWithFiles = new List<AccountWithFiles>{
-        new AccountWithFiles(
-            acc.Id,
-            acc.Name,
-            acc.Email__c,
-            cb,
-            new List<FileWrapper>{ fw },
-            true
-        )
+            new AccountWithFiles(
+                acc.Id,
+                acc.Name,
+                acc.Email__c,
+                cb,
+                new List<FileWrapper>{ fw },
+                true,
+                cb.EBD_Due_Date__c != null ? String.valueOf(cb.EBD_Due_Date__c) : null
+            )
         };
         String accountsJson = JSON.serialize(accWithFiles);
 
