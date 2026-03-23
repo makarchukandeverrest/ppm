@@ -567,6 +567,11 @@
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
+        <editable>true</editable>
+        <field>Invoice__c.Customer_Quickbooks_Id__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
         <editable>false</editable>
         <field>Invoice__c.Past_Due_Days__c</field>
         <readable>true</readable>
