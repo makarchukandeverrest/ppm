@@ -18,6 +18,23 @@ public with sharing class OpportunityContactSyncServiceTest {
         acc.Primary_Contact__c = contacts[2].Id;
         acc.Secondary_Contact__c = contacts[3].Id;
         update acc;
+
+        Account acc2 = new Account(Name = 'Second Test Account');
+        insert acc2;
+
+        List<Contact> contacts2 = new List<Contact>{
+            new Contact(LastName = 'Billing Setup', AccountId = acc2.Id),
+            new Contact(LastName = 'Maintenance Setup', AccountId = acc2.Id),
+            new Contact(LastName = 'Primary Setup', AccountId = acc2.Id),
+            new Contact(LastName = 'Secondary Setup', AccountId = acc2.Id)
+        };
+        insert contacts2;
+
+        acc2.Billing_Contact__c = contacts2[0].Id;
+        acc2.Maintenance_Contact__c = contacts2[1].Id;
+        acc2.Primary_Contact__c = contacts2[2].Id;
+        acc2.Secondary_Contact__c = contacts2[3].Id;
+        update acc2;        
     }
 
     @IsTest
@@ -82,51 +99,43 @@ public with sharing class OpportunityContactSyncServiceTest {
         System.assertEquals(newContacts[1].Id, updatedOpp.Customer_Maintenance_Contact__c);
         System.assertEquals(newContacts[2].Id, updatedOpp.Customer_Primary_Contact__c);
         System.assertEquals(newContacts[3].Id, updatedOpp.Customer_Secondary_Contact__c);
-    }
 
-    @IsTest
-    static void testAssignContactsWhenOpportunityAccountChanged() {
-        Account firstAcc = [SELECT Id FROM Account WHERE Name = 'Test Account' LIMIT 1];
-
-        Account secondAcc = new Account(Name = 'Second Test Account');
-        insert secondAcc;
-
-        List<Contact> secondContacts = new List<Contact>{
-            new Contact(LastName = 'Second Billing', AccountId = secondAcc.Id),
-            new Contact(LastName = 'Second Maintenance', AccountId = secondAcc.Id),
-            new Contact(LastName = 'Second Primary', AccountId = secondAcc.Id),
-            new Contact(LastName = 'Second Secondary', AccountId = secondAcc.Id)
-        };
-        insert secondContacts;
-
-        secondAcc.Billing_Contact__c = secondContacts[0].Id;
-        secondAcc.Maintenance_Contact__c = secondContacts[1].Id;
-        secondAcc.Primary_Contact__c = secondContacts[2].Id;
-        secondAcc.Secondary_Contact__c = secondContacts[3].Id;
-        update secondAcc;
-
-        Opportunity opp = new Opportunity(
-            Name = 'Reassign Account Test',
-            AccountId = firstAcc.Id,
-            StageName = 'Proposal Created / Ready for review',
-            CloseDate = Date.today().addDays(10),
-            Account_QuickBooks_Id__c = 'REASSIGN-TEST'
-        );
-        insert opp;
-
-        opp.AccountId = secondAcc.Id;
-        update opp;
-
-        Opportunity updatedOpp = [
-            SELECT Customer_Billing_Contact__c, Customer_Maintenance_Contact__c, Customer_Primary_Contact__c, Customer_Secondary_Contact__c
-            FROM Opportunity
-            WHERE Id = :opp.Id
+        Account acc2 = [
+            SELECT Id
+            FROM Account
+            WHERE Name = 'Second Test Account'
             LIMIT 1
         ];
 
-        System.assertEquals(secondContacts[0].Id, updatedOpp.Customer_Billing_Contact__c);
-        System.assertEquals(secondContacts[1].Id, updatedOpp.Customer_Maintenance_Contact__c);
-        System.assertEquals(secondContacts[2].Id, updatedOpp.Customer_Primary_Contact__c);
-        System.assertEquals(secondContacts[3].Id, updatedOpp.Customer_Secondary_Contact__c);
+        Account acc2WithContacts = [
+            SELECT Id, Billing_Contact__c, Maintenance_Contact__c, Primary_Contact__c, Secondary_Contact__c
+            FROM Account
+            WHERE Id = :acc2.Id
+            LIMIT 1
+        ];
+
+        syncOpp.AccountId = acc2.Id;
+        update syncOpp;
+
+        Opportunity oppForDirectSync = [
+            SELECT Id, AccountId, Customer_Billing_Contact__c, Customer_Maintenance_Contact__c, Customer_Primary_Contact__c, Customer_Secondary_Contact__c
+            FROM Opportunity
+            WHERE Id = :syncOpp.Id
+            LIMIT 1
+        ];
+        OpportunityContactSyncService.assignContacts(new List<Opportunity>{ oppForDirectSync });
+        update oppForDirectSync;
+
+        Opportunity updatedOpp2 = [
+            SELECT Id, Customer_Billing_Contact__c, Customer_Maintenance_Contact__c, Customer_Primary_Contact__c, Customer_Secondary_Contact__c
+            FROM Opportunity
+            WHERE Id = :syncOpp.Id
+            LIMIT 1
+        ];
+        
+        System.assertEquals(acc2WithContacts.Billing_Contact__c, updatedOpp2.Customer_Billing_Contact__c);
+        System.assertEquals(acc2WithContacts.Maintenance_Contact__c, updatedOpp2.Customer_Maintenance_Contact__c);
+        System.assertEquals(acc2WithContacts.Primary_Contact__c, updatedOpp2.Customer_Primary_Contact__c);
+        System.assertEquals(acc2WithContacts.Secondary_Contact__c, updatedOpp2.Customer_Secondary_Contact__c);
     }
 }

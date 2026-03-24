@@ -1,11 +1,32 @@
 public inherited sharing class OpportunityContactSyncService {
     public static void assignContacts(List<Opportunity> opps) {
+        if(opps == null || opps.isEmpty()){
+            return;
+        }
+
+        Set<Id> accountIds = new Set<Id>();
         for(Opportunity opp : opps){
             if(opp.AccountId != null){
-                opp.Customer_Billing_Contact__c = opp.Account.Billing_Contact__c;
-                opp.Customer_Maintenance_Contact__c = opp.Account.Maintenance_Contact__c;
-                opp.Customer_Primary_Contact__c = opp.Account.Primary_Contact__c;
-                opp.Customer_Secondary_Contact__c = opp.Account.Secondary_Contact__c;
+                accountIds.add(opp.AccountId);
+            }
+        }
+        if(accountIds.isEmpty()){
+            return;
+        }
+
+        Map<Id, Account> accMap = new Map<Id, Account>([
+            SELECT Id, Billing_Contact__c, Maintenance_Contact__c, Primary_Contact__c, Secondary_Contact__c
+            FROM Account
+            WHERE Id IN :accountIds
+        ]);
+
+        for(Opportunity opp : opps){
+            if(opp.AccountId != null && accMap.containsKey(opp.AccountId)){
+                Account acc = accMap.get(opp.AccountId);
+                opp.Customer_Billing_Contact__c = acc.Billing_Contact__c;
+                opp.Customer_Maintenance_Contact__c = acc.Maintenance_Contact__c;
+                opp.Customer_Primary_Contact__c = acc.Primary_Contact__c;
+                opp.Customer_Secondary_Contact__c = acc.Secondary_Contact__c;
             }
         }
     }
