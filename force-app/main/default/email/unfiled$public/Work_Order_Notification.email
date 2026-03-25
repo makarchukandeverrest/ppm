@@ -1,0 +1,24 @@
+<p>Hi {!WorkOrder.Service_Team_Member__c},</p>
+
+<p>A new <strong>Work Order</strong> has been assigned to you.</p>
+
+<p>
+  <strong>Work order number:</strong> {!WorkOrder.Quick_Books_WO_No__c}<br/>
+  <strong>Customer:</strong> {!WorkOrder.Account}<br/>
+  <strong>Location:</strong>[ACCOUNT_ADDRESS]<br/>
+  <strong>Memo:</strong> {!WorkOrder.Quickbooks_Memo__c}
+</p>
+
+<p><strong>Your line items</strong></p>
+[LINE_ITEMS]
+
+<p><strong>Please:</strong></p>
+<ul>
+  <li>Contact the customer if any clarification is needed.</li>
+  <li>Update the status and add comments or photos when the work is completed.</li>
+</ul>
+
+<p>
+  Thanks,<br/>
+  Service Team
+</p>
