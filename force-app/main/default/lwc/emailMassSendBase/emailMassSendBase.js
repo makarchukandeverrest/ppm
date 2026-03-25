@@ -14,8 +14,26 @@ export default class EmailMassSendBase extends NavigationMixin(
   /* =====================================================
        OPTIONAL INPUTS (fallback only)
     ===================================================== */
-  @api recordId;
-  @api selectedRecordIds = [];
+  _recordId;
+  _selectedRecordIds = [];
+
+  @api
+  get recordId() {
+    return this._recordId;
+  }
+  set recordId(value) {
+    this._recordId = value;
+    this.tryInitFromComponentInputs();
+  }
+
+  @api
+  get selectedRecordIds() {
+    return this._selectedRecordIds;
+  }
+  set selectedRecordIds(value) {
+    this._selectedRecordIds = Array.isArray(value) ? value : [];
+    this.tryInitFromComponentInputs();
+  }
 
   /* =====================================================
        STATE
@@ -60,10 +78,25 @@ export default class EmailMassSendBase extends NavigationMixin(
     ===================================================== */
   @wire(CurrentPageReference)
   handlePageRef(pageRef) {
-    if (pageRef?.state?.ids && !this.inputIds.length) {
+    if (!pageRef) {
+      return;
+    }
+
+    if (pageRef.state?.ids && !this.inputIds.length) {
       this.inputIds = pageRef.state.ids.split(",");
-      // Load data immediately
       this.loadData();
+      return;
+    }
+
+    const state = pageRef.state || {};
+    const attrs = pageRef.attributes || {};
+    const rid =
+      state.recordId ||
+      state.c__recordId ||
+      attrs.recordId;
+
+    if (rid) {
+      this.recordId = rid;
     }
   }
 
@@ -71,19 +104,25 @@ export default class EmailMassSendBase extends NavigationMixin(
        FALLBACKS (Record Action / Flow / tests)
     ===================================================== */
   connectedCallback() {
-    console.log("emailMassSendBase connectedCallback");
-    console.log("customersData:", this.customersData);
-    console.log("flowRecords:", this.flowRecords);
-    console.log("recordId:", this.recordId);
-    console.log("selectedRecordIds:", this.selectedRecordIds);
+    // Tab / navigation: query string (modal quick actions often have no search params)
+    if (!this._recordId) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromUrl =
+        urlParams.get("recordId") || urlParams.get("c__recordId");
+      if (fromUrl) {
+        this._recordId = fromUrl;
+      }
+    }
 
+    this.tryInitFromComponentInputs();
+  }
+
+  tryInitFromComponentInputs() {
     // Priority 1: customersData (Single String, new approach)
     if (this.customersData) {
       try {
         const jsonString = `[${this.customersData.replace(/,\s*$/, "")}]`;
-        console.log("Parsed jsonString:", jsonString);
         const parsedObjs = JSON.parse(jsonString);
-        console.log("Parsed objects:", parsedObjs);
 
         this.inputIds = parsedObjs
           .map((obj) => obj.accountId)
@@ -96,9 +135,11 @@ export default class EmailMassSendBase extends NavigationMixin(
         console.error("Error parsing customersData", error);
         this.toast("Error", "Invalid customersData: " + error.message, "error");
       }
+      return;
+    }
 
-      // Priority 2: flowRecords (Array, legacy)
-    } else if (this.flowRecords && this.flowRecords.length > 0) {
+    // Priority 2: flowRecords (Array, legacy)
+    if (this.flowRecords && this.flowRecords.length > 0) {
       try {
         this.inputIds = this.flowRecords
           .map((jsonStr) => {
@@ -114,20 +155,24 @@ export default class EmailMassSendBase extends NavigationMixin(
         console.error("Error parsing flowRecords", error);
         this.toast("Error", "Invalid flowRecords: " + error.message, "error");
       }
+      return;
+    }
 
-      // Priority 3: Direct Record ID (Quick Action)
-    } else if (!this.inputIds.length && this.recordId) {
-      this.inputIds = [this.recordId];
-      this.loadData();
+    // Priority 3: Direct Record ID (record page / quick action — often set after connect)
+    if (this.recordId) {
+      if (!this.inputIds.length) {
+        this.inputIds = [this.recordId];
+        this.loadData();
+      }
+      return;
+    }
 
-      // Priority 4: Selected Records (List View wrapper)
-    } else if (
-      !this.inputIds.length &&
-      this.selectedRecordIds &&
-      this.selectedRecordIds.length
-    ) {
-      this.inputIds = [...this.selectedRecordIds];
-      this.loadData();
+    // Priority 4: Selected Records (List View wrapper)
+    if (this.selectedRecordIds && this.selectedRecordIds.length) {
+      if (!this.inputIds.length) {
+        this.inputIds = [...this.selectedRecordIds];
+        this.loadData();
+      }
     }
   }
 
