@@ -33,26 +33,31 @@ public with sharing class ContractMassSendController {
 
   /** Org-wide address used when the mass-send host is a Work Order record page. */
   private static final String WORK_ORDER_ORG_WIDE_EMAIL_ADDRESS =
-    'sf_workorders@premiersswim.com';
-
-  private static final String LOG_SEND = 'ContractMassSend';
-
-  private static void logSend(String message) {
-    System.debug(LoggingLevel.INFO, LOG_SEND + ' | ' + message);
-  }
-
-  private static void logSendWarn(String message) {
-    System.debug(LoggingLevel.WARN, LOG_SEND + ' | ' + message);
-  }
+    'sf_workorders@premierswim.com';
 
   /**
-   * True when the LWC passes the host record as inputIds[0] (e.g. quick action on Work Order).
+   * Work Order-driven send: any inputId is a Work Order, or any send row has workOrderId
+   * set (e.g. Flow passes only Account Ids but LWC still sends workOrderId per row).
    */
-  private static Boolean isWorkOrderPageContext(List<Id> inputIds) {
-    return inputIds != null &&
-      !inputIds.isEmpty() &&
-      inputIds[0] != null &&
-      inputIds[0].getSobjectType() == WorkOrder.SObjectType;
+  private static Boolean isWorkOrderPageContext(
+    List<Id> inputIds,
+    List<SendReqRow> rows
+  ) {
+    if (inputIds != null) {
+      for (Id pid : inputIds) {
+        if (pid != null && pid.getSobjectType() == WorkOrder.SObjectType) {
+          return true;
+        }
+      }
+    }
+    if (rows != null) {
+      for (SendReqRow r : rows) {
+        if (r.workOrderId != null && isWorkOrderId(r.workOrderId)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   private static OrgWideEmailAddress getWorkOrderOrgWideEmailAddress() {
@@ -66,69 +71,36 @@ public with sharing class ContractMassSendController {
   }
 
   /**
-   * From: Org-Wide Email — Work Order mailbox when launched from a Work Order page;
-   * otherwise same as before (current user address + matching verified OWEA if any).
+   * From: Work Order org-wide mailbox when in WO context; Reply-To matches that mailbox.
+   * Otherwise: current user's verified OWEA or user email, Reply-To = running user.
+   * When setOrgWideEmailAddressId is set, do NOT call setSenderDisplayName (API limitation).
    */
   private static void applyOutboundSenderIdentity(
     Messaging.SingleEmailMessage mail,
     User currentUser,
-    Boolean useWorkOrderMailbox,
-    String branchLabel
+    Boolean useWorkOrderMailbox
   ) {
     if (useWorkOrderMailbox) {
       OrgWideEmailAddress woOwea = getWorkOrderOrgWideEmailAddress();
       if (woOwea != null) {
         mail.setOrgWideEmailAddressId(woOwea.Id);
-        mail.setSenderDisplayName(
-          String.isNotBlank(woOwea.DisplayName) ? woOwea.DisplayName : woOwea.Address
-        );
-        mail.setReplyTo(currentUser.Email);
-        logSend(
-          'sender=' +
-            branchLabel +
-            ' path=WorkOrderOWEA orgWideEmailAddressId=' +
-            woOwea.Id +
-            ' display=' +
-            (String.isNotBlank(woOwea.DisplayName)
-              ? woOwea.DisplayName
-              : woOwea.Address) +
-            ' replyTo=' +
-            currentUser.Email
-        );
+        mail.setReplyTo(woOwea.Address);
         return;
       }
-      logSendWarn(
-        'sender=' +
-          branchLabel +
-          ' path=WorkOrderOWEA FAILED (missing OWEA); falling back to user OWEA / user From'
-      );
     }
 
     List<OrgWideEmailAddress> oweaList = [
-      SELECT Id
+      SELECT Id, Address
       FROM OrgWideEmailAddress
       WHERE Address = :currentUser.Email AND IsVerified = TRUE
       LIMIT 1
     ];
     if (!oweaList.isEmpty()) {
       mail.setOrgWideEmailAddressId(oweaList[0].Id);
-      mail.setSenderDisplayName(currentUser.Email + ' (Salesforce)');
-      logSend(
-        'sender=' +
-          branchLabel +
-          ' path=UserOWEA orgWideEmailAddressId=' +
-          oweaList[0].Id +
-          ' userEmail=' +
-          currentUser.Email
-      );
-    } else {
-      logSend(
-        'sender=' +
-          branchLabel +
-          ' path=UserEmailOnly (no verified OWEA for user) userEmail=' +
-          currentUser.Email
-      );
+      mail.setReplyTo(currentUser.Email);
+      return;
     }
+
     mail.setReplyTo(currentUser.Email);
     mail.setSenderDisplayName(currentUser.Email);
   }
@@ -938,6 +910,15 @@ public with sharing class ContractMassSendController {
     Map<Integer, List<LogRowDto>> emailIndexToLogs = new Map<Integer, List<LogRowDto>>();
     Integer emailIndex = 0;
 
+    User sendingUser = [
+      SELECT Email
+      FROM User
+      WHERE Id = :UserInfo.getUserId()
+      LIMIT 1
+    ];
+
+    Boolean useWorkOrderMailbox = isWorkOrderPageContext(inputIds, rows);
+
     for (SendReqRow r : rows) {
       String rowSubject = r.subject != null ? r.subject : subject;
       String rowBody = r.body != null ? r.body : body;
@@ -978,24 +959,7 @@ public with sharing class ContractMassSendController {
         mail.setWhatId(mergeWhatId);
         mail.setSaveAsActivity(true);
 
-        User currentUserStm = [
-          SELECT Email
-          FROM User
-          WHERE Id = :UserInfo.getUserId()
-          LIMIT 1
-        ];
-        List<OrgWideEmailAddress> oweaListStm = [
-          SELECT Id
-          FROM OrgWideEmailAddress
-          WHERE Address = :currentUserStm.Email AND IsVerified = TRUE
-          LIMIT 1
-        ];
-        if (!oweaListStm.isEmpty()) {
-          mail.setOrgWideEmailAddressId(oweaListStm[0].Id);
-          mail.setSenderDisplayName(currentUserStm.Email + ' (Salesforce)');
-        }
-        mail.setReplyTo(currentUserStm.Email);
-        mail.setSenderDisplayName(currentUserStm.Email);
+        applyOutboundSenderIdentity(mail, sendingUser, useWorkOrderMailbox);
 
         // whoId must be Contact, Lead, or User for merge API; STM is recipient via setToAddresses only.
         Id whoForMerge = UserInfo.getUserId();
@@ -1115,25 +1079,7 @@ public with sharing class ContractMassSendController {
       }
       mail.setSaveAsActivity(true);
 
-      User currentUser = [
-        SELECT Email
-        FROM User
-        WHERE Id = :UserInfo.getUserId()
-        LIMIT 1
-      ];
-      List<OrgWideEmailAddress> oweaList = [
-        SELECT Id
-        FROM OrgWideEmailAddress
-        WHERE Address = :currentUser.Email AND IsVerified = TRUE
-        LIMIT 1
-      ];
-      if (!oweaList.isEmpty()) {
-        mail.setOrgWideEmailAddressId(oweaList[0].Id);
-        mail.setSenderDisplayName(currentUser.Email + ' (Salesforce)');
-      }
-      mail.setReplyTo(currentUser.Email);
-      mail.setReplyTo(currentUser.Email);
-      mail.setSenderDisplayName(currentUser.Email);
+      applyOutboundSenderIdentity(mail, sendingUser, useWorkOrderMailbox);
 
       // Attach contracts only in "with contracts" mode
       if (r.contentVersionIds != null && !r.contentVersionIds.isEmpty()) {
