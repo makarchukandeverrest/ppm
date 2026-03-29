@@ -247,12 +247,17 @@ export default class EmailMassSendBase extends NavigationMixin(
         expanded: true,
         isExpandedLabel: c.expanded ? "Expand" : "Collapse",
         isHovered: false,
+        isEditing: false,
+        isEditContentLoading: false,
+        emailSubjectOverride: null,
+        emailBodyOverride: null,
         // In contracts mode we also expect contracts array with selection flags
         contracts: (c.contracts || []).map((cv) => ({
           ...cv,
           isSelected: true
         }))
       }));
+      this.applyCustomerDisplayFields();
 
       this.sendLog = res.recentLogs || [];
       this.selectedContractVersionIdsByCustomer = new Map();
@@ -285,6 +290,12 @@ export default class EmailMassSendBase extends NavigationMixin(
       });
       this.subject = details.subject;
       this.body = details.body;
+      this.customers = this.customers.map((c) => ({
+        ...c,
+        emailSubjectOverride: null,
+        emailBodyOverride: null
+      }));
+      this.applyCustomerDisplayFields();
     } catch {
       this.toast("Error", "Could not load template details", "error");
     } finally {
@@ -294,10 +305,103 @@ export default class EmailMassSendBase extends NavigationMixin(
 
   handleSubjectChange(event) {
     this.subject = event.detail.value;
+    this.applyCustomerDisplayFields();
   }
 
   handleBodyChange(event) {
     this.body = event.detail.value;
+    this.applyCustomerDisplayFields();
+  }
+
+  applyCustomerDisplayFields() {
+    this.customers = this.customers.map((c) => ({
+      ...c,
+      displaySubject:
+        c.emailSubjectOverride != null ? c.emailSubjectOverride : this.subject,
+      displayBody:
+        c.emailBodyOverride != null ? c.emailBodyOverride : this.body
+    }));
+  }
+
+  handleCustomerSubjectChange(event) {
+    const customerId = event.currentTarget.dataset.customerId;
+    const value = event.detail.value;
+    this.customers = this.customers.map((c) => {
+      if (c.customerId !== customerId) {
+        return c;
+      }
+      return {
+        ...c,
+        emailSubjectOverride: value
+      };
+    });
+    this.applyCustomerDisplayFields();
+  }
+
+  handleCustomerBodyChange(event) {
+    const customerId = event.currentTarget.dataset.customerId;
+    const value = event.detail.value;
+    this.customers = this.customers.map((c) => {
+      if (c.customerId !== customerId) {
+        return c;
+      }
+      return {
+        ...c,
+        emailBodyOverride: value
+      };
+    });
+    this.applyCustomerDisplayFields();
+  }
+
+  async handleCustomerResetEmail(event) {
+    const customerId = event.currentTarget.dataset.customerId;
+    if (!this.selectedTemplateId) {
+      return;
+    }
+    this.customers = this.customers.map((c) => ({
+      ...c,
+      isEditContentLoading: c.customerId === customerId
+    }));
+    await this.loadMergedEmailForCustomer(customerId);
+  }
+
+  /**
+   * Loads fully merged subject/body for this recipient (same output as preview),
+   * for editing as final text — not raw template merge fields.
+   */
+  async loadMergedEmailForCustomer(customerId) {
+    const row = this.customers.find((c) => c.customerId === customerId);
+    try {
+      const res = await previewEmail({
+        emailTemplateId: this.selectedTemplateId,
+        customerId,
+        contactId: null,
+        workOrderId: row?.workOrderId || null,
+        subject: "",
+        body: ""
+      });
+
+      this.customers = this.customers.map((c) => {
+        if (c.customerId !== customerId) {
+          return c;
+        }
+        return {
+          ...c,
+          emailSubjectOverride: res.subject,
+          emailBodyOverride: res.body,
+          isEditContentLoading: false
+        };
+      });
+      this.applyCustomerDisplayFields();
+    } catch (e) {
+      this.toast("Error", this.normalizeError(e), "error");
+      this.customers = this.customers.map((c) => ({
+        ...c,
+        isEditing:
+          c.customerId === customerId ? false : c.isEditing,
+        isEditContentLoading: false
+      }));
+    }
   }
 
   toggleCustomer(event) {
@@ -379,11 +483,21 @@ export default class EmailMassSendBase extends NavigationMixin(
             .map((contract) => contract.contentVersionId);
 
           if (ids.length > 0) {
-            payload.push({
+            const row = {
               customerId: c.customerId,
               workOrderId: c.workOrderId || null,
               contentVersionIds: ids
-            });
+            };
+            if (c.emailSubjectOverride != null) {
+              row.subject = c.emailSubjectOverride;
+            }
+            if (c.emailBodyOverride != null) {
+              row.body = c.emailBodyOverride;
+            }
+            if (c.emailSubjectOverride != null || c.emailBodyOverride != null) {
+              row.parsedContent = true;
+            }
+            payload.push(row);
           }
         }
 
@@ -398,10 +512,20 @@ export default class EmailMassSendBase extends NavigationMixin(
       } else {
         // Simple mode: send per-customer without specific contracts
         for (const c of this.customers) {
-          payload.push({
+          const row = {
             customerId: c.customerId,
             workOrderId: c.workOrderId || null
-          });
+          };
+          if (c.emailSubjectOverride != null) {
+            row.subject = c.emailSubjectOverride;
+          }
+          if (c.emailBodyOverride != null) {
+            row.body = c.emailBodyOverride;
+          }
+          if (c.emailSubjectOverride != null || c.emailBodyOverride != null) {
+            row.parsedContent = true;
+          }
+          payload.push(row);
         }
 
         if (!payload.length) {
@@ -465,8 +589,52 @@ export default class EmailMassSendBase extends NavigationMixin(
     }
   }
 
+  async handleEditClick(event) {
+    const customerId = event.currentTarget.dataset.customerId;
+    const current = this.customers.find((c) => c.customerId === customerId);
+    if (current?.isEditing) {
+      this.handleEditLeave();
+      return;
+    }
+
+    this.hoveredCustomerId = null;
+    this.hoveredPreviewSubject = null;
+    this.hoveredPreviewBody = null;
+    this.mergeFieldError = false;
+    this.mergeFieldErrorMessage = null;
+
+    if (!this.selectedTemplateId) {
+      this.customers = this.customers.map((c) => ({
+        ...c,
+        isHovered: false,
+        isEditing: c.customerId === customerId,
+        isEditContentLoading: false
+      }));
+      return;
+    }
+
+    this.customers = this.customers.map((c) => ({
+      ...c,
+      isHovered: false,
+      isEditing: c.customerId === customerId,
+      isEditContentLoading: c.customerId === customerId
+    }));
+
+    await this.loadMergedEmailForCustomer(customerId);
+  }
+
+  handleEditLeave() {
+    this.customers = this.customers.map((c) => ({
+      ...c,
+      isEditing: false,
+      isEditContentLoading: false
+    }));
+  }
+
   async handlePreviewClick(event) {
     const customerId = event.currentTarget.dataset.customerId;
+
+    this.handleEditLeave();
 
     // If this customer's preview is already open, close it on second click
     const currentCustomer = this.customers.find(
@@ -488,7 +656,8 @@ export default class EmailMassSendBase extends NavigationMixin(
 
     this.customers = this.customers.map((c) => ({
       ...c,
-      isHovered: c.customerId === customerId
+      isHovered: c.customerId === customerId,
+      isEditing: false
     }));
 
     const previewCustomer = this.customers.find(
@@ -496,13 +665,26 @@ export default class EmailMassSendBase extends NavigationMixin(
     );
 
     try {
+      // Stored merged text (from edit load) is final HTML — do not run through merge again.
+      if (
+        previewCustomer &&
+        (previewCustomer.emailSubjectOverride != null ||
+          previewCustomer.emailBodyOverride != null)
+      ) {
+        this.hoveredPreviewSubject = this.getSubjectForCustomer(previewCustomer);
+        this.hoveredPreviewBody = this.getBodyForCustomer(previewCustomer);
+        this.mergeFieldError = false;
+        this.mergeFieldErrorMessage = null;
+        return;
+      }
+
       const res = await previewEmail({
         emailTemplateId: this.selectedTemplateId,
         customerId: customerId,
         contactId: null,
         workOrderId: previewCustomer?.workOrderId || null,
-        subject: this.subject,
-        body: this.body
+        subject: this.getSubjectForCustomer(previewCustomer),
+        body: this.getBodyForCustomer(previewCustomer)
       });
 
       this.hoveredPreviewSubject = res.subject;
@@ -538,5 +720,21 @@ export default class EmailMassSendBase extends NavigationMixin(
 
   get isContractsMode() {
     return this.mode === "contracts";
+  }
+
+  getSubjectForCustomer(cust) {
+    if (!cust) {
+      return this.subject;
+    }
+    return cust.emailSubjectOverride != null
+      ? cust.emailSubjectOverride
+      : this.subject;
+  }
+
+  getBodyForCustomer(cust) {
+    if (!cust) {
+      return this.body;
+    }
+    return cust.emailBodyOverride != null ? cust.emailBodyOverride : this.body;
   }
 }
