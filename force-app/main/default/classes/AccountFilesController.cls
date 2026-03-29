@@ -74,14 +74,14 @@ public with sharing class AccountFilesController {
             options.regionalManagers.add(new PicklistOption(u.Name, u.Id));
         }
         
-        // Get Supervisor names
-        for (User u : [
-            SELECT Id, Name 
-            FROM User 
-            WHERE Id IN :supervisorIds 
+        // Get Supervisor names (Supervisor__c lookup on Account)
+        for (Supervisor__c sup : [
+            SELECT Id, Name
+            FROM Supervisor__c
+            WHERE Id IN :supervisorIds
             ORDER BY Name
         ]) {
-            options.supervisors.add(new PicklistOption(u.Name, u.Id));
+            options.supervisors.add(new PicklistOption(sup.Name, sup.Id));
         }
         
         // Build County options (label = value)

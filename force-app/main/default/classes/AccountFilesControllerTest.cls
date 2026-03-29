@@ -34,6 +34,15 @@ public class AccountFilesControllerTest {
         return u;
     }
 
+    private static Supervisor__c createSupervisor(String nameSuffix) {
+        String uniqueId = String.valueOf(Datetime.now().getTime()) + String.valueOf(Crypto.getRandomInteger());
+        Supervisor__c sup = new Supervisor__c(
+            Name = 'Sup ' + nameSuffix + ' ' + uniqueId.left(40)
+        );
+        insert sup;
+        return sup;
+    }
+
     /**
      * Gets a valid county picklist value dynamically
      */
@@ -154,7 +163,7 @@ public class AccountFilesControllerTest {
     static void testGetFilterOptions_basic() {
         // Setup
         User rm = createUser('RM');
-        User sup = createUser('SUP');
+        Supervisor__c sup = createSupervisor('SUP');
 
         // Get active stages from metadata
         StageReferenceSettings__mdt stageRef = StageReferenceSettings__mdt.getInstance('Active_Stages');
@@ -196,7 +205,7 @@ public class AccountFilesControllerTest {
         // Setup
         User rm1 = createUser('RM1');
         User rm2 = createUser('RM2');
-        User sup1 = createUser('SUP1');
+        Supervisor__c sup1 = createSupervisor('SUP1');
 
         // Get active stages
         StageReferenceSettings__mdt stageRef = StageReferenceSettings__mdt.getInstance('Active_Stages');
