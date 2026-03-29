@@ -3,8 +3,9 @@
     <fullName>Supervisor__c</fullName>
     <deleteConstraint>SetNull</deleteConstraint>
     <label>Supervisor</label>
-    <referenceTo>User</referenceTo>
-    <relationshipName>Customers_Supervisor</relationshipName>
+    <referenceTo>Supervisor__c</referenceTo>
+    <relationshipLabel>Customers</relationshipLabel>
+    <relationshipName>Customers</relationshipName>
     <required>false</required>
     <trackFeedHistory>false</trackFeedHistory>
     <type>Lookup</type>

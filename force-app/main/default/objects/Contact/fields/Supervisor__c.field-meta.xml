@@ -7,8 +7,8 @@
     &quot;&quot;,
     HYPERLINK(
         &quot;/&quot; &amp; Account.Supervisor__c,
-        Account.Supervisor__r.FirstName &amp; &quot; &quot; &amp;
-        Account.Supervisor__r.LastName,
+        Account.Supervisor__r.Name &amp; &quot; &quot; &amp;
+        Account.Supervisor__r.Last_Name__c,
         &quot;_self&quot;
     )
 )</formula>
