@@ -148,7 +148,7 @@
     <deploymentStatus>Deployed</deploymentStatus>
     <enableActivities>true</enableActivities>
     <enableBulkApi>true</enableBulkApi>
-    <enableFeeds>false</enableFeeds>
+    <enableFeeds>true</enableFeeds>
     <enableHistory>true</enableHistory>
     <enableLicensing>false</enableLicensing>
     <enableReports>true</enableReports>
@@ -159,21 +159,24 @@
     <label>Contract Bid</label>
     <nameField>
         <label>Contract Bid Name</label>
+        <trackFeedHistory>false</trackFeedHistory>
         <trackHistory>false</trackHistory>
         <type>Text</type>
     </nameField>
     <pluralLabel>Contract Bids</pluralLabel>
     <searchLayouts>
-        <listViewButtons>Send_Contracts</listViewButtons>
-        <searchResultsAdditionalFields>Version__c</searchResultsAdditionalFields>
+        <listViewButtons>Signature_Send</listViewButtons>
+        <listViewButtons>Mass_Send</listViewButtons>
         <searchResultsAdditionalFields>Customer__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Colored_Labels__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Colored_Stage__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Stage__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>RFP__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Renewal_Client__c</searchResultsAdditionalFields>
         <searchResultsAdditionalFields>Management_Company__c</searchResultsAdditionalFields>
-        <searchResultsAdditionalFields>Current_Vendor__c</searchResultsAdditionalFields>
-        <searchResultsAdditionalFields>CREATED_DATE</searchResultsAdditionalFields>
-        <searchResultsAdditionalFields>Due_Date__c</searchResultsAdditionalFields>
-        <searchResultsAdditionalFields>EBD_Due_Date__c</searchResultsAdditionalFields>
-        <searchResultsAdditionalFields>Lead_Owner__c</searchResultsAdditionalFields>
-        <searchResultsCustomButtons>Send_Contracts</searchResultsCustomButtons>
+        <searchResultsAdditionalFields>UPDATEDBY_USER.ALIAS</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Lead_Generator__c</searchResultsAdditionalFields>
+        <searchResultsCustomButtons>Signature_Send</searchResultsCustomButtons>
     </searchLayouts>
     <sharingModel>ControlledByParent</sharingModel>
     <visibility>Public</visibility>

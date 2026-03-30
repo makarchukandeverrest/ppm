@@ -6,7 +6,6 @@
     <columns>ACCOUNT.ADDRESS1_CITY</columns>
     <columns>ACCOUNT.PHONE1</columns>
     <columns>ACCOUNT.TYPE</columns>
-    <columns>Supervisor__c</columns>
     <filterScope>Everything</filterScope>
     <filters>
         <field>Is_Current_User__c</field>

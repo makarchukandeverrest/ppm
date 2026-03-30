@@ -3,6 +3,7 @@
     <fullName>Stage__c</fullName>
     <label>Stage</label>
     <required>false</required>
+    <trackFeedHistory>true</trackFeedHistory>
     <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>
     <type>Picklist</type>

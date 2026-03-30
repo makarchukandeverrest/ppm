@@ -16,5 +16,5 @@
     <protected>false</protected>
     <showsLocation>false</showsLocation>
     <showsStatus>false</showsStatus>
-    <url>/flow/Customer_Reparent_Flow?UserId__c={!User.Id}</url>
+    <url>/flow/Customer_Reparent_Flow?recordId={!User.Id}</url>
 </WebLink>

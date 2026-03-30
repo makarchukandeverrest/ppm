@@ -1,0 +1,116 @@
+<template>
+    <lightning-card title="Mass Object Merger">
+        <div class="slds-p-around_medium">
+
+            <!-- Выбор объекта и кнопка загрузки -->
+            <div class="slds-grid slds-gutters slds-m-bottom_medium">
+                <div class="slds-col">
+                    <lightning-combobox
+                        name="objectType"
+                        label="Object"
+                        value={selectedObjectType}
+                        placeholder="Select an object"
+                        options={objectTypes}
+                        onchange={handleObjectTypeChange}
+                    ></lightning-combobox>
+                </div>
+                <div class="slds-col slds-align-bottom">
+                    <lightning-button
+                        label="Load duplicates"
+                        variant="brand"
+                        onclick={loadDuplicateGroups}
+                        disabled={isLoadButtonDisabled}
+                    ></lightning-button>
+                </div>
+            </div>
+
+            <template if:true={isLoading}>
+                <lightning-spinner alternative-text="Loading duplicates"></lightning-spinner>
+            </template>
+
+            <!-- Если групп нет -->
+            <template if:false={hasGroups}>
+                <p class="slds-text-color_weak">
+                    No duplicate groups loaded. Select object and click "Load duplicates".
+                </p>
+            </template>
+
+            <!-- Таблицы для групп -->
+            <template if:true={hasGroups}>
+                <template for:each={displayGroups} for:item="group">
+                    <section key={group.groupKey} class="slds-m-bottom_large merge-group">
+                        <h2 class="slds-text-heading_small slds-m-bottom_small">
+                            Group: {group.groupKey}
+                        </h2>
+
+                        <!-- Покажем, какие записи участвуют -->
+                        <p class="slds-m-bottom_x-small">
+                            Records:
+                            <template for:each={group.headerRecords} for:item="rec">
+                                <span key={rec.id}>
+                                    {rec.name} ({rec.id})
+                                </span>
+                            </template>
+                        </p>
+
+                        <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Field</th>
+                                    <template for:each={group.headerRecords} for:item="rec">
+                                        <th scope="col" key={rec.id}>
+                                            {rec.name}
+                                        </th>
+                                    </template>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template for:each={group.fieldRows} for:item="row">
+                                    <tr key={row.fieldApiName}>
+                                        <th scope="row">
+                                            {row.fieldLabel}
+                                        </th>
+                                        <template for:each={row.recordValues} for:item="val">
+                                            <td key={val.recordId}>
+                                                <div class="slds-grid slds-grid_vertical-align-center slds-gutters_small">
+                                                    <div class="slds-col">
+                                                        <span>{val.value}</span>
+                                                        <template if:true={val.isDifferent}>
+                                                            <span class="slds-text-color_error">
+                                                                *
+                                                            </span>
+                                                        </template>
+                                                    </div>
+                                                    <div class="slds-col">
+                                                        <input
+                                                            type="radio"
+                                                            name={row.radioName}
+                                                            data-groupkey={group.groupKey}
+                                                            data-fieldapiname={row.fieldApiName}
+                                                            data-recordid={val.recordId}
+                                                            onchange={handleFieldChoiceChange}
+                                                            checked={val.isSelected}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </template>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </section>
+                </template>
+            </template>
+
+            <div class="slds-m-top_medium">
+                <lightning-button
+                    variant="brand"
+                    label="Merge"
+                    onclick={handleMerge}
+                    disabled={isMergeButtonDisabled}
+                ></lightning-button>
+            </div>
+        </div>
+    </lightning-card>
+</template>

@@ -1,4 +1,4 @@
-public inherited sharing class ProposalRegionalManagerAssigner {
+public with sharing class ProposalRegionalManagerAssigner {
     
     public static void assignManagers(List<Opportunity> newOppList) {
         // Collect unique order codes from opportunities
