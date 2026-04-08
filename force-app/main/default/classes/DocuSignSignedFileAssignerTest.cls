@@ -211,4 +211,94 @@ public with sharing class DocuSignSignedFileAssignerTest {
         // Если сюда дошли без исключений — ок.
         System.assertEquals(true, true, 'Method must safely handle null and empty input.');
     }
+
+    @IsTest
+    static void testAssignProposalDocuments_Positive_LinkToOpportunity_AndRename() {
+        Account acc = [
+            SELECT Id
+            FROM Account
+            WHERE Name = 'Test Account'
+            LIMIT 1
+        ];
+
+        Opportunity opp = new Opportunity(
+            Name = 'Test Opp',
+            AccountId = acc.Id,
+            StageName = 'Prospecting',
+            CloseDate = Date.today().addDays(7)
+        );
+        insert opp;
+
+        EmailMessage em = new EmailMessage(
+            Subject = 'Completed: Premier Swim Proposal 123',
+            FromAddress = 'sender@docusign.net',
+            ToAddress = 'test@example.com',
+            Status = '3'
+        );
+        insert em;
+
+        ContentVersion originalProposal = new ContentVersion(
+            Title = 'Premier Swim Proposal 123',
+            PathOnClient = 'Premier Swim Proposal 123.pdf',
+            VersionData = Blob.valueOf('original proposal'),
+            IsMajorVersion = true
+        );
+        insert originalProposal;
+        originalProposal = [
+            SELECT Id, ContentDocumentId, Title
+            FROM ContentVersion
+            WHERE Id = :originalProposal.Id
+            LIMIT 1
+        ];
+        insert new ContentDocumentLink(
+            ContentDocumentId = originalProposal.ContentDocumentId,
+            LinkedEntityId = opp.Id,
+            ShareType = 'V',
+            Visibility = 'AllUsers'
+        );
+
+        ContentVersion signedProposal = new ContentVersion(
+            Title = 'Premier Swim Proposal 123.pdf',
+            PathOnClient = 'Premier Swim Proposal 123.pdf',
+            VersionData = Blob.valueOf('signed proposal'),
+            IsMajorVersion = true
+        );
+        insert signedProposal;
+        signedProposal = [
+            SELECT Id, ContentDocumentId, Title
+            FROM ContentVersion
+            WHERE Id = :signedProposal.Id
+            LIMIT 1
+        ];
+        insert new ContentDocumentLink(
+            ContentDocumentId = signedProposal.ContentDocumentId,
+            LinkedEntityId = em.Id,
+            ShareType = 'V',
+            Visibility = 'AllUsers'
+        );
+
+        Test.startTest();
+        DocuSignSignedFileAssigner.assignProposalDocuments(new List<EmailMessage>{ em });
+        Test.stopTest();
+
+        Integer linkCount = [
+            SELECT COUNT()
+            FROM ContentDocumentLink
+            WHERE ContentDocumentId = :signedProposal.ContentDocumentId
+            AND LinkedEntityId = :opp.Id
+        ];
+        System.assertEquals(1, linkCount, 'Signed proposal must be linked to the Opportunity.');
+
+        ContentVersion signedAfter = [
+            SELECT Id, Title
+            FROM ContentVersion
+            WHERE Id = :signedProposal.Id
+            LIMIT 1
+        ];
+        System.assertEquals(
+            true,
+            signedAfter.Title != null && signedAfter.Title.endsWith(' - Completed'),
+            'Signed proposal Title must be renamed with " - Completed".'
+        );
+    }
 }

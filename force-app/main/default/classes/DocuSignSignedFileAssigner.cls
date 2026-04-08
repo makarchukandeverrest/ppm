@@ -237,4 +237,137 @@ public with sharing class DocuSignSignedFileAssigner {
         result = result.trim();
         return String.isBlank(result) ? null : result;
     }
+
+    public static void assignProposalDocuments(List<EmailMessage> docuSignEmails) {
+        if (docuSignEmails == null || docuSignEmails.isEmpty()) {
+            return;
+        }
+
+        Set<Id> emailIds = new Set<Id>();
+        for (EmailMessage em : docuSignEmails) {
+            if (em != null && em.Id != null) {
+                emailIds.add(em.Id);
+            }
+        }
+
+        List<ContentDocumentLink> emailLinks = [
+            SELECT ContentDocumentId, LinkedEntityId
+            FROM ContentDocumentLink
+            WHERE LinkedEntityId IN :emailIds
+        ];
+
+        Set<Id> signedDocIds = new Set<Id>();
+        for (ContentDocumentLink cdl : emailLinks) {
+            signedDocIds.add(cdl.ContentDocumentId);
+        }
+
+        List<ContentVersion> signedVersions = [
+            SELECT Id, ContentDocumentId, Title, IsLatest
+            FROM ContentVersion
+            WHERE ContentDocumentId IN :signedDocIds
+            AND IsLatest = true AND Title LIKE '%Premier Swim Proposal%'
+        ];
+        if (signedVersions.isEmpty()) {
+            return;
+        }
+
+        Set<String> signedBaseTitles = new Set<String>();
+        Map<Id, String> signedDocIdToBaseTitle = new Map<Id, String>();
+        for (ContentVersion cv : signedVersions) {
+            if (String.isBlank(cv.Title)) {
+                continue;
+            }
+
+            String baseTitle = normalizeTitle(cv.Title);
+            if (!String.isBlank(baseTitle)) {
+                signedBaseTitles.add(baseTitle);
+                signedDocIdToBaseTitle.put(cv.ContentDocumentId, baseTitle);
+            }
+        }
+        if (signedBaseTitles.isEmpty()) {
+            return;
+        }
+
+        List<ContentVersion> allAdditionalVersions = [
+            SELECT Id, ContentDocumentId, Title
+            FROM ContentVersion
+            WHERE IsLatest = true
+            AND ContentDocumentId NOT IN :signedDocIds AND Title LIKE '%Premier Swim Proposal%'
+        ];
+
+        Set<Id> oppSideDocIds = new Set<Id>();
+        Map<Id, String> docIdToBaseTitle = new Map<Id, String>();
+        for (ContentVersion cv : allAdditionalVersions) {
+            if (String.isBlank(cv.Title)) {
+                continue;
+            }
+
+            String baseTitle = normalizeTitle(cv.Title);
+            if (signedBaseTitles.contains(baseTitle)) {
+                oppSideDocIds.add(cv.ContentDocumentId);
+                docIdToBaseTitle.put(cv.ContentDocumentId, baseTitle);
+            }
+        }
+        if (oppSideDocIds.isEmpty()) {
+            return;
+        }
+
+        List<ContentDocumentLink> allLinks = [
+            SELECT ContentDocumentId, LinkedEntityId
+            FROM ContentDocumentLink
+            WHERE ContentDocumentId IN :oppSideDocIds
+        ];
+
+        Map<String, Id> baseTitleToOpportunityId = new Map<String, Id>();
+        for (ContentDocumentLink cdl : allLinks) {
+            if (cdl.LinkedEntityId == null) {
+                continue;
+            }
+
+            String prefix = String.valueOf(cdl.LinkedEntityId).left(3);
+            if (prefix != '006') {
+                continue;
+            }
+
+            String baseTitle = docIdToBaseTitle.get(cdl.ContentDocumentId);
+            if (
+                !String.isBlank(baseTitle)
+                && !baseTitleToOpportunityId.containsKey(baseTitle)
+            ) {
+                baseTitleToOpportunityId.put(baseTitle, cdl.LinkedEntityId);
+            }
+        }
+        if (baseTitleToOpportunityId.isEmpty()) {
+            return;
+        }
+
+        List<ContentVersion> versionsToUpdate = new List<ContentVersion>();
+        List<ContentDocumentLink> newCdls = new List<ContentDocumentLink>();
+
+        for (ContentVersion cv : signedVersions) {
+            String baseTitle = signedDocIdToBaseTitle.get(cv.ContentDocumentId);
+            if (String.isBlank(baseTitle)) {
+                continue;
+            }
+
+            Id oppId = baseTitleToOpportunityId.get(baseTitle);
+            if (oppId == null) {
+                continue;
+            }
+
+            String newTitle = baseTitle + ' - Completed';
+            versionsToUpdate.add(new ContentVersion(Id = cv.Id, Title = newTitle));
+
+            newCdls.add(
+                new ContentDocumentLink(
+                    ContentDocumentId = cv.ContentDocumentId,
+                    LinkedEntityId = oppId,
+                    ShareType = 'V',
+                    Visibility = 'AllUsers'
+                )
+            );
+        }
+        insert newCdls;
+    }
+
 }
