@@ -94,7 +94,7 @@ public with sharing class DocuSignSignedFileAssignerTest {
         ];
 
         Test.startTest();
-        DocuSignSignedFileAssigner.assignDocuments(new List<EmailMessage>{ em });
+        DocuSignSignedFileAssigner.assignContractDocuments(new List<EmailMessage>{ em });
         Test.stopTest();
 
         // 1. Проверяем, что файл ПРИВЯЗАН к Account (через ContentDocumentLink)
@@ -164,7 +164,7 @@ public with sharing class DocuSignSignedFileAssignerTest {
         insert blankCdlEmail;
 
         Test.startTest();
-        DocuSignSignedFileAssigner.assignDocuments(new List<EmailMessage>{ em });
+        DocuSignSignedFileAssigner.assignContractDocuments(new List<EmailMessage>{ em });
         Test.stopTest();
 
         // 1. Не должен быть залинкован к Account
@@ -202,10 +202,10 @@ public with sharing class DocuSignSignedFileAssignerTest {
     static void testAssignDocuments_NullAndEmptyInput_EarlyReturn() {
         Test.startTest();
         // null
-        DocuSignSignedFileAssigner.assignDocuments(null);
+        DocuSignSignedFileAssigner.assignContractDocuments(null);
 
         // пустой список
-        DocuSignSignedFileAssigner.assignDocuments(new List<EmailMessage>());
+        DocuSignSignedFileAssigner.assignContractDocuments(new List<EmailMessage>());
         Test.stopTest();
 
         // Если сюда дошли без исключений — ок.

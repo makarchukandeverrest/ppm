@@ -1,6 +1,6 @@
 public with sharing class DocuSignSignedFileAssigner {
 
-    public static void assignDocuments(List<EmailMessage> docuSignEmails) {
+    public static void assignContractDocuments(List<EmailMessage> docuSignEmails) {
         if (docuSignEmails == null || docuSignEmails.isEmpty()) {
             return;
         }

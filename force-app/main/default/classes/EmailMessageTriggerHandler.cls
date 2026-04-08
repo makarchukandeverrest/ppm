@@ -40,7 +40,8 @@ public with sharing class EmailMessageTriggerHandler extends TriggerHandler {
 }
 
 protected override void afterInsert() {
-    List<EmailMessage> docuSignEmails = new List<EmailMessage>();
+    List<EmailMessage> docuSignContractEmails = new List<EmailMessage>();
+    List<EmailMessage> docuSignProposalEmails = new List<EmailMessage>();
 
     for (EmailMessage em : newMap.values()) {
         if (em == null) continue;
@@ -52,13 +53,16 @@ protected override void afterInsert() {
             && fromAddress.contains('@docusign.net')
             && subject.contains('Completed:')
             && em.HasAttachment == true) {
-
-            docuSignEmails.add(em);
+                if(!em.Subject.contains('Premier Swim Proposal')){
+                    docuSignContractEmails.add(em);
+                }else{
+                    docuSignProposalEmails.add(em);
+                }
         }
     }
 
-    if (!docuSignEmails.isEmpty()) {
-        DocuSignSignedFileAssigner.assignDocuments(docuSignEmails);
+    if (!docuSignContractEmails.isEmpty()) {
+        DocuSignSignedFileAssigner.assignContractDocuments(docuSignContractEmails);
     }
 }
 
