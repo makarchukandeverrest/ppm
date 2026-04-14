@@ -46,7 +46,7 @@ public with sharing class AccountFilesController {
         Set<String> countyValues = new Set<String>();
         
         for (Account acc : [
-            SELECT Id, BillingCountry, Supervisor__c, Regional_Manager__c, County__c 
+            SELECT Id, BillingCountry, Regional_Manager__c, Supervisor_Lookup__c, County__c 
             FROM Account 
             WHERE Id IN :customerIds
         ]) {
@@ -55,8 +55,8 @@ public with sharing class AccountFilesController {
                 regionalManagerIds.add(acc.Regional_Manager__c);
             }
             // Supervisor from Account
-            if (acc.Supervisor__c != null) {
-                supervisorIds.add(acc.Supervisor__c);
+            if (acc.Supervisor_Lookup__c != null) {
+                supervisorIds.add(acc.Supervisor_Lookup__c);
             }
             // County__c from Account
             if (String.isNotBlank(acc.County__c)) {
@@ -75,13 +75,17 @@ public with sharing class AccountFilesController {
         }
         
         // Get Supervisor names
-        for (User u : [
-            SELECT Id, Name 
-            FROM User 
-            WHERE Id IN :supervisorIds 
+        for (Supervisor__c sup : [
+            SELECT Id, Name, Last_Name__c
+            FROM Supervisor__c
+            WHERE Id IN :supervisorIds
             ORDER BY Name
         ]) {
-            options.supervisors.add(new PicklistOption(u.Name, u.Id));
+            String label = sup.Name;
+            if (String.isNotBlank(sup.Last_Name__c)) {
+                label += ' ' + sup.Last_Name__c;
+            }
+            options.supervisors.add(new PicklistOption(label, sup.Id));
         }
         
         // Build County options (label = value)
@@ -112,7 +116,7 @@ public with sharing class AccountFilesController {
         String soqlQuery = 'SELECT Id, Name, Customer__c, Stage__c, ' +
                            'Customer__r.Name, Customer__r.Email__c, ' +
                            'Customer__r.BillingCountry, ' +
-                           'Customer__r.Supervisor__c, Customer__r.Supervisor__r.Name, ' +
+                           'Customer__r.Supervisor_Lookup__c, Customer__r.Supervisor_Lookup__r.Name, ' +
                            'Customer__r.Regional_Manager__c, Customer__r.Regional_Manager__r.Name, ' +
                            'Customer__r.County__c, EBD_Due_Date__c, ' +
                            'Renewal_Client__c ' +
@@ -155,7 +159,7 @@ public with sharing class AccountFilesController {
             
             // Apply Supervisor filter (from Account)
             if (String.isNotBlank(supervisorId)) {
-                if (contract.Customer__r.Supervisor__c != supervisorId) {
+                if (contract.Customer__r.Supervisor_Lookup__c != supervisorId) {
                     continue;
                 }
             }
@@ -268,8 +272,8 @@ public with sharing class AccountFilesController {
                     ? contract.Customer__r.Regional_Manager__r.Name 
                     : null;
                 awf.countyName = contract.Customer__r.County__c;
-                awf.supervisorName = contract.Customer__r.Supervisor__r != null 
-                    ? contract.Customer__r.Supervisor__r.Name 
+                awf.supervisorName = contract.Customer__r.Supervisor_Lookup__r != null 
+                    ? contract.Customer__r.Supervisor_Lookup__r.Name 
                     : null;
                 
                 result.add(awf);
