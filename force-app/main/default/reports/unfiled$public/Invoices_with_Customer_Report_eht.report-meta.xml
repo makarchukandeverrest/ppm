@@ -34,11 +34,21 @@
     <columns>
         <field>Invoice__c.Work_Order_Start_Date__c</field>
     </columns>
+    <filter>
+        <criteriaItems>
+            <column>FK_ACC_ID</column>
+            <columnToColumn>false</columnToColumn>
+            <isUnlocked>true</isUnlocked>
+            <operator>notEqual</operator>
+            <value></value>
+        </criteriaItems>
+        <language>en_US</language>
+    </filter>
     <format>Summary</format>
     <groupingsDown>
         <dateGranularity>Day</dateGranularity>
-        <field>FK_NAME</field>
-        <sortOrder>Asc</sortOrder>
+        <field>Invoice__c.Customer_with_Trust_Level__c</field>
+        <sortOrder>Desc</sortOrder>
     </groupingsDown>
     <name>Invoices with Customer Report</name>
     <params>

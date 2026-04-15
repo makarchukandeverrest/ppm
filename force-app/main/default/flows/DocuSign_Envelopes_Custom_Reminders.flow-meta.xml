@@ -1,13 +1,105 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
     <actionCalls>
+        <name>Copy_2_of_Send_Alert_Email</name>
+        <label>Copy 2 of Send Alert Email</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>recipientAddresses</name>
+            <value>
+                <collectionElements>
+                    <elementReference>$Record.Deal__r.Regional_Manager__r.Email</elementReference>
+                </collectionElements>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>composeEmailContent</name>
+            <value>
+                <stringValue>True</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>NotificationTitle1</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <inputConfiguratorMode>Custom</inputConfiguratorMode>
+                <stringValue>{!NotificaionBody2}</stringValue>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+        <offset>0</offset>
+        <versionString>2.0.1</versionString>
+    </actionCalls>
+    <actionCalls>
+        <name>Copy_2_of_Send_Custom_Notification_Action_1</name>
+        <label>Copy 2 of Send Custom Notification Action 1</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>customNotificationAction</actionName>
+        <actionType>customNotificationAction</actionType>
+        <connector>
+            <targetReference>Copy_2_of_Send_Alert_Email</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>customNotifTypeId</name>
+            <value>
+                <elementReference>Get_Custom_Notification.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>recipientIds</name>
+            <value>
+                <elementReference>NotificationRecipients</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>title</name>
+            <value>
+                <elementReference>NotificationTitle1</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>body</name>
+            <value>
+                <elementReference>NotificaionBody2</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>targetId</name>
+            <value>
+                <elementReference>$Record.Deal__r.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>customNotificationAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
         <name>New_Task_Action_1</name>
         <label>Visit Property Action</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
         <actionName>NewTask</actionName>
         <actionType>quickAction</actionType>
+        <connector>
+            <targetReference>Copy_2_of_Send_Custom_Notification_Action_1</targetReference>
+        </connector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>contextId</name>
+            <value>
+                <elementReference>$Record.Deal__r.Id</elementReference>
+            </value>
+        </inputParameters>
         <inputParameters>
             <name>Subject</name>
             <value>
@@ -18,12 +110,6 @@
             <name>OwnerId</name>
             <value>
                 <elementReference>$Record.Deal__r.Regional_Manager__r.Id</elementReference>
-            </value>
-        </inputParameters>
-        <inputParameters>
-            <name>WhoId</name>
-            <value>
-                <elementReference>$Record.Deal__r.Id</elementReference>
             </value>
         </inputParameters>
         <inputParameters>
@@ -43,9 +129,15 @@
         <actionName>NewTask</actionName>
         <actionType>quickAction</actionType>
         <connector>
-            <targetReference>New_Task_Action_1</targetReference>
+            <targetReference>Get_Custom_Notification</targetReference>
         </connector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>contextId</name>
+            <value>
+                <elementReference>$Record.Deal__r.Id</elementReference>
+            </value>
+        </inputParameters>
         <inputParameters>
             <name>Subject</name>
             <value>
@@ -68,12 +160,101 @@
         <offset>0</offset>
     </actionCalls>
     <actionCalls>
+        <name>Send_Alert_Email</name>
+        <label>Send Alert Email</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>emailSimple</actionName>
+        <actionType>emailSimple</actionType>
+        <connector>
+            <targetReference>New_Task_Action_1</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>recipientAddresses</name>
+            <value>
+                <collectionElements>
+                    <elementReference>$Record.Deal__r.Regional_Manager__r.Email</elementReference>
+                </collectionElements>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>composeEmailContent</name>
+            <value>
+                <stringValue>True</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailSubject</name>
+            <value>
+                <elementReference>NotificationTitle1</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>emailBody</name>
+            <value>
+                <inputConfiguratorMode>Custom</inputConfiguratorMode>
+                <stringValue>{!NotificationBody}</stringValue>
+            </value>
+        </inputParameters>
+        <nameSegment>emailSimple</nameSegment>
+        <offset>0</offset>
+        <versionString>2.0.1</versionString>
+    </actionCalls>
+    <actionCalls>
+        <name>Send_Custom_Notification_Action_1</name>
+        <label>Send Custom Notification Action 1</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>customNotificationAction</actionName>
+        <actionType>customNotificationAction</actionType>
+        <connector>
+            <targetReference>Send_Alert_Email</targetReference>
+        </connector>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>customNotifTypeId</name>
+            <value>
+                <elementReference>Get_Custom_Notification.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>recipientIds</name>
+            <value>
+                <elementReference>NotificationRecipients</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>title</name>
+            <value>
+                <elementReference>NotificationTitle1</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>body</name>
+            <value>
+                <elementReference>NotificationBody</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>targetId</name>
+            <value>
+                <elementReference>$Record.Deal__r.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>customNotificationAction</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
         <name>Send_Reminder_1</name>
         <label>Send Reminder 1</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
         <actionName>emailSimple</actionName>
         <actionType>emailSimple</actionType>
+        <connector>
+            <targetReference>Send_Reminder_2</targetReference>
+        </connector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
         <inputParameters>
             <name>recipientAddresses</name>
@@ -102,7 +283,7 @@
             <name>senderAddress</name>
             <value>
                 <inputConfiguratorMode>Custom</inputConfiguratorMode>
-                <stringValue>sf_workorders@premierswim.com</stringValue>
+                <stringValue>office@premierswim.com</stringValue>
             </value>
         </inputParameters>
         <inputParameters>
@@ -135,6 +316,9 @@
         <locationY>0</locationY>
         <actionName>emailSimple</actionName>
         <actionType>emailSimple</actionType>
+        <connector>
+            <targetReference>Send_Reminder_3</targetReference>
+        </connector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
         <inputParameters>
             <name>recipientAddresses</name>
@@ -163,7 +347,7 @@
             <name>senderAddress</name>
             <value>
                 <inputConfiguratorMode>Custom</inputConfiguratorMode>
-                <stringValue>sf_workorders@premierswim.com</stringValue>
+                <stringValue>office@premierswim.com</stringValue>
             </value>
         </inputParameters>
         <inputParameters>
@@ -196,6 +380,9 @@
         <locationY>0</locationY>
         <actionName>emailSimple</actionName>
         <actionType>emailSimple</actionType>
+        <connector>
+            <targetReference>Phone_Call_Task</targetReference>
+        </connector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
         <inputParameters>
             <name>recipientAddresses</name>
@@ -224,7 +411,7 @@
             <name>senderAddress</name>
             <value>
                 <inputConfiguratorMode>Custom</inputConfiguratorMode>
-                <stringValue>sf_workorders@premierswim.com</stringValue>
+                <stringValue>office@premierswim.com</stringValue>
             </value>
         </inputParameters>
         <inputParameters>
@@ -252,7 +439,23 @@
     </actionCalls>
     <apiVersion>66.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
-    <description>Version for DEBUG</description>
+    <assignments>
+        <name>Fill_Recipients</name>
+        <label>Fill Recipients</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>NotificationRecipients</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>$Record.Deal__r.Regional_Manager__r.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>Send_Custom_Notification_Action_1</targetReference>
+        </connector>
+    </assignments>
+    <description>TEST Version of FLOW</description>
     <environments>Default</environments>
     <formulas>
         <name>PhoneCallSubject</name>
@@ -289,6 +492,27 @@ $Record.Deal__r.Name &amp;
     </processMetadataValues>
     <processType>AutoLaunchedFlow</processType>
     <recordLookups>
+        <name>Get_Custom_Notification</name>
+        <label>Get Custom Notification</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Fill_Recipients</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>DeveloperName</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Task_Due_Date</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>CustomNotificationType</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
         <name>Get_Recipients</name>
         <label>Get Recipients</label>
         <locationX>0</locationX>
@@ -309,7 +533,7 @@ $Record.Deal__r.Name &amp;
             <field>dfsle__Role__c</field>
             <operator>Contains</operator>
             <value>
-                <stringValue>Recipient</stringValue>
+                <stringValue>Signer</stringValue>
             </value>
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
@@ -322,9 +546,6 @@ $Record.Deal__r.Name &amp;
         <locationX>0</locationX>
         <locationY>0</locationY>
         <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
-        <connector>
-            <targetReference>Send_Reminder_2</targetReference>
-        </connector>
         <filterLogic>and</filterLogic>
         <filters>
             <field>dfsle__Envelope__c</field>
@@ -350,9 +571,6 @@ $Record.Deal__r.Name &amp;
         <locationX>0</locationX>
         <locationY>0</locationY>
         <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
-        <connector>
-            <targetReference>Send_Reminder_3</targetReference>
-        </connector>
         <filterLogic>and</filterLogic>
         <filters>
             <field>dfsle__Envelope__c</field>
@@ -439,8 +657,9 @@ $Record.Deal__r.Name &amp;
         <locationX>0</locationX>
         <locationY>0</locationY>
         <connector>
-            <targetReference>Phone_Call_Task</targetReference>
+            <targetReference>Get_Regional_Manager</targetReference>
         </connector>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
         <filterLogic>and</filterLogic>
         <filters>
             <field>Status__c</field>
@@ -450,12 +669,9 @@ $Record.Deal__r.Name &amp;
             </value>
         </filters>
         <object>dfsle__Envelope__c</object>
-        <recordTriggerType>Create</recordTriggerType>
+        <recordTriggerType>Update</recordTriggerType>
         <scheduledPaths>
             <name>X3_Days_after_Proposal</name>
-            <connector>
-                <targetReference>Get_Regional_Manager</targetReference>
-            </connector>
             <label>3 Days after Proposal</label>
             <offsetNumber>-3</offsetNumber>
             <offsetUnit>Days</offsetUnit>
@@ -464,9 +680,6 @@ $Record.Deal__r.Name &amp;
         </scheduledPaths>
         <scheduledPaths>
             <name>X4_Days_After_Reminder_1</name>
-            <connector>
-                <targetReference>Get_Regional_Manager_2</targetReference>
-            </connector>
             <label>4 Days After Reminder 1</label>
             <offsetNumber>7</offsetNumber>
             <offsetUnit>Days</offsetUnit>
@@ -476,7 +689,7 @@ $Record.Deal__r.Name &amp;
         <scheduledPaths>
             <name>X3_Days_After_Reminder_1</name>
             <connector>
-                <targetReference>Regional_Manager_3</targetReference>
+                <targetReference>Get_Regional_Manager_2</targetReference>
             </connector>
             <label>3 Days After Reminder 2</label>
             <offsetNumber>10</offsetNumber>
@@ -486,6 +699,9 @@ $Record.Deal__r.Name &amp;
         </scheduledPaths>
         <scheduledPaths>
             <name>X4_Days_After_All_Reminders</name>
+            <connector>
+                <targetReference>Regional_Manager_3</targetReference>
+            </connector>
             <label>4 Days After All Reminders</label>
             <offsetNumber>14</offsetNumber>
             <offsetUnit>Days</offsetUnit>
@@ -502,25 +718,63 @@ $Record.Deal__r.Name &amp;
         </scheduledPaths>
         <triggerType>RecordAfterSave</triggerType>
     </start>
-    <status>Draft</status>
+    <status>Active</status>
+    <textTemplates>
+        <name>NotificaionBody2</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Visit Property Task assigned to you.</text>
+    </textTemplates>
+    <textTemplates>
+        <name>NotificationBody</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>New Task for Proposal assigned to you.</text>
+    </textTemplates>
+    <textTemplates>
+        <name>NotificationTitle1</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>New Task assigned</text>
+    </textTemplates>
     <textTemplates>
         <name>Reminder1Body</name>
-        <isViewedAsPlainText>false</isViewedAsPlainText>
-        <text>&lt;p&gt;Hi {!Get_Recipients.Name},&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Just a quick note to confirm that the repair and supplies proposal came through on your end.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;If you didn’t receive it or would like it to be resent, I’m glad to do so. Please let me know if you have any questions or would like to review any items together.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Thank you,&lt;/p&gt;&lt;p&gt;{!Get_Regional_Manager.Name}&lt;/p&gt;</text>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Hi {!Get_Recipients.Name},
+Just a quick note to confirm that the repair and supplies proposal came through on your end.
+If you didn’t receive it or would like it to be resent, I’m glad to do so. Please let me know if you have any questions or would like to review any items together.
+Thank you,
+{!Get_Regional_Manager.Name}</text>
     </textTemplates>
     <textTemplates>
         <name>Reminder2Body</name>
-        <isViewedAsPlainText>false</isViewedAsPlainText>
-        <text>&lt;p&gt;Hi {!Get_Recipients_2.Name},&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Just a quick note to confirm that the repair and supplies proposal came through on your end.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;If you didn’t receive it or would like it to be resent, I’m glad to do so. Please let me know if you have any questions or would like to review any items together.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Thank you,&lt;/p&gt;&lt;p&gt;{!Get_Regional_Manager_2.Name}&lt;/p&gt;</text>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Hi {!Get_Recipients_2.Name},
+
+Just a quick note to confirm that the repair and supplies proposal came through on your end.
+
+If you didn’t receive it or would like it to be resent, I’m glad to do so. Please let me know if you have any questions or would like to review any items together.
+
+Thank you,
+{!Get_Regional_Manager_2.Name}</text>
     </textTemplates>
     <textTemplates>
         <name>Reminder3Body</name>
-        <isViewedAsPlainText>false</isViewedAsPlainText>
-        <text>&lt;p&gt;Hi {!Get_Recipients_3.Name},&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Just following up on my previous email.&lt;/p&gt;&lt;p&gt;If helpful, I’d be glad to schedule a quick call or site visit to walk through the proposed repairs and supplies, answer any questions, and align on priorities.&lt;/p&gt;&lt;p&gt;Please let me know what works best for you.&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;Thank you,&lt;/p&gt;&lt;p&gt;{!Regional_Manager_3.Name}&lt;/p&gt;</text>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Hi {!Get_Recipients_3.Name},
+
+Just following up on my previous email. If helpful, I’d be glad to schedule a quick call or site visit to walk through the proposed repairs and supplies, answer any questions, and align on priorities. Please let me know what works best for you.
+
+Thank you,
+{!Regional_Manager_3.Name}</text>
     </textTemplates>
     <textTemplates>
         <name>ReminderSubject</name>
         <isViewedAsPlainText>false</isViewedAsPlainText>
         <text>&lt;p&gt;{!$Record.Account__r.Name} – Pool Repairs &amp;amp; Supplies Proposal&lt;/p&gt;</text>
     </textTemplates>
+    <variables>
+        <name>NotificationRecipients</name>
+        <dataType>String</dataType>
+        <isCollection>true</isCollection>
+        <isInput>false</isInput>
+        <isOutput>false</isOutput>
+    </variables>
 </Flow>
