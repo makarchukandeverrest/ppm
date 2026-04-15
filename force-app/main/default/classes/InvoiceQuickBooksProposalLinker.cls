@@ -30,6 +30,34 @@ public with sharing class InvoiceQuickBooksProposalLinker {
                     }
                 }
 
+                // LinkedTxn JSON: fill missing QB ids based on TxnType
+                if (String.isNotBlank(invoice.Quickbooks_LinkedTxn_JSON__c) &&
+                    (String.isBlank(invoice.Proposal_QuickBooks_Id__c) || String.isBlank(invoice.WorkOrder_QuickBooks_Id__c))) {
+
+                    for (Map<String, Object> txn : parseLinkedTxn(invoice.Quickbooks_LinkedTxn_JSON__c)) {
+                        String txnType = getStringIgnoreCase(txn, 'TxnType');
+                        String txnId = getStringIgnoreCase(txn, 'TxnID');
+                        if (String.isBlank(txnId)) {
+                            txnId = getStringIgnoreCase(txn, 'TxnId');
+                        }
+
+                        if (String.isBlank(txnType) || String.isBlank(txnId)) {
+                            continue;
+                        }
+
+                        if (String.isBlank(invoice.Proposal_QuickBooks_Id__c) && txnType == 'Estimate') {
+                            invoice.Proposal_QuickBooks_Id__c = txnId;
+                        } else if (String.isBlank(invoice.WorkOrder_QuickBooks_Id__c) && txnType == 'SalesOrder') {
+                            invoice.WorkOrder_QuickBooks_Id__c = txnId;
+                        }
+
+                        if (String.isNotBlank(invoice.Proposal_QuickBooks_Id__c) &&
+                            String.isNotBlank(invoice.WorkOrder_QuickBooks_Id__c)) {
+                            break;
+                        }
+                    }
+                }
+
                 if (String.isNotBlank(invoice.Proposal_QuickBooks_Id__c)) {
                     proposalQuickBooksIds.add(invoice.Proposal_QuickBooks_Id__c);
                 }
@@ -221,6 +249,56 @@ public with sharing class InvoiceQuickBooksProposalLinker {
                 ' StackTrace: ' + e.getStackTraceString()
             );
         }
+    }
+
+    private static List<Map<String, Object>> parseLinkedTxn(String rawJson) {
+        List<Map<String, Object>> out = new List<Map<String, Object>>();
+        if (String.isBlank(rawJson)) return out;
+
+        Object root;
+        try {
+            root = JSON.deserializeUntyped(rawJson);
+        } catch (Exception e) {
+            return out;
+        }
+
+        List<Object> items;
+        if (root instanceof List<Object>) {
+            // Historical format: raw array of LinkedTxn rows
+            items = (List<Object>) root;
+        } else if (root instanceof Map<String, Object>) {
+            // QuickBooks format: { "LinkedTxn": [ ... ] }
+            Map<String, Object> m = (Map<String, Object>) root;
+            Object linked = m.get('LinkedTxn');
+            if (linked instanceof List<Object>) {
+                items = (List<Object>) linked;
+            } else {
+                items = new List<Object>();
+            }
+        } else {
+            items = new List<Object>();
+        }
+
+        for (Object obj : items) {
+            if (obj instanceof Map<String, Object>) {
+                out.add((Map<String, Object>) obj);
+            }
+        }
+
+        return out;
+    }
+
+    private static String getStringIgnoreCase(Map<String, Object> m, String key) {
+        if (m == null || String.isBlank(key)) return null;
+        if (m.containsKey(key)) return (m.get(key) == null) ? null : String.valueOf(m.get(key));
+
+        String keyLower = key.toLowerCase();
+        for (String k : m.keySet()) {
+            if (k != null && k.toLowerCase() == keyLower) {
+                return (m.get(k) == null) ? null : String.valueOf(m.get(k));
+            }
+        }
+        return null;
     }
 
     /**
