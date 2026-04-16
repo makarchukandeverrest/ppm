@@ -2,9 +2,6 @@ public inherited sharing class ProposalCustomerAssigner {
   private static final String LOG = 'ProposalCustomerAssigner';
 
   public static void assignCustomer(List<Opportunity> opps) {
-    System.debug(
-      LOG + ': assignCustomer start, opportunityCount=' + opps.size()
-    );
 
     Set<String> qbIds = new Set<String>();
 
@@ -21,8 +18,6 @@ public inherited sharing class ProposalCustomerAssigner {
       return;
     }
 
-    System.debug(LOG + ': distinct Account_QuickBooks_Id__c count=' + qbIds.size() + ', values=' + String.valueOf(qbIds));
-
     List<Account> accounts = [
       SELECT
         Id,
@@ -35,8 +30,6 @@ public inherited sharing class ProposalCustomerAssigner {
       WHERE QuickBooks_Id__c IN :qbIds
     ];
 
-    System.debug(LOG + ': Account query returned rows=' + accounts.size());
-
     Map<String, Account> accountByQbId = new Map<String, Account>();
 
     for (Account a : accounts) {
@@ -44,8 +37,6 @@ public inherited sharing class ProposalCustomerAssigner {
         accountByQbId.put(a.QuickBooks_Id__c, a);
       }
     }
-
-    System.debug(LOG + ': accountByQbId size=' + accountByQbId.size());
 
     Integer assigned = 0;
     Integer skippedNoQb = 0;
@@ -61,44 +52,15 @@ public inherited sharing class ProposalCustomerAssigner {
 
       if (matched != null) {
         opp.AccountId = matched.Id;
-
         opp.Customer_Billing_Contact__c = matched.Billing_Contact__c;
-
         opp.Customer_Maintenance_Contact__c = matched.Maintenance_Contact__c;
-
         opp.Customer_Primary_Contact__c = matched.Primary_Contact__c;
-
         opp.Customer_Secondary_Contact__c = matched.Secondary_Contact__c;
 
         assigned++;
-        System.debug(
-          LOG +
-            ': assigned AccountId=' +
-            matched.Id +
-            ' for Account_QuickBooks_Id__c=' +
-            opp.Account_QuickBooks_Id__c +
-            (opp.Id != null ? ', OpportunityId=' + opp.Id : ', OpportunityId=(before insert)')
-        );
       } else {
         noMatchingAccount++;
-        System.debug(
-          LoggingLevel.WARN,
-          LOG +
-            ': no Account with QuickBooks_Id__c=' +
-            opp.Account_QuickBooks_Id__c +
-            (opp.Id != null ? ', OpportunityId=' + opp.Id : ', OpportunityId=(before insert)')
-        );
       }
     }
-
-    System.debug(
-      LOG +
-        ': assignCustomer end, assigned=' +
-        assigned +
-        ', skippedNoAccountQbId=' +
-        skippedNoQb +
-        ', noMatchingAccount=' +
-        noMatchingAccount
-    );
   }
 }

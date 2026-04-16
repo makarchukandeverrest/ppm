@@ -115,7 +115,6 @@ public without sharing class CustomerRegionalManagerService {
         for (WorkOrder wo : newWorkOrders) {
             Account acc = accById.get(wo.AccountId);
             if (acc != null && acc.Regional_Manager__c != null) {
-                // In before insert, WorkOrder.Id is null; set in-memory instead of DML.
                 if (wo.Id == null) {
                     wo.OwnerId = acc.Regional_Manager__c;
                 } else {
@@ -170,17 +169,13 @@ public without sharing class CustomerRegionalManagerService {
     // AC 2: Open Proposals  → OwnerId + Regional_Manager__c updated to new RM
     // AC 3: Closed Proposals → OwnerId updated only; Regional_Manager__c frozen
     public static void assignOwnerByCustomer(List<Account> newAccounts) {
-        System.debug('>>> CRMS.assignOwnerByCustomer(Account) ENTER, count=' + newAccounts.size());
-
         Map<Id, Id> accIdToRegionalMgrId = new Map<Id, Id>();
         for (Account a : newAccounts) {
             if (a.Regional_Manager__c != null) {
                 accIdToRegionalMgrId.put(a.Id, a.Regional_Manager__c);
-                System.debug('>>> Account ' + a.Id + ' → new RM = ' + a.Regional_Manager__c);
             }
         }
         if (accIdToRegionalMgrId.isEmpty()) {
-            System.debug('>>> No accounts with RM, exiting');
             return;
         }
 
@@ -190,7 +185,6 @@ public without sharing class CustomerRegionalManagerService {
             FROM WorkOrder
             WHERE AccountId IN :accIdToRegionalMgrId.keySet()
         ];
-        System.debug('>>> WorkOrders found: ' + workOrdersToUpdate.size());
 
         // ── Invoices ──
         List<Invoice__c> invoicesToUpdate = [
@@ -198,7 +192,6 @@ public without sharing class CustomerRegionalManagerService {
             FROM Invoice__c
             WHERE Customer__c IN :accIdToRegionalMgrId.keySet()
         ];
-        System.debug('>>> Invoices found: ' + invoicesToUpdate.size());
 
         // ── Proposals (Opportunities) ──
         List<Opportunity> proposalsToUpdate = [
@@ -206,7 +199,6 @@ public without sharing class CustomerRegionalManagerService {
     FROM Opportunity
     WHERE AccountId IN :accIdToRegionalMgrId.keySet()
 ];
-        System.debug('>>> Proposals found: ' + proposalsToUpdate.size());
 
         for (WorkOrder wo : workOrdersToUpdate) {
             Id regMgrId = accIdToRegionalMgrId.get(wo.AccountId);
@@ -240,18 +232,14 @@ public without sharing class CustomerRegionalManagerService {
             update invoicesToUpdate;
         }
         if (!proposalsToUpdate.isEmpty()) {
-            System.debug('>>> Updating ' + proposalsToUpdate.size() + ' proposals, setting bypassPreventOverride=true');
             // bypassPreventOverride ensures the nested Proposal trigger's
             // preventProposalRMOverride does not revert the cascade we just applied
             bypassPreventOverride = true;
             try {
                 update proposalsToUpdate;
-                System.debug('>>> Proposals updated successfully');
             } finally {
                 bypassPreventOverride = false;
             }
-        } else {
-            System.debug('>>> No proposals to update');
         }
     }
 }
