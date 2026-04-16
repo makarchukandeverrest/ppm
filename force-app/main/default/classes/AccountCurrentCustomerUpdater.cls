@@ -2,8 +2,6 @@ public with sharing class AccountCurrentCustomerUpdater {
   public static void updateCustomers(List<Contract_Bid__c> wonBids) {
     List<Account> accountsToUpdate = new List<Account>();
     for (Contract_Bid__c bid : wonBids) {
-      System.debug('bid: ' + bid);
-      System.debug('bid.Customer__c: ' + bid.Customer__c);
       if (bid.Customer__c != null) {
         accountsToUpdate.add(
           new Account(
@@ -16,7 +14,6 @@ public with sharing class AccountCurrentCustomerUpdater {
         );
       }
     }
-    System.debug('accountsToUpdate: ' + accountsToUpdate);
     if (!accountsToUpdate.isEmpty()) {
       update accountsToUpdate;
     }

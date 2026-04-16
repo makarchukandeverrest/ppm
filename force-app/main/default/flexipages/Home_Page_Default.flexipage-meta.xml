@@ -3,12 +3,6 @@
     <flexiPageRegions>
         <itemInstances>
             <componentInstance>
-                <componentName>Email_Platform:globalInbox</componentName>
-                <identifier>Email_Platform_globalInbox</identifier>
-            </componentInstance>
-        </itemInstances>
-        <itemInstances>
-            <componentInstance>
                 <componentInstanceProperties>
                     <name>dashboardName</name>
                     <value>AdoptionDashboard1</value>

@@ -2,6 +2,7 @@
 <ListView xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>All</fullName>
     <columns>NAME</columns>
+    <columns>Invoice_Number__c</columns>
     <columns>Is_Paid__c</columns>
     <columns>LAST_UPDATE</columns>
     <columns>Customer__c</columns>

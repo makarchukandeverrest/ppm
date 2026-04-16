@@ -237,7 +237,7 @@ public with sharing class ContractMassSendController {
     List<Quick_Book_Work_Order_Line_Item__c> lines;
     if (serviceTeamMemberId != null) {
       lines = [
-        SELECT Name, Description__c, Quantity__c, Rate__c, Amount__c
+        SELECT Name, Description__c, Quantity__c
         FROM Quick_Book_Work_Order_Line_Item__c
         WHERE
           Work_Order__c = :workOrderId
@@ -246,7 +246,7 @@ public with sharing class ContractMassSendController {
       ];
     } else {
       lines = [
-        SELECT Name, Description__c, Quantity__c, Rate__c, Amount__c
+        SELECT Name, Description__c, Quantity__c
         FROM Quick_Book_Work_Order_Line_Item__c
         WHERE Work_Order__c = :workOrderId
         ORDER BY CreatedDate ASC
@@ -269,8 +269,6 @@ public with sharing class ContractMassSendController {
         '<th style="border:1px solid #ccc;padding:8px;text-align:left;">Item</th>' +
         '<th style="border:1px solid #ccc;padding:8px;text-align:left;">Description</th>' +
         '<th style="border:1px solid #ccc;padding:8px;text-align:right;">Qty</th>' +
-        '<th style="border:1px solid #ccc;padding:8px;text-align:right;">Rate</th>' +
-        '<th style="border:1px solid #ccc;padding:8px;text-align:right;">Amount</th>' +
         '</tr></thead><tbody>'
     );
 
@@ -285,12 +283,6 @@ public with sharing class ContractMassSendController {
           '</td>' +
           '<td style="border:1px solid #ccc;padding:8px;text-align:right;">' +
           (li.Quantity__c != null ? String.valueOf(li.Quantity__c) : '') +
-          '</td>' +
-          '<td style="border:1px solid #ccc;padding:8px;text-align:right;">' +
-          (li.Rate__c != null ? String.valueOf(li.Rate__c) : '') +
-          '</td>' +
-          '<td style="border:1px solid #ccc;padding:8px;text-align:right;">' +
-          (li.Amount__c != null ? String.valueOf(li.Amount__c) : '') +
           '</td>' +
           '</tr>'
       );
