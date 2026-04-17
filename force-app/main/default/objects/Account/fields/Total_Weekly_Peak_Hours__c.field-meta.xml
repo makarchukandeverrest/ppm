@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Total_Weekly_Peak_Hours__c</fullName>
+    <externalId>false</externalId>
+    <formula>ROUND(
+    (VALUE(LEFT(TEXT(Normal_Season_Monday_Close_Time__c), 2)) 
+        - VALUE(LEFT(TEXT(Normal_Season_Monday_Open_Time__c), 2)))
+    +
+    (VALUE(MID(TEXT(Normal_Season_Monday_Close_Time__c), 4, 2))/60
+        - VALUE(MID(TEXT(Normal_Season_Monday_Open_Time__c), 4, 2))/60)
+    +
+    (VALUE(LEFT(TEXT(Normal_Season_Tuesday_Close_Time__c), 2)) 
+        - VALUE(LEFT(TEXT(Normal_Season_Tuesday_Open_Time__c), 2)))
+    +
+    (VALUE(MID(TEXT(Normal_Season_Tuesday_Close_Time__c), 4, 2))/60
+        - VALUE(MID(TEXT(Normal_Season_Tuesday_Open_Time__c), 4, 2))/60)
+    +
+    (VALUE(LEFT(TEXT(Normal_Season_Wednesday_Close_Time__c), 2)) 
+        - VALUE(LEFT(TEXT(Normal_Season_Wednesday_Open_Time__c), 2)))
+    +
+    (VALUE(MID(TEXT(Normal_Season_Wednesday_Close_Time__c), 4, 2))/60
+        - VALUE(MID(TEXT(Normal_Season_Wednesday_Open_Time__c), 4, 2))/60)
+    +
+    (VALUE(LEFT(TEXT(Normal_Season_Thursday_Close_Time__c), 2)) 
+        - VALUE(LEFT(TEXT(Normal_Season_Thursday_Open_Time__c), 2)))
+    +
+    (VALUE(MID(TEXT(Normal_Season_Thursday_Close_Time__c), 4, 2))/60
+        - VALUE(MID(TEXT(Normal_Season_Thursday_Open_Time__c), 4, 2))/60)
+    +
+    (VALUE(LEFT(TEXT(Normal_Season_Friday_Close_Time__c), 2)) 
+        - VALUE(LEFT(TEXT(Normal_Season_Friday_Open_Time__c), 2)))
+    +
+    (VALUE(MID(TEXT(Normal_Season_Friday_Close_Time__c), 4, 2))/60
+        - VALUE(MID(TEXT(Normal_Season_Friday_Open_Time__c), 4, 2))/60)
+    +
+    (VALUE(LEFT(TEXT(NormalSeason_Saturday_Close_Time__c), 2)) 
+        - VALUE(LEFT(TEXT(NormalSeason_Saturday_Open_Time__c), 2)))
+    +
+    (VALUE(MID(TEXT(NormalSeason_Saturday_Close_Time__c), 4, 2))/60
+        - VALUE(MID(TEXT(NormalSeason_Saturday_Open_Time__c), 4, 2))/60)
+    +
+    (VALUE(LEFT(TEXT(NormalSeason_Sunday_Close_Time__c), 2)) 
+        - VALUE(LEFT(TEXT(NormalSeason_Sunday_Open_Time__c), 2)))
+    +
+    (VALUE(MID(TEXT(NormalSeason_Sunday_Close_Time__c), 4, 2))/60
+        - VALUE(MID(TEXT(NormalSeason_Sunday_Open_Time__c), 4, 2))/60)
+,
+2)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Total Weekly Peak Hours</label>
+    <precision>18</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

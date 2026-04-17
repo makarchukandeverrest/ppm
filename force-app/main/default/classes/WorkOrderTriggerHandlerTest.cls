@@ -110,7 +110,7 @@ private class WorkOrderTriggerHandlerTest {
         Account testCustomer = [SELECT Id, Name FROM Account WHERE Name = 'Test Customer A' LIMIT 1];
         // FIX: Changed to 13971 which exists in the new setup
         Opportunity testProposal = [SELECT Id, StageName, Reference_Number__c FROM Opportunity WHERE Reference_Number__c = '13971' LIMIT 1];
-        System.assertEquals('Pending', testProposal.StageName, 'Proposal should start with initial stage.');
+        System.assertEquals('Proposal Created / Ready for review', testProposal.StageName, 'Proposal should start with initial stage.');
 
         String validLineItemsJson = '[{' +
             '"Id": "QB-12345",' +

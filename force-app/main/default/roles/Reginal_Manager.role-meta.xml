@@ -6,5 +6,5 @@
     <mayForecastManagerShare>false</mayForecastManagerShare>
     <name>Regional</name>
     <opportunityAccessLevel>Edit</opportunityAccessLevel>
-    <parentRole>GeneralAdmin</parentRole>
+    <parentRole>Senior_Regional</parentRole>
 </Role>

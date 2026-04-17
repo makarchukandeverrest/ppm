@@ -29,7 +29,6 @@ private class MapCustomersControllerTest {
                 BillingCountry = 'USA',
                 BillingLatitude = 34.0522,
                 BillingLongitude = -118.2437,
-                // Email__c = 'customer' + i + '@example.com',
                 County__c = 'Montgomery County',
                 Contract_Periods__c  = '2021-2022'
             );
@@ -37,13 +36,25 @@ private class MapCustomersControllerTest {
         }
         insert accts;
 
+        // Manually share all accounts with the standard user (OWD = Private)
+        List<AccountShare> shares = new List<AccountShare>();
+        for (Account a : accts) {
+            AccountShare s = new AccountShare();
+            s.AccountId = a.Id;
+            s.UserOrGroupId = u.Id;
+            s.AccountAccessLevel = 'Edit';       // 'Read' или 'Edit'
+            s.OpportunityAccessLevel = 'Edit';   // или 'Read' при необходимости
+            s.RowCause = Schema.AccountShare.RowCause.Manual;
+            shares.add(s);
+        }
+        insert shares;
+
         // Optionally relate a Regional Manager lookup if field exists in org
         try {
             Contact mgr = new Contact(LastName = 'Regional Manager');
             insert mgr;
 
             Account updateOne = [SELECT Id FROM Account WHERE Name = 'Test Customer 0' LIMIT 1];
-            // If your lookup API name differs, update the key below accordingly.
             updateOne.Regional_Manager__c = mgr.Id;
             update updateOne;
         } catch (Exception e) {
@@ -68,20 +79,21 @@ private class MapCustomersControllerTest {
             // Verify ordering by Name ASC
             List<Account> sortedResults = new List<Account>(results);
             sortedResults.sort(new AccountNameComparator());
-            
-            for(Integer i = 0; i < results.size(); i++) {
+
+            for (Integer i = 0; i < results.size(); i++) {
                 System.assertEquals(
-                    sortedResults[i].Name, 
-                    results[i].Name, 
-                    'Results should be ordered by Name ASC. Expected: ' + sortedResults[i].Name + ', Actual: ' + results[i].Name
+                    sortedResults[i].Name,
+                    results[i].Name,
+                    'Results should be ordered by Name ASC. Expected: ' +
+                    sortedResults[i].Name + ', Actual: ' + results[i].Name
                 );
             }
 
             // Validate fields on a sample record
-            for(Account a : results) {
+            for (Account a : results) {
                 System.assertNotEquals(null, a.Id, 'Id should be populated');
                 System.assertNotEquals(null, a.Name, 'Name should be populated');
-                
+
                 // Address fields inserted in setup
                 System.assertEquals('123 Test St', a.BillingStreet, 'BillingStreet mismatch');
                 System.assertEquals('Test City', a.BillingCity, 'BillingCity mismatch');
@@ -93,11 +105,8 @@ private class MapCustomersControllerTest {
                 System.assertNotEquals(null, a.BillingLatitude, 'BillingLatitude should be populated');
                 System.assertNotEquals(null, a.BillingLongitude, 'BillingLongitude should be populated');
 
-                // Custom fields
-                // System.assertNotEquals(null, a.Email__c, 'Email__c should be populated');
-
                 // Check Regional Manager relationship if present
-                if(a.Regional_Manager__c != null) {
+                if (a.Regional_Manager__c != null) {
                     System.assertNotEquals(null, a.Regional_Manager__r, 'Regional_Manager__r should be populated');
                     System.assertNotEquals(null, a.Regional_Manager__r.Name, 'Regional_Manager__r.Name should be populated');
                 }
@@ -105,12 +114,12 @@ private class MapCustomersControllerTest {
         }
     }
 
-        // Helper comparator class for sorting Accounts by Name
-        private class AccountNameComparator implements System.Comparator<Account> {
-            public Integer compare(Account a1, Account a2) {
-                if(a1.Name == a2.Name) return 0;
-                if(a1.Name > a2.Name) return 1;
-                return -1;
-            }
+    // Helper comparator class for sorting Accounts by Name
+    private class AccountNameComparator implements System.Comparator<Account> {
+        public Integer compare(Account a1, Account a2) {
+            if (a1.Name == a2.Name) return 0;
+            if (a1.Name > a2.Name) return 1;
+            return -1;
         }
+    }
 }

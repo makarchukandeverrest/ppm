@@ -5,7 +5,8 @@ public class AccountWithFiles {
     @AuraEnabled public Contract_Bid__c contract;
     @AuraEnabled public List<FileWrapper> files;
     @AuraEnabled public Boolean newClient;
-    
+    // Exposed EBD due date as a simple string property for LWC
+    @AuraEnabled public String ebdDueDate;
     // Filter-related fields for display
     @AuraEnabled public String regionalManagerName;
     @AuraEnabled public String countyName;
@@ -15,12 +16,29 @@ public class AccountWithFiles {
     @AuraEnabled public String reminderValue;   // final: "1"-"7" or custom number
     @AuraEnabled public String daysBeforeExpires;
 
-    public AccountWithFiles(Id accountId, String accountName, String email, Contract_Bid__c contr, List<FileWrapper> files, Boolean newClient) {
-        this(accountId, accountName, email, contr, files, newClient, null, null);
+    public AccountWithFiles(
+        Id accountId,
+        String accountName,
+        String email,
+        Contract_Bid__c contr,
+        List<FileWrapper> files,
+        Boolean newClient,
+        String ebdDueDate
+    ) {
+        this(accountId, accountName, email, contr, files, newClient, null, null, ebdDueDate);
     }
 
-    public AccountWithFiles(Id accountId, String accountName, String email, Contract_Bid__c contr, List<FileWrapper> files, Boolean newClient,
-            String reminderValue, String daysBeforeExpires) {
+    public AccountWithFiles(
+        Id accountId,
+        String accountName,
+        String email,
+        Contract_Bid__c contr,
+        List<FileWrapper> files,
+        Boolean newClient,
+        String reminderValue,
+        String daysBeforeExpires,
+        String ebdDueDate
+    ) {
         this.accountId = accountId;
         this.accountName = accountName;
         this.email = email;
@@ -29,5 +47,6 @@ public class AccountWithFiles {
         this.newClient = newClient;
         this.reminderValue = reminderValue;
         this.daysBeforeExpires = daysBeforeExpires;
+        this.ebdDueDate = ebdDueDate;
     }
 }

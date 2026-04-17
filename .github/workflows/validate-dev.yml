@@ -20,6 +20,9 @@ jobs:
         continue-on-error: true
         run: |
           echo ${{ secrets.SF_DEV_SFDX_URL }} | sf org login sfdx-url -s -u
+      - name: Set Email Service runAsUser for Dev
+        run: |
+          sed -i 's/bohdan\.pyrih@everrest\.org<\/runAsUser>/bohdan.pyrih@everrest.org.dev<\/runAsUser>/' "force-app/main/default/emailservices/Work Order Service.xml-meta.xml"
       - name: Validate with tests
         run: |
           sf project deploy validate -d force-app -l RunLocalTests -w 30

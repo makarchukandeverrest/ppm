@@ -34,6 +34,18 @@
                 <default>false</default>
                 <label>5</label>
             </value>
+            <value>
+                <fullName>Indoor</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Indoor</label>
+            </value>
+            <value>
+                <fullName>Outdoor</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Outdoor</label>
+            </value>
         </valueSetDefinition>
     </valueSet>
 </CustomField>

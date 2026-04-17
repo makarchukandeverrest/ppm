@@ -16,6 +16,7 @@ import DATE_ORDERED_FIELD from "@salesforce/schema/Opportunity.Date_Ordered__c";
 import COMMENTS_FIELD from "@salesforce/schema/Opportunity.Comments__c";
 import REFERENCE_NUMBER_FIELD from "@salesforce/schema/Opportunity.Reference_Number__c";
 import WARRANTY_FIELD from "@salesforce/schema/Opportunity.Warranty__c";
+import DESCRIPTION_FIELD from "@salesforce/schema/Opportunity.Description";
 import getProposalLineItems from "@salesforce/apex/ProposalLineItemController.getProposalLineItems";
 import updateProposalLineItems from "@salesforce/apex/ProposalLineItemController.updateProposalLineItems";
 import createProposalLineItems from "@salesforce/apex/ProposalLineItemController.createProposalLineItems";
@@ -51,7 +52,8 @@ export default class ProposalLineItems extends LightningElement {
       COMMENTS_FIELD,
       REFERENCE_NUMBER_FIELD,
       TAX_FIELD,
-      WARRANTY_FIELD
+      WARRANTY_FIELD,
+      DESCRIPTION_FIELD
     ]
   })
   wiredProposal({ error, data }) {
@@ -82,7 +84,7 @@ export default class ProposalLineItems extends LightningElement {
         startDate: getFieldValue(data, START_DATE_FIELD),
         orderTakenBy: getFieldValue(data, ORDER_TAKEN_BY_FIELD),
         dateOrdered: getFieldValue(data, DATE_ORDERED_FIELD),
-        comments: getFieldValue(data, COMMENTS_FIELD),
+        comments: getFieldValue(data, DESCRIPTION_FIELD),
         referenceNumber: getFieldValue(data, REFERENCE_NUMBER_FIELD),
         salesTax:
           salesTaxValue !== undefined && salesTaxValue !== null

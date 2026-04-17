@@ -17,6 +17,17 @@
             </value>
         </inputParameters>
         <inputParameters>
+            <name>ccAddresses</name>
+            <value>
+                <collectionElements>
+                    <elementReference>$Record.Proposal__r.Regional_Manager__r.Email</elementReference>
+                </collectionElements>
+                <collectionElements>
+                    <elementReference>Get_Service_Manager.Email__c</elementReference>
+                </collectionElements>
+            </value>
+        </inputParameters>
+        <inputParameters>
             <name>senderType</name>
             <value>
                 <inputConfiguratorMode>Custom</inputConfiguratorMode>
@@ -66,7 +77,7 @@
         <offset>0</offset>
         <versionString>2.0.1</versionString>
     </actionCalls>
-    <apiVersion>66.0</apiVersion>
+    <apiVersion>65.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
     <environments>Default</environments>
     <formulas>
@@ -77,7 +88,7 @@ $Record.Service_Team_Member__r.Name &amp;
 &quot;, &quot; &amp; BR() &amp; BR() &amp;
 
 &quot;A new Work Order has been assigned to you.&quot; &amp; BR() &amp;
-&quot;Work Order Number: &quot; &amp; $Record.WorkOrderNumber &amp; BR() &amp;
+&quot;Work Order Number: &quot; &amp; $Record.Quick_Books_WO_No__c &amp; BR() &amp;
 &quot;Customer: &quot; &amp; $Record.Account.Name &amp; BR() &amp;
 &quot;Location: &quot; &amp;
 $Record.Account.BillingStreet &amp; &quot;, &quot; &amp;
@@ -119,11 +130,32 @@ $Record.Account.BillingPostalCode &amp; BR() &amp;
         </value>
     </processMetadataValues>
     <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Get_Service_Manager</name>
+        <label>Get Service Manager</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Send_Email_Notification</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Name</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Service Team Manager</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Service_Team_Member__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
     <start>
         <locationX>0</locationX>
         <locationY>0</locationY>
         <connector>
-            <targetReference>Send_Email_Notification</targetReference>
+            <targetReference>Get_Service_Manager</targetReference>
         </connector>
         <filterLogic>and</filterLogic>
         <filters>

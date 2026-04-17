@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8"?>
 <FlexiPage xmlns="http://soap.sforce.com/2006/04/metadata">
     <flexiPageRegions>
         <itemInstances>
@@ -11,10 +11,8 @@
                     <name>variant</name>
                     <value>linear</value>
                 </componentInstanceProperties>
-                <componentName
-        >runtime_sales_pathassistant:pathAssistant</componentName>
-                <identifier
-        >runtime_sales_pathassistant_pathAssistant</identifier>
+                <componentName>runtime_sales_pathassistant:pathAssistant</componentName>
+                <identifier>runtime_sales_pathassistant_pathAssistant</identifier>
             </componentInstance>
         </itemInstances>
         <itemInstances>
@@ -54,8 +52,7 @@
                     <name>showLegacyActivityComposer</name>
                     <value>false</value>
                 </componentInstanceProperties>
-                <componentName
-        >runtime_sales_activities:activityPanel</componentName>
+                <componentName>runtime_sales_activities:activityPanel</componentName>
                 <identifier>runtime_sales_activities_activityPanel</identifier>
             </componentInstance>
         </itemInstances>
@@ -209,6 +206,34 @@
             <fieldInstance>
                 <fieldInstanceProperties>
                     <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Note__c</fieldItem>
+                <identifier>RecordNote_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <name>Facet-4692118a-b573-4daa-9c34-b51a5d9c998b</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>body</name>
+                    <value>Facet-4692118a-b573-4daa-9c34-b51a5d9c998b</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:column</componentName>
+                <identifier>flexipage_column3</identifier>
+            </componentInstance>
+        </itemInstances>
+        <name>Facet-6f2b2d4e-86eb-4f7a-a717-d0dc53e22b90</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
                     <value>required</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.Name</fieldItem>
@@ -241,8 +266,8 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.Supervisor__c</fieldItem>
-                <identifier>RecordSupervisor__cField</identifier>
+                <fieldItem>Record.Supervisor_Lookup__c</fieldItem>
+                <identifier>RecordSupervisor_Lookup_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -291,8 +316,8 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.Stage__c</fieldItem>
-                <identifier>RecordStage__cField</identifier>
+                <fieldItem>Record.Pool_Identifier__c</fieldItem>
+                <identifier>RecordPool_Identifier_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <name>Facet-a733ad25-2fac-4feb-8ba3-bfaa7cd6d969</name>
@@ -327,6 +352,26 @@
                 </fieldInstanceProperties>
                 <fieldItem>Record.Email__c</fieldItem>
                 <identifier>RecordEmail_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>readonly</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.OwnerId</fieldItem>
+                <identifier>RecordOwnerIdField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Trust_Level__c</fieldItem>
+                <identifier>RecordTrust_Level_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <name>Facet-51c9ef8e-5820-43b0-9af4-e7d5dc440451</name>
@@ -983,10 +1028,46 @@
                     <name>displayOption</name>
                     <value>BOTH</value>
                 </componentInstanceProperties>
-                <componentName
-        >runtime_sales_merge:mergeCandidatesPreviewCard</componentName>
-                <identifier
-        >runtime_sales_merge_mergeCandidatesPreviewCard</identifier>
+                <componentName>runtime_sales_merge:mergeCandidatesPreviewCard</componentName>
+                <identifier>runtime_sales_merge_mergeCandidatesPreviewCard</identifier>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>timeRangeLabel</name>
+                    <value>Normal</value>
+                </componentInstanceProperties>
+                <componentName>customerTimeRangeEditor</componentName>
+                <identifier>c_customerTimeRangeEditor</identifier>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>timeRangeLabel</name>
+                    <value>school</value>
+                </componentInstanceProperties>
+                <componentName>customerTimeRangeEditor</componentName>
+                <identifier>c_customerTimeRangeEditor2</identifier>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>columns</name>
+                    <value>Facet-6f2b2d4e-86eb-4f7a-a717-d0dc53e22b90</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>horizontalAlignment</name>
+                    <value>false</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>label</name>
+                    <value>Comments</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:fieldSection</componentName>
+                <identifier>flexipage_fieldSection2</identifier>
             </componentInstance>
         </itemInstances>
         <itemInstances>
@@ -1038,8 +1119,7 @@
         <name>flexipage:recordHomeTemplateDesktop</name>
         <properties>
             <name>saveOptions</name>
-            <value
-      >[{&quot;name&quot;:&quot;UseDefaultAssignmentRule&quot;,&quot;value&quot;:&quot;NONE&quot;}]</value>
+            <value>[{&quot;name&quot;:&quot;UseDefaultAssignmentRule&quot;,&quot;value&quot;:&quot;NONE&quot;}]</value>
         </properties>
     </template>
     <type>RecordPage</type>

@@ -13,7 +13,7 @@
     </matchingRules>
     <matchingRules>
         <fullName>Improved_Default_Account_Mathing_Rule</fullName>
-        <booleanFilter>(1 AND 2 AND 5) OR (1 AND 3 AND 5) OR (1 AND 4 AND 5)</booleanFilter>
+        <booleanFilter>(1 AND 2 AND 5) OR (1 AND 3 AND 5) OR (1 AND 4 AND 5) OR (6 AND 4 AND 5) OR (6 AND 2 AND 5) OR (2 AND 3 AND 5)</booleanFilter>
         <label>Improved Default Account Mathing Rule</label>
         <matchingRuleItems>
             <blankValueBehavior>NullNotAllowed</blankValueBehavior>
@@ -40,6 +40,11 @@
             <fieldName>Pool_Identifier__c</fieldName>
             <matchingMethod>Exact</matchingMethod>
         </matchingRuleItems>
-        <ruleStatus>Active</ruleStatus>
+        <matchingRuleItems>
+            <blankValueBehavior>NullNotAllowed</blankValueBehavior>
+            <fieldName>Website</fieldName>
+            <matchingMethod>Exact</matchingMethod>
+        </matchingRuleItems>
+        <ruleStatus>Inactive</ruleStatus>
     </matchingRules>
 </MatchingRules>

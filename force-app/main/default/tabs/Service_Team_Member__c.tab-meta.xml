@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomTab xmlns="http://soap.sforce.com/2006/04/metadata">
-    <fullName>Service_Team_Member__c</fullName>
     <customObject>true</customObject>
-    <label>Service Team Member</label>
-    <motif>Custom25: Clipboard</motif>
+    <motif>Custom7: Square</motif>
 </CustomTab>

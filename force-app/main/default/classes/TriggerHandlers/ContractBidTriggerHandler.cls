@@ -10,10 +10,7 @@ public with sharing class ContractBidTriggerHandler extends TriggerHandler {
   protected override void afterInsert() {
     List<Contract_Bid__c> wonBids = new List<Contract_Bid__c>();
     for (Contract_Bid__c bid : this.newList) {
-      if (
-        bid.Stage__c == 'Closed - WON' &&
-        oldMap.get(bid.Id).Stage__c != 'Closed - WON'
-      ) {
+      if (bid.Stage__c == 'Closed - WON') {
         wonBids.add(bid);
       }
     }

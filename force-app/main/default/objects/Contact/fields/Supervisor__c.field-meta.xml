@@ -3,12 +3,12 @@
     <fullName>Supervisor__c</fullName>
     <externalId>false</externalId>
     <formula>IF(
-    ISBLANK(Account.Supervisor__c),
+    ISBLANK(Account.Supervisor_Lookup__c),
     &quot;&quot;,
     HYPERLINK(
-        &quot;/&quot; &amp; Account.Supervisor__c,
-        Account.Supervisor__r.FirstName &amp; &quot; &quot; &amp;
-        Account.Supervisor__r.LastName,
+        &quot;/&quot; &amp; Account.Supervisor_Lookup__c,
+        Account.Supervisor_Lookup__r.Name &amp; &quot; &quot; &amp;
+        Account.Supervisor_Lookup__r.Last_Name__c,
         &quot;_self&quot;
     )
 )</formula>

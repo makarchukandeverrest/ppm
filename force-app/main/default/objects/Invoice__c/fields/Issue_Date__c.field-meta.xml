@@ -3,6 +3,7 @@
     <fullName>Issue_Date__c</fullName>
     <label>Issue Date</label>
     <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
     <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>
     <type>DateTime</type>

@@ -12,5 +12,6 @@ public with sharing class WorkOrderTriggerHandler extends TriggerHandler{
 
     protected override void beforeInsert(){
         WorkOrderCustomerAssigner linker = new WorkOrderCustomerAssigner(this.newList);
+        CustomerRegionalManagerService.assignOwnerByCustomer(this.newList);
     }
 }
