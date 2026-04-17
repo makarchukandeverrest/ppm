@@ -11,6 +11,10 @@ public virtual with sharing class TriggerHandler {
                 afterInsert();
             }when AFTER_UPDATE {
                 afterUpdate();
+            }when AFTER_DELETE {
+                afterDelete();
+            }when AFTER_UNDELETE {
+                afterUndelete();
             }when BEFORE_INSERT {
                 beforeInsert();
             }when BEFORE_UPDATE {
@@ -22,6 +26,10 @@ public virtual with sharing class TriggerHandler {
     protected virtual void afterInsert(){}
 
     protected virtual void afterUpdate(){}
+
+    protected virtual void afterDelete(){}
+
+    protected virtual void afterUndelete(){}
 
     protected virtual void beforeInsert(){}
 
