@@ -7,7 +7,7 @@
     <relationshipLabel>Invoices</relationshipLabel>
     <relationshipName>Invoices</relationshipName>
     <required>false</required>
-    <trackFeedHistory>false</trackFeedHistory>
+    <trackFeedHistory>true</trackFeedHistory>
     <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>
     <type>Lookup</type>

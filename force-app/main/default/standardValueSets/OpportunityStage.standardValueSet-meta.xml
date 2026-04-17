@@ -78,10 +78,10 @@
         <fullName>Invoiced - WO Completed</fullName>
         <default>false</default>
         <label>Invoiced - WO Completed</label>
-        <closed>true</closed>
-        <forecastCategory>Omitted</forecastCategory>
+        <closed>false</closed>
+        <forecastCategory>Pipeline</forecastCategory>
         <probability>90</probability>
-        <won>true</won>
+        <won>false</won>
     </standardValue>
     <standardValue>
         <fullName>Closed Won</fullName>

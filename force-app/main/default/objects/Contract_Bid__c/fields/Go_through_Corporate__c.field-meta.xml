@@ -3,7 +3,6 @@
     <fullName>Go_through_Corporate__c</fullName>
     <defaultValue>false</defaultValue>
     <label>Go throughCorporate</label>
-    <trackFeedHistory>false</trackFeedHistory>
     <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>
     <type>Checkbox</type>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>X2025_Work_Orders</fullName>
+    <columns>Name</columns>
+    <columns>Account</columns>
+    <columns>Subject</columns>
+    <columns>Status</columns>
+    <columns>Priority</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>StartDate</field>
+        <operation>greaterThan</operation>
+        <value>1/1/2025 12:00 AM</value>
+    </filters>
+    <filters>
+        <field>StartDate</field>
+        <operation>lessThan</operation>
+        <value>1/1/2026 12:00 AM</value>
+    </filters>
+    <label>2025 Work Orders</label>
+</ListView>

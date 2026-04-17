@@ -3,12 +3,15 @@
     <fullName>AllContacts</fullName>
     <columns>ACCOUNT.NAME</columns>
     <columns>FULL_NAME</columns>
-    <columns>CONTACT.TITLE</columns>
-    <columns>CONTACT.PHONE1</columns>
-    <columns>CONTACT.EMAIL</columns>
+    <columns>Regional_Manager__c</columns>
     <columns>CORE.USERS.FIRST_NAME</columns>
     <columns>CORE.USERS.LAST_NAME</columns>
-    <columns>Contact_Person_ID__c</columns>
+    <columns>CORE.USERS.ALIAS</columns>
     <filterScope>Everything</filterScope>
+    <filters>
+        <field>CORE.USERS.ALIAS</field>
+        <operation>equals</operation>
+        <value>hamzah</value>
+    </filters>
     <label>All Contacts</label>
 </ListView>

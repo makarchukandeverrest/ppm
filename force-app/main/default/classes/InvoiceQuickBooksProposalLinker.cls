@@ -10,15 +10,12 @@ public with sharing class InvoiceQuickBooksProposalLinker {
         try {
             Set<String> proposalQuickBooksIds = new Set<String>();
             Set<String> workOrderQuickBooksIds = new Set<String>();
-            Set<String> customerQuickBooksIds = new Set<String>();
             Set<String> proposalReferenceNumbers = new Set<String>();
             Set<String> accountNameFragments = new Set<String>();
 
             Map<String, Id> quickBooksIdToOpportunityId = new Map<String, Id>();
             Map<String, Id> referenceNumberToOpportunityId = new Map<String, Id>();
             Map<String, Id> quickBooksIdToWorkOrderId = new Map<String, Id>();
-            Map<String, Id> contractQuickBooksIdToAccountId = new Map<String, Id>();
-            Map<String, Id> serviceQuickBooksIdToAccountId = new Map<String, Id>();
 
             Map<String, List<Account>> potentialAccountsByFragment = new Map<String, List<Account>>();
 
@@ -65,34 +62,11 @@ public with sharing class InvoiceQuickBooksProposalLinker {
                 if (String.isNotBlank(invoice.WorkOrder_QuickBooks_Id__c)) {
                     workOrderQuickBooksIds.add(invoice.WorkOrder_QuickBooks_Id__c);
                 }
-                
-                if (String.isNotBlank(invoice.Customer_Quickbooks_Id__c)) {
-                    customerQuickBooksIds.add(invoice.Customer_Quickbooks_Id__c);
-                }
 
                 if (String.isNotBlank(invoice.Memo__c)) {
                     String referenceNumber = extractReferenceNumber(invoice.Memo__c);
                     if (String.isNotBlank(referenceNumber)) {
                         proposalReferenceNumbers.add(referenceNumber);
-                    }
-                }
-            }
-            
-            if (!customerQuickBooksIds.isEmpty()) {
-                for (Account acc : [
-                    SELECT Id, QuickBooks_Contract_Id__c, QuickBooks_Service_Id__c
-                    FROM Account
-                    WHERE QuickBooks_Contract_Id__c IN :customerQuickBooksIds
-                       OR QuickBooks_Service_Id__c IN :customerQuickBooksIds
-                    LIMIT 10000
-                ]) {
-                    if (String.isNotBlank(acc.QuickBooks_Contract_Id__c) &&
-                        customerQuickBooksIds.contains(acc.QuickBooks_Contract_Id__c)) {
-                        contractQuickBooksIdToAccountId.put(acc.QuickBooks_Contract_Id__c, acc.Id);
-                    }
-                    if (String.isNotBlank(acc.QuickBooks_Service_Id__c) &&
-                        customerQuickBooksIds.contains(acc.QuickBooks_Service_Id__c)) {
-                        serviceQuickBooksIdToAccountId.put(acc.QuickBooks_Service_Id__c, acc.Id);
                     }
                 }
             }
@@ -199,20 +173,7 @@ public with sharing class InvoiceQuickBooksProposalLinker {
                     }
                 }
 
-                // Customer assignment by explicit QuickBooks id first, then fuzzy by name
-                if (invoice.Customer__c == null && String.isNotBlank(invoice.Customer_Quickbooks_Id__c)) {
-                    if (contractQuickBooksIdToAccountId.containsKey(invoice.Customer_Quickbooks_Id__c)) {
-                        invoice.Customer__c = contractQuickBooksIdToAccountId.get(invoice.Customer_Quickbooks_Id__c);
-                    } else if (serviceQuickBooksIdToAccountId.containsKey(invoice.Customer_Quickbooks_Id__c)) {
-                        invoice.Customer__c = serviceQuickBooksIdToAccountId.get(invoice.Customer_Quickbooks_Id__c);
-                    }
-                }
-                
                 // Customer fuzzy assignment
-                if (invoice.Customer__c != null) {
-                    continue;
-                }
-                
                 if (String.isNotBlank(invoice.Name)) {
                     String accountName = extractAccountName(invoice.Name);
                     if (String.isNotBlank(accountName)) {
