@@ -63,10 +63,9 @@ public with sharing class BatchHttpSender implements Database.Batchable<HttpRequ
         for (ContentVersion v : versions) {
             contentMap.put(v.Title, v);
         }
-        System.debug('contentMap: ' + contentMap);
+
         if(!contentTitles.isEmpty()){
             for (String title : titleToEnvelopeId.keySet()) {
-                System.debug('title : ' + title);
                 ContentVersion version = contentMap.get(title);
                 version.DocuSign_Envelope_Id__c = titleToEnvelopeId.get(title).toUpperCase();
                 version.To_Sent__c = false;

@@ -3,7 +3,6 @@
     <fullName>Current_Vendor__c</fullName>
     <label>Current Vendor</label>
     <required>false</required>
-    <trackFeedHistory>false</trackFeedHistory>
     <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>
     <type>Picklist</type>

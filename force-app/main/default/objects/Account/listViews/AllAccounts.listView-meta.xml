@@ -9,7 +9,6 @@
     <columns>CORE.USERS.LAST_NAME</columns>
     <columns>ACCOUNT.CREATED_DATE</columns>
     <columns>County__c</columns>
-    <columns>ACCOUNT.LAST_UPDATE</columns>
     <filterScope>Everything</filterScope>
     <label>All Customers</label>
 </ListView>

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8"?>
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>65.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
@@ -8,12 +8,10 @@
         <locationX>0</locationX>
         <locationY>0</locationY>
         <assignmentItems>
-            <assignToReference
-      >Set_new_Regional_manager.Regional_Manager__c</assignToReference>
+            <assignToReference>Set_new_Regional_manager.Regional_Manager__c</assignToReference>
             <operator>Assign</operator>
             <value>
-                <elementReference
-        >UserSelection.selectedChoiceValues</elementReference>
+                <elementReference>UserSelection.selectedChoiceValues</elementReference>
             </value>
         </assignmentItems>
         <connector>
@@ -39,8 +37,7 @@
     <customProperties>
         <name>ScreenProgressIndicator</name>
         <value>
-            <stringValue
-      >{&quot;location&quot;:&quot;top&quot;,&quot;type&quot;:&quot;simple&quot;}</stringValue>
+            <stringValue>{&quot;location&quot;:&quot;top&quot;,&quot;type&quot;:&quot;simple&quot;}</stringValue>
         </value>
     </customProperties>
     <dynamicChoiceSets>
@@ -52,8 +49,7 @@
         <valueField>Name</valueField>
     </dynamicChoiceSets>
     <environments>Default</environments>
-    <interviewLabel
-  >Customer Reparent Flow {!$Flow.CurrentDateTime}</interviewLabel>
+    <interviewLabel>Customer Reparent Flow {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Customer Reparent Flow</label>
     <loops>
         <name>Each_Profile</name>
@@ -107,8 +103,7 @@
         <label>Get Active Users</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound
-    >false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Change_Customers_Owner</targetReference>
         </connector>
@@ -136,8 +131,7 @@
         <label>Get Customers</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound
-    >false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Set_new_Regional_manager</targetReference>
         </connector>
@@ -158,8 +152,7 @@
         <label>Get Profiles</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound
-    >false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Each_Profile</targetReference>
         </connector>
@@ -206,8 +199,7 @@
             <extensionName>flowruntime:choiceLookup</extensionName>
             <fieldText>Select User for reparenting</fieldText>
             <fieldType>ComponentChoice</fieldType>
-            <inputsOnNextNavToAssocScrn
-      >UseStoredValues</inputsOnNextNavToAssocScrn>
+            <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
             <isRequired>false</isRequired>
             <storeOutputAutomatically>true</storeOutputAutomatically>
             <styleProperties>
@@ -237,8 +229,7 @@
         </connector>
         <fields>
             <name>ConfirmationText</name>
-            <fieldText
-      >&lt;p&gt;Are you sure that you want reparent all Customers to {!UserSelection.selectedChoiceValues}&lt;/p&gt;</fieldText>
+            <fieldText>&lt;p&gt;Are you sure that you want reparent all Customers to {!UserSelection.selectedChoiceValues}&lt;/p&gt;</fieldText>
             <fieldType>DisplayText</fieldType>
             <styleProperties>
                 <verticalAlignment>
