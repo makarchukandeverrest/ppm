@@ -329,7 +329,7 @@
         </scheduledPaths>
         <triggerType>RecordAfterSave</triggerType>
     </start>
-    <status>Obsolete</status>
+    <status>Active</status>
     <textTemplates>
         <name>ContractBidSubject</name>
         <isViewedAsPlainText>true</isViewedAsPlainText>

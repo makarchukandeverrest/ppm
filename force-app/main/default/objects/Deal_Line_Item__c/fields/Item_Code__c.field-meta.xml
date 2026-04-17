@@ -5,12 +5,18 @@
     <formula>TRIM(
   IF(
     CONTAINS(Name, &quot;:&quot;),
+    /* Case 1: has colon -&gt; last segment */
     IF(
       FIND(&quot;:&quot;, REVERSE(Name)) &gt; 1,
       RIGHT(Name, FIND(&quot;:&quot;, REVERSE(Name)) - 1),
       &quot;&quot;
     ),
-    Name
+    /* Case 2/3: no colon -&gt; decide Id vs text by a0W prefix */
+    IF(
+      LEFT(Name, 3) = &quot;a0W&quot;,
+      &quot;&quot;,
+      Name
+    )
   )
 )</formula>
     <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>

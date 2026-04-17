@@ -12,7 +12,10 @@
             <name>recipientAddresses</name>
             <value>
                 <collectionElements>
-                    <stringValue>Artem@premierswim.com</stringValue>
+                    <stringValue>artem.mykhailov@everrest.org</stringValue>
+                </collectionElements>
+                <collectionElements>
+                    <stringValue>Rania@premierswim.com</stringValue>
                 </collectionElements>
             </value>
         </inputParameters>
@@ -47,13 +50,11 @@
             <value>
                 <inputConfiguratorMode>Custom</inputConfiguratorMode>
                 <stringValue>Hello Team,
-
-The Work Order {!$Record.WorkOrderNumber} has been completed.
+The Work Order {!$Record.WorkOrderNumber} for Proposal {!$Record.Proposal__r.Name} has been completed.
 
 Customer: {!$Record.Account.Name}
 
-Amount (Total Price): {!$Record.Proposal__r.Total__c}
-</stringValue>
+Amount (Total Price): {!$Record.Proposal__r.Total__c}</stringValue>
             </value>
         </inputParameters>
         <inputParameters>
@@ -72,6 +73,7 @@ Amount (Total Price): {!$Record.Proposal__r.Total__c}
     </actionCalls>
     <apiVersion>65.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <description>Two test emails + plain text</description>
     <environments>Default</environments>
     <interviewLabel>Completed WorkOrder Email {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Completed WorkOrder Email</label>
@@ -100,12 +102,13 @@ Amount (Total Price): {!$Record.Proposal__r.Total__c}
         <connector>
             <targetReference>Work_Order_Completed</targetReference>
         </connector>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
         <filterLogic>and</filterLogic>
         <filters>
             <field>Status</field>
             <operator>EqualTo</operator>
             <value>
-                <stringValue>Completed</stringValue>
+                <stringValue>Work Order Completed</stringValue>
             </value>
         </filters>
         <object>WorkOrder</object>

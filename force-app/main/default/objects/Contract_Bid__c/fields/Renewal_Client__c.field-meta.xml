@@ -3,7 +3,6 @@
     <fullName>Renewal_Client__c</fullName>
     <defaultValue>false</defaultValue>
     <label>Renewal Client</label>
-    <trackFeedHistory>false</trackFeedHistory>
     <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>
     <type>Checkbox</type>

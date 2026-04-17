@@ -5,14 +5,10 @@
     <columns>Reference_Number__c</columns>
     <columns>ACCOUNT.NAME</columns>
     <columns>OPPORTUNITY.STAGE_NAME</columns>
+    <columns>Date_Ordered__c</columns>
     <columns>OPPORTUNITY.CLOSE_DATE</columns>
     <columns>Subtotal__c</columns>
     <columns>Sales_Tax__c</columns>
     <filterScope>Everything</filterScope>
-    <filters>
-        <field>Order_Taken_By__c</field>
-        <operation>equals</operation>
-        <value>AA</value>
-    </filters>
     <label>All Proposals</label>
 </ListView>

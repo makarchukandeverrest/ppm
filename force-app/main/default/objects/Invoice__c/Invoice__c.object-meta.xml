@@ -175,6 +175,6 @@
         <searchResultsAdditionalFields>Amount__c</searchResultsAdditionalFields>
         <searchResultsAdditionalFields>Balance__c</searchResultsAdditionalFields>
     </searchLayouts>
-    <sharingModel>ReadWrite</sharingModel>
+    <sharingModel>Private</sharingModel>
     <visibility>Public</visibility>
 </CustomObject>
