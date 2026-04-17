@@ -108,8 +108,11 @@ public without sharing class WorkOrderCustomerAssigner {
     private void linkProposal(){
         List<String> proposalReferenceNumbers = new List<String>();
         for (WorkOrder w : newList) {
-            if(String.isNotBlank(w.Quickbooks_Memo__c)) {
-                proposalReferenceNumbers.add(w.Quickbooks_Memo__c.split(' ')[1].replace(':',''));
+            if (w.Proposal__c == null && String.isNotBlank(w.Quickbooks_Memo__c)) {
+                List<String> parts = w.Quickbooks_Memo__c.split(' ');
+                if (parts.size() > 1 && String.isNotBlank(parts[1])) {
+                    proposalReferenceNumbers.add(parts[1].replace(':',''));
+                }
             }
         }
         List<Opportunity> proposals = new List<Opportunity>();
@@ -124,8 +127,18 @@ public without sharing class WorkOrderCustomerAssigner {
         }
         if(!referenceNumberToOpportunityId.keySet().isEmpty()){
             for(WorkOrder w :newList){
-                if(String.isNotBlank(w.Quickbooks_Memo__c) && referenceNumberToOpportunityId.containsKey(w.Quickbooks_Memo__c.split(' ')[1].replace(':',''))){
-                    w.Proposal__c = referenceNumberToOpportunityId.get(w.Quickbooks_Memo__c.split(' ')[1].replace(':',''));
+                if (w.Proposal__c != null || String.isBlank(w.Quickbooks_Memo__c)) {
+                    continue;
+                }
+
+                List<String> parts = w.Quickbooks_Memo__c.split(' ');
+                if (parts.size() <= 1 || String.isBlank(parts[1])) {
+                    continue;
+                }
+
+                String referenceNumber = parts[1].replace(':','');
+                if (referenceNumberToOpportunityId.containsKey(referenceNumber)){
+                    w.Proposal__c = referenceNumberToOpportunityId.get(referenceNumber);
                 }
             }
         }
