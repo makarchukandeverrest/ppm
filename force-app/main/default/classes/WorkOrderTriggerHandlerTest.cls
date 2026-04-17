@@ -48,18 +48,14 @@ private class WorkOrderTriggerHandlerTest {
         // ARRANGE - Get data from setup
         Account testCustomerA = [SELECT Id, Name FROM Account WHERE Name = 'Test Customer A' LIMIT 1];
         Opportunity testProposal = [SELECT Id, Reference_Number__c FROM Opportunity WHERE Reference_Number__c = '13974' LIMIT 1];
-        
-        System.debug('Looking for proposal with reference: 13974');
-        System.debug('Found proposal: ' + testProposal.Id + ' with ref: ' + testProposal.Reference_Number__c);
 
         WorkOrder woWithCustomerAndProposal = new WorkOrder(
             Subject = 'WO With Links',
             Pricebook2Id = Test.getStandardPricebookId(),
             Duration = 60,
             StartDate = System.now(),
-            Quick_Books_Customer_Name__c = 'Test Customer A: Some Other Info',
-            // Format must be: "Word1 Word2" where Word2 is the reference number
-            Quickbooks_Memo__c = 'Estimate 13974' // "13974" is the second word
+            Quickbooks_Customer_Id__c = 'Test Customer A: Some Other Info',
+            Quickbooks_Memo__c = 'Estimate 13974'
         );
 
         WorkOrder woWithNoLinks = new WorkOrder(
@@ -67,8 +63,8 @@ private class WorkOrderTriggerHandlerTest {
             Pricebook2Id = Test.getStandardPricebookId(),
             Duration = 60,
             StartDate = System.now(),
-            Quick_Books_Customer_Name__c = 'Non-Existent Customer',
-            Quickbooks_Memo__c = 'Estimate BAD-REF' // Non-existent reference
+            Quickbooks_Customer_Id__c = 'Non-Existent Customer',
+            Quickbooks_Memo__c = 'Estimate BAD-REF'
         );
 
         List<WorkOrder> workOrdersToInsert = new List<WorkOrder>{ woWithCustomerAndProposal, woWithNoLinks };
@@ -78,17 +74,12 @@ private class WorkOrderTriggerHandlerTest {
         insert workOrdersToInsert;
         Test.stopTest();
 
-        // DEBUG: Check what actually got linked
         Map<Id, WorkOrder> insertedWorkOrders = new Map<Id, WorkOrder>([
             SELECT Id, AccountId, Proposal__c, Quickbooks_Memo__c,
                    Proposal__r.Reference_Number__c, Proposal__r.Name
             FROM WorkOrder
             WHERE Id IN :workOrdersToInsert
         ]);
-
-        for (WorkOrder wo : insertedWorkOrders.values()) {
-            System.debug('WO: ' + wo.Id + ' | Memo: ' + wo.Quickbooks_Memo__c + ' | Proposal: ' + wo.Proposal__c + ' | Proposal Ref: ' + wo.Proposal__r?.Reference_Number__c);
-        }
 
         // ASSERT
         WorkOrder linkedWO = insertedWorkOrders.get(woWithCustomerAndProposal.Id);
@@ -102,6 +93,48 @@ private class WorkOrderTriggerHandlerTest {
     }
 
     /**
+     * @description BEFORE UPDATE: when Account or Proposal lookup is cleared but QuickBooks source fields remain,
+     *              WorkOrderTriggerHandler re-runs WorkOrderCustomerAssigner to repopulate lookups.
+     */
+    @isTest
+    static void testBeforeUpdate_ReassignsCustomerAndProposalWhenLookupsCleared() {
+        Account testCustomerA = [SELECT Id FROM Account WHERE Name = 'Test Customer A' LIMIT 1];
+        Opportunity testProposal = [SELECT Id FROM Opportunity WHERE Reference_Number__c = '13974' LIMIT 1];
+
+        WorkOrder wo = new WorkOrder(
+            Subject = 'WO Re-link On Update',
+            Pricebook2Id = Test.getStandardPricebookId(),
+            Duration = 60,
+            StartDate = System.now(),
+            Quickbooks_Customer_Id__c = 'Test Customer A: QB-REF',
+            Quickbooks_Memo__c = 'Estimate 13974'
+        );
+        insert wo;
+
+        wo = [
+            SELECT Id, AccountId, Proposal__c
+            FROM WorkOrder
+            WHERE Id = :wo.Id
+        ];
+        System.assertEquals(testCustomerA.Id, wo.AccountId, 'Insert should link Account from Quickbooks_Customer_Id__c.');
+        System.assertEquals(testProposal.Id, wo.Proposal__c, 'Insert should link Proposal from memo reference.');
+
+        wo.AccountId = null;
+        wo.Proposal__c = null;
+        Test.startTest();
+        update wo;
+        Test.stopTest();
+
+        wo = [
+            SELECT Id, AccountId, Proposal__c
+            FROM WorkOrder
+            WHERE Id = :wo.Id
+        ];
+        System.assertEquals(testCustomerA.Id, wo.AccountId, 'Update should re-link Account when cleared.');
+        System.assertEquals(testProposal.Id, wo.Proposal__c, 'Update should re-link Proposal when cleared.');
+    }
+
+    /**
      * @description Tests the COMPLETE flow: BEFORE insert (linking) and AFTER insert (line items + status update).
      */
     @isTest
@@ -110,7 +143,7 @@ private class WorkOrderTriggerHandlerTest {
         Account testCustomer = [SELECT Id, Name FROM Account WHERE Name = 'Test Customer A' LIMIT 1];
         // FIX: Changed to 13971 which exists in the new setup
         Opportunity testProposal = [SELECT Id, StageName, Reference_Number__c FROM Opportunity WHERE Reference_Number__c = '13971' LIMIT 1];
-        System.assertEquals('Proposal Created / Ready for review', testProposal.StageName, 'Proposal should start with initial stage.');
+        System.assertEquals('Draft', testProposal.StageName, 'Proposal starts as Draft; ProposalStatusDefiner is not run on Opportunity insert.');
 
         String validLineItemsJson = '[{' +
             '"Id": "QB-12345",' +
@@ -132,9 +165,8 @@ private class WorkOrderTriggerHandlerTest {
             Pricebook2Id = Test.getStandardPricebookId(),
             Duration = 60,
             StartDate = System.now(),
-            Quick_Books_Customer_Name__c = 'Test Customer A: QB Customer ID',
-            // FIX: Use the correct reference number that exists
-            Quickbooks_Memo__c = 'Estimate 13971', // "13971" is the second word
+            Quickbooks_Customer_Id__c = 'Test Customer A: QB Customer ID',
+            Quickbooks_Memo__c = 'Estimate 13971',
             Quick_Books_Line_Items__c = validLineItemsJson
         );
 
@@ -161,11 +193,8 @@ private class WorkOrderTriggerHandlerTest {
         System.assertEquals('Approved - WO Issued', updatedProposal.StageName, 'Proposal stage should be updated by the trigger.');
     }
 
-    // ... (Keep all other test methods the same, but ensure they use existing reference numbers)
-    
     /**
      * @description Tests the positive scenario for WorkOrderLineItemCreator with valid JSON.
-     * UPDATED: Use existing reference number 13974
      */
     @isTest
     static void testAfterInsert_WithValidLineItemsJson() {
