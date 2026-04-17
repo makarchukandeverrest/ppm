@@ -169,5 +169,5 @@
         <searchResultsAdditionalFields>Total__c</searchResultsAdditionalFields>
         <searchResultsAdditionalFields>Order_Taken_By__c</searchResultsAdditionalFields>
     </searchLayouts>
-    <sharingModel>Read</sharingModel>
+    <sharingModel>Private</sharingModel>
 </CustomObject>

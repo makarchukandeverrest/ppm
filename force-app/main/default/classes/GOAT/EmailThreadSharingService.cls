@@ -32,21 +32,21 @@ public inherited sharing class EmailThreadSharingService {
     Map<String, List<String>> emailAddresses = new Map<String, List<String>>();
 
     for (EmailMessage e : emailMessages) {
-      emailAddresses.put(
-        e.ThreadIdentifier,
-        new List<String>{
-          e.FromAddress,
-          e.ToAddress,
-          e.CcAddress,
-          e.BccAddress
-        }
-      );
+      List<String> addrs = new List<String>();
+      addrs.addAll(splitAddresses(e.FromAddress));
+      addrs.addAll(splitAddresses(e.ToAddress));
+      addrs.addAll(splitAddresses(e.CcAddress));
+      addrs.addAll(splitAddresses(e.BccAddress));
+      emailAddresses.put(e.ThreadIdentifier, addrs);
     }
 
     for (Email_Platform__Email_Thread__c t : newList) {
       List<String> adresses = emailAddresses.get(
         t.Email_Platform__Thread_Identifier__c
       );
+      if (adresses == null) {
+        continue;
+      }
       for (String a : adresses) {
         Id targetUserId = userEmailToId.get(a);
         if (targetUserId != null) {
@@ -63,5 +63,15 @@ public inherited sharing class EmailThreadSharingService {
     if (!sharesToInsert.isEmpty()) {
       insert sharesToInsert;
     }
+  }
+
+  private static List<String> splitAddresses(String raw) {
+    List<String> result = new List<String>();
+    if (String.isBlank(raw)) return result;
+    for (String addr : raw.split('[,;]')) {
+      String trimmed = addr.trim();
+      if (String.isNotBlank(trimmed)) result.add(trimmed);
+    }
+    return result;
   }
 }

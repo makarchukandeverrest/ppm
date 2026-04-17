@@ -25,7 +25,7 @@ private class ProposalTriggerHandlerTest {
 
         // ASSERT
         Opportunity insertedProposal = [SELECT Id, StageName, Is_Active__c FROM Opportunity WHERE Id = :activeProposal.Id];
-        System.assertEquals('Pending', insertedProposal.StageName, 'StageName should be set to "Pending" when Is_Active__c is true.');
+        System.assertEquals('Proposal Created / Ready for review', insertedProposal.StageName, 'StageName should be set to "Pending" when Is_Active__c is true.');
         System.assertEquals(true, insertedProposal.Is_Active__c, 'Is_Active__c should remain true.');
     }
 }

@@ -35,9 +35,10 @@ public class AccountFilesControllerTest {
     }
 
     private static Supervisor__c createSupervisor(String nameSuffix) {
-        String uniqueId = String.valueOf(Datetime.now().getTime()) + String.valueOf(Crypto.getRandomInteger());
+        String uniqueId = String.valueOf(Datetime.now().getTime()) + Crypto.getRandomInteger();
         Supervisor__c sup = new Supervisor__c(
-            Name = 'Sup ' + nameSuffix + ' ' + uniqueId.left(40)
+            Name = 'Sup ' + nameSuffix + ' ' + uniqueId.left(6),
+            Last_Name__c = 'Ln' + uniqueId.left(6)
         );
         insert sup;
         return sup;
@@ -91,7 +92,7 @@ public class AccountFilesControllerTest {
         Account acc = new Account(
             Name                = name,
             Regional_Manager__c = regionalManagerId,
-            Supervisor__c       = supervisorId,
+            Supervisor_Lookup__c = supervisorId,
             County__c           = county
         );
         insert acc;

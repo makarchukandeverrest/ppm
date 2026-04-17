@@ -9,7 +9,6 @@
     <columns>ACCOUNT.ADDRESS1_ZIP</columns>
     <columns>Primary_Contact__c</columns>
     <columns>Regional_Manager__c</columns>
-    <columns>Supervisor__c</columns>
     <filterScope>Everything</filterScope>
     <filters>
         <field>Contract_Periods__c</field>
