@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ListView xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>X2026_Work_Orders</fullName>
-    <columns>Name</columns>
+    <columns>Work_Order_Link__c</columns>
+    <columns>Quick_Books_WO_No__c</columns>
     <columns>Account</columns>
     <columns>Subject</columns>
     <columns>Status</columns>

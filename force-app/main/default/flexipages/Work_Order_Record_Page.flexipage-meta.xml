@@ -4,16 +4,102 @@
         <itemInstances>
             <componentInstance>
                 <componentInstanceProperties>
+                    <name>actionNames</name>
+                    <valueList>
+                        <valueListItems>
+                            <value>WorkOrder.Send_Notification_to_Service</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>FeedItem.TextPost</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>FeedItem.ContentPost</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>Global.NewEvent</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>Global.NewTask</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>Global.LogACall</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>Global.NewContact</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>Global.NewOpportunity</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>Global.NewLead</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>FeedItem.ContentNote</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>FeedItem.PollPost</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>Share</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>AdvancedExchangeRequest</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>GeneratePdf</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>CreatePartReturnRequest</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>Delete</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>ChangeRecordType</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>PrintableView</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>Clone</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>AddWorkPlans</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>ChangeOwnerOne</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>Submit</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>SendSurveyInvitation</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>XClean</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>RecordShareHierarchy</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>Edit</value>
+                        </valueListItems>
+                        <valueListItems>
+                            <value>DeleteWorkPlans</value>
+                        </valueListItems>
+                    </valueList>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
                     <name>collapsed</name>
                     <value>false</value>
                 </componentInstanceProperties>
                 <componentInstanceProperties>
                     <name>enableActionsConfiguration</name>
-                    <value>false</value>
+                    <value>true</value>
                 </componentInstanceProperties>
                 <componentInstanceProperties>
                     <name>enableActionsInNative</name>
-                    <value>false</value>
+                    <value>true</value>
                 </componentInstanceProperties>
                 <componentInstanceProperties>
                     <name>hideChatterActions</name>
@@ -393,6 +479,13 @@
                 </componentInstanceProperties>
                 <componentName>flexipage:tab</componentName>
                 <identifier>flexipage_tab4</identifier>
+                <visibilityRule>
+                    <criteria>
+                        <leftValue>{!$User.UserRole.Name}</leftValue>
+                        <operator>NE</operator>
+                        <rightValue>Regional</rightValue>
+                    </criteria>
+                </visibilityRule>
             </componentInstance>
         </itemInstances>
         <mode>Replace</mode>

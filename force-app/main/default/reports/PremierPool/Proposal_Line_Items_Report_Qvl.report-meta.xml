@@ -1,16 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Report xmlns="http://soap.sforce.com/2006/04/metadata">
     <columns>
-        <field>Opportunity$Name</field>
-    </columns>
-    <columns>
         <field>Opportunity$Account</field>
     </columns>
     <columns>
-        <field>Opportunity.Deal_Line_Items__r$Name</field>
+        <field>Opportunity$Name</field>
+    </columns>
+    <columns>
+        <field>Opportunity$Reference_Number__c</field>
     </columns>
     <columns>
         <field>Opportunity$Date_Ordered__c</field>
+    </columns>
+    <columns>
+        <field>Opportunity.Deal_Line_Items__r$Item_Code__c</field>
+    </columns>
+    <columns>
+        <field>Opportunity.Deal_Line_Items__r$Description__c</field>
     </columns>
     <columns>
         <aggregateTypes>Sum</aggregateTypes>
@@ -23,9 +29,6 @@
     <columns>
         <aggregateTypes>Sum</aggregateTypes>
         <field>Opportunity.Deal_Line_Items__r$Total__c</field>
-    </columns>
-    <columns>
-        <field>Opportunity.Deal_Line_Items__r$Description__c</field>
     </columns>
     <filter>
         <criteriaItems>

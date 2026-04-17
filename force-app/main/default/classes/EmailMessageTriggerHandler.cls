@@ -1,66 +1,69 @@
-public with sharing class EmailMessageTriggerHandler extends TriggerHandler {
-  Map<Id, EmailMessage> newMap;
-  Map<Id, EmailMessage> oldMap;
+public without sharing class EmailMessageTriggerHandler extends TriggerHandler {
+    Map<Id, EmailMessage> newMap;
+    Map<Id, EmailMessage> oldMap;
 
-  public EmailMessageTriggerHandler() {
-    this.newMap = (Map<Id, EmailMessage>) Trigger.newMap;
-    this.oldMap = (Map<Id, EmailMessage>) Trigger.oldMap;
-  }
+    public EmailMessageTriggerHandler() {
+        this.newMap = (Map<Id, EmailMessage>) Trigger.newMap;
+        this.oldMap = (Map<Id, EmailMessage>) Trigger.oldMap;
+    }
 
-  protected override void afterUpdate() {
-    System.debug('=== EmailMessageTriggerHandler.afterUpdate START ===');
+    // ---------------- afterInsert ----------------
+    protected override void afterInsert() {
+        List<EmailMessage> docuSignEmails = new List<EmailMessage>();
 
-    List<EmailMessage> bouncedEmails = new List<EmailMessage>();
+        for (EmailMessage em : newMap.values()) {
+            if (em == null) {
+                continue;
+            }
 
-    for (EmailMessage em : newMap.values()) {
-        EmailMessage oldEm = oldMap.get(em.Id);
+            if (em.FromAddress != null
+                && em.Subject != null
+                && em.FromAddress.contains('@docusign.net')
+                && em.Subject.contains('Completed:')
+                && em.HasAttachment == true) {
 
-        System.debug(
-            'EmailMessage ' + em.Id +
-            ' IsBounced old=' + (oldEm != null ? oldEm.IsBounced : null) +
-            ' new=' + em.IsBounced +
-            ' ToAddress=' + em.ToAddress
-        );
+                docuSignEmails.add(em);
+            }
+        }
 
-        if (em.IsBounced == true && (oldEm == null || oldEm.IsBounced != true)) {
-            System.debug('>>> BOUNCE DETECTED for EmailMessage ' + em.Id);
-            bouncedEmails.add(em);
+        if (!docuSignEmails.isEmpty()) {
+            DocuSignSignedFileAssigner.assignDocuments(docuSignEmails);
         }
     }
 
-    if (!bouncedEmails.isEmpty()) {
-        BounceEmailFromEmailMessageHandler.handle(bouncedEmails);
-    }
+    // ---------------- afterUpdate ----------------
+    protected override void afterUpdate() {
+        List<EmailMessage> bouncedEmails  = new List<EmailMessage>();
+        List<EmailMessage> docuSignEmails = new List<EmailMessage>();
 
-    System.debug(
-        '=== EmailMessageTriggerHandler.afterUpdate END. Bounced=' +
-        bouncedEmails.size() +
-        ' ==='
-    );
-}
+        for (EmailMessage em : newMap.values()) {
+            EmailMessage oldEm = oldMap.get(em.Id);
 
-protected override void afterInsert() {
-    List<EmailMessage> docuSignEmails = new List<EmailMessage>();
+            // Bounce
+            if (em.IsBounced == true && (oldEm == null || oldEm.IsBounced != true)) {
+                bouncedEmails.add(em);
+            }
 
-    for (EmailMessage em : newMap.values()) {
-        if (em == null) continue;
+            if (em == null) {
+                continue;
+            }
 
-        String fromAddress = em.FromAddress;
-        String subject     = em.Subject;
+            if (em.FromAddress != null
+                && em.Subject != null
+                && em.FromAddress.contains('@docusign.net')
+                && em.Subject.contains('Completed:')
+                && em.HasAttachment == true) {
 
-        if (fromAddress != null && subject != null
-            && fromAddress.contains('@docusign.net')
-            && subject.contains('Completed:')
-            && em.HasAttachment == true) {
+                docuSignEmails.add(em);
+            }
+        }
 
-            docuSignEmails.add(em);
+        if (!bouncedEmails.isEmpty()) {
+            BounceEmailFromEmailMessageHandler.handle(bouncedEmails);
+        }
+
+        if (!docuSignEmails.isEmpty()) {
+            DocuSignSignedFileAssigner.assignDocuments(docuSignEmails);
         }
     }
-
-    if (!docuSignEmails.isEmpty()) {
-        DocuSignSignedFileAssigner.assignDocuments(docuSignEmails);
-    }
-}
-
-
 }

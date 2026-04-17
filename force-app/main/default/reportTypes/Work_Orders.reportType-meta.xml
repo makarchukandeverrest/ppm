@@ -568,11 +568,6 @@
             <field>Share_to_Regional__c</field>
             <table>WorkOrder.Invoices__r</table>
         </columns>
-        <columns>
-            <checkedByDefault>false</checkedByDefault>
-            <field>Customer_Quickbooks_Id__c</field>
-            <table>WorkOrder.Invoices__r</table>
-        </columns>
         <masterLabel>Invoices</masterLabel>
     </sections>
 </ReportType>
