@@ -1,5 +1,10 @@
 public with sharing class DocuSignSignedFileAssigner {
 
+    /** Delegates to assignDocuments; legacy method name for existing integrations. */
+    public static void assignContractDocuments(List<EmailMessage> docuSignEmails) {
+        assignDocuments(docuSignEmails);
+    }
+
     public static void assignDocuments(List<EmailMessage> docuSignEmails) {
 
         if (docuSignEmails == null || docuSignEmails.isEmpty()) {
@@ -92,50 +97,50 @@ public with sharing class DocuSignSignedFileAssigner {
             return;
         }
 
-        // 7. Линки этих доков, чтобы найти Account
+        // 7. Линки исходных доков → родитель Account (001) или Opportunity (006)
         List<ContentDocumentLink> allLinksForAccountSideDocs = [
             SELECT Id, ContentDocumentId, LinkedEntityId, ShareType, Visibility
             FROM ContentDocumentLink
             WHERE ContentDocumentId IN :accountSideDocIds
         ];
 
-        Map<Id, Id> docIdToAccountId = new Map<Id, Id>();
+        Map<Id, Id> docIdToParentId = new Map<Id, Id>();
         for (ContentDocumentLink cdl : allLinksForAccountSideDocs) {
             if (cdl.LinkedEntityId == null) {
                 continue;
             }
             String linkedIdStr = String.valueOf(cdl.LinkedEntityId);
-            if (linkedIdStr.startsWith('001')) {
-                if (!docIdToAccountId.containsKey(cdl.ContentDocumentId)) {
-                    docIdToAccountId.put(cdl.ContentDocumentId, cdl.LinkedEntityId);
+            if (linkedIdStr.startsWith('001') || linkedIdStr.startsWith('006')) {
+                if (!docIdToParentId.containsKey(cdl.ContentDocumentId)) {
+                    docIdToParentId.put(cdl.ContentDocumentId, cdl.LinkedEntityId);
                 }
             }
         }
-        if (docIdToAccountId.isEmpty()) {
+        if (docIdToParentId.isEmpty()) {
             return;
         }
 
-        // 8. baseTitle -> AccountId
-        Map<String, Id> baseTitleToAccountId = new Map<String, Id>();
+        // 8. baseTitle → Id того же родителя, куда был привязан исходный файл
+        Map<String, Id> baseTitleToParentId = new Map<String, Id>();
 
         for (Id docId : accountSideDocIds) {
-            Id accId = docIdToAccountId.get(docId);
-            if (accId == null) {
+            Id parentId = docIdToParentId.get(docId);
+            if (parentId == null) {
                 continue;
             }
             String baseTitle = docIdToBaseTitle.get(docId);
             if (String.isBlank(baseTitle)) {
                 continue;
             }
-            if (!baseTitleToAccountId.containsKey(baseTitle)) {
-                baseTitleToAccountId.put(baseTitle, accId);
+            if (!baseTitleToParentId.containsKey(baseTitle)) {
+                baseTitleToParentId.put(baseTitle, parentId);
             }
         }
-        if (baseTitleToAccountId.isEmpty()) {
+        if (baseTitleToParentId.isEmpty()) {
             return;
         }
 
-        // 9. Переименовываем подписанные и линкуем к Account
+        // 9. Переименовать подписанный файл и связать с тем же родителем (Account или Opportunity)
         List<ContentDocumentLink> newLinks = new List<ContentDocumentLink>();
         List<ContentVersion> versionsToUpdate = new List<ContentVersion>();
 
@@ -150,8 +155,8 @@ public with sharing class DocuSignSignedFileAssigner {
                 continue;
             }
 
-            Id accId = baseTitleToAccountId.get(signedBaseTitle);
-            if (accId == null) {
+            Id parentId = baseTitleToParentId.get(signedBaseTitle);
+            if (parentId == null) {
                 continue;
             }
 
@@ -166,10 +171,10 @@ public with sharing class DocuSignSignedFileAssigner {
                 Title = newTitle
             ));
 
-            // 9.2. Линкануть к Account
+            // 9.2. Привязать к Account или Opportunity
             newLinks.add(new ContentDocumentLink(
                 ContentDocumentId = signedCv.ContentDocumentId,
-                LinkedEntityId    = accId,
+                LinkedEntityId    = parentId,
                 ShareType         = 'V',
                 Visibility        = 'AllUsers'
             ));
@@ -180,25 +185,25 @@ public with sharing class DocuSignSignedFileAssigner {
         }
 
         if (!newLinks.isEmpty()) {
-            // Собираем пары (ContentDocumentId, AccountId), которые хотим создать
+            // Собираем пары (ContentDocumentId, LinkedEntityId), которые хотим создать
             Set<String> pairs = new Set<String>();
             for (ContentDocumentLink l : newLinks) {
                 pairs.add(l.ContentDocumentId + '|' + l.LinkedEntityId);
             }
 
-            // Читаем уже существующие линки для этих docId на эти же Account
+            // Уже существующие линки на те же родительские записи
             Set<Id> docIds = new Set<Id>();
-            Set<Id> accIds = new Set<Id>();
+            Set<Id> parentEntityIds = new Set<Id>();
             for (ContentDocumentLink l : newLinks) {
                 docIds.add(l.ContentDocumentId);
-                accIds.add(l.LinkedEntityId);
+                parentEntityIds.add(l.LinkedEntityId);
             }
 
             List<ContentDocumentLink> existing = [
                 SELECT ContentDocumentId, LinkedEntityId
                 FROM ContentDocumentLink
                 WHERE ContentDocumentId IN :docIds
-                AND LinkedEntityId IN :accIds
+                AND LinkedEntityId IN :parentEntityIds
             ];
 
             Set<String> existingPairs = new Set<String>();
