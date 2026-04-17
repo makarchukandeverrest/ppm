@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8"?>
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>65.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
@@ -27,8 +27,7 @@
             <assignToReference>Customers_Email</assignToReference>
             <operator>Add</operator>
             <value>
-                <stringValue
-        >{&quot;email&quot;:&quot;{!For_Each_Id.Email__c}&quot;,&quot;accountId&quot;:&quot;{!For_Each_Id.Id}&quot;},</stringValue>
+                <stringValue>{&quot;email&quot;:&quot;{!For_Each_Id.Email__c}&quot;,&quot;accountId&quot;:&quot;{!For_Each_Id.Id}&quot;},</stringValue>
             </value>
         </assignmentItems>
         <connector>
@@ -44,8 +43,7 @@
             <assignToReference>CustomerIds</assignToReference>
             <operator>Add</operator>
             <value>
-                <elementReference
-        >Get_Bids_Customers.Customer__c</elementReference>
+                <elementReference>Get_Bids_Customers.Customer__c</elementReference>
             </value>
         </assignmentItems>
         <connector>
@@ -87,8 +85,7 @@
     <customProperties>
         <name>ScreenProgressIndicator</name>
         <value>
-            <stringValue
-      >{&quot;location&quot;:&quot;top&quot;,&quot;type&quot;:&quot;simple&quot;}</stringValue>
+            <stringValue>{&quot;location&quot;:&quot;top&quot;,&quot;type&quot;:&quot;simple&quot;}</stringValue>
         </value>
     </customProperties>
     <decisions>
@@ -132,10 +129,8 @@
         </rules>
     </decisions>
     <environments>Default</environments>
-    <interviewLabel
-  >Mass Send Contracts {!$Flow.CurrentDateTime}</interviewLabel>
-    <isAdditionalPermissionRequiredToRun
-  >true</isAdditionalPermissionRequiredToRun>
+    <interviewLabel>Mass Send Contracts {!$Flow.CurrentDateTime}</interviewLabel>
+    <isAdditionalPermissionRequiredToRun>true</isAdditionalPermissionRequiredToRun>
     <label>Contract Mass Send</label>
     <loops>
         <name>For_Each_Id</name>
@@ -203,8 +198,7 @@
         <label>Get Bid Customers</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound
-    >false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Set_Customers</targetReference>
         </connector>
@@ -225,8 +219,7 @@
         <label>Get Contract Bids</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound
-    >false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Get_Bids_Customers</targetReference>
         </connector>
@@ -247,8 +240,7 @@
         <label>Get Customers</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound
-    >false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>SetCustomers</targetReference>
         </connector>
@@ -290,8 +282,7 @@
                     <elementReference>Mode</elementReference>
                 </value>
             </inputParameters>
-            <inputsOnNextNavToAssocScrn
-      >UseStoredValues</inputsOnNextNavToAssocScrn>
+            <inputsOnNextNavToAssocScrn>UseStoredValues</inputsOnNextNavToAssocScrn>
             <isRequired>true</isRequired>
             <storeOutputAutomatically>true</storeOutputAutomatically>
             <styleProperties>

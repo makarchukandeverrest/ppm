@@ -1,6 +1,47 @@
 @isTest
 private class DealLineItemTriggerTest {
 @isTest
+static void testTriggerAfterInsert_WithoutDeal() {
+    // ARRANGE
+    Account testAccount = new Account(Name = 'Test Account');
+    insert testAccount;
+
+    Opportunity testDeal = new Opportunity(
+        Name = 'Test Deal for Trigger',
+        AccountId = testAccount.Id,
+        CloseDate = Date.today().addDays(30),
+        StageName = 'Prospecting',
+        QuickBooks_Id__c = 'QB-TRIGGER-TEST'
+    );
+    insert testDeal;
+
+    Deal_Line_Item__c lineItem = new Deal_Line_Item__c(
+        Name = 'Trigger Test Item',
+        Description__c = 'Test Description',
+        Quantity__c = 2,
+        Unit_Cost__c = 50.00,
+        QuickBooks_Id__c = 'QB-TRIGGER-TEST',
+        Deal_QuickBooks_Id__c = 'QB-TRIGGER-TEST'
+    );
+
+    // ACT - This insert should fire the trigger
+    Test.startTest();
+    insert lineItem;
+    Test.stopTest();
+
+    Deal_Line_Item__c insertedLineItem = [SELECT Id, Deal__c FROM Deal_Line_Item__c WHERE Id = :lineItem.Id];
+
+    // ASSERT
+    Opportunity updatedDeal = [SELECT Id, Line_Items__c FROM Opportunity WHERE Id = :testDeal.Id];
+    System.assertNotEquals(null, updatedDeal.Line_Items__c, 'Line_Items__c should be updated by trigger after insert');
+    
+    // Verify JSON content
+    List<Object> parsedItems = (List<Object>) JSON.deserializeUntyped(updatedDeal.Line_Items__c);
+    System.assertEquals(1, parsedItems.size(), 'JSON should contain 1 line item');
+    System.assertEquals(testDeal.Id, insertedLineItem.Deal__c, 'Deal assigned by QB Id');
+}
+
+@isTest
 static void testTriggerAfterInsert() {
     // ARRANGE
     Account testAccount = new Account(Name = 'Test Account');
