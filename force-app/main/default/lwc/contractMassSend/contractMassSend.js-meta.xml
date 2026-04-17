@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>65.0</apiVersion>
+    <isExposed>true</isExposed>
+    <targets>
+        <target>lightning__RecordPage</target>
+        <target>lightning__RecordAction</target>
+        <target>
+        lightning__Tab</target>
+        <target>lightning__FlowScreen</target>
+    </targets>
+
+    <targetConfigs>
+        <!-- Для Record Page -->
+        <targetConfig targets="lightning__RecordPage">
+            <objects>
+                <object>Contract_Bid__c</object>
+            </objects>
+        </targetConfig>
+
+        <!-- Для Quick Action -->
+        <targetConfig targets="lightning__RecordAction">
+            <actionType>ScreenAction</actionType>
+            <objects>
+                <object>Contract_Bid__c</object>
+            </objects>
+        </targetConfig>
+
+        <targetConfig targets="lightning__FlowScreen">
+            <property name="flowRecords" type="String[]" label="Flow Records JSON (Legacy)"
+                description="List of JSON strings (deprecated)" />
+            <property name="customersData" type="String" label="Customers Data"
+                description="Concatenated JSON objects" role="inputOnly" />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

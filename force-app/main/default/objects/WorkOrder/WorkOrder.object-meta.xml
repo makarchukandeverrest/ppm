@@ -166,5 +166,5 @@
         <searchResultsAdditionalFields>Issue_Date__c</searchResultsAdditionalFields>
         <searchResultsAdditionalFields>Sales_Rep__c</searchResultsAdditionalFields>
     </searchLayouts>
-    <sharingModel>ReadWrite</sharingModel>
+    <sharingModel>Private</sharingModel>
 </CustomObject>

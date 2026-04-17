@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<EmailTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <available>true</available>
+    <encodingKey>UTF-8</encodingKey>
+    <name>Work Order Notification</name>
+    <style>none</style>
+    <subject>New Work Order Assigned {!WorkOrder.WorkOrderNumber}</subject>
+    <textOnly>Hi {!WorkOrder.Service_Team_Member__r},
+
+A new Work Order has been assigned to you.
+
+Work order number: {!WorkOrder.Quick_Books_WO_No__c}
+Customer: {!WorkOrder.Account}
+Location: {!WorkOrder.Account}, {!WorkOrder.Account}, {!WorkOrder.Account} {!WorkOrder.Account}
+Memo: {!WorkOrder.Quickbooks_Memo__c}
+
+Your line items
+
+[LINE_ITEMS]
+
+Please:
+
+Contact the customer if any clarification is needed.
+Update the status and add comments or photos when the work is completed.
+
+Thanks,
+Service Team</textOnly>
+    <type>custom</type>
+    <uiType>Aloha</uiType>
+</EmailTemplate>

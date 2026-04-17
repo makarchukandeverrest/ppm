@@ -266,8 +266,8 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.Supervisor__c</fieldItem>
-                <identifier>RecordSupervisor__cField</identifier>
+                <fieldItem>Record.Supervisor_Lookup__c</fieldItem>
+                <identifier>RecordSupervisor_Lookup_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -362,6 +362,16 @@
                 </fieldInstanceProperties>
                 <fieldItem>Record.OwnerId</fieldItem>
                 <identifier>RecordOwnerIdField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Trust_Level__c</fieldItem>
+                <identifier>RecordTrust_Level_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <name>Facet-51c9ef8e-5820-43b0-9af4-e7d5dc440451</name>

@@ -14,8 +14,26 @@ export default class EmailMassSendBase extends NavigationMixin(
   /* =====================================================
        OPTIONAL INPUTS (fallback only)
     ===================================================== */
-  @api recordId;
-  @api selectedRecordIds = [];
+  _recordId;
+  _selectedRecordIds = [];
+
+  @api
+  get recordId() {
+    return this._recordId;
+  }
+  set recordId(value) {
+    this._recordId = value;
+    this.tryInitFromComponentInputs();
+  }
+
+  @api
+  get selectedRecordIds() {
+    return this._selectedRecordIds;
+  }
+  set selectedRecordIds(value) {
+    this._selectedRecordIds = Array.isArray(value) ? value : [];
+    this.tryInitFromComponentInputs();
+  }
 
   /* =====================================================
        STATE
@@ -60,10 +78,25 @@ export default class EmailMassSendBase extends NavigationMixin(
     ===================================================== */
   @wire(CurrentPageReference)
   handlePageRef(pageRef) {
-    if (pageRef?.state?.ids && !this.inputIds.length) {
+    if (!pageRef) {
+      return;
+    }
+
+    if (pageRef.state?.ids && !this.inputIds.length) {
       this.inputIds = pageRef.state.ids.split(",");
-      // Load data immediately
       this.loadData();
+      return;
+    }
+
+    const state = pageRef.state || {};
+    const attrs = pageRef.attributes || {};
+    const rid =
+      state.recordId ||
+      state.c__recordId ||
+      attrs.recordId;
+
+    if (rid) {
+      this.recordId = rid;
     }
   }
 
@@ -71,19 +104,25 @@ export default class EmailMassSendBase extends NavigationMixin(
        FALLBACKS (Record Action / Flow / tests)
     ===================================================== */
   connectedCallback() {
-    console.log("emailMassSendBase connectedCallback");
-    console.log("customersData:", this.customersData);
-    console.log("flowRecords:", this.flowRecords);
-    console.log("recordId:", this.recordId);
-    console.log("selectedRecordIds:", this.selectedRecordIds);
+    // Tab / navigation: query string (modal quick actions often have no search params)
+    if (!this._recordId) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromUrl =
+        urlParams.get("recordId") || urlParams.get("c__recordId");
+      if (fromUrl) {
+        this._recordId = fromUrl;
+      }
+    }
 
+    this.tryInitFromComponentInputs();
+  }
+
+  tryInitFromComponentInputs() {
     // Priority 1: customersData (Single String, new approach)
     if (this.customersData) {
       try {
         const jsonString = `[${this.customersData.replace(/,\s*$/, "")}]`;
-        console.log("Parsed jsonString:", jsonString);
         const parsedObjs = JSON.parse(jsonString);
-        console.log("Parsed objects:", parsedObjs);
 
         this.inputIds = parsedObjs
           .map((obj) => obj.accountId)
@@ -96,9 +135,11 @@ export default class EmailMassSendBase extends NavigationMixin(
         console.error("Error parsing customersData", error);
         this.toast("Error", "Invalid customersData: " + error.message, "error");
       }
+      return;
+    }
 
-      // Priority 2: flowRecords (Array, legacy)
-    } else if (this.flowRecords && this.flowRecords.length > 0) {
+    // Priority 2: flowRecords (Array, legacy)
+    if (this.flowRecords && this.flowRecords.length > 0) {
       try {
         this.inputIds = this.flowRecords
           .map((jsonStr) => {
@@ -114,20 +155,24 @@ export default class EmailMassSendBase extends NavigationMixin(
         console.error("Error parsing flowRecords", error);
         this.toast("Error", "Invalid flowRecords: " + error.message, "error");
       }
+      return;
+    }
 
-      // Priority 3: Direct Record ID (Quick Action)
-    } else if (!this.inputIds.length && this.recordId) {
-      this.inputIds = [this.recordId];
-      this.loadData();
+    // Priority 3: Direct Record ID (record page / quick action — often set after connect)
+    if (this.recordId) {
+      if (!this.inputIds.length) {
+        this.inputIds = [this.recordId];
+        this.loadData();
+      }
+      return;
+    }
 
-      // Priority 4: Selected Records (List View wrapper)
-    } else if (
-      !this.inputIds.length &&
-      this.selectedRecordIds &&
-      this.selectedRecordIds.length
-    ) {
-      this.inputIds = [...this.selectedRecordIds];
-      this.loadData();
+    // Priority 4: Selected Records (List View wrapper)
+    if (this.selectedRecordIds && this.selectedRecordIds.length) {
+      if (!this.inputIds.length) {
+        this.inputIds = [...this.selectedRecordIds];
+        this.loadData();
+      }
     }
   }
 
@@ -202,12 +247,17 @@ export default class EmailMassSendBase extends NavigationMixin(
         expanded: true,
         isExpandedLabel: c.expanded ? "Expand" : "Collapse",
         isHovered: false,
+        isEditing: false,
+        isEditContentLoading: false,
+        emailSubjectOverride: null,
+        emailBodyOverride: null,
         // In contracts mode we also expect contracts array with selection flags
         contracts: (c.contracts || []).map((cv) => ({
           ...cv,
           isSelected: true
         }))
       }));
+      this.applyCustomerDisplayFields();
 
       this.sendLog = res.recentLogs || [];
       this.selectedContractVersionIdsByCustomer = new Map();
@@ -240,6 +290,12 @@ export default class EmailMassSendBase extends NavigationMixin(
       });
       this.subject = details.subject;
       this.body = details.body;
+      this.customers = this.customers.map((c) => ({
+        ...c,
+        emailSubjectOverride: null,
+        emailBodyOverride: null
+      }));
+      this.applyCustomerDisplayFields();
     } catch {
       this.toast("Error", "Could not load template details", "error");
     } finally {
@@ -249,10 +305,103 @@ export default class EmailMassSendBase extends NavigationMixin(
 
   handleSubjectChange(event) {
     this.subject = event.detail.value;
+    this.applyCustomerDisplayFields();
   }
 
   handleBodyChange(event) {
     this.body = event.detail.value;
+    this.applyCustomerDisplayFields();
+  }
+
+  applyCustomerDisplayFields() {
+    this.customers = this.customers.map((c) => ({
+      ...c,
+      displaySubject:
+        c.emailSubjectOverride != null ? c.emailSubjectOverride : this.subject,
+      displayBody:
+        c.emailBodyOverride != null ? c.emailBodyOverride : this.body
+    }));
+  }
+
+  handleCustomerSubjectChange(event) {
+    const customerId = event.currentTarget.dataset.customerId;
+    const value = event.detail.value;
+    this.customers = this.customers.map((c) => {
+      if (c.customerId !== customerId) {
+        return c;
+      }
+      return {
+        ...c,
+        emailSubjectOverride: value
+      };
+    });
+    this.applyCustomerDisplayFields();
+  }
+
+  handleCustomerBodyChange(event) {
+    const customerId = event.currentTarget.dataset.customerId;
+    const value = event.detail.value;
+    this.customers = this.customers.map((c) => {
+      if (c.customerId !== customerId) {
+        return c;
+      }
+      return {
+        ...c,
+        emailBodyOverride: value
+      };
+    });
+    this.applyCustomerDisplayFields();
+  }
+
+  async handleCustomerResetEmail(event) {
+    const customerId = event.currentTarget.dataset.customerId;
+    if (!this.selectedTemplateId) {
+      return;
+    }
+    this.customers = this.customers.map((c) => ({
+      ...c,
+      isEditContentLoading: c.customerId === customerId
+    }));
+    await this.loadMergedEmailForCustomer(customerId);
+  }
+
+  /**
+   * Loads fully merged subject/body for this recipient (same output as preview),
+   * for editing as final text — not raw template merge fields.
+   */
+  async loadMergedEmailForCustomer(customerId) {
+    const row = this.customers.find((c) => c.customerId === customerId);
+    try {
+      const res = await previewEmail({
+        emailTemplateId: this.selectedTemplateId,
+        customerId,
+        contactId: null,
+        workOrderId: row?.workOrderId || null,
+        subject: "",
+        body: ""
+      });
+
+      this.customers = this.customers.map((c) => {
+        if (c.customerId !== customerId) {
+          return c;
+        }
+        return {
+          ...c,
+          emailSubjectOverride: res.subject,
+          emailBodyOverride: res.body,
+          isEditContentLoading: false
+        };
+      });
+      this.applyCustomerDisplayFields();
+    } catch (e) {
+      this.toast("Error", this.normalizeError(e), "error");
+      this.customers = this.customers.map((c) => ({
+        ...c,
+        isEditing:
+          c.customerId === customerId ? false : c.isEditing,
+        isEditContentLoading: false
+      }));
+    }
   }
 
   toggleCustomer(event) {
@@ -334,10 +483,21 @@ export default class EmailMassSendBase extends NavigationMixin(
             .map((contract) => contract.contentVersionId);
 
           if (ids.length > 0) {
-            payload.push({
+            const row = {
               customerId: c.customerId,
+              workOrderId: c.workOrderId || null,
               contentVersionIds: ids
-            });
+            };
+            if (c.emailSubjectOverride != null) {
+              row.subject = c.emailSubjectOverride;
+            }
+            if (c.emailBodyOverride != null) {
+              row.body = c.emailBodyOverride;
+            }
+            if (c.emailSubjectOverride != null || c.emailBodyOverride != null) {
+              row.parsedContent = true;
+            }
+            payload.push(row);
           }
         }
 
@@ -352,9 +512,20 @@ export default class EmailMassSendBase extends NavigationMixin(
       } else {
         // Simple mode: send per-customer without specific contracts
         for (const c of this.customers) {
-          payload.push({
-            customerId: c.customerId
-          });
+          const row = {
+            customerId: c.customerId,
+            workOrderId: c.workOrderId || null
+          };
+          if (c.emailSubjectOverride != null) {
+            row.subject = c.emailSubjectOverride;
+          }
+          if (c.emailBodyOverride != null) {
+            row.body = c.emailBodyOverride;
+          }
+          if (c.emailSubjectOverride != null || c.emailBodyOverride != null) {
+            row.parsedContent = true;
+          }
+          payload.push(row);
         }
 
         if (!payload.length) {
@@ -418,8 +589,52 @@ export default class EmailMassSendBase extends NavigationMixin(
     }
   }
 
+  async handleEditClick(event) {
+    const customerId = event.currentTarget.dataset.customerId;
+    const current = this.customers.find((c) => c.customerId === customerId);
+    if (current?.isEditing) {
+      this.handleEditLeave();
+      return;
+    }
+
+    this.hoveredCustomerId = null;
+    this.hoveredPreviewSubject = null;
+    this.hoveredPreviewBody = null;
+    this.mergeFieldError = false;
+    this.mergeFieldErrorMessage = null;
+
+    if (!this.selectedTemplateId) {
+      this.customers = this.customers.map((c) => ({
+        ...c,
+        isHovered: false,
+        isEditing: c.customerId === customerId,
+        isEditContentLoading: false
+      }));
+      return;
+    }
+
+    this.customers = this.customers.map((c) => ({
+      ...c,
+      isHovered: false,
+      isEditing: c.customerId === customerId,
+      isEditContentLoading: c.customerId === customerId
+    }));
+
+    await this.loadMergedEmailForCustomer(customerId);
+  }
+
+  handleEditLeave() {
+    this.customers = this.customers.map((c) => ({
+      ...c,
+      isEditing: false,
+      isEditContentLoading: false
+    }));
+  }
+
   async handlePreviewClick(event) {
     const customerId = event.currentTarget.dataset.customerId;
+
+    this.handleEditLeave();
 
     // If this customer's preview is already open, close it on second click
     const currentCustomer = this.customers.find(
@@ -441,16 +656,35 @@ export default class EmailMassSendBase extends NavigationMixin(
 
     this.customers = this.customers.map((c) => ({
       ...c,
-      isHovered: c.customerId === customerId
+      isHovered: c.customerId === customerId,
+      isEditing: false
     }));
 
+    const previewCustomer = this.customers.find(
+      (c) => c.customerId === customerId
+    );
+
     try {
+      // Stored merged text (from edit load) is final HTML — do not run through merge again.
+      if (
+        previewCustomer &&
+        (previewCustomer.emailSubjectOverride != null ||
+          previewCustomer.emailBodyOverride != null)
+      ) {
+        this.hoveredPreviewSubject = this.getSubjectForCustomer(previewCustomer);
+        this.hoveredPreviewBody = this.getBodyForCustomer(previewCustomer);
+        this.mergeFieldError = false;
+        this.mergeFieldErrorMessage = null;
+        return;
+      }
+
       const res = await previewEmail({
         emailTemplateId: this.selectedTemplateId,
         customerId: customerId,
         contactId: null,
-        subject: this.subject,
-        body: this.body
+        workOrderId: previewCustomer?.workOrderId || null,
+        subject: this.getSubjectForCustomer(previewCustomer),
+        body: this.getBodyForCustomer(previewCustomer)
       });
 
       this.hoveredPreviewSubject = res.subject;
@@ -486,5 +720,21 @@ export default class EmailMassSendBase extends NavigationMixin(
 
   get isContractsMode() {
     return this.mode === "contracts";
+  }
+
+  getSubjectForCustomer(cust) {
+    if (!cust) {
+      return this.subject;
+    }
+    return cust.emailSubjectOverride != null
+      ? cust.emailSubjectOverride
+      : this.subject;
+  }
+
+  getBodyForCustomer(cust) {
+    if (!cust) {
+      return this.body;
+    }
+    return cust.emailBodyOverride != null ? cust.emailBodyOverride : this.body;
   }
 }

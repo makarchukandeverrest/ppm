@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Service_Team_Member__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <label>Service Team Member</label>
+    <referenceTo>Service_Team_Member__c</referenceTo>
+    <relationshipLabel>Quick Book Work Order Line Items</relationshipLabel>
+    <relationshipName>Quick_Book_Work_Order_Line_Items</relationshipName>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>
