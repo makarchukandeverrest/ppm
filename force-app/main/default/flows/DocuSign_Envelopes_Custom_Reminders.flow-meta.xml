@@ -17,6 +17,20 @@
             </value>
         </inputParameters>
         <inputParameters>
+            <name>senderType</name>
+            <value>
+                <inputConfiguratorMode>Custom</inputConfiguratorMode>
+                <stringValue>OrgWideEmailAddress</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderAddress</name>
+            <value>
+                <inputConfiguratorMode>Custom</inputConfiguratorMode>
+                <stringValue>office@premierswim.com</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
             <name>composeEmailContent</name>
             <value>
                 <stringValue>True</stringValue>
@@ -176,6 +190,20 @@
                 <collectionElements>
                     <elementReference>$Record.Deal__r.Regional_Manager__r.Email</elementReference>
                 </collectionElements>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderType</name>
+            <value>
+                <inputConfiguratorMode>Custom</inputConfiguratorMode>
+                <stringValue>OrgWideEmailAddress</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>senderAddress</name>
+            <value>
+                <inputConfiguratorMode>Custom</inputConfiguratorMode>
+                <stringValue>office@premierswim.com</stringValue>
             </value>
         </inputParameters>
         <inputParameters>
