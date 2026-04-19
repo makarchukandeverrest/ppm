@@ -55,7 +55,13 @@ export default class WorkOrderLineItemsView extends LightningElement {
   wiredLineItems(result) {
     const { error, data } = result;
     if (data) {
-      this.workOrderLineItems = JSON.parse(JSON.stringify(data));
+      const raw = JSON.parse(JSON.stringify(data));
+      this.workOrderLineItems = raw.map((row) => ({
+        ...row,
+        isEditing: false,
+        // Hide default Name when it duplicates the record Id (e.g. placeholder)
+        itemNameDisplay: row.Name.toLowerCase() === row.Id.slice(0, 15).toLowerCase() ? "" : row.Name ?? ""
+      }));
     } else if (error) {
       // optional: log line items error
       // console.error("Error fetching line items:", error);

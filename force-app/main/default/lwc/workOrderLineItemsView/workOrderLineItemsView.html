@@ -73,7 +73,7 @@
                 <template if:true={item.isEditing}>
                   <lightning-input
                     type="text"
-                    value={item.Name}
+                    value={item.itemNameDisplay}
                     onchange={handleDescriptionChange}
                     data-id={item.Id}
                     data-field="Name"
@@ -81,7 +81,9 @@
                   >
                   </lightning-input>
                 </template>
-                <template if:false={item.isEditing}> {item.Name} </template>
+                <template if:false={item.isEditing}>
+                  {item.itemNameDisplay}
+                </template>
               </td>
               <td
                 class="slds-cell-wrap description-column"
