@@ -1,5 +1,5 @@
 import { LightningElement, track, wire, api } from "lwc";
-import { getRecord, getFieldValue } from "lightning/uiRecordApi";
+import { getRecord, getFieldValue, getRecordNotifyChange } from "lightning/uiRecordApi";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 
 import WORK_ORDER_QB_NO from "@salesforce/schema/WorkOrder.Quick_Books_WO_No__c";
@@ -58,7 +58,7 @@ export default class WorkOrderLineItemsView extends LightningElement {
       const raw = JSON.parse(JSON.stringify(data));
       this.workOrderLineItems = raw.map((row) => ({
         ...row,
-        isEditing: false,
+        editingServiceTeamMember: false,
         // Hide default Name when it duplicates the record Id (e.g. placeholder)
         itemNameDisplay: row.Name.toLowerCase() === row.Id.slice(0, 15).toLowerCase() ? "" : row.Name ?? ""
       }));
@@ -75,7 +75,27 @@ export default class WorkOrderLineItemsView extends LightningElement {
     );
   }
 
-  handleLineItemSave() {
+  handleBeginEditServiceTeamMember(event) {
+    const rowId = event.currentTarget.dataset.rowId;
+    if (!rowId) return;
+    this.workOrderLineItems = this.workOrderLineItems.map((item) => ({
+      ...item,
+      editingServiceTeamMember: item.Id === rowId
+    }));
+  }
+
+  handleServiceTeamMemberSaved(event) {
+    const recordId =
+      event.detail?.id ||
+      this.workOrderLineItems.find((i) => i.editingServiceTeamMember)?.Id;
+    if (recordId) {
+      getRecordNotifyChange([{ recordId }]);
+      this.workOrderLineItems = this.workOrderLineItems.map((item) =>
+        item.Id === recordId
+          ? { ...item, editingServiceTeamMember: false }
+          : item
+      );
+    }
     this.dispatchEvent(
       new ShowToastEvent({
         title: "Success",
