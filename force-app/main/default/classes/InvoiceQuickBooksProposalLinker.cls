@@ -12,10 +12,12 @@ public with sharing class InvoiceQuickBooksProposalLinker {
             Set<String> workOrderQuickBooksIds = new Set<String>();
             Set<String> proposalReferenceNumbers = new Set<String>();
             Set<String> accountNameFragments = new Set<String>();
+            Set<String> customerQuickBooksIds = new Set<String>();
 
             Map<String, Id> quickBooksIdToOpportunityId = new Map<String, Id>();
             Map<String, Id> referenceNumberToOpportunityId = new Map<String, Id>();
             Map<String, Id> quickBooksIdToWorkOrderId = new Map<String, Id>();
+            Map<String, Id> quickBooksIdToAccountId = new Map<String, Id>();
 
             Map<String, List<Account>> potentialAccountsByFragment = new Map<String, List<Account>>();
 
@@ -27,7 +29,6 @@ public with sharing class InvoiceQuickBooksProposalLinker {
                     }
                 }
 
-                // LinkedTxn JSON: fill missing QB ids based on TxnType
                 if (String.isNotBlank(invoice.Quickbooks_LinkedTxn_JSON__c) &&
                     (String.isBlank(invoice.Proposal_QuickBooks_Id__c) || String.isBlank(invoice.WorkOrder_QuickBooks_Id__c))) {
 
@@ -69,6 +70,15 @@ public with sharing class InvoiceQuickBooksProposalLinker {
                         proposalReferenceNumbers.add(referenceNumber);
                     }
                 }
+
+                if (invoice.Customer__c == null && String.isNotBlank(invoice.Customer_Quickbooks_Id__c)) {
+                    String rawCustomerQb = invoice.Customer_Quickbooks_Id__c.trim();
+                    Integer colonIdx = rawCustomerQb.indexOf(':');
+                    String qbId = colonIdx >= 0 ? rawCustomerQb.substring(colonIdx + 1).trim() : rawCustomerQb;
+                    if (String.isNotBlank(qbId)) {
+                        customerQuickBooksIds.add(qbId);
+                    }
+                }
             }
 
             if (!accountNameFragments.isEmpty()) {
@@ -97,7 +107,6 @@ public with sharing class InvoiceQuickBooksProposalLinker {
                                     potentialAccountsByFragment.put(fragment, new List<Account>());
                                 }
                                 potentialAccountsByFragment.get(fragment).add(acc);
-                                //Brake for cases when one name can match multiple fragments
                                 break;
                             }
                         }
@@ -134,7 +143,19 @@ public with sharing class InvoiceQuickBooksProposalLinker {
                 }
             }
 
-            // Work Orders
+            if (!customerQuickBooksIds.isEmpty()) {
+                for (Account a : [
+                    SELECT Id, QuickBooks_Id__c
+                    FROM Account
+                    WHERE QuickBooks_Id__c IN :customerQuickBooksIds
+                    LIMIT 10000
+                ]) {
+                    if (String.isNotBlank(a.QuickBooks_Id__c)) {
+                        quickBooksIdToAccountId.put(a.QuickBooks_Id__c, a.Id);
+                    }
+                }
+            }
+
             if (!workOrderQuickBooksIds.isEmpty()) {
                 for (WorkOrder wo : [
                     SELECT Id, AccountId, Quick_Books_Id__c
@@ -151,20 +172,29 @@ public with sharing class InvoiceQuickBooksProposalLinker {
 
             for (Invoice__c invoice : newList) {
 
-                // Work Order assignment
-                if (String.isNotBlank(invoice.WorkOrder_QuickBooks_Id__c) &&
+                if (invoice.Work_Order__c == null &&
+                    String.isNotBlank(invoice.WorkOrder_QuickBooks_Id__c) &&
                     quickBooksIdToWorkOrderId.containsKey(invoice.WorkOrder_QuickBooks_Id__c)) {
 
                     invoice.Work_Order__c = quickBooksIdToWorkOrderId.get(invoice.WorkOrder_QuickBooks_Id__c);
                 }
 
-                // Proposal assignment
-                if (String.isNotBlank(invoice.Proposal_QuickBooks_Id__c) &&
+                if (invoice.Customer__c == null && String.isNotBlank(invoice.Customer_Quickbooks_Id__c)) {
+                    String rawCustomerQb = invoice.Customer_Quickbooks_Id__c.trim();
+                    Integer colonIdx = rawCustomerQb.indexOf(':');
+                    String qbId = colonIdx >= 0 ? rawCustomerQb.substring(colonIdx + 1).trim() : rawCustomerQb;
+                    if (String.isNotBlank(qbId) && quickBooksIdToAccountId.containsKey(qbId)) {
+                        invoice.Customer__c = quickBooksIdToAccountId.get(qbId);
+                    }
+                }
+
+                if (invoice.Proposal__c == null &&
+                    String.isNotBlank(invoice.Proposal_QuickBooks_Id__c) &&
                     quickBooksIdToOpportunityId.containsKey(invoice.Proposal_QuickBooks_Id__c)) {
 
                     invoice.Proposal__c = quickBooksIdToOpportunityId.get(invoice.Proposal_QuickBooks_Id__c);
 
-                } else if (String.isNotBlank(invoice.Memo__c)) {
+                } else if (invoice.Proposal__c == null && String.isNotBlank(invoice.Memo__c)) {
                     String referenceNumber = extractReferenceNumber(invoice.Memo__c);
                     if (String.isNotBlank(referenceNumber) &&
                         referenceNumberToOpportunityId.containsKey(referenceNumber)) {
@@ -173,8 +203,7 @@ public with sharing class InvoiceQuickBooksProposalLinker {
                     }
                 }
 
-                // Customer fuzzy assignment
-                if (String.isNotBlank(invoice.Name)) {
+                if (invoice.Customer__c == null && String.isNotBlank(invoice.Name)) {
                     String accountName = extractAccountName(invoice.Name);
                     if (String.isNotBlank(accountName)) {
                         List<Account> matches = potentialAccountsByFragment.get(accountName);
@@ -183,7 +212,6 @@ public with sharing class InvoiceQuickBooksProposalLinker {
                             String target = accountName.toLowerCase();
                             Account exactMatch;
                             
-                            //Find exact match Account
                             for (Account acc : matches) {
                                 if (acc.Name != null && acc.Name.toLowerCase() == target) {
                                     exactMatch = acc;
@@ -193,7 +221,7 @@ public with sharing class InvoiceQuickBooksProposalLinker {
                 
                             if (exactMatch != null) {
                                 invoice.Customer__c = exactMatch.Id;
-                            } else { //Best fuzzy match
+                            } else {
                                 if (matches.size() == 1) {
                                     invoice.Customer__c = matches[0].Id;
                                 }
@@ -225,10 +253,8 @@ public with sharing class InvoiceQuickBooksProposalLinker {
 
         List<Object> items;
         if (root instanceof List<Object>) {
-            // Historical format: raw array of LinkedTxn rows
             items = (List<Object>) root;
         } else if (root instanceof Map<String, Object>) {
-            // QuickBooks format: { "LinkedTxn": [ ... ] }
             Map<String, Object> m = (Map<String, Object>) root;
             Object linked = m.get('LinkedTxn');
             if (linked instanceof List<Object>) {
@@ -262,14 +288,10 @@ public with sharing class InvoiceQuickBooksProposalLinker {
         return null;
     }
 
-    /**
-     * Safe reference number extraction from Memo__c
-     */
     private String extractReferenceNumber(String memo) {
         if (String.isBlank(memo)) return null;
 
         try {
-            // Patterns: "Estimate 12345:", "12345:", etc.
             Pattern pattern = Pattern.compile('(?:Estimate)?\\s*(\\d+)(?::|\\s|$)');
             Matcher matcher = pattern.matcher(memo);
 
@@ -283,9 +305,6 @@ public with sharing class InvoiceQuickBooksProposalLinker {
         return null;
     }
 
-    /**
-     * Safe account name extraction from Name field
-     */
     private String extractAccountName(String invoiceName) {
         if (String.isBlank(invoiceName)) return null;
 
