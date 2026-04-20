@@ -138,10 +138,7 @@ private class WorkOrderTriggerHandlerTest {
      * @description Tests the COMPLETE flow: BEFORE insert (linking) and AFTER insert (line items + status update).
      */
     @isTest
-    static void testCompleteFlow_FromLinkToStatusUpdate() {
-        // ARRANGE - Get data from setup
-        Account testCustomer = [SELECT Id, Name FROM Account WHERE Name = 'Test Customer A' LIMIT 1];
-        // FIX: Changed to 13971 which exists in the new setup
+    static void testCompleteFlow_FromLinkToStatusUpdate() {        Account testCustomer = [SELECT Id, Name FROM Account WHERE Name = 'Test Customer A' LIMIT 1];
         Opportunity testProposal = [SELECT Id, StageName, Reference_Number__c FROM Opportunity WHERE Reference_Number__c = '13971' LIMIT 1];
         System.assertEquals('Draft', testProposal.StageName, 'Proposal starts as Draft; ProposalStatusDefiner is not run on Opportunity insert.');
 
@@ -175,20 +172,19 @@ private class WorkOrderTriggerHandlerTest {
         insert testWorkOrder;
         Test.stopTest();
 
-        // ASSERT
-        // 1. Verify BEFORE INSERT logic: Links were made
+
         WorkOrder insertedWO = [SELECT Id, AccountId, Proposal__c, Proposal__r.Reference_Number__c 
                                FROM WorkOrder WHERE Id = :testWorkOrder.Id];
         System.assertEquals(testCustomer.Id, insertedWO.AccountId, 'WorkOrder should be auto-linked to the correct Customer.');
         System.assertEquals(testProposal.Id, insertedWO.Proposal__c, 'WorkOrder should be auto-linked to the correct Proposal. Expected: ' + testProposal.Id + ', Actual: ' + insertedWO.Proposal__c);
 
-        // 2. Verify AFTER INSERT logic: Line item was created (WorkOrderLineItemCreator)
+
         List<Quick_Book_Work_Order_Line_Item__c> lineItems = [
             SELECT Id FROM Quick_Book_Work_Order_Line_Item__c WHERE Work_Order__c = :testWorkOrder.Id
         ];
         System.assertEquals(1, lineItems.size(), 'Line item should be created from JSON.');
 
-        // 3. Verify AFTER INSERT logic: Proposal status was updated (ProposalStatusDefiner)
+
         Opportunity updatedProposal = [SELECT Id, StageName FROM Opportunity WHERE Id = :testProposal.Id];
         System.assertEquals('Approved - WO Issued', updatedProposal.StageName, 'Proposal stage should be updated by the trigger.');
     }
@@ -198,7 +194,7 @@ private class WorkOrderTriggerHandlerTest {
      */
     @isTest
     static void testAfterInsert_WithValidLineItemsJson() {
-        // ARRANGE - Get data from setup
+
         Account testAcc = [SELECT Id FROM Account LIMIT 1];
         Opportunity testProposal = [SELECT Id FROM Opportunity WHERE Reference_Number__c = '13974' LIMIT 1];
 
@@ -220,19 +216,19 @@ private class WorkOrderTriggerHandlerTest {
         WorkOrder testWorkOrder = new WorkOrder(
             Subject = 'Test WorkOrder with Line Items',
             AccountId = testAcc.Id,
-            Proposal__c = testProposal.Id, // Manually link since we're testing line items, not parsing
+            Proposal__c = testProposal.Id,
             Pricebook2Id = Test.getStandardPricebookId(),
             Duration = 60,
             StartDate = System.now(),
             Quick_Books_Line_Items__c = validLineItemsJson
         );
 
-        // ACT
+
         Test.startTest();
         insert testWorkOrder;
         Test.stopTest();
 
-        // ASSERT
+
         List<Quick_Book_Work_Order_Line_Item__c> createdLineItems = [
             SELECT Id, Name, Work_Order__c, Description__c, Quantity__c, Rate__c, Amount__c, Quick_Books_Id__c
             FROM Quick_Book_Work_Order_Line_Item__c

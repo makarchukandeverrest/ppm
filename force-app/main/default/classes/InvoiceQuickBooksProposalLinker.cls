@@ -29,7 +29,6 @@ public with sharing class InvoiceQuickBooksProposalLinker {
                     }
                 }
 
-                // LinkedTxn JSON: fill missing QB ids based on TxnType
                 if (String.isNotBlank(invoice.Quickbooks_LinkedTxn_JSON__c) &&
                     (String.isBlank(invoice.Proposal_QuickBooks_Id__c) || String.isBlank(invoice.WorkOrder_QuickBooks_Id__c))) {
 
@@ -108,7 +107,6 @@ public with sharing class InvoiceQuickBooksProposalLinker {
                                     potentialAccountsByFragment.put(fragment, new List<Account>());
                                 }
                                 potentialAccountsByFragment.get(fragment).add(acc);
-                                //Brake for cases when one name can match multiple fragments
                                 break;
                             }
                         }
@@ -145,7 +143,6 @@ public with sharing class InvoiceQuickBooksProposalLinker {
                 }
             }
 
-            // Customers
             if (!customerQuickBooksIds.isEmpty()) {
                 for (Account a : [
                     SELECT Id, QuickBooks_Id__c
@@ -159,7 +156,6 @@ public with sharing class InvoiceQuickBooksProposalLinker {
                 }
             }
 
-            // Work Orders
             if (!workOrderQuickBooksIds.isEmpty()) {
                 for (WorkOrder wo : [
                     SELECT Id, AccountId, Quick_Books_Id__c
@@ -176,7 +172,6 @@ public with sharing class InvoiceQuickBooksProposalLinker {
 
             for (Invoice__c invoice : newList) {
 
-                // Work Order assignment
                 if (invoice.Work_Order__c == null &&
                     String.isNotBlank(invoice.WorkOrder_QuickBooks_Id__c) &&
                     quickBooksIdToWorkOrderId.containsKey(invoice.WorkOrder_QuickBooks_Id__c)) {
@@ -184,7 +179,6 @@ public with sharing class InvoiceQuickBooksProposalLinker {
                     invoice.Work_Order__c = quickBooksIdToWorkOrderId.get(invoice.WorkOrder_QuickBooks_Id__c);
                 }
 
-                // Customer assignment by QuickBooks Id (preferred)
                 if (invoice.Customer__c == null && String.isNotBlank(invoice.Customer_Quickbooks_Id__c)) {
                     String rawCustomerQb = invoice.Customer_Quickbooks_Id__c.trim();
                     Integer colonIdx = rawCustomerQb.indexOf(':');
@@ -194,7 +188,6 @@ public with sharing class InvoiceQuickBooksProposalLinker {
                     }
                 }
 
-                // Proposal assignment
                 if (invoice.Proposal__c == null &&
                     String.isNotBlank(invoice.Proposal_QuickBooks_Id__c) &&
                     quickBooksIdToOpportunityId.containsKey(invoice.Proposal_QuickBooks_Id__c)) {
@@ -210,7 +203,6 @@ public with sharing class InvoiceQuickBooksProposalLinker {
                     }
                 }
 
-                // Customer fuzzy assignment
                 if (invoice.Customer__c == null && String.isNotBlank(invoice.Name)) {
                     String accountName = extractAccountName(invoice.Name);
                     if (String.isNotBlank(accountName)) {
@@ -220,7 +212,6 @@ public with sharing class InvoiceQuickBooksProposalLinker {
                             String target = accountName.toLowerCase();
                             Account exactMatch;
                             
-                            //Find exact match Account
                             for (Account acc : matches) {
                                 if (acc.Name != null && acc.Name.toLowerCase() == target) {
                                     exactMatch = acc;
@@ -230,7 +221,7 @@ public with sharing class InvoiceQuickBooksProposalLinker {
                 
                             if (exactMatch != null) {
                                 invoice.Customer__c = exactMatch.Id;
-                            } else { //Best fuzzy match
+                            } else {
                                 if (matches.size() == 1) {
                                     invoice.Customer__c = matches[0].Id;
                                 }
@@ -262,10 +253,8 @@ public with sharing class InvoiceQuickBooksProposalLinker {
 
         List<Object> items;
         if (root instanceof List<Object>) {
-            // Historical format: raw array of LinkedTxn rows
             items = (List<Object>) root;
         } else if (root instanceof Map<String, Object>) {
-            // QuickBooks format: { "LinkedTxn": [ ... ] }
             Map<String, Object> m = (Map<String, Object>) root;
             Object linked = m.get('LinkedTxn');
             if (linked instanceof List<Object>) {
@@ -299,14 +288,10 @@ public with sharing class InvoiceQuickBooksProposalLinker {
         return null;
     }
 
-    /**
-     * Safe reference number extraction from Memo__c
-     */
     private String extractReferenceNumber(String memo) {
         if (String.isBlank(memo)) return null;
 
         try {
-            // Patterns: "Estimate 12345:", "12345:", etc.
             Pattern pattern = Pattern.compile('(?:Estimate)?\\s*(\\d+)(?::|\\s|$)');
             Matcher matcher = pattern.matcher(memo);
 
@@ -320,9 +305,6 @@ public with sharing class InvoiceQuickBooksProposalLinker {
         return null;
     }
 
-    /**
-     * Safe account name extraction from Name field
-     */
     private String extractAccountName(String invoiceName) {
         if (String.isBlank(invoiceName)) return null;
 

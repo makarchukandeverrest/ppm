@@ -7,7 +7,6 @@ private class ProposalTriggerHandlerTest {
      */
     @isTest
     static void testBeforeInsert_IsActiveTrue() {
-        // ARRANGE
         Account testAccount = new Account(Name = 'Test Account');
         insert testAccount;
 
@@ -19,12 +18,10 @@ private class ProposalTriggerHandlerTest {
             Is_Active__c = true
         );
 
-        // ACT
         Test.startTest();
         insert activeProposal;
         Test.stopTest();
 
-        // ASSERT
         Opportunity insertedProposal = [SELECT Id, StageName, Is_Active__c FROM Opportunity WHERE Id = :activeProposal.Id];
         System.assertEquals('Draft', insertedProposal.StageName, 'Stage remains Draft until ProposalStatusDefiner.updateStatus runs elsewhere.');
         System.assertEquals(true, insertedProposal.Is_Active__c, 'Is_Active__c should remain true.');
