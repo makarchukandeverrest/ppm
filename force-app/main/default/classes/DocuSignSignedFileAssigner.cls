@@ -1,10 +1,5 @@
 public with sharing class DocuSignSignedFileAssigner {
 
-    /** Delegates to assignDocuments; legacy method name for existing integrations. */
-    public static void assignContractDocuments(List<EmailMessage> docuSignEmails) {
-        assignDocuments(docuSignEmails);
-    }
-
     public static void assignDocuments(List<EmailMessage> docuSignEmails) {
 
         if (docuSignEmails == null || docuSignEmails.isEmpty()) {
