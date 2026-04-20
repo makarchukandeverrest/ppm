@@ -111,10 +111,12 @@ public with sharing class DocuSignSignedFileAssignerTest {
         );
 
         // 2. Проверяем, что файл ПЕРЕИМЕНОВАН (Title заканчивается на " - Completed")
+        // Берём latest по ContentDocumentId — после update Title Id версии может смениться.
         ContentVersion signedAfter = [
             SELECT Id, Title
             FROM ContentVersion
-            WHERE Id = :signedBefore.Id
+            WHERE ContentDocumentId = :signedBefore.ContentDocumentId
+            AND IsLatest = true
             LIMIT 1
         ];
         System.assertEquals(
@@ -122,6 +124,109 @@ public with sharing class DocuSignSignedFileAssignerTest {
             signedAfter.Title != null &&
             signedAfter.Title.endsWith(' - Completed'),
             'Signed file Title must be renamed with " - Completed".'
+        );
+    }
+
+    /**
+     * Исходный файл на Opportunity; подписанный на Email — линк на тот же Opportunity и суффикс Title.
+     */
+    @IsTest
+    static void testAssignProposalDocuments_Positive_LinkToOpportunity_AndRename() {
+        Account acc = [
+            SELECT Id
+            FROM Account
+            WHERE Name = 'Test Account'
+            LIMIT 1
+        ];
+
+        Opportunity opp = new Opportunity(
+            Name = 'DocuSign Test Proposal',
+            AccountId = acc.Id,
+            CloseDate = Date.today().addDays(30),
+            StageName = 'Draft'
+        );
+        insert opp;
+
+        ContentVersion originalCv = new ContentVersion(
+            Title = 'Opp-Signed-10081--Contract',
+            PathOnClient = 'Opp-Signed-10081--Contract.pdf',
+            VersionData = Blob.valueOf('opp original body'),
+            IsMajorVersion = true
+        );
+        insert originalCv;
+
+        originalCv = [
+            SELECT Id, ContentDocumentId
+            FROM ContentVersion
+            WHERE Id = :originalCv.Id
+            LIMIT 1
+        ];
+
+        insert new ContentDocumentLink(
+            ContentDocumentId = originalCv.ContentDocumentId,
+            LinkedEntityId = opp.Id,
+            ShareType = 'V',
+            Visibility = 'AllUsers'
+        );
+
+        EmailMessage em = new EmailMessage(
+            Subject = 'DocuSign Signed Proposal Doc',
+            FromAddress = 'sender2@example.com',
+            ToAddress = 'test2@example.com',
+            Status = '3',
+            Incoming = false
+        );
+        insert em;
+
+        ContentVersion signedCv = new ContentVersion(
+            Title = 'Opp-Signed-10081--Contract.pdf',
+            PathOnClient = 'Opp-Signed-10081--Contract.pdf',
+            VersionData = Blob.valueOf('signed opp body'),
+            IsMajorVersion = true
+        );
+        insert signedCv;
+
+        signedCv = [
+            SELECT Id, ContentDocumentId
+            FROM ContentVersion
+            WHERE Id = :signedCv.Id
+            LIMIT 1
+        ];
+
+        insert new ContentDocumentLink(
+            ContentDocumentId = signedCv.ContentDocumentId,
+            LinkedEntityId = em.Id,
+            ShareType = 'V',
+            Visibility = 'AllUsers'
+        );
+
+        Test.startTest();
+        DocuSignSignedFileAssigner.assignDocuments(new List<EmailMessage>{ em });
+        Test.stopTest();
+
+        Integer linkCount = [
+            SELECT COUNT()
+            FROM ContentDocumentLink
+            WHERE ContentDocumentId = :signedCv.ContentDocumentId
+            AND LinkedEntityId = :opp.Id
+        ];
+        System.assertEquals(
+            1,
+            linkCount,
+            'Signed file must be linked to the Opportunity.'
+        );
+
+        ContentVersion signedAfter = [
+            SELECT Title
+            FROM ContentVersion
+            WHERE ContentDocumentId = :signedCv.ContentDocumentId
+            AND IsLatest = true
+            LIMIT 1
+        ];
+        System.assertEquals(
+            true,
+            signedAfter.Title != null && signedAfter.Title.endsWith(' - Completed'),
+            'Signed proposal Title must be renamed with " - Completed".'
         );
     }
 

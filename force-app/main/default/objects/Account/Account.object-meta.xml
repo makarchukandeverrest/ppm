@@ -262,7 +262,7 @@
     <enableEnhancedLookup>true</enableEnhancedLookup>
     <enableFeeds>true</enableFeeds>
     <enableHistory>false</enableHistory>
-    <externalSharingModel>Private</externalSharingModel>
+    <externalSharingModel>ReadWrite</externalSharingModel>
     <searchLayouts>
         <customTabListAdditionalFields>ACCOUNT.NAME</customTabListAdditionalFields>
         <customTabListAdditionalFields>ACCOUNT.ADDRESS1_CITY</customTabListAdditionalFields>
@@ -286,7 +286,6 @@
         <searchResultsAdditionalFields>ACCOUNT.ADDRESS1_ZIP</searchResultsAdditionalFields>
         <searchResultsAdditionalFields>Primary_Contact__c</searchResultsAdditionalFields>
         <searchResultsAdditionalFields>Regional_Manager__c</searchResultsAdditionalFields>
-        <searchResultsAdditionalFields>Supervisor__c</searchResultsAdditionalFields>
         <searchResultsCustomButtons>Send_Emails</searchResultsCustomButtons>
     </searchLayouts>
     <sharingModel>ReadWrite</sharingModel>

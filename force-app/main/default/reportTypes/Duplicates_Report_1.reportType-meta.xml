@@ -293,11 +293,6 @@
         </columns>
         <columns>
             <checkedByDefault>false</checkedByDefault>
-            <field>Supervisor__c</field>
-            <table>Account</table>
-        </columns>
-        <columns>
-            <checkedByDefault>false</checkedByDefault>
             <field>Primary_Contact__c</field>
             <table>Account</table>
         </columns>

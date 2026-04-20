@@ -7,6 +7,7 @@
     <columns>Quickbooks_Memo__c</columns>
     <columns>Issue_Date__c</columns>
     <columns>Sales_Rep__c</columns>
+    <columns>Status</columns>
     <filterScope>Everything</filterScope>
     <label>All Work Orders</label>
 </ListView>
