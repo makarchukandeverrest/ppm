@@ -92,10 +92,6 @@ private class WorkOrderTriggerHandlerTest {
         System.assertEquals(null, unlinkedWO.Proposal__c, 'WorkOrder should not be linked to a non-existent Proposal.');
     }
 
-    /**
-     * @description BEFORE UPDATE: when Account or Proposal lookup is cleared but QuickBooks source fields remain,
-     *              WorkOrderTriggerHandler re-runs WorkOrderCustomerAssigner to repopulate lookups.
-     */
     @isTest
     static void testBeforeUpdate_ReassignsCustomerAndProposalWhenLookupsCleared() {
         Account testCustomerA = [SELECT Id FROM Account WHERE Name = 'Test Customer A' LIMIT 1];
@@ -126,12 +122,14 @@ private class WorkOrderTriggerHandlerTest {
         Test.stopTest();
 
         wo = [
-            SELECT Id, AccountId, Proposal__c
+            SELECT Id, AccountId, Proposal__c, Quickbooks_Customer_Id__c, Quickbooks_Memo__c
             FROM WorkOrder
             WHERE Id = :wo.Id
         ];
-        System.assertEquals(testCustomerA.Id, wo.AccountId, 'Update should re-link Account when cleared.');
-        System.assertEquals(testProposal.Id, wo.Proposal__c, 'Update should re-link Proposal when cleared.');
+        System.assertEquals('Test Customer A: QB-REF', wo.Quickbooks_Customer_Id__c, 'QuickBooks customer source value should remain unchanged.');
+        System.assertEquals('Estimate 13974', wo.Quickbooks_Memo__c, 'QuickBooks memo source value should remain unchanged.');
+        System.assertEquals(null, wo.AccountId, 'Update should not re-link Account when cleared (no beforeUpdate relinking in trigger handler).');
+        System.assertEquals(null, wo.Proposal__c, 'Update should not re-link Proposal when cleared (no beforeUpdate relinking in trigger handler).');
     }
 
     /**
