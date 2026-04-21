@@ -53,23 +53,6 @@
         <aggregateTypes>Sum</aggregateTypes>
         <field>Opportunity.Work_Orders__r$Total_Profit__c</field>
     </columns>
-    <filter>
-        <criteriaItems>
-            <column>Opportunity.Work_Orders__r.Qucik_Boock_Work_Order_Line_Items__r$Item_Code__c</column>
-            <columnToColumn>false</columnToColumn>
-            <isUnlocked>true</isUnlocked>
-            <operator>notEqual</operator>
-            <value>null</value>
-        </criteriaItems>
-        <criteriaItems>
-            <column>Opportunity.Work_Orders__r$Gas__c</column>
-            <columnToColumn>false</columnToColumn>
-            <isUnlocked>true</isUnlocked>
-            <operator>notEqual</operator>
-            <value></value>
-        </criteriaItems>
-        <language>en_US</language>
-    </filter>
     <format>Summary</format>
     <groupingsDown>
         <dateGranularity>Day</dateGranularity>
@@ -92,7 +75,7 @@
         <value>1</value>
     </params>
     <reportType>Proposal_Work_Order_Metric__c</reportType>
-    <scope>user</scope>
+    <scope>organization</scope>
     <showDetails>true</showDetails>
     <showGrandTotal>true</showGrandTotal>
     <showSubTotals>false</showSubTotals>

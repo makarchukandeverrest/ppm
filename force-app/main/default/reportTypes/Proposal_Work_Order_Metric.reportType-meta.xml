@@ -1000,6 +1000,11 @@
             <field>Item_Code__c</field>
             <table>Opportunity.Work_Orders__r.Qucik_Boock_Work_Order_Line_Items__r</table>
         </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Short_Description__c</field>
+            <table>Opportunity.Work_Orders__r.Qucik_Boock_Work_Order_Line_Items__r</table>
+        </columns>
         <masterLabel>Quick Book Work Order Line Items</masterLabel>
     </sections>
 </ReportType>
