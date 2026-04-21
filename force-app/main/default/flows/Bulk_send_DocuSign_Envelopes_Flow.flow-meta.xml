@@ -107,7 +107,7 @@
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>Get_Customer_Email.Email__c</leftValueReference>
+                <leftValueReference>Loop_over_allProposals.Account.Email__c</leftValueReference>
                 <operator>IsNull</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
@@ -136,7 +136,7 @@
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>Get_Customer_Email.Email__c</leftValueReference>
+                <leftValueReference>Loop_over_allProposals.Account.Email__c</leftValueReference>
                 <operator>IsNull</operator>
                 <rightValue>
                     <booleanValue>true</booleanValue>
@@ -215,7 +215,7 @@
         <collectionReference>Get_Proposals</collectionReference>
         <iterationOrder>Asc</iterationOrder>
         <nextValueConnector>
-            <targetReference>Get_Customer_Email</targetReference>
+            <targetReference>Is_Valid</targetReference>
         </nextValueConnector>
         <noMoreValuesConnector>
             <targetReference>Preview_Confirm</targetReference>
@@ -251,29 +251,6 @@
         </value>
     </processMetadataValues>
     <processType>Flow</processType>
-    <recordLookups>
-        <name>Get_Customer_Email</name>
-        <label>Get Customer Email</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
-        <connector>
-            <targetReference>Is_Valid</targetReference>
-        </connector>
-        <filterLogic>and</filterLogic>
-        <filters>
-            <field>Id</field>
-            <operator>EqualTo</operator>
-            <value>
-                <elementReference>Loop_over_allProposals.AccountId</elementReference>
-            </value>
-        </filters>
-        <getFirstRecordOnly>true</getFirstRecordOnly>
-        <object>Account</object>
-        <queriedFields>Id</queriedFields>
-        <queriedFields>Email__c</queriedFields>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
-    </recordLookups>
     <recordLookups>
         <name>Get_Proposals</name>
         <label>Get Proposals</label>
