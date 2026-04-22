@@ -32,6 +32,12 @@
                 <elementReference>NotificationBody</elementReference>
             </value>
         </inputParameters>
+        <inputParameters>
+            <name>targetId</name>
+            <value>
+                <elementReference>Get_WorkOrder_info.Id</elementReference>
+            </value>
+        </inputParameters>
         <nameSegment>customNotificationAction</nameSegment>
         <offset>0</offset>
     </actionCalls>
@@ -46,30 +52,16 @@
             <assignToReference>RecipientIds</assignToReference>
             <operator>Add</operator>
             <value>
-                <elementReference>Get_User_Ids</elementReference>
+                <elementReference>Get_Users.Id</elementReference>
             </value>
         </assignmentItems>
         <connector>
-            <targetReference>Get_User_Ids</targetReference>
+            <targetReference>Send_Custom_Notification_Action_1</targetReference>
         </connector>
     </assignments>
     <environments>Default</environments>
     <interviewLabel>Notify Service Managers for Work Order Update {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Notify Service Managers for Work Order Update</label>
-    <loops>
-        <name>Get_User_Ids</name>
-        <label>Get User Ids</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <collectionReference>RecipientIds</collectionReference>
-        <iterationOrder>Asc</iterationOrder>
-        <nextValueConnector>
-            <targetReference>Assignment_1</targetReference>
-        </nextValueConnector>
-        <noMoreValuesConnector>
-            <targetReference>Send_Custom_Notification_Action_1</targetReference>
-        </noMoreValuesConnector>
-    </loops>
     <processMetadataValues>
         <name>BuilderType</name>
         <value>
@@ -117,7 +109,7 @@
         <locationY>0</locationY>
         <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
         <connector>
-            <targetReference>Get_User_Ids</targetReference>
+            <targetReference>Assignment_1</targetReference>
         </connector>
         <filterLogic>and</filterLogic>
         <filters>
@@ -191,7 +183,7 @@
         <recordTriggerType>Create</recordTriggerType>
         <triggerType>RecordAfterSave</triggerType>
     </start>
-    <status>Active</status>
+    <status>Draft</status>
     <textTemplates>
         <name>NotificationBody</name>
         <isViewedAsPlainText>false</isViewedAsPlainText>
