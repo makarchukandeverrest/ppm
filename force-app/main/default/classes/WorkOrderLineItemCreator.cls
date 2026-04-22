@@ -134,6 +134,21 @@ public with sharing class WorkOrderLineItemCreator {
         }
         String normalized = text.replace('\r\n', '\n').replace('\r', '\n');
         Integer nl = normalized.indexOf('\n');
-        return (nl == -1 ? normalized : normalized.substring(0, nl)).trim();
+        String firstLine = (nl == -1 ? normalized : normalized.substring(0, nl)).trim();
+
+        Integer maxLen = Quick_Book_Work_Order_Line_Item__c.Short_Description__c.getDescribe().getLength();
+        if (maxLen != null && maxLen > 0 && firstLine != null && firstLine.length() > maxLen) {
+            String clipped = firstLine.substring(0, maxLen).trim();
+
+            // Prefer a word boundary, but don't over-truncate.
+            Integer lastSpace = Math.max(clipped.lastIndexOf(' '), clipped.lastIndexOf('\t'));
+            Integer minKeep = (Integer)Math.floor(maxLen * 0.6);
+            if (lastSpace > 0 && lastSpace >= minKeep) {
+                clipped = clipped.substring(0, lastSpace).trim();
+            }
+
+            firstLine = clipped;
+        }
+        return firstLine;
     }
 }
