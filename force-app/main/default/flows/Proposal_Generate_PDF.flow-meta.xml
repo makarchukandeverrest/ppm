@@ -4,7 +4,7 @@
         <name>Generate_Doc</name>
         <label>Generate Doc</label>
         <locationX>50</locationX>
-        <locationY>539</locationY>
+        <locationY>647</locationY>
         <actionName>dfsle__InvocableDocumentGenerationRequest</actionName>
         <actionType>apex</actionType>
         <flowTransactionModel>Automatic</flowTransactionModel>
@@ -17,7 +17,7 @@
         <inputParameters>
             <name>templateId</name>
             <value>
-                <stringValue>a0JVv000006ZcN7MAK</stringValue>
+                <elementReference>Get_Template.Id</elementReference>
             </value>
         </inputParameters>
         <nameSegment>dfsle__InvocableDocumentGenerationRequest</nameSegment>
@@ -29,7 +29,7 @@
         <name>Decision_1</name>
         <label>Proposal Has Line Item?</label>
         <locationX>182</locationX>
-        <locationY>431</locationY>
+        <locationY>539</locationY>
         <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
         <rules>
             <name>Proposal_Has_Line_Item</name>
@@ -76,7 +76,7 @@
         <locationY>323</locationY>
         <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
         <connector>
-            <targetReference>Decision_1</targetReference>
+            <targetReference>Get_Template</targetReference>
         </connector>
         <filterLogic>and</filterLogic>
         <filters>
@@ -88,6 +88,27 @@
         </filters>
         <getFirstRecordOnly>false</getFirstRecordOnly>
         <object>Deal_Line_Item__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Template</name>
+        <label>Get Template</label>
+        <locationX>182</locationX>
+        <locationY>431</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Decision_1</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Name</field>
+            <operator>Contains</operator>
+            <value>
+                <stringValue>Proposal PDF Only Template</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>dfsle__GenTemplate__c</object>
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordLookups>
     <start>
@@ -123,13 +144,6 @@
             <operator>EqualTo</operator>
             <value>
                 <stringValue>Proposal ready to be sent</stringValue>
-            </value>
-        </filters>
-        <filters>
-            <field>StageName</field>
-            <operator>EqualTo</operator>
-            <value>
-                <stringValue>Proposal sent / Customer Reviewing</stringValue>
             </value>
         </filters>
         <object>Opportunity</object>
