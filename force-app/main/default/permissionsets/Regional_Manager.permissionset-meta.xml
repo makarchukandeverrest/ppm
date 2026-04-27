@@ -1023,6 +1023,10 @@
         <visibility>Visible</visibility>
     </tabSettings>
     <tabSettings>
+        <tab>Customers_Map</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
         <tab>Invoice__c</tab>
         <visibility>Visible</visibility>
     </tabSettings>
