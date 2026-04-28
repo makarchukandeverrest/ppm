@@ -8,7 +8,7 @@ public with sharing class InvoiceWorkOrderAssigner {
             // Only consider invoices that (1) don't already have a Work Order, and
             // (2) have a QuickBooks WorkOrder Id present. Invoices without a QB Id
             // must be ignored per business rules/tests.
-            if (i.Work_Order__c == null && i.WorkOrder_QuickBooks_Id__c != null) {
+            if (i.Work_Order__c == null && String.isNotBlank(i.WorkOrder_QuickBooks_Id__c)) {
                 proposalIds.add(i.Proposal__c);
                 invoicesToUpdate.add(i);
             }
