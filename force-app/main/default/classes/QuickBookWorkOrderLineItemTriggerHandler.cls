@@ -1,4 +1,4 @@
-public with sharing class QuickBookWorkOrderLineItemTriggerHandler extends TriggerHandler{
+public without sharing class QuickBookWorkOrderLineItemTriggerHandler extends TriggerHandler{
     List<Quick_Book_Work_Order_Line_Item__c> newList;
     Map<Id,Quick_Book_Work_Order_Line_Item__c> oldMap;
 
