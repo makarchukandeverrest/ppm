@@ -57,9 +57,12 @@ public without sharing class QuickBookWorkOrderTechnicianHandler {
     }
 
     private static Map<Id, Set<Id>> queryDistinctMemberIdsByWorkOrder(Set<Id> workOrderIds) {
-        List<WorkOrder> triggeredWO = [SELECT Work_Order__c, Service_Team_Member__c FROM Quick_Book_Work_Order_Line_Item__c WHERE Work_Order__c IN :workOrderIds AND Service_Team_Member__c != NULL];
+        List<WorkOrder> triggered_WO_Items = [SELECT Work_Order__c, Service_Team_Member__c
+            FROM Quick_Book_Work_Order_Line_Item__c
+            WHERE Work_Order__c IN :workOrderIds AND Service_Team_Member__c != NULL
+        ];
         Map<Id, Set<Id>> result = new Map<Id, Set<Id>>();
-        for (Quick_Book_Work_Order_Line_Item__c row : triggeredWO) {
+        for (Quick_Book_Work_Order_Line_Item__c row : triggered_WO_Items) {
             if (!result.containsKey(row.Work_Order__c)) {
                 result.put(row.Work_Order__c, new Set<Id>());
             }
