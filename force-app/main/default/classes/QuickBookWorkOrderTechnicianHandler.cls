@@ -57,7 +57,7 @@ public without sharing class QuickBookWorkOrderTechnicianHandler {
     }
 
     private static Map<Id, Set<Id>> queryDistinctMemberIdsByWorkOrder(Set<Id> workOrderIds) {
-        List<WorkOrder> triggered_WO_Items = [SELECT Work_Order__c, Service_Team_Member__c
+        List<Quick_Book_Work_Order_Line_Item__c> triggered_WO_Items = [SELECT Work_Order__c, Service_Team_Member__c
             FROM Quick_Book_Work_Order_Line_Item__c
             WHERE Work_Order__c IN :workOrderIds AND Service_Team_Member__c != NULL
         ];
