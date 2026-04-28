@@ -73,7 +73,7 @@
                 <template if:true={item.isEditing}>
                   <lightning-input
                     type="text"
-                    value={item.Name}
+                    value={item.itemNameDisplay}
                     onchange={handleDescriptionChange}
                     data-id={item.Id}
                     data-field="Name"
@@ -81,7 +81,9 @@
                   >
                   </lightning-input>
                 </template>
-                <template if:false={item.isEditing}> {item.Name} </template>
+                <template if:false={item.isEditing}>
+                  {item.itemNameDisplay}
+                </template>
               </td>
               <td
                 class="slds-cell-wrap description-column"
@@ -124,32 +126,62 @@
                 </template>
               </td>
               <td class="slds-cell-wrap centered-cell">
-                <!-- Must match Quick_Book_Work_Order_Line_Item__c (Apex list), NOT standard WorkOrderLineItem -->
-                <lightning-record-edit-form
-                  object-api-name="Quick_Book_Work_Order_Line_Item__c"
-                  record-id={item.Id}
-                  onsuccess={handleLineItemSave}
-                >
-                  <div class="slds-grid slds-gutters_x-small">
+                <template if:false={item.editingServiceTeamMember}>
+                  <div
+                    class="slds-grid slds-grid_vertical-align-center slds-gutters_x-small"
+                  >
                     <div class="slds-col">
-                      <lightning-input-field
-                        field-name="Service_Team_Member__c"
-                        variant="label-hidden"
+                      <lightning-record-view-form
+                        record-id={item.Id}
+                        object-api-name="Quick_Book_Work_Order_Line_Item__c"
                       >
-                      </lightning-input-field>
+                        <lightning-output-field
+                          field-name="Service_Team_Member__c"
+                          variant="label-hidden"
+                        ></lightning-output-field>
+                      </lightning-record-view-form>
                     </div>
                     <div class="slds-col slds-grow-none">
                       <lightning-button-icon
-                        icon-name="utility:save"
-                        alternative-text="Save"
-                        type="submit"
+                        icon-name="utility:edit"
+                        alternative-text="Edit Service Team Member"
                         variant="border-filled"
                         size="small"
-                      >
-                      </lightning-button-icon>
+                        data-row-id={item.Id}
+                        onclick={handleBeginEditServiceTeamMember}
+                      ></lightning-button-icon>
                     </div>
                   </div>
-                </lightning-record-edit-form>
+                </template>
+                <template if:true={item.editingServiceTeamMember}>
+                  <lightning-record-edit-form
+                    object-api-name="Quick_Book_Work_Order_Line_Item__c"
+                    record-id={item.Id}
+                    onsuccess={handleServiceTeamMemberSaved}
+                  >
+                    <div
+                      class="slds-grid slds-grid_vertical-align-center slds-gutters_x-small"
+                    >
+                      <div class="slds-col">
+                        <lightning-input-field
+                          field-name="Service_Team_Member__c"
+                          variant="label-hidden"
+                        >
+                        </lightning-input-field>
+                      </div>
+                      <div class="slds-col slds-grow-none">
+                        <lightning-button-icon
+                          icon-name="utility:save"
+                          alternative-text="Save"
+                          type="submit"
+                          variant="border-filled"
+                          size="small"
+                        >
+                        </lightning-button-icon>
+                      </div>
+                    </div>
+                  </lightning-record-edit-form>
+                </template>
               </td>
             <!-- <td
                 class="slds-cell-wrap centered-cell"

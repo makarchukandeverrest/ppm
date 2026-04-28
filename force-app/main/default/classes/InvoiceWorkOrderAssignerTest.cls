@@ -30,31 +30,27 @@ private class InvoiceWorkOrderAssignerTest {
         insert wo1;
 
         // Invoices:
-        // - inv1: has QB Id, null Work_Order__c, proposal with WorkOrder (should be linked)
-        // - inv2: has QB Id, null Work_Order__c, proposal without WorkOrder (should remain null)
-        // - inv3: missing QB Id, null Work_Order__c (should be ignored)
-        // - inv4: has QB Id, already linked Work_Order__c (should be ignored / not updated)
+        // - inv1: null Work_Order__c, proposal with WorkOrder (should be linked)
+        // - inv2: null Work_Order__c, proposal without WorkOrder (should remain null)
+        // - inv3: null Work_Order__c, same proposal as inv1 (should be linked)
+        // - inv4: already linked Work_Order__c (should be ignored / not updated)
 
         Invoice__c inv1 = new Invoice__c(
-            Name                     = 'INV1',
-            Proposal__c              = prop1.Id,
-            WorkOrder_QuickBooks_Id__c = 'QB-1'
+            Name        = 'INV1',
+            Proposal__c = prop1.Id
         );
         Invoice__c inv2 = new Invoice__c(
-            Name                     = 'INV2',
-            Proposal__c              = prop2.Id,
-            WorkOrder_QuickBooks_Id__c = 'QB-2'
+            Name        = 'INV2',
+            Proposal__c = prop2.Id
         );
         Invoice__c inv3 = new Invoice__c(
             Name        = 'INV3',
             Proposal__c = prop1.Id
-            // WorkOrder_QuickBooks_Id__c null - should be ignored
         );
         Invoice__c inv4 = new Invoice__c(
-            Name                     = 'INV4',
-            Proposal__c              = prop1.Id,
-            WorkOrder_QuickBooks_Id__c = 'QB-4',
-            Work_Order__c            = wo1.Id // already set - should be ignored
+            Name        = 'INV4',
+            Proposal__c = prop1.Id,
+            Work_Order__c = wo1.Id // already set - should be ignored
         );
         insert new List<Invoice__c>{ inv1, inv2, inv3, inv4 };
     }
@@ -67,6 +63,14 @@ private class InvoiceWorkOrderAssignerTest {
             FROM Invoice__c
             WHERE Name IN ('INV1','INV2','INV3','INV4')
         ];
+        
+        // Capture pre-state for records that must be ignored by the assigner.
+        // Note: other org automation (flows/processes/triggers) may populate Work_Order__c
+        // based on Proposal__c during DML; this test only asserts what this class changes.
+        Map<String, Id> beforeWorkOrderByName = new Map<String, Id>();
+        for (Invoice__c i : invs) {
+            beforeWorkOrderByName.put(i.Name, i.Work_Order__c);
+        }
 
         Test.startTest();
         InvoiceWorkOrderAssigner.assignWorkOrder(invs);
@@ -95,7 +99,7 @@ private class InvoiceWorkOrderAssignerTest {
             LIMIT 1
         ];
 
-        // INV1: has QB Id, proposal with WorkOrder -> should be linked
+        // INV1: proposal with WorkOrder -> should be linked
         System.assertNotEquals(
             null,
             inv1.Work_Order__c,
@@ -107,18 +111,18 @@ private class InvoiceWorkOrderAssignerTest {
             'INV1 should be linked to WO for its Proposal__c'
         );
 
-        // INV2: has QB Id, proposal without WorkOrder -> should remain null
+        // INV2: proposal without WorkOrder -> should remain null
         System.assertEquals(
             null,
             inv2.Work_Order__c,
             'INV2 must remain without Work_Order__c because there is no WorkOrder for its Proposal__c'
         );
 
-        // INV3: no QB Id -> must be ignored
+        // INV3: same proposal as INV1 -> should be linked
         System.assertEquals(
-            null,
+            wo1.Id,
             inv3.Work_Order__c,
-            'INV3 must be ignored because WorkOrder_QuickBooks_Id__c is null'
+            'INV3 should be linked to WO for its Proposal__c'
         );
 
         // INV4: already has Work_Order__c -> must not be changed
@@ -132,11 +136,15 @@ private class InvoiceWorkOrderAssignerTest {
     @IsTest
     static void testNoUpdateWhenNoEligibleInvoices() {
         // Prepare a list where nothing should qualify:
-        // Take only invoices that either lack QB Id or already have Work_Order__c
+        // - one invoice already has Work_Order__c
+        // - one invoice has no Proposal__c
+        Invoice__c noProposal = new Invoice__c(Name = 'INV-NO-PROP');
+        insert noProposal;
+
         List<Invoice__c> invs = [
-            SELECT Id, Proposal__c, Work_Order__c, WorkOrder_QuickBooks_Id__c, Name
+            SELECT Id, Proposal__c, Work_Order__c, Name
             FROM Invoice__c
-            WHERE Name IN ('INV3','INV4')
+            WHERE Name IN ('INV4','INV-NO-PROP')
         ];
 
         // Capture current values to assert no change
