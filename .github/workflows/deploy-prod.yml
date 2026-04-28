@@ -12,8 +12,6 @@ jobs:
   deploy:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    container: 
-      image: salesforce/cli:latest-slim
     
     if: github.event.inputs.confirm == 'deploy'
     
@@ -23,25 +21,54 @@ jobs:
         with:
           ref: master
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Salesforce CLI
+        run: |
+          npm install -g @salesforce/cli
+          sf --version
+
       - name: Authenticate to Production
         run: |
-          echo ${{ secrets.SF_PROD_SFDX_URL }} | sf org login sfdx-url -s -u
+          echo "${{ secrets.SF_PROD_SFDX_URL }}" > /tmp/sfdx-url.txt
+          sf org login sfdx-url \
+            --sfdx-url-file /tmp/sfdx-url.txt \
+            --alias prod \
+            --set-default-username \
+            --no-prompt
+          sf config set target-org=prod
+        env:
+          SF_PROD_SFDX_URL: ${{ secrets.SF_PROD_SFDX_URL }}
 
       - name: Verify Authentication
         run: |
-          sf org display || exit 1
+          sf org display --target-org prod || exit 1
 
       - name: Validate Deployment (Dry Run)
         run: |
-          sf project deploy start --source-dir force-app --dry-run --wait 10
+          sf project deploy start \
+            --source-dir force-app \
+            --target-org prod \
+            --dry-run \
+            --wait 10
 
       - name: Deploy to Production
         run: |
-          sf project deploy start --source-dir force-app --wait 10
+          sf project deploy start \
+            --source-dir force-app \
+            --target-org prod \
+            --wait 10
 
       - name: Run Apex Tests
         run: |
-          sf apex run test --code-coverage --result-format human --wait 10
+          sf apex run test \
+            --target-org prod \
+            --code-coverage \
+            --result-format human \
+            --wait 10
 
       - name: Deployment Summary
         if: always()
