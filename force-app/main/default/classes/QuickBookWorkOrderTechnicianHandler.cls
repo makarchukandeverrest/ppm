@@ -27,7 +27,6 @@ public without sharing class QuickBookWorkOrderTechnicianHandler {
         );
 
         List<WorkOrder> triggeredWO = [SELECT Id, Technician__c FROM WorkOrder WHERE Id IN :workOrderIds];
-
         List<WorkOrder> toUpdate = new List<WorkOrder>();
         for (WorkOrder wo : triggeredWO) {
             String nextValue = workOrderIdToTechnicianValue.get(wo.Id);
@@ -57,12 +56,9 @@ public without sharing class QuickBookWorkOrderTechnicianHandler {
     }
 
     private static Map<Id, Set<Id>> queryDistinctMemberIdsByWorkOrder(Set<Id> workOrderIds) {
-        List<Quick_Book_Work_Order_Line_Item__c> triggered_WO_Items = [SELECT Work_Order__c, Service_Team_Member__c
-            FROM Quick_Book_Work_Order_Line_Item__c
-            WHERE Work_Order__c IN :workOrderIds AND Service_Team_Member__c != NULL
-        ];
         Map<Id, Set<Id>> result = new Map<Id, Set<Id>>();
-        for (Quick_Book_Work_Order_Line_Item__c row : triggered_WO_Items) {
+        List<Quick_Book_Work_Order_Line_Item__c> triggeredWO = [SELECT Work_Order__c, Service_Team_Member__c FROM Quick_Book_Work_Order_Line_Item__c WHERE Work_Order__c IN :workOrderIds AND Service_Team_Member__c != NULL];
+        for (Quick_Book_Work_Order_Line_Item__c row : triggeredWO) {
             if (!result.containsKey(row.Work_Order__c)) {
                 result.put(row.Work_Order__c, new Set<Id>());
             }
