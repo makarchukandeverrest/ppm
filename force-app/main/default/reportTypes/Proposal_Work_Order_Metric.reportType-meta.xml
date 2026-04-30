@@ -962,11 +962,6 @@
         </columns>
         <columns>
             <checkedByDefault>false</checkedByDefault>
-            <field>LastActivityDate</field>
-            <table>Opportunity.Work_Orders__r.Qucik_Boock_Work_Order_Line_Items__r</table>
-        </columns>
-        <columns>
-            <checkedByDefault>false</checkedByDefault>
             <field>Amount__c</field>
             <table>Opportunity.Work_Orders__r.Qucik_Boock_Work_Order_Line_Items__r</table>
         </columns>
