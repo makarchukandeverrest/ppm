@@ -63,7 +63,6 @@ export default class ProposalLineItems extends LightningElement {
       const oppTotalValue = getFieldValue(data, TOTAL_FIELD);
       const salesTaxValue = getFieldValue(data, TAX_FIELD);
       const warrantyValue = getFieldValue(data, WARRANTY_FIELD);
-      console.log("Raw Opportunity Amount value:", oppTotalValue);
 
       this.proposalDetails = {
         accountName: getFieldValue(data, ACCOUNT_NAME_FIELD),
@@ -93,8 +92,6 @@ export default class ProposalLineItems extends LightningElement {
           : null;
       this.tax = this.proposalDetails.salesTax;
       this.warranty = this.proposalDetails.warranty;
-      console.log("Final Tax set to:", this.tax);
-      console.log("Final Warranty set to:", this.warranty);
       this.calculateSummary();
     } else if (error) {
       console.error("Error in wiredProposal:", error);
@@ -216,11 +213,6 @@ export default class ProposalLineItems extends LightningElement {
       this.updateEditingStatus();
       this.selectedItems = [];
       this.updateDeleteButtonState();
-      console.log(
-        "Cancel triggered, reverted to original values and removed new items"
-      );
-    } else {
-      console.log("No original data to revert to");
     }
   }
 
