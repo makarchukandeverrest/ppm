@@ -51,11 +51,21 @@ public inherited sharing class ProposalCustomerAssigner {
       Account matched = accountByQbId.get(opp.Account_QuickBooks_Id__c);
 
       if (matched != null) {
-        opp.AccountId = matched.Id;
-        opp.Customer_Billing_Contact__c = matched.Billing_Contact__c;
-        opp.Customer_Maintenance_Contact__c = matched.Maintenance_Contact__c;
-        opp.Customer_Primary_Contact__c = matched.Primary_Contact__c;
-        opp.Customer_Secondary_Contact__c = matched.Secondary_Contact__c;
+        if (opp.AccountId == null) {
+          opp.AccountId = matched.Id;
+        }
+        if (opp.Customer_Billing_Contact__c == null) {
+          opp.Customer_Billing_Contact__c = matched.Billing_Contact__c;
+        }
+        if (opp.Customer_Maintenance_Contact__c == null) {
+          opp.Customer_Maintenance_Contact__c = matched.Maintenance_Contact__c;
+        }
+        if (opp.Customer_Primary_Contact__c == null) {
+          opp.Customer_Primary_Contact__c = matched.Primary_Contact__c;
+        }
+        if (opp.Customer_Secondary_Contact__c == null) {
+          opp.Customer_Secondary_Contact__c = matched.Secondary_Contact__c;
+        }
 
         assigned++;
       } else {

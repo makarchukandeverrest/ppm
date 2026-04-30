@@ -6,7 +6,6 @@ public with sharing class DocuSignSignedFileAssigner {
             return;
         }
 
-        // 1. Собираем Id email'ов
         Set<Id> emailIds = new Set<Id>();
         for (EmailMessage em : docuSignEmails) {
             if (em != null && em.Id != null) {
@@ -17,7 +16,6 @@ public with sharing class DocuSignSignedFileAssigner {
             return;
         }
 
-        // 2. Находим файлы, прикреплённые к этим EmailMessage (подписанные DocuSign)
         List<ContentDocumentLink> emailLinks = [
             SELECT Id, ContentDocumentId, LinkedEntityId, ShareType, Visibility
             FROM ContentDocumentLink
@@ -35,7 +33,6 @@ public with sharing class DocuSignSignedFileAssigner {
             return;
         }
 
-        // 3. Берём последние версии подписанных файлов
         List<ContentVersion> signedVersions = [
             SELECT Id, ContentDocumentId, Title, IsLatest
             FROM ContentVersion
@@ -46,7 +43,6 @@ public with sharing class DocuSignSignedFileAssigner {
             return;
         }
 
-        // 4. Собираем baseTitles для подписанных файлов (Title без расширения)
         Set<String> signedBaseTitles = new Set<String>();
 
         for (ContentVersion cv : signedVersions) {
@@ -62,8 +58,6 @@ public with sharing class DocuSignSignedFileAssigner {
             return;
         }
 
-        // 5. Ищем исходные файлы (latest) по тем же baseTitles
-        //    Здесь сравниваем уже нормализованный Title (без расширения)
         List<ContentVersion> accountSideVersions = [
             SELECT Id, ContentDocumentId, Title, IsLatest
             FROM ContentVersion
@@ -73,8 +67,6 @@ public with sharing class DocuSignSignedFileAssigner {
             return;
         }
 
-        // 6. Фильтруем accountSideVersions в Apex по baseTitle
-        //    И собираем ContentDocumentId этих файлов
         Set<Id> accountSideDocIds = new Set<Id>();
         Map<Id, String> docIdToBaseTitle = new Map<Id, String>();
 
@@ -92,50 +84,47 @@ public with sharing class DocuSignSignedFileAssigner {
             return;
         }
 
-        // 7. Линки этих доков, чтобы найти Account
         List<ContentDocumentLink> allLinksForAccountSideDocs = [
             SELECT Id, ContentDocumentId, LinkedEntityId, ShareType, Visibility
             FROM ContentDocumentLink
             WHERE ContentDocumentId IN :accountSideDocIds
         ];
 
-        Map<Id, Id> docIdToAccountId = new Map<Id, Id>();
+        Map<Id, Id> docIdToParentId = new Map<Id, Id>();
         for (ContentDocumentLink cdl : allLinksForAccountSideDocs) {
             if (cdl.LinkedEntityId == null) {
                 continue;
             }
             String linkedIdStr = String.valueOf(cdl.LinkedEntityId);
-            if (linkedIdStr.startsWith('001')) {
-                if (!docIdToAccountId.containsKey(cdl.ContentDocumentId)) {
-                    docIdToAccountId.put(cdl.ContentDocumentId, cdl.LinkedEntityId);
+            if (linkedIdStr.startsWith('001') || linkedIdStr.startsWith('006')) {
+                if (!docIdToParentId.containsKey(cdl.ContentDocumentId)) {
+                    docIdToParentId.put(cdl.ContentDocumentId, cdl.LinkedEntityId);
                 }
             }
         }
-        if (docIdToAccountId.isEmpty()) {
+        if (docIdToParentId.isEmpty()) {
             return;
         }
 
-        // 8. baseTitle -> AccountId
-        Map<String, Id> baseTitleToAccountId = new Map<String, Id>();
+        Map<String, Id> baseTitleToParentId = new Map<String, Id>();
 
         for (Id docId : accountSideDocIds) {
-            Id accId = docIdToAccountId.get(docId);
-            if (accId == null) {
+            Id parentId = docIdToParentId.get(docId);
+            if (parentId == null) {
                 continue;
             }
             String baseTitle = docIdToBaseTitle.get(docId);
             if (String.isBlank(baseTitle)) {
                 continue;
             }
-            if (!baseTitleToAccountId.containsKey(baseTitle)) {
-                baseTitleToAccountId.put(baseTitle, accId);
+            if (!baseTitleToParentId.containsKey(baseTitle)) {
+                baseTitleToParentId.put(baseTitle, parentId);
             }
         }
-        if (baseTitleToAccountId.isEmpty()) {
+        if (baseTitleToParentId.isEmpty()) {
             return;
         }
 
-        // 9. Переименовываем подписанные и линкуем к Account
         List<ContentDocumentLink> newLinks = new List<ContentDocumentLink>();
         List<ContentVersion> versionsToUpdate = new List<ContentVersion>();
 
@@ -150,12 +139,11 @@ public with sharing class DocuSignSignedFileAssigner {
                 continue;
             }
 
-            Id accId = baseTitleToAccountId.get(signedBaseTitle);
-            if (accId == null) {
+            Id parentId = baseTitleToParentId.get(signedBaseTitle);
+            if (parentId == null) {
                 continue;
             }
 
-            // 9.1. Переименовать
             String newTitle = signedCv.Title;
             if (!newTitle.endsWith(' - Completed')) {
                 newTitle += ' - Completed';
@@ -166,10 +154,9 @@ public with sharing class DocuSignSignedFileAssigner {
                 Title = newTitle
             ));
 
-            // 9.2. Линкануть к Account
             newLinks.add(new ContentDocumentLink(
                 ContentDocumentId = signedCv.ContentDocumentId,
-                LinkedEntityId    = accId,
+                LinkedEntityId    = parentId,
                 ShareType         = 'V',
                 Visibility        = 'AllUsers'
             ));
@@ -180,25 +167,23 @@ public with sharing class DocuSignSignedFileAssigner {
         }
 
         if (!newLinks.isEmpty()) {
-            // Собираем пары (ContentDocumentId, AccountId), которые хотим создать
             Set<String> pairs = new Set<String>();
             for (ContentDocumentLink l : newLinks) {
                 pairs.add(l.ContentDocumentId + '|' + l.LinkedEntityId);
             }
 
-            // Читаем уже существующие линки для этих docId на эти же Account
             Set<Id> docIds = new Set<Id>();
-            Set<Id> accIds = new Set<Id>();
+            Set<Id> parentEntityIds = new Set<Id>();
             for (ContentDocumentLink l : newLinks) {
                 docIds.add(l.ContentDocumentId);
-                accIds.add(l.LinkedEntityId);
+                parentEntityIds.add(l.LinkedEntityId);
             }
 
             List<ContentDocumentLink> existing = [
                 SELECT ContentDocumentId, LinkedEntityId
                 FROM ContentDocumentLink
                 WHERE ContentDocumentId IN :docIds
-                AND LinkedEntityId IN :accIds
+                AND LinkedEntityId IN :parentEntityIds
             ];
 
             Set<String> existingPairs = new Set<String>();
@@ -206,7 +191,6 @@ public with sharing class DocuSignSignedFileAssigner {
                 existingPairs.add(e.ContentDocumentId + '|' + e.LinkedEntityId);
             }
 
-            // Оставляем только те, которых ещё нет
             List<ContentDocumentLink> filtered = new List<ContentDocumentLink>();
             for (ContentDocumentLink l : newLinks) {
                 String key = l.ContentDocumentId + '|' + l.LinkedEntityId;
@@ -221,7 +205,6 @@ public with sharing class DocuSignSignedFileAssigner {
         }
     }
 
-    // Вспомогательный метод: обрезает расширение по последней точке
     private static String normalizeTitle(String title) {
         if (String.isBlank(title)) {
             return null;

@@ -17,10 +17,6 @@ public with sharing class WorkOrderTriggerHandler extends TriggerHandler{
         WorkOrderCustomerAssigner linker = new WorkOrderCustomerAssigner(this.newList);
     }
 
-    protected override void afterUpdate(){
-        WorkOrderLineItemCreator.syncWorkOrderLineItems(this.newList, this.oldMap);
-    }
-
     protected override void beforeUpdate(){
         List<WorkOrder> workOrdersNeedingLookupAssignment = new List<WorkOrder>();
 
