@@ -1,12 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
     <actionCalls>
+        <name>Create_Task_for_Director_of_Operations</name>
+        <label>Create Task for Director of Operations</label>
+        <locationX>182</locationX>
+        <locationY>1187</locationY>
+        <actionName>NewTask</actionName>
+        <actionType>quickAction</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>Subject</name>
+            <value>
+                <elementReference>TaskSubject</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>OwnerId</name>
+            <value>
+                <elementReference>Get_Director_of_Operations.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>WhatId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>NewTask</nameSegment>
+        <offset>0</offset>
+    </actionCalls>
+    <actionCalls>
         <name>Generate_Doc</name>
         <label>Generate Doc</label>
         <locationX>50</locationX>
         <locationY>647</locationY>
         <actionName>dfsle__InvocableDocumentGenerationRequest</actionName>
         <actionType>apex</actionType>
+        <connector>
+            <targetReference>Get_Director_of_Operations_Role</targetReference>
+        </connector>
         <flowTransactionModel>Automatic</flowTransactionModel>
         <inputParameters>
             <name>sourceId</name>
@@ -26,9 +58,31 @@
     <apiVersion>63.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
     <decisions>
+        <name>Completed_Tasks_found</name>
+        <label>Uncompleted Tasks found ?</label>
+        <locationX>50</locationX>
+        <locationY>1079</locationY>
+        <defaultConnector>
+            <targetReference>Create_Task_for_Director_of_Operations</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Yes</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Tasks_for_Director_of_Operations</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <decisions>
         <name>Decision_1</name>
         <label>Proposal Has Line Item?</label>
-        <locationX>182</locationX>
+        <locationX>248</locationX>
         <locationY>539</locationY>
         <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
         <rules>
@@ -70,9 +124,51 @@
     </processMetadataValues>
     <processType>AutoLaunchedFlow</processType>
     <recordLookups>
+        <name>Get_Director_of_Operations</name>
+        <label>Get Director of Operations</label>
+        <locationX>50</locationX>
+        <locationY>863</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Tasks_for_Director_of_Operations</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>UserRoleId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Get_Director_of_Operations_Role.Id</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>User</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Director_of_Operations_Role</name>
+        <label>Get Director of Operations Role</label>
+        <locationX>50</locationX>
+        <locationY>755</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Director_of_Operations</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Name</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Director of Operations</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>UserRole</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
         <name>Get_Line_Item</name>
         <label>Get Line Item</label>
-        <locationX>182</locationX>
+        <locationX>248</locationX>
         <locationY>323</locationY>
         <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
         <connector>
@@ -91,9 +187,37 @@
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordLookups>
     <recordLookups>
+        <name>Get_Tasks_for_Director_of_Operations</name>
+        <label>Get Tasks for Director of Operations</label>
+        <locationX>50</locationX>
+        <locationY>971</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Completed_Tasks_found</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Status</field>
+            <operator>NotEqualTo</operator>
+            <value>
+                <stringValue>Completed</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>OwnerId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Get_Director_of_Operations.Id</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Task</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
         <name>Get_Template</name>
         <label>Get Template</label>
-        <locationX>182</locationX>
+        <locationX>248</locationX>
         <locationY>431</locationY>
         <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
         <connector>
@@ -112,43 +236,28 @@
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordLookups>
     <start>
-        <locationX>56</locationX>
+        <locationX>122</locationX>
         <locationY>0</locationY>
         <connector>
             <targetReference>Get_Line_Item</targetReference>
         </connector>
+        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
         <filterLogic>or</filterLogic>
         <filters>
             <field>StageName</field>
             <operator>EqualTo</operator>
             <value>
-                <stringValue>Opportunity Qualified – Proposal Requested</stringValue>
-            </value>
-        </filters>
-        <filters>
-            <field>StageName</field>
-            <operator>EqualTo</operator>
-            <value>
-                <stringValue>Proposal Created / Ready for review</stringValue>
-            </value>
-        </filters>
-        <filters>
-            <field>StageName</field>
-            <operator>EqualTo</operator>
-            <value>
-                <stringValue>Request for proposal revision</stringValue>
-            </value>
-        </filters>
-        <filters>
-            <field>StageName</field>
-            <operator>EqualTo</operator>
-            <value>
-                <stringValue>Proposal ready to be sent</stringValue>
+                <stringValue>Negotiation</stringValue>
             </value>
         </filters>
         <object>Opportunity</object>
         <recordTriggerType>CreateAndUpdate</recordTriggerType>
         <triggerType>RecordAfterSave</triggerType>
     </start>
-    <status>Draft</status>
+    <status>Active</status>
+    <textTemplates>
+        <name>TaskSubject</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Review Proposal {!$Record.Account.Name}-{!$Record.Name}-{!$Record.Reference_Number__c}</text>
+    </textTemplates>
 </Flow>
