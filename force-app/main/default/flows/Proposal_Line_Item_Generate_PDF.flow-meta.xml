@@ -58,6 +58,28 @@
     <apiVersion>66.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
     <decisions>
+        <name>Template_found</name>
+        <label>Template found?</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Exist</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Template</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Generate</targetReference>
+            </connector>
+            <label>Exist</label>
+        </rules>
+    </decisions>
+    <decisions>
         <name>Uncompleted_Tasks_found</name>
         <label>Uncompleted Tasks found ?</label>
         <locationX>0</locationX>
@@ -185,7 +207,7 @@
         <locationY>0</locationY>
         <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
         <connector>
-            <targetReference>Generate</targetReference>
+            <targetReference>Template_found</targetReference>
         </connector>
         <filterLogic>and</filterLogic>
         <filters>
