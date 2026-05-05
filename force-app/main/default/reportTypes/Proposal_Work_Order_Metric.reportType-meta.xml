@@ -874,11 +874,6 @@
         </columns>
         <columns>
             <checkedByDefault>false</checkedByDefault>
-            <field>Descriptions_Summary__c</field>
-            <table>Opportunity.Work_Orders__r</table>
-        </columns>
-        <columns>
-            <checkedByDefault>false</checkedByDefault>
             <field>Contractor_Labor_Cost__c</field>
             <table>Opportunity.Work_Orders__r</table>
         </columns>
