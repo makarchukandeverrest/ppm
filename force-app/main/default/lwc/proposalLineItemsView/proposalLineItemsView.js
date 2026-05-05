@@ -3,6 +3,7 @@ import { getRecord, getFieldValue } from "lightning/uiRecordApi";
 import { refreshApex } from "@salesforce/apex";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import OPPORTUNITY_OBJECT from "@salesforce/schema/Opportunity";
+import TOTAL_FIELD from "@salesforce/schema/Opportunity.Total__c";
 import TAX_FIELD from "@salesforce/schema/Opportunity.Sales_Tax__c";
 import ACCOUNT_NAME_FIELD from "@salesforce/schema/Opportunity.Account.Name";
 import BILLING_STREET_FIELD from "@salesforce/schema/Opportunity.Account.BillingStreet";
@@ -40,6 +41,7 @@ export default class ProposalLineItems extends LightningElement {
   @wire(getRecord, {
     recordId: "$recordId",
     fields: [
+      TOTAL_FIELD,
       ACCOUNT_NAME_FIELD,
       BILLING_STREET_FIELD,
       BILLING_CITY_FIELD,
@@ -58,21 +60,9 @@ export default class ProposalLineItems extends LightningElement {
   })
   wiredProposal({ error, data }) {
     if (data) {
+      const oppTotalValue = getFieldValue(data, TOTAL_FIELD);
       const salesTaxValue = getFieldValue(data, TAX_FIELD);
       const warrantyValue = getFieldValue(data, WARRANTY_FIELD);
-      console.log("Raw Sales Tax value from Opportunity:", salesTaxValue);
-      console.log("Raw Warranty value from Opportunity:", warrantyValue);
-      console.log("Billing Street:", getFieldValue(data, BILLING_STREET_FIELD));
-      console.log("Billing City:", getFieldValue(data, BILLING_CITY_FIELD));
-      console.log("Billing State:", getFieldValue(data, BILLING_STATE_FIELD));
-      console.log(
-        "Billing Postal Code:",
-        getFieldValue(data, BILLING_POSTAL_CODE_FIELD)
-      );
-      console.log(
-        "Billing Country:",
-        getFieldValue(data, BILLING_COUNTRY_FIELD)
-      );
 
       this.proposalDetails = {
         accountName: getFieldValue(data, ACCOUNT_NAME_FIELD),
@@ -95,10 +85,13 @@ export default class ProposalLineItems extends LightningElement {
             ? warrantyValue
             : this.warranty || ""
       };
+
+      this.total =
+      oppTotalValue !== undefined && oppTotalValue !== null
+          ? oppTotalValue
+          : null;
       this.tax = this.proposalDetails.salesTax;
       this.warranty = this.proposalDetails.warranty;
-      console.log("Final Tax set to:", this.tax);
-      console.log("Final Warranty set to:", this.warranty);
       this.calculateSummary();
     } else if (error) {
       console.error("Error in wiredProposal:", error);
@@ -183,12 +176,8 @@ export default class ProposalLineItems extends LightningElement {
   }
 
   calculateSummary() {
-    this.subtotal = this.proposalLineItems.reduce(
-      (sum, item) => sum + (item.Total__c || 0),
-      0
-    );
+    this.subtotal = this.total - this.tax;
     this.markup = 0;
-    this.total = this.subtotal + this.tax;
   }
 
   updateEditingStatus() {
@@ -224,11 +213,6 @@ export default class ProposalLineItems extends LightningElement {
       this.updateEditingStatus();
       this.selectedItems = [];
       this.updateDeleteButtonState();
-      console.log(
-        "Cancel triggered, reverted to original values and removed new items"
-      );
-    } else {
-      console.log("No original data to revert to");
     }
   }
 
