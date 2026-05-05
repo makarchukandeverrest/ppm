@@ -1,8 +1,10 @@
 public with sharing class WorkOrderTriggerHandler extends TriggerHandler{
     List<WorkOrder> newList;
+    Map<Id, WorkOrder> oldMap;
 
     public WorkOrderTriggerHandler(){
 		this.newList = (List<WorkOrder>)Trigger.new;
+        this.oldMap = (Map<Id, WorkOrder>)Trigger.oldMap;
 	}
 
     protected override void afterInsert(){
