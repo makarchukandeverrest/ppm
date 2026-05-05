@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Item_Code__c</fullName>
+    <externalId>false</externalId>
+    <formula>IF(
+    AND(
+        OR(
+            LEN(Name) = 15,
+            LEN(Name) = 18
+        ),
+        NOT( CONTAINS(Name, &quot;:&quot;) )
+    ),
+    &quot;&quot;,
+    RIGHT(
+        Name,
+        LEN(Name) -
+        IF(
+            CONTAINS(Name, &quot;:&quot;),
+            FIND(
+                &quot;###&quot;,
+                SUBSTITUTE(
+                    Name,
+                    &quot;:&quot;,
+                    &quot;###&quot;
+                ),
+                LEN(
+                    SUBSTITUTE(
+                        Name,
+                        &quot;:&quot;,
+                        &quot;&quot;
+                    )
+                ) + 1
+            ),
+            0
+        )
+    )
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Item Code</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>
