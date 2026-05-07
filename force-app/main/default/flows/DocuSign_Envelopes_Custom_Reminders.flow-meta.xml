@@ -67,7 +67,7 @@
         <inputParameters>
             <name>customNotifTypeId</name>
             <value>
-                <elementReference>Get_Custom_Notification.Id</elementReference>
+                <elementReference>Copy_1_of_Get_Custom_Notification.Id</elementReference>
             </value>
         </inputParameters>
         <inputParameters>
@@ -180,9 +180,6 @@
         <locationY>0</locationY>
         <actionName>emailSimple</actionName>
         <actionType>emailSimple</actionType>
-        <connector>
-            <targetReference>New_Task_Action_1</targetReference>
-        </connector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
         <inputParameters>
             <name>recipientAddresses</name>
@@ -280,9 +277,6 @@
         <locationY>0</locationY>
         <actionName>emailSimple</actionName>
         <actionType>emailSimple</actionType>
-        <connector>
-            <targetReference>Send_Reminder_2</targetReference>
-        </connector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
         <inputParameters>
             <name>recipientAddresses</name>
@@ -330,7 +324,7 @@
             <name>emailBody</name>
             <value>
                 <inputConfiguratorMode>Custom</inputConfiguratorMode>
-                <stringValue>&lt;p&gt;{!Reminder1Body}&lt;/p&gt;</stringValue>
+                <stringValue>{!Reminder1Body}</stringValue>
             </value>
         </inputParameters>
         <nameSegment>emailSimple</nameSegment>
@@ -344,15 +338,12 @@
         <locationY>0</locationY>
         <actionName>emailSimple</actionName>
         <actionType>emailSimple</actionType>
-        <connector>
-            <targetReference>Send_Reminder_3</targetReference>
-        </connector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
         <inputParameters>
             <name>recipientAddresses</name>
             <value>
                 <collectionElements>
-                    <elementReference>Get_Recipients.dfsle__Email__c</elementReference>
+                    <elementReference>Get_Recipients_2.dfsle__Email__c</elementReference>
                 </collectionElements>
             </value>
         </inputParameters>
@@ -394,7 +385,7 @@
             <name>emailBody</name>
             <value>
                 <inputConfiguratorMode>Custom</inputConfiguratorMode>
-                <stringValue>&lt;p&gt;{!Reminder2Body}&lt;/p&gt;</stringValue>
+                <stringValue>{!Reminder2Body}</stringValue>
             </value>
         </inputParameters>
         <nameSegment>emailSimple</nameSegment>
@@ -408,15 +399,12 @@
         <locationY>0</locationY>
         <actionName>emailSimple</actionName>
         <actionType>emailSimple</actionType>
-        <connector>
-            <targetReference>Phone_Call_Task</targetReference>
-        </connector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
         <inputParameters>
             <name>recipientAddresses</name>
             <value>
                 <collectionElements>
-                    <elementReference>Get_Recipients.dfsle__Email__c</elementReference>
+                    <elementReference>Get_Recipients_3.dfsle__Email__c</elementReference>
                 </collectionElements>
             </value>
         </inputParameters>
@@ -458,7 +446,7 @@
             <name>emailBody</name>
             <value>
                 <inputConfiguratorMode>Custom</inputConfiguratorMode>
-                <stringValue>&lt;p&gt;{!Reminder3Body}&lt;/p&gt;</stringValue>
+                <stringValue>{!Reminder3Body}</stringValue>
             </value>
         </inputParameters>
         <nameSegment>emailSimple</nameSegment>
@@ -467,6 +455,22 @@
     </actionCalls>
     <apiVersion>66.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <assignments>
+        <name>Copy_1_of_Fill_Recipients</name>
+        <label>Copy 1 of Fill Recipients</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>NotificationRecipients</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <elementReference>$Record.Deal__r.Regional_Manager__r.Id</elementReference>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>New_Task_Action_1</targetReference>
+        </connector>
+    </assignments>
     <assignments>
         <name>Fill_Recipients</name>
         <label>Fill Recipients</label>
@@ -483,6 +487,72 @@
             <targetReference>Send_Custom_Notification_Action_1</targetReference>
         </connector>
     </assignments>
+    <decisions>
+        <name>Copy_1_of_Copy_1_of_Status_Check</name>
+        <label>Copy 1 of Copy 1 of Status Check</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Copy_1_of_Copy_1_of_Still_active</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Sent</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Regional_Manager_3</targetReference>
+            </connector>
+            <label>Copy 1 of Copy 1 of Still active</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Copy_1_of_Status_Check</name>
+        <label>Copy 1 of Status Check</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Copy_1_of_Still_active</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Sent</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Regional_Manager_2</targetReference>
+            </connector>
+            <label>Copy 1 of Still active</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Status_Check</name>
+        <label>Status Check</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
+        <rules>
+            <name>Still_active</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Status__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <stringValue>Sent</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Regional_Manager</targetReference>
+            </connector>
+            <label>Still active</label>
+        </rules>
+    </decisions>
     <description>TEST Version of FLOW</description>
     <environments>Default</environments>
     <formulas>
@@ -519,6 +589,27 @@ $Record.Deal__r.Name &amp;
         </value>
     </processMetadataValues>
     <processType>AutoLaunchedFlow</processType>
+    <recordLookups>
+        <name>Copy_1_of_Get_Custom_Notification</name>
+        <label>Copy 1 of Get Custom Notification</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Copy_1_of_Fill_Recipients</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>DeveloperName</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Task_Due_Date</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>CustomNotificationType</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
     <recordLookups>
         <name>Get_Custom_Notification</name>
         <label>Get Custom Notification</label>
@@ -574,6 +665,9 @@ $Record.Deal__r.Name &amp;
         <locationX>0</locationX>
         <locationY>0</locationY>
         <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Send_Reminder_2</targetReference>
+        </connector>
         <filterLogic>and</filterLogic>
         <filters>
             <field>dfsle__Envelope__c</field>
@@ -599,6 +693,9 @@ $Record.Deal__r.Name &amp;
         <locationX>0</locationX>
         <locationY>0</locationY>
         <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Send_Reminder_3</targetReference>
+        </connector>
         <filterLogic>and</filterLogic>
         <filters>
             <field>dfsle__Envelope__c</field>
@@ -684,9 +781,6 @@ $Record.Deal__r.Name &amp;
     <start>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <connector>
-            <targetReference>Get_Regional_Manager</targetReference>
-        </connector>
         <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
         <filterLogic>and</filterLogic>
         <filters>
@@ -700,14 +794,20 @@ $Record.Deal__r.Name &amp;
         <recordTriggerType>Update</recordTriggerType>
         <scheduledPaths>
             <name>X3_Days_after_Proposal</name>
+            <connector>
+                <targetReference>Status_Check</targetReference>
+            </connector>
             <label>3 Days after Proposal</label>
-            <offsetNumber>-3</offsetNumber>
+            <offsetNumber>3</offsetNumber>
             <offsetUnit>Days</offsetUnit>
             <recordField>dfsle__Sent__c</recordField>
             <timeSource>RecordField</timeSource>
         </scheduledPaths>
         <scheduledPaths>
             <name>X4_Days_After_Reminder_1</name>
+            <connector>
+                <targetReference>Copy_1_of_Status_Check</targetReference>
+            </connector>
             <label>4 Days After Reminder 1</label>
             <offsetNumber>7</offsetNumber>
             <offsetUnit>Days</offsetUnit>
@@ -717,7 +817,7 @@ $Record.Deal__r.Name &amp;
         <scheduledPaths>
             <name>X3_Days_After_Reminder_1</name>
             <connector>
-                <targetReference>Get_Regional_Manager_2</targetReference>
+                <targetReference>Copy_1_of_Copy_1_of_Status_Check</targetReference>
             </connector>
             <label>3 Days After Reminder 2</label>
             <offsetNumber>10</offsetNumber>
@@ -728,7 +828,7 @@ $Record.Deal__r.Name &amp;
         <scheduledPaths>
             <name>X4_Days_After_All_Reminders</name>
             <connector>
-                <targetReference>Regional_Manager_3</targetReference>
+                <targetReference>Phone_Call_Task</targetReference>
             </connector>
             <label>4 Days After All Reminders</label>
             <offsetNumber>14</offsetNumber>
@@ -738,6 +838,9 @@ $Record.Deal__r.Name &amp;
         </scheduledPaths>
         <scheduledPaths>
             <name>X1_Day_After_First_Activty</name>
+            <connector>
+                <targetReference>Copy_1_of_Get_Custom_Notification</targetReference>
+            </connector>
             <label>1 Day After First Activty</label>
             <offsetNumber>15</offsetNumber>
             <offsetUnit>Days</offsetUnit>
@@ -746,7 +849,7 @@ $Record.Deal__r.Name &amp;
         </scheduledPaths>
         <triggerType>RecordAfterSave</triggerType>
     </start>
-    <status>Active</status>
+    <status>Draft</status>
     <textTemplates>
         <name>NotificaionBody2</name>
         <isViewedAsPlainText>true</isViewedAsPlainText>
@@ -795,8 +898,8 @@ Thank you,
     </textTemplates>
     <textTemplates>
         <name>ReminderSubject</name>
-        <isViewedAsPlainText>false</isViewedAsPlainText>
-        <text>&lt;p&gt;{!$Record.Account__r.Name} – Pool Repairs &amp;amp; Supplies Proposal&lt;/p&gt;</text>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>{!$Record.Account__r.Name} – Pool Repairs &amp;amp; Supplies Proposal</text>
     </textTemplates>
     <variables>
         <name>NotificationRecipients</name>
