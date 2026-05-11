@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>NormalSeason_Sunday_Open_Time__c</fullName>
+    <label>Normal/Season Sunday Open Time</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <type>Time</type>
+</CustomField>
