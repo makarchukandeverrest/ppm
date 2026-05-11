@@ -87,10 +87,109 @@
                         onclick={handlePreviewClick}
                       >
                       </lightning-button-icon>
+                      <lightning-button-icon
+                        icon-name="utility:edit"
+                        alternative-text="Edit email"
+                        title="Edit email"
+                        variant="bare"
+                        class="slds-m-left_xx-small"
+                        data-customer-id={cust.customerId}
+                        onclick={handleEditClick}
+                      >
+                      </lightning-button-icon>
                     </div>
                     <div class="slds-text-body_small slds-text-color_weak">
                       Email: {cust.customerEmail}
                     </div>
+
+                    <template if:true={cust.primaryContactMissing}>
+                      <div
+                        class="slds-notify slds-notify_alert slds-theme_alert-texture slds-theme_error slds-m-top_x-small"
+                        role="alert"
+                      >
+                        <span class="slds-assistive-text">Error</span>
+                        <span
+                          class="slds-icon_container slds-icon-utility-error slds-m-right_x-small"
+                        >
+                          <lightning-icon
+                            icon-name="utility:error"
+                            size="x-small"
+                            alternative-text=""
+                            variant="inverse"
+                          ></lightning-icon>
+                        </span>
+                        <span>
+                          Primary Contact is not set or is not visible on this
+                          account. Set a Primary Contact for reliable send and
+                          merge, or ensure you can access that contact record.
+                        </span>
+                      </div>
+                    </template>
+
+                    <template if:true={cust.isEditing}>
+                      <template if:true={selectedTemplateId}>
+                        <div
+                          class="slds-box slds-m-top_small slds-theme_default slds-text-body_small"
+                          style="position: relative; z-index: 10"
+                        >
+                          <div
+                            class="slds-grid slds-grid_vertical-align-center slds-grid_align-spread slds-m-bottom_small"
+                          >
+                            <div>
+                              <div class="slds-text-title_bold">
+                                Edit merged message
+                              </div>
+                              <div
+                                class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small"
+                              >
+                                Text is fully merged for this recipient (not raw
+                                template fields).
+                              </div>
+                            </div>
+                            <lightning-button
+                              variant="neutral"
+                              label="Reload merged default"
+                              data-customer-id={cust.customerId}
+                              onclick={handleCustomerResetEmail}
+                              disabled={cust.isEditContentLoading}
+                            >
+                            </lightning-button>
+                          </div>
+                          <template if:true={cust.isEditContentLoading}>
+                            <lightning-spinner
+                              alternative-text="Loading merged email"
+                              size="small"
+                              class="slds-m-bottom_small"
+                            ></lightning-spinner>
+                          </template>
+                          <template if:false={cust.isEditContentLoading}>
+                          <lightning-input
+                            label="Subject"
+                            value={cust.displaySubject}
+                            data-customer-id={cust.customerId}
+                            onchange={handleCustomerSubjectChange}
+                            class="slds-m-bottom_small"
+                          >
+                          </lightning-input>
+                          <label class="slds-form-element__label">Body</label>
+                          <lightning-input-rich-text
+                            value={cust.displayBody}
+                            data-customer-id={cust.customerId}
+                            onchange={handleCustomerBodyChange}
+                          >
+                          </lightning-input-rich-text>
+                          </template>
+                        </div>
+                      </template>
+                      <template if:false={selectedTemplateId}>
+                        <div
+                          class="slds-box slds-m-top_small slds-text-body_small slds-text-color_weak"
+                        >
+                          Select an email template above to edit per-recipient
+                          content.
+                        </div>
+                      </template>
+                    </template>
 
                     <!-- Блок превью по hover -->
                     <template if:true={cust.isHovered}>

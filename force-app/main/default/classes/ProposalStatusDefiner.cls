@@ -3,7 +3,7 @@ public inherited sharing class ProposalStatusDefiner {
     // Not allow change Opportunity status backwards
     public static void handleStatusChange(List<Opportunity> newOppList, Map<Id, Opportunity> oldOppMap) {
         for (Opportunity o : newOppList) {
-            if(o.StageName == 'Pending' && oldOppMap.get(o.Id).StageName != 'Pending') {
+            if(o.StageName == 'Proposal Created / Ready for review' && oldOppMap.get(o.Id).StageName != 'Proposal Created / Ready for review') {
                 o.StageName = oldOppMap.get(o.Id).StageName;
             }
         }
@@ -12,7 +12,7 @@ public inherited sharing class ProposalStatusDefiner {
     // For Opportunity trigger
     public static void updateStatus(List<Opportunity> oppList) {
         for (Opportunity o : oppList) {
-            o.StageName = o.Is_Active__c ? 'Pending' : 'Abandoned';
+            o.StageName = o.Is_Active__c ? 'Proposal Created / Ready for review' : 'Abandoned';
         }
     }
 

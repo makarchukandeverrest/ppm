@@ -81,10 +81,28 @@
                 <label>Closed - LOST</label>
             </value>
             <value>
+                <fullName>Contact Verified</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Contact Verified</label>
+            </value>
+            <value>
                 <fullName>Conversation Started</fullName>
                 <default>false</default>
                 <isActive>false</isActive>
                 <label>Conversation Started</label>
+            </value>
+            <value>
+                <fullName>Negotiations Started</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Negotiations Started</label>
+            </value>
+            <value>
+                <fullName>Qualified</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>Qualified</label>
             </value>
         </valueSetDefinition>
     </valueSet>

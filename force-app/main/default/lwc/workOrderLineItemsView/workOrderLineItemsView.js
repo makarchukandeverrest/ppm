@@ -1,6 +1,6 @@
-import { LightningElement, track, wire,api } from 'lwc';
-import { getRecord, getFieldValue } from "lightning/uiRecordApi";
-import { refreshApex } from "@salesforce/apex";
+import { LightningElement, track, wire, api } from "lwc";
+import { getRecord, getFieldValue, getRecordNotifyChange } from "lightning/uiRecordApi";
+import { ShowToastEvent } from "lightning/platformShowToastEvent";
 
 import WORK_ORDER_QB_NO from "@salesforce/schema/WorkOrder.Quick_Books_WO_No__c";
 import WORK_ORDER_START_DATE from "@salesforce/schema/WorkOrder.StartDate";
@@ -10,54 +10,98 @@ import BILLING_CITY_FIELD from "@salesforce/schema/WorkOrder.Account.BillingCity
 import BILLING_STATE_FIELD from "@salesforce/schema/WorkOrder.Account.BillingState";
 import BILLING_POSTAL_CODE_FIELD from "@salesforce/schema/WorkOrder.Account.BillingPostalCode";
 import BILLING_COUNTRY_FIELD from "@salesforce/schema/WorkOrder.Account.BillingCountry";
+import SERVICE_TEAM_MEMBER from "@salesforce/schema/WorkOrder.Service_Team_Member__c";
 
 import getWorkOrderLineItems from "@salesforce/apex/WorkOrderLineItemsController.getWorkOrderLineItems";
 
-
 export default class WorkOrderLineItemsView extends LightningElement {
-    @api recordId;
-    @track workOrderDetails = {};
-    @track workOrderLineItems = [];
+  @api recordId;
+  @track workOrderDetails = {};
+  @track workOrderLineItems = [];
 
-    @wire(getRecord, {
-        recordId: "$recordId",
-        fields: [
-            WORK_ORDER_QB_NO,
-            WORK_ORDER_START_DATE,
-            WORK_ORDER_CUSTOMER_NAME,
-            BILLING_STREET_FIELD,
-            BILLING_CITY_FIELD,
-            BILLING_STATE_FIELD,
-            BILLING_POSTAL_CODE_FIELD,
-            BILLING_COUNTRY_FIELD
-        ]
-    })
-    wiredProposal({ error, data }) {
-        if (data) {
-            this.workOrderDetails = {
-                accountName: getFieldValue(data, WORK_ORDER_CUSTOMER_NAME),
-                billingStreet: getFieldValue(data, BILLING_STREET_FIELD),
-                billingCity: getFieldValue(data, BILLING_CITY_FIELD),
-                billingState: getFieldValue(data, BILLING_STATE_FIELD),
-                billingPostalCode: getFieldValue(data, BILLING_POSTAL_CODE_FIELD),
-                billingCountry: getFieldValue(data, BILLING_COUNTRY_FIELD),
-                startDate: getFieldValue(data, WORK_ORDER_START_DATE)
-            }; 
-        }
-        
+  @wire(getRecord, {
+    recordId: "$recordId",
+    fields: [
+      WORK_ORDER_QB_NO,
+      WORK_ORDER_START_DATE,
+      WORK_ORDER_CUSTOMER_NAME,
+      BILLING_STREET_FIELD,
+      BILLING_CITY_FIELD,
+      BILLING_STATE_FIELD,
+      BILLING_POSTAL_CODE_FIELD,
+      BILLING_COUNTRY_FIELD,
+      SERVICE_TEAM_MEMBER
+    ]
+  })
+  wiredProposal({ error, data }) {
+    if (data) {
+      this.workOrderDetails = {
+        accountName: getFieldValue(data, WORK_ORDER_CUSTOMER_NAME),
+        billingStreet: getFieldValue(data, BILLING_STREET_FIELD),
+        billingCity: getFieldValue(data, BILLING_CITY_FIELD),
+        billingState: getFieldValue(data, BILLING_STATE_FIELD),
+        billingPostalCode: getFieldValue(data, BILLING_POSTAL_CODE_FIELD),
+        billingCountry: getFieldValue(data, BILLING_COUNTRY_FIELD),
+        startDate: getFieldValue(data, WORK_ORDER_START_DATE),
+        serviceTeamMember: getFieldValue(data, SERVICE_TEAM_MEMBER)
+      };
+    } else if (error) {
+      // optional: log header load error
+      // console.error("Error fetching work order:", error);
     }
+  }
 
-        @wire(getWorkOrderLineItems, { workOrderId: "$recordId" })
-        wiredLineItems(result) {
-          const { error, data } = result;
-          if (data) {
-            this.workOrderLineItems = JSON.parse(JSON.stringify(data));
-          } else if (error) {
-            console.error("Error fetching line items:", error);
-          }
-        }
-
-    get total() {
-        return this.workOrderLineItems.reduce((sum, item) => sum + (item.Amount__c || 0), 0);
+  @wire(getWorkOrderLineItems, { workOrderId: "$recordId" })
+  wiredLineItems(result) {
+    const { error, data } = result;
+    if (data) {
+      const raw = JSON.parse(JSON.stringify(data));
+      this.workOrderLineItems = raw.map((row) => ({
+        ...row,
+        editingServiceTeamMember: false,
+        // Hide default Name when it duplicates the record Id (e.g. placeholder)
+        itemNameDisplay: row.Name.toLowerCase() === row.Id.slice(0, 15).toLowerCase() ? "" : row.Name ?? ""
+      }));
+    } else if (error) {
+      // optional: log line items error
+      // console.error("Error fetching line items:", error);
     }
+  }
+
+  get total() {
+    return this.workOrderLineItems.reduce(
+      (sum, item) => sum + (item.Amount__c || 0),
+      0
+    );
+  }
+
+  handleBeginEditServiceTeamMember(event) {
+    const rowId = event.currentTarget.dataset.rowId;
+    if (!rowId) return;
+    this.workOrderLineItems = this.workOrderLineItems.map((item) => ({
+      ...item,
+      editingServiceTeamMember: item.Id === rowId
+    }));
+  }
+
+  handleServiceTeamMemberSaved(event) {
+    const recordId =
+      event.detail?.id ||
+      this.workOrderLineItems.find((i) => i.editingServiceTeamMember)?.Id;
+    if (recordId) {
+      getRecordNotifyChange([{ recordId }]);
+      this.workOrderLineItems = this.workOrderLineItems.map((item) =>
+        item.Id === recordId
+          ? { ...item, editingServiceTeamMember: false }
+          : item
+      );
+    }
+    this.dispatchEvent(
+      new ShowToastEvent({
+        title: "Success",
+        message: "Service Team Member updated.",
+        variant: "success"
+      })
+    );
+  }
 }
