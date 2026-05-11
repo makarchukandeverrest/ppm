@@ -50,6 +50,10 @@
                     <value>false</value>
                 </componentInstanceProperties>
                 <componentInstanceProperties>
+                    <name>hideSlackAction</name>
+                    <value>false</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
                     <name>numVisibleActions</name>
                     <value>3</value>
                 </componentInstanceProperties>
@@ -71,7 +75,6 @@
                 <identifier>runtime_sales_pathassistant_pathAssistant</identifier>
             </componentInstance>
         </itemInstances>
-        <mode>Replace</mode>
         <name>header</name>
         <type>Region</type>
     </flexiPageRegions>
@@ -87,16 +90,6 @@
             </componentInstance>
         </itemInstances>
         <name>Facet-06b606f5-2fdf-415a-9478-45107fdb5117</name>
-        <type>Facet</type>
-    </flexiPageRegions>
-    <flexiPageRegions>
-        <itemInstances>
-            <componentInstance>
-                <componentName>forceChatter:recordFeedContainer</componentName>
-                <identifier>forceChatter_recordFeedContainer</identifier>
-            </componentInstance>
-        </itemInstances>
-        <name>Facet-86528b95-5925-49bc-8bc5-2ff7baf24515</name>
         <type>Facet</type>
     </flexiPageRegions>
     <flexiPageRegions>
@@ -118,7 +111,6 @@
                 <identifier>force_relatedListContainer</identifier>
             </componentInstance>
         </itemInstances>
-        <mode>Replace</mode>
         <name>relatedTabContent</name>
         <type>Facet</type>
     </flexiPageRegions>
@@ -141,20 +133,6 @@
             <componentInstance>
                 <componentInstanceProperties>
                     <name>body</name>
-                    <value>Facet-86528b95-5925-49bc-8bc5-2ff7baf24515</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>title</name>
-                    <value>Standard.Tab.feed</value>
-                </componentInstanceProperties>
-                <componentName>flexipage:tab</componentName>
-                <identifier>flexipage_tab2</identifier>
-            </componentInstance>
-        </itemInstances>
-        <itemInstances>
-            <componentInstance>
-                <componentInstanceProperties>
-                    <name>body</name>
                     <value>relatedTabContent</value>
                 </componentInstanceProperties>
                 <componentInstanceProperties>
@@ -165,7 +143,6 @@
                 <identifier>relatedListsTab</identifier>
             </componentInstance>
         </itemInstances>
-        <mode>Replace</mode>
         <name>maintabs</name>
         <type>Facet</type>
     </flexiPageRegions>
@@ -184,8 +161,7 @@
                 <identifier>flexipage_tabset</identifier>
             </componentInstance>
         </itemInstances>
-        <mode>Replace</mode>
-        <name>main</name>
+        <name>leftcol</name>
         <type>Region</type>
     </flexiPageRegions>
     <flexiPageRegions>
@@ -195,8 +171,529 @@
                 <identifier>force_detailPanel</identifier>
             </componentInstance>
         </itemInstances>
-        <mode>Replace</mode>
         <name>activityTabContent</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <fieldInstance>
+                <fieldItem>Record.Customer__r.Primary_Contact__c</fieldItem>
+                <identifier>RecordCustomer_rPrimary_Contact_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldItem>Record.Customer__r.Maintenance_Contact__c</fieldItem>
+                <identifier>RecordCustomer_rMaintenance_Contact_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <name>Facet-274c88c5-be9e-44df-bba8-85698df1aa97</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <fieldInstance>
+                <fieldItem>Record.Customer__r.Secondary_Contact__c</fieldItem>
+                <identifier>RecordCustomer_rSecondary_Contact_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldItem>Record.Customer__r.Billing_Contact__c</fieldItem>
+                <identifier>RecordCustomer_rBilling_Contact_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <name>Facet-a155a73e-e216-44b2-933c-9e931da391f5</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>body</name>
+                    <value>Facet-274c88c5-be9e-44df-bba8-85698df1aa97</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:column</componentName>
+                <identifier>flexipage_column</identifier>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>body</name>
+                    <value>Facet-a155a73e-e216-44b2-933c-9e931da391f5</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:column</componentName>
+                <identifier>flexipage_column2</identifier>
+            </componentInstance>
+        </itemInstances>
+        <name>Facet-6fd58f79-9893-4aca-a14b-17d6fdcdeffa</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>columns</name>
+                    <value>Facet-6fd58f79-9893-4aca-a14b-17d6fdcdeffa</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>horizontalAlignment</name>
+                    <value>false</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>label</name>
+                    <value>@@@SFDCInformationSFDC@@@</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:fieldSection</componentName>
+                <identifier>flexipage_fieldSection</identifier>
+            </componentInstance>
+        </itemInstances>
+        <name>Facet-604ff138-51c2-48e3-81f8-6b8fe06fc5b4</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Normal_Season_Monday_Open_Time__c</fieldItem>
+                <identifier>RecordNormal_Season_Monday_Open_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Normal_Season_Tuesday_Open_Time__c</fieldItem>
+                <identifier>RecordNormal_Season_Tuesday_Open_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Normal_Season_Wednesday_Open_Time__c</fieldItem>
+                <identifier>RecordNormal_Season_Wednesday_Open_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Normal_Season_Thursday_Open_Time__c</fieldItem>
+                <identifier>RecordNormal_Season_Thursday_Open_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Normal_Season_Friday_Open_Time__c</fieldItem>
+                <identifier>RecordNormal_Season_Friday_Open_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.NormalSeason_Saturday_Open_Time__c</fieldItem>
+                <identifier>RecordNormalSeason_Saturday_Open_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.NormalSeason_Sunday_Open_Time__c</fieldItem>
+                <identifier>RecordNormalSeason_Sunday_Open_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Normal_Season_Total_Staff_Hours__c</fieldItem>
+                <identifier>RecordNormal_Season_Total_Staff_Hours_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.NormalSeason_Hours_per_Lifeguard__c</fieldItem>
+                <identifier>RecordNormalSeason_Hours_per_Lifeguard_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <name>Facet-3bf222c4-b127-4587-82fa-7b353d2153ac</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Normal_Season_Monday_Close_Time__c</fieldItem>
+                <identifier>RecordNormal_Season_Monday_Close_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Normal_Season_Tuesday_Close_Time__c</fieldItem>
+                <identifier>RecordNormal_Season_Tuesday_Close_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Normal_Season_Wednesday_Close_Time__c</fieldItem>
+                <identifier>RecordNormal_Season_Wednesday_Close_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Normal_Season_Thursday_Close_Time__c</fieldItem>
+                <identifier>RecordNormal_Season_Thursday_Close_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Normal_Season_Friday_Close_Time__c</fieldItem>
+                <identifier>RecordNormal_Season_Friday_Close_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.NormalSeason_Saturday_Close_Time__c</fieldItem>
+                <identifier>RecordNormalSeason_Saturday_Close_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.NormalSeason_Sunday_Close_Time__c</fieldItem>
+                <identifier>RecordNormalSeason_Sunday_Close_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.NormalSeason_Number_of_Lifeguards__c</fieldItem>
+                <identifier>RecordNormalSeason_Number_of_Lifeguards_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <name>Facet-0de13109-c785-4fa5-817f-beca51d58c7e</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>body</name>
+                    <value>Facet-3bf222c4-b127-4587-82fa-7b353d2153ac</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:column</componentName>
+                <identifier>flexipage_column3</identifier>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>body</name>
+                    <value>Facet-0de13109-c785-4fa5-817f-beca51d58c7e</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:column</componentName>
+                <identifier>flexipage_column4</identifier>
+            </componentInstance>
+        </itemInstances>
+        <name>Facet-f2101022-d7b6-493e-abd4-4f0f26afe00a</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.SchoolOff_Season_Monday_Open_Time__c</fieldItem>
+                <identifier>RecordSchoolOff_Season_Monday_Open_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.SchoolOff_Season_Tuesday_Open_Time__c</fieldItem>
+                <identifier>RecordSchoolOff_Season_Tuesday_Open_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.SchoolOff_Season_Wednesday_Open_Time__c</fieldItem>
+                <identifier>RecordSchoolOff_Season_Wednesday_Open_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.SchoolOff_Season_Thursday_Open_Time__c</fieldItem>
+                <identifier>RecordSchoolOff_Season_Thursday_Open_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.SchoolOff_Season_Friday_Open_Time__c</fieldItem>
+                <identifier>RecordSchoolOff_Season_Friday_Open_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.SchoolOff_Season_Saturday_Open_Time__c</fieldItem>
+                <identifier>RecordSchoolOff_Season_Saturday_Open_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.SchoolOff_Season_Sunday_Open_Time__c</fieldItem>
+                <identifier>RecordSchoolOff_Season_Sunday_Open_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.School_Off_Season_Total_Staff_Hours__c</fieldItem>
+                <identifier>RecordSchool_Off_Season_Total_Staff_Hours_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.School_Off_Season_Hours_per_Lifeguard__c</fieldItem>
+                <identifier>RecordSchool_Off_Season_Hours_per_Lifeguard_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <name>Facet-532fb694-8a9f-48c1-b735-20f176738e89</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.SchoolOff_Season_Monday_Close_Time__c</fieldItem>
+                <identifier>RecordSchoolOff_Season_Monday_Close_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.SchoolOff_Season_Tuesday_Close_Time__c</fieldItem>
+                <identifier>RecordSchoolOff_Season_Tuesday_Close_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.SchoolOff_Season_Wednesday_Close_Time__c</fieldItem>
+                <identifier>RecordSchoolOff_Season_Wednesday_Close_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.SchoolOff_Season_Thursday_Close_Time__c</fieldItem>
+                <identifier>RecordSchoolOff_Season_Thursday_Close_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.SchoolOff_Season_Friday_Close_Time__c</fieldItem>
+                <identifier>RecordSchoolOff_Season_Friday_Close_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.SchoolOff_Season_Saturday_Close_Time__c</fieldItem>
+                <identifier>RecordSchoolOff_Season_Saturday_Close_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.SchoolOff_Season_Sunday_Close_Time__c</fieldItem>
+                <identifier>RecordSchoolOff_Season_Sunday_Close_Time_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.SchoolOff_Season_Number_of_Lifeguards__c</fieldItem>
+                <identifier>RecordSchoolOff_Season_Number_of_Lifeguards_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <name>Facet-610bf12a-a378-4229-b412-985f945fae50</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>body</name>
+                    <value>Facet-532fb694-8a9f-48c1-b735-20f176738e89</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:column</componentName>
+                <identifier>flexipage_column5</identifier>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>body</name>
+                    <value>Facet-610bf12a-a378-4229-b412-985f945fae50</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:column</componentName>
+                <identifier>flexipage_column6</identifier>
+            </componentInstance>
+        </itemInstances>
+        <name>Facet-9522c386-8d77-4bf3-b66f-71eabde24239</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>columns</name>
+                    <value>Facet-f2101022-d7b6-493e-abd4-4f0f26afe00a</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>horizontalAlignment</name>
+                    <value>false</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>label</name>
+                    <value>Peak Bid Hours</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:fieldSection</componentName>
+                <identifier>flexipage_fieldSection2</identifier>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>columns</name>
+                    <value>Facet-9522c386-8d77-4bf3-b66f-71eabde24239</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>horizontalAlignment</name>
+                    <value>false</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>label</name>
+                    <value>School Bid Hours</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:fieldSection</componentName>
+                <identifier>flexipage_fieldSection3</identifier>
+            </componentInstance>
+        </itemInstances>
+        <name>Facet-rmhid2vaco</name>
         <type>Facet</type>
     </flexiPageRegions>
     <flexiPageRegions>
@@ -218,7 +715,34 @@
                 <identifier>activityTab</identifier>
             </componentInstance>
         </itemInstances>
-        <mode>Replace</mode>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>body</name>
+                    <value>Facet-604ff138-51c2-48e3-81f8-6b8fe06fc5b4</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>title</name>
+                    <value>Contacts Details</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:tab</componentName>
+                <identifier>flexipage_tab2</identifier>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>body</name>
+                    <value>Facet-rmhid2vaco</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>title</name>
+                    <value>Seasons</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:tab</componentName>
+                <identifier>flexipage_tab3</identifier>
+            </componentInstance>
+        </itemInstances>
         <name>sidebartabs</name>
         <type>Facet</type>
     </flexiPageRegions>
@@ -258,15 +782,13 @@
                 <identifier>flexipage_tabset2</identifier>
             </componentInstance>
         </itemInstances>
-        <mode>Replace</mode>
-        <name>sidebar</name>
+        <name>rightcol</name>
         <type>Region</type>
     </flexiPageRegions>
     <masterLabel>Contract Bid Record Page</masterLabel>
-    <parentFlexiPage>flexipage__default_rec_L</parentFlexiPage>
     <sobjectType>Contract_Bid__c</sobjectType>
     <template>
-        <name>flexipage:recordHomeTemplateDesktop</name>
+        <name>flexipage:recordHomeTwoColEqualHeaderTemplateDesktop</name>
     </template>
     <type>RecordPage</type>
 </FlexiPage>
