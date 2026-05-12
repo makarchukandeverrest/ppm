@@ -29,6 +29,50 @@
             <isFieldError>true</isFieldError>
         </customErrorMessages>
     </customErrors>
+    <customErrors>
+        <name>Error_Contact_Not_Found</name>
+        <label>Error Contact Not Found</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <customErrorMessages>
+            <errorMessage>The Account&apos;s Primary Contact record could not be found.</errorMessage>
+            <fieldSelection>WhoId</fieldSelection>
+            <isFieldError>true</isFieldError>
+        </customErrorMessages>
+    </customErrors>
+    <customErrors>
+        <name>Error_Opportunity_No_Account</name>
+        <label>Error Opportunity No Account</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <customErrorMessages>
+            <errorMessage>The related Opportunity has no Account. Link an Account to the Opportunity first.</errorMessage>
+            <fieldSelection>WhatId</fieldSelection>
+            <isFieldError>true</isFieldError>
+        </customErrorMessages>
+    </customErrors>
+    <customErrors>
+        <name>Error_Opportunity_Not_Found</name>
+        <label>Error Opportunity Not Found</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <customErrorMessages>
+            <errorMessage>The related Opportunity could not be found.</errorMessage>
+            <fieldSelection>WhatId</fieldSelection>
+            <isFieldError>true</isFieldError>
+        </customErrorMessages>
+    </customErrors>
+    <customErrors>
+        <name>Error_Primary_Contact_Blank</name>
+        <label>Error Primary Contact Blank</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <customErrorMessages>
+            <errorMessage>Set Primary Contact on the related Account before saving this Task.</errorMessage>
+            <fieldSelection>WhoId</fieldSelection>
+            <isFieldError>true</isFieldError>
+        </customErrorMessages>
+    </customErrors>
     <decisions>
         <name>Decision_1</name>
         <label>Decision 1</label>
@@ -52,32 +96,103 @@
         </rules>
     </decisions>
     <decisions>
-        <name>Opportunity_check</name>
-        <label>Opportunity check</label>
+        <name>Decision_Account_Id_On_Opportunity</name>
+        <label>Account Id On Opportunity</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <defaultConnectorLabel>No</defaultConnectorLabel>
+        <defaultConnector>
+            <targetReference>Error_Opportunity_No_Account</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>No Account On Opportunity</defaultConnectorLabel>
         <rules>
-            <name>Is_Opportunity</name>
+            <name>Has_Account_Id</name>
             <conditionLogic>and</conditionLogic>
             <conditions>
-                <leftValueReference>$Record.WhatId</leftValueReference>
-                <operator>StartsWith</operator>
-                <rightValue>
-                    <stringValue>006</stringValue>
-                </rightValue>
-            </conditions>
-            <conditions>
-                <leftValueReference>$Record.WhoId</leftValueReference>
+                <leftValueReference>Get_Opportunity.AccountId</leftValueReference>
                 <operator>IsNull</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
                 </rightValue>
             </conditions>
             <connector>
-                <targetReference>Get_Opportunity</targetReference>
+                <targetReference>Get_Customer_Contact</targetReference>
             </connector>
-            <label>Is Opportunity</label>
+            <label>Has Account Id</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Decision_Contact_Resolved</name>
+        <label>Contact Resolved</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>Error_Contact_Not_Found</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Contact Not Found</defaultConnectorLabel>
+        <rules>
+            <name>Contact_Found</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Contact.Id</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Task_Contacts</targetReference>
+            </connector>
+            <label>Contact Found</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Decision_Opportunity_Found</name>
+        <label>Opportunity Found</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>Error_Opportunity_Not_Found</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Opportunity Not Found</defaultConnectorLabel>
+        <rules>
+            <name>Opp_Found</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Opportunity.Id</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Decision_Account_Id_On_Opportunity</targetReference>
+            </connector>
+            <label>Opp Found</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Decision_Primary_Contact_Set</name>
+        <label>Primary Contact Set</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>Error_Primary_Contact_Blank</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Primary Contact Blank</defaultConnectorLabel>
+        <rules>
+            <name>Has_Primary_Contact</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Customer_Contact.Primary_Contact__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Contact</targetReference>
+            </connector>
+            <label>Has Primary Contact</label>
         </rules>
     </decisions>
     <environments>Default</environments>
@@ -109,7 +224,7 @@
         <locationY>0</locationY>
         <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
         <connector>
-            <targetReference>Get_Task_Contacts</targetReference>
+            <targetReference>Decision_Contact_Resolved</targetReference>
         </connector>
         <filterLogic>and</filterLogic>
         <filters>
@@ -130,7 +245,7 @@
         <locationY>0</locationY>
         <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
         <connector>
-            <targetReference>Get_Contact</targetReference>
+            <targetReference>Decision_Primary_Contact_Set</targetReference>
         </connector>
         <filterLogic>and</filterLogic>
         <filters>
@@ -151,7 +266,7 @@
         <locationY>0</locationY>
         <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
         <connector>
-            <targetReference>Get_Customer_Contact</targetReference>
+            <targetReference>Decision_Opportunity_Found</targetReference>
         </connector>
         <filterLogic>and</filterLogic>
         <filters>
@@ -169,7 +284,7 @@
         <locationX>0</locationX>
         <locationY>0</locationY>
         <connector>
-            <targetReference>Opportunity_check</targetReference>
+            <targetReference>Get_Opportunity</targetReference>
         </connector>
         <filterLogic>and</filterLogic>
         <filters>
