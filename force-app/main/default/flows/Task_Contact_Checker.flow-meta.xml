@@ -48,13 +48,6 @@
                     <elementReference>Get_Contact.Id</elementReference>
                 </rightValue>
             </conditions>
-            <conditions>
-                <leftValueReference>$Record.WhoId</leftValueReference>
-                <operator>StartsWith</operator>
-                <rightValue>
-                    <stringValue>003</stringValue>
-                </rightValue>
-            </conditions>
             <label>True</label>
         </rules>
     </decisions>
@@ -178,12 +171,19 @@
         <connector>
             <targetReference>Opportunity_check</targetReference>
         </connector>
-        <filterLogic>or</filterLogic>
+        <filterLogic>and</filterLogic>
         <filters>
             <field>WhatId</field>
             <operator>StartsWith</operator>
             <value>
                 <stringValue>006</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>WhoId</field>
+            <operator>StartsWith</operator>
+            <value>
+                <stringValue>003</stringValue>
             </value>
         </filters>
         <object>Task</object>
