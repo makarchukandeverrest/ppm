@@ -838,6 +838,11 @@
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
+        <editable>true</editable>
+        <field>Opportunity.Envelope_Subject__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
         <editable>false</editable>
         <field>Invoice__c.Amount__c</field>
         <readable>true</readable>
@@ -1016,6 +1021,10 @@
     </objectPermissions>
     <tabSettings>
         <tab>Contract_Bid__c</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
+        <tab>Customers_Map</tab>
         <visibility>Visible</visibility>
     </tabSettings>
     <tabSettings>
