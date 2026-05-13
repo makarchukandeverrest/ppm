@@ -5,7 +5,7 @@
     <formula>NormalSeason_Number_of_Lifeguards__c *  NormalSeason_Hours_per_Lifeguard__c</formula>
     <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
     <inlineHelpText>Total staff hours per week</inlineHelpText>
-    <label>Normal/Season Total Staff Hours</label>
+    <label>Peak Total Staff Hours</label>
     <precision>18</precision>
     <required>false</required>
     <scale>0</scale>

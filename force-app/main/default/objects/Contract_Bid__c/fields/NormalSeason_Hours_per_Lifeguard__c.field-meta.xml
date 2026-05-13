@@ -3,7 +3,7 @@
     <fullName>NormalSeason_Hours_per_Lifeguard__c</fullName>
     <externalId>false</externalId>
     <inlineHelpText>Hours per week</inlineHelpText>
-    <label>Normal/Season Hours per Lifeguard</label>
+    <label>Peak Hours per Lifeguard</label>
     <precision>18</precision>
     <required>false</required>
     <scale>0</scale>
