@@ -2,7 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Envelope_Subject__c</fullName>
     <externalId>false</externalId>
-    <formula>Account.Name + &apos;-&apos; + Name + &apos;-&apos; +  Reference_Number__c</formula>
+    <formula>Account.Name + &apos; &apos; + Name + &apos; &apos; + Reference_Number__c + &apos; &apos; + &apos;Estimate from Premier Pool Management, Inc.&apos;</formula>
     <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
     <label>Envelope Subject</label>
     <required>false</required>
