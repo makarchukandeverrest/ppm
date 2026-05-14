@@ -50,10 +50,6 @@
                     <value>false</value>
                 </componentInstanceProperties>
                 <componentInstanceProperties>
-                    <name>hideSlackAction</name>
-                    <value>false</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
                     <name>numVisibleActions</name>
                     <value>3</value>
                 </componentInstanceProperties>
@@ -483,6 +479,56 @@
                 <identifier>RecordAdjusted_Total_EBD_Price_cField</identifier>
             </fieldInstance>
         </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Increased_Percent__c</fieldItem>
+                <identifier>RecordIncreasedPercentcField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.EBD_Adjustment__c</fieldItem>
+                <identifier>RecordEBDAdjustmentcField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Total_After_EBD_Adjustment__c</fieldItem>
+                <identifier>RecordTotalAfterEBDAdjustmentcField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Desired_Number_of_Payments__c</fieldItem>
+                <identifier>RecordDesiredNumberofPaymentscField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Payments_1_of_X__c</fieldItem>
+                <identifier>RecordPayments1ofXcField</identifier>
+            </fieldInstance>
+        </itemInstances>
         <name>pricingTotalsLeft</name>
         <type>Facet</type>
     </flexiPageRegions>
@@ -525,6 +571,36 @@
                 </fieldInstanceProperties>
                 <fieldItem>Record.Winterization__c</fieldItem>
                 <identifier>RecordWinterization_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Cost_Per_Lifeguard_Hour__c</fieldItem>
+                <identifier>RecordCostPerLifeguardHourcField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Price_Match_Guaranteed__c</fieldItem>
+                <identifier>RecordPriceMatchGuaranteedcField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Reference_Type__c</fieldItem>
+                <identifier>RecordReferenceTypecField</identifier>
             </fieldInstance>
         </itemInstances>
         <name>pricingTotalsRight</name>
@@ -575,6 +651,36 @@
                 <identifier>RecordOther_cField</identifier>
             </fieldInstance>
         </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Management_Cost__c</fieldItem>
+                <identifier>RecordManagementCostcField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Drain_Clean__c</fieldItem>
+                <identifier>RecordDrainCleancField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Chem_Chlorine__c</fieldItem>
+                <identifier>RecordChemChlorinecField</identifier>
+            </fieldInstance>
+        </itemInstances>
         <name>pricingComponentsLeft</name>
         <type>Facet</type>
     </flexiPageRegions>
@@ -597,6 +703,26 @@
                 </fieldInstanceProperties>
                 <fieldItem>Record.Profit_5__c</fieldItem>
                 <identifier>RecordProfit_5_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Commissions__c</fieldItem>
+                <identifier>RecordCommissionscField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Insurance__c</fieldItem>
+                <identifier>RecordInsurancecField</identifier>
             </fieldInstance>
         </itemInstances>
         <name>pricingComponentsRight</name>
@@ -767,6 +893,46 @@
                 <identifier>RecordNormal_Season_Total_Staff_Hours_cField</identifier>
             </fieldInstance>
         </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Total_Weeks_in_Season__c</fieldItem>
+                <identifier>RecordTotalWeeksinSeasoncField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Peak_Season_Start_Date__c</fieldItem>
+                <identifier>RecordPeakSeasonStartDatecField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Peak_Season_Number_of_Weeks__c</fieldItem>
+                <identifier>RecordPeakSeasonNumberofWeekscField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Peak_Total_Staff_Hours__c</fieldItem>
+                <identifier>RecordPeakTotalStaffHourscField</identifier>
+            </fieldInstance>
+        </itemInstances>
         <name>peakSeasonLeft</name>
         <type>Facet</type>
     </flexiPageRegions>
@@ -869,6 +1035,26 @@
                 </fieldInstanceProperties>
                 <fieldItem>Record.Total_Weekly_Peak_Hours_Calc__c</fieldItem>
                 <identifier>RecordTotal_Weekly_Peak_Hours_Calc_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Peak_Season_End_Date__c</fieldItem>
+                <identifier>RecordPeakSeasonEndDatecField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Total_Season_Peak_Hours_All_Guards__c</fieldItem>
+                <identifier>RecordTotalSeasonPeakHoursAllGuardscField</identifier>
             </fieldInstance>
         </itemInstances>
         <name>peakSeasonRight</name>
@@ -997,16 +1183,6 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.SchoolOff_Season_Holiday_Open_Time__c</fieldItem>
-                <identifier>RecordSchoolOff_Season_Holiday_Open_Time_cField</identifier>
-            </fieldInstance>
-        </itemInstances>
-        <itemInstances>
-            <fieldInstance>
-                <fieldInstanceProperties>
-                    <name>uiBehavior</name>
-                    <value>none</value>
-                </fieldInstanceProperties>
                 <fieldItem>Record.School_Off_Season_Hours_per_Lifeguard__c</fieldItem>
                 <identifier>RecordSchool_Off_Season_Hours_per_Lifeguard_cField</identifier>
             </fieldInstance>
@@ -1019,6 +1195,36 @@
                 </fieldInstanceProperties>
                 <fieldItem>Record.School_Off_Season_Total_Staff_Hours__c</fieldItem>
                 <identifier>RecordSchool_Off_Season_Total_Staff_Hours_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.School_Season_First_Date__c</fieldItem>
+                <identifier>RecordSchoolSeasonFirstDatecField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.School_Season_Number_of_Weeks__c</fieldItem>
+                <identifier>RecordSchoolSeasonNumberofWeekscField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.School_Off_Total_Staff_Hours__c</fieldItem>
+                <identifier>RecordSchoolOffTotalStaffHourscField</identifier>
             </fieldInstance>
         </itemInstances>
         <name>schoolOffSeasonLeft</name>
@@ -1101,16 +1307,6 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.SchoolOff_Season_Holiday_Close_Time__c</fieldItem>
-                <identifier>RecordSchoolOff_Season_Holiday_Close_Time_cField</identifier>
-            </fieldInstance>
-        </itemInstances>
-        <itemInstances>
-            <fieldInstance>
-                <fieldInstanceProperties>
-                    <name>uiBehavior</name>
-                    <value>none</value>
-                </fieldInstanceProperties>
                 <fieldItem>Record.SchoolOff_Season_Number_of_Lifeguards__c</fieldItem>
                 <identifier>RecordSchoolOff_Season_Number_of_Lifeguards_cField</identifier>
             </fieldInstance>
@@ -1123,6 +1319,26 @@
                 </fieldInstanceProperties>
                 <fieldItem>Record.Total_School_Off_Season_Weekly_Hours__c</fieldItem>
                 <identifier>RecordTotal_School_Off_Season_Weekly_Hours_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.School_Season_Last_Date__c</fieldItem>
+                <identifier>RecordSchoolSeasonLastDatecField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Total_Season_School_Guard_Hours__c</fieldItem>
+                <identifier>RecordTotalSeasonSchoolGuardHourscField</identifier>
             </fieldInstance>
         </itemInstances>
         <name>schoolOffSeasonRight</name>
