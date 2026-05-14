@@ -168,7 +168,7 @@
         <searchResultsAdditionalFields>Version__c</searchResultsAdditionalFields>
         <searchResultsAdditionalFields>Customer__c</searchResultsAdditionalFields>
         <searchResultsAdditionalFields>Management_Company__c</searchResultsAdditionalFields>
-        <searchResultsAdditionalFields>Current_Vendor__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Current_Vendor_Object__c</searchResultsAdditionalFields>
         <searchResultsAdditionalFields>CREATED_DATE</searchResultsAdditionalFields>
         <searchResultsAdditionalFields>Due_Date__c</searchResultsAdditionalFields>
         <searchResultsAdditionalFields>EBD_Due_Date__c</searchResultsAdditionalFields>
