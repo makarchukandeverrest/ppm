@@ -3,6 +3,7 @@
     <fullName>NormalSeason_Saturday_Open_Time__c</fullName>
     <label>Peak Saturday Start</label>
     <required>false</required>
-    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
     <type>Time</type>
 </CustomField>
