@@ -18,6 +18,25 @@ public with sharing class ContractBidStatusUpdater {
             WHERE ContentDocumentId IN :contentDocIds
         ];
 
+        Set<String> validStages = new Set<String>();
+        List<StageReferenceSettings__mdt> settings = [
+            SELECT Stage_Names__c
+            FROM StageReferenceSettings__mdt
+            WHERE DeveloperName = 'Send_Contract_Stages'
+            LIMIT 1
+        ];
+
+        if (!settings.isEmpty() && String.isNotBlank(settings[0].Stage_Names__c)) {
+            for (String stage : settings[0].Stage_Names__c.split(',')) {
+                String trimmedStage = stage.trim();
+                if (String.isNotBlank(trimmedStage)) {
+                    validStages.add(trimmedStage);
+                }
+            }
+        }
+
+        if (validStages.isEmpty()) return;
+
         List<Contract_Bid__c> bidsToUpdate = new List<Contract_Bid__c>();
 
         for (ContentDocumentLink link : links) {
@@ -28,29 +47,16 @@ public with sharing class ContractBidStatusUpdater {
             String status = docIdToStatus.get(link.ContentDocumentId);
             if (status == null) continue;
 
-            Schema.DescribeFieldResult fieldResult = Contract_Bid__c.Stage__c.getDescribe();
-            List<Schema.PicklistEntry> picklistEntries = fieldResult.getPicklistValues();
-            List<String> validStages = new List<String>();
-            Integer startIdx = Math.max(0, picklistEntries.size() - 5);
-            for (Integer i = startIdx; i < picklistEntries.size(); i++) {
-                Schema.PicklistEntry entry = picklistEntries[i];
-                if(entry.isActive()){
-                    validStages.add(entry.getValue());
-                }
-            }
-            
             List<Contract_Bid__c> bids = [
                 SELECT Id, Name, Stage__c
                 FROM Contract_Bid__c
                 WHERE Customer__c = :link.LinkedEntityId
-                  AND Stage__c IN : validStages
+                  AND Stage__c IN :validStages
             ];
             for (Contract_Bid__c bid : bids) {
 
                 if (status == 'Completed') {
                     bid.Stage__c = 'Closed - WON';
-                } else if (status == 'Declined' || status == 'Voided') {
-                    bid.Stage__c = 'Closed - LOST';
                 } else if (status == 'Delivered') {
                     bid.Stage__c = 'Proposal/Review';
                 }

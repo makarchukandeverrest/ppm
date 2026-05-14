@@ -31,76 +31,6 @@ private class ContentVersionTriggerHandlerTest {
         System.assertEquals(1, cvs.size(), 'ContentVersion should not be deleted');
     }
 
-    // @IsTest
-    // static void testAfterInsert_DuplicateFromEmailPlatform_Deleted() {
-    //     // Test: Duplicate from Email_Platform should be deleted
-    //     Account acc = [SELECT Id FROM Account LIMIT 1];
-        
-    //     // Use the same Blob to ensure ContentSize matches exactly
-    //     Blob testContent = Blob.valueOf('Original Content');
-        
-    //     // Create original ContentVersion with EnvelopeId BEFORE Test.startTest()
-    //     // This ensures it's committed to the database before the duplicate is created
-    //     ContentVersion originalCV = new ContentVersion(
-    //         Title = 'Contract Document.pdf',
-    //         PathOnClient = 'Contract Document.pdf',
-    //         VersionData = testContent,
-    //         IsMajorVersion = true,
-    //         DocuSign_Envelope_Id__c = 'TEST-ENVELOPE-123',
-    //         Origin = 'C'
-    //     );
-    //     insert originalCV;
-        
-    //     // Get ContentDocumentId and link to Account
-    //     ContentVersion originalReloaded = [
-    //         SELECT Id, ContentDocumentId, Title, ContentSize
-    //         FROM ContentVersion
-    //         WHERE Id = :originalCV.Id
-    //     ];
-        
-    //     ContentDocumentLink link = new ContentDocumentLink(
-    //         ContentDocumentId = originalReloaded.ContentDocumentId,
-    //         LinkedEntityId = acc.Id,
-    //         ShareType = 'V',
-    //         Visibility = 'AllUsers'
-    //     );
-    //     insert link;
-        
-    //     Test.startTest();
-        
-    //     // Create duplicate from Email_Platform (no EnvelopeId, Origin = 'H', FirstPublishLocationId = Account)
-    //     // Use the same Blob and Title to ensure ContentSize and Title match
-    //     ContentVersion duplicateCV = new ContentVersion(
-    //         Title = originalReloaded.Title, // Use exact Title from original
-    //         PathOnClient = 'Contract Document.pdf',
-    //         VersionData = testContent, // Same Blob = same ContentSize
-    //         IsMajorVersion = true,
-    //         Origin = 'H', // Email_Platform
-    //         FirstPublishLocationId = acc.Id // Account ID (starts with '001')
-    //         // No DocuSign_Envelope_Id__c
-    //     );
-        
-    //     insert duplicateCV;
-        
-    //     Test.stopTest();
-        
-    //     // Verify duplicate was deleted
-    //     List<ContentVersion> duplicates = [
-    //         SELECT Id
-    //         FROM ContentVersion
-    //         WHERE Id = :duplicateCV.Id
-    //     ];
-    //     System.assertEquals(0, duplicates.size(), 'Duplicate ContentVersion should be deleted');
-        
-    //     // Verify original still exists
-    //     List<ContentVersion> originals = [
-    //         SELECT Id
-    //         FROM ContentVersion
-    //         WHERE Id = :originalCV.Id
-    //     ];
-    //     System.assertEquals(1, originals.size(), 'Original ContentVersion should still exist');
-    // }
-
     @IsTest
     static void testAfterInsert_DuplicateWithDifferentTitle_NotDeleted() {
         // Test: ContentVersion from Email_Platform but different title should not be deleted
@@ -226,6 +156,7 @@ private class ContentVersionTriggerHandlerTest {
 
     @IsTest
     static void testAfterUpdate_NoStatusChange() {
+        
         // Test: When DocuSign status doesn't change, services should not be called
         ContentVersion cv = new ContentVersion(
             Title = 'Test Document.pdf',
@@ -252,67 +183,6 @@ private class ContentVersionTriggerHandlerTest {
         System.assertEquals('Updated Title.pdf', updatedCV.Title);
         System.assertEquals('Sent', updatedCV.DocuSign_Envelope_Status__c);
     }
-
-    // @IsTest
-    // static void testAfterInsert_DuplicateWithNullOrigin_Deleted() {
-    //     // Test: Duplicate with Origin = 'H' (Email_Platform) should be deleted
-    //     // Note: Origin cannot be null in Salesforce, so we test with 'H' instead
-    //     Account acc = [SELECT Id FROM Account LIMIT 1];
-        
-    //     // Use the same Blob to ensure ContentSize matches exactly
-    //     Blob testContent = Blob.valueOf('Test Content');
-        
-    //     // Create original ContentVersion with EnvelopeId BEFORE Test.startTest()
-    //     ContentVersion originalCV = new ContentVersion(
-    //         Title = 'Email Platform Test.pdf',
-    //         PathOnClient = 'Email Platform Test.pdf',
-    //         VersionData = testContent,
-    //         IsMajorVersion = true,
-    //         DocuSign_Envelope_Id__c = 'TEST-ENVELOPE-H',
-    //         Origin = 'C'
-    //     );
-    //     insert originalCV;
-        
-    //     // Get ContentDocumentId and exact Title from original
-    //     ContentVersion originalReloaded = [
-    //         SELECT Id, ContentDocumentId, Title, ContentSize
-    //         FROM ContentVersion
-    //         WHERE Id = :originalCV.Id
-    //     ];
-        
-    //     ContentDocumentLink link = new ContentDocumentLink(
-    //         ContentDocumentId = originalReloaded.ContentDocumentId,
-    //         LinkedEntityId = acc.Id,
-    //         ShareType = 'V',
-    //         Visibility = 'AllUsers'
-    //     );
-    //     insert link;
-        
-    //     Test.startTest();
-        
-    //     // Create duplicate with Origin = 'H' (Email_Platform)
-    //     ContentVersion duplicateCV = new ContentVersion(
-    //         Title = originalReloaded.Title, // Use exact Title from original
-    //         PathOnClient = 'Email Platform Test.pdf',
-    //         VersionData = testContent, // Same Blob = same ContentSize
-    //         IsMajorVersion = true,
-    //         Origin = 'H', // Email_Platform (cannot be null in Salesforce)
-    //         FirstPublishLocationId = acc.Id // Account ID
-    //         // No DocuSign_Envelope_Id__c
-    //     );
-        
-    //     insert duplicateCV;
-        
-    //     Test.stopTest();
-        
-    //     // Verify duplicate was deleted
-    //     List<ContentVersion> duplicates = [
-    //         SELECT Id
-    //         FROM ContentVersion
-    //         WHERE Id = :duplicateCV.Id
-    //     ];
-    //     System.assertEquals(0, duplicates.size(), 'Duplicate with Origin = H should be deleted');
-    // }
 
     @IsTest
     static void testAfterInsert_NoTitleOrContentSize_NotProcessed() {
@@ -364,68 +234,4 @@ private class ContentVersionTriggerHandlerTest {
         List<ContentVersion> cvs = [SELECT Id FROM ContentVersion WHERE Id = :cv.Id];
         System.assertEquals(1, cvs.size(), 'ContentVersion with EnvelopeId should not be deleted');
     }
-
-    // @IsTest
-    // static void testAfterInsert_DuplicateTimeDifferenceTooLarge_NotDeleted() {
-    //     // Test: Duplicate created more than 1 hour after original should not be deleted
-    //     // Note: In test environment, we can't manipulate CreatedDate, so this test
-    //     // verifies the logic exists, but actual time difference test would need different approach
-    //     Account acc = [SELECT Id FROM Account LIMIT 1];
-        
-    //     // Use the same Blob to ensure ContentSize matches exactly
-    //     Blob testContent = Blob.valueOf('Test Content');
-        
-    //     // Create original ContentVersion with EnvelopeId BEFORE Test.startTest()
-    //     ContentVersion originalCV = new ContentVersion(
-    //         Title = 'Time Test.pdf',
-    //         PathOnClient = 'Time Test.pdf',
-    //         VersionData = testContent,
-    //         IsMajorVersion = true,
-    //         DocuSign_Envelope_Id__c = 'TEST-ENVELOPE-TIME',
-    //         Origin = 'C'
-    //     );
-    //     insert originalCV;
-        
-    //     // Get ContentDocumentId and exact Title from original
-    //     ContentVersion originalReloaded = [
-    //         SELECT Id, ContentDocumentId, Title, ContentSize
-    //         FROM ContentVersion
-    //         WHERE Id = :originalCV.Id
-    //     ];
-        
-    //     ContentDocumentLink link = new ContentDocumentLink(
-    //         ContentDocumentId = originalReloaded.ContentDocumentId,
-    //         LinkedEntityId = acc.Id,
-    //         ShareType = 'V',
-    //         Visibility = 'AllUsers'
-    //     );
-    //     insert link;
-        
-    //     Test.startTest();
-        
-    //     // Create duplicate - in test, both are created at same time, so it will match
-    //     // This test verifies the duplicate detection logic works
-    //     ContentVersion duplicateCV = new ContentVersion(
-    //         Title = originalReloaded.Title, // Use exact Title from original
-    //         PathOnClient = 'Time Test.pdf',
-    //         VersionData = testContent, // Same Blob = same ContentSize
-    //         IsMajorVersion = true,
-    //         Origin = 'H',
-    //         FirstPublishLocationId = acc.Id // Account ID
-    //     );
-        
-    //     insert duplicateCV;
-        
-    //     Test.stopTest();
-        
-    //     // In test, both are created at same time, so duplicate will be deleted
-    //     // This is expected behavior for the test scenario
-    //     List<ContentVersion> duplicates = [
-    //         SELECT Id
-    //         FROM ContentVersion
-    //         WHERE Id = :duplicateCV.Id
-    //     ];
-    //     // Duplicate should be deleted since time difference is within 1 hour
-    //     System.assertEquals(0, duplicates.size(), 'Duplicate created at same time should be deleted');
-    // }
 }
