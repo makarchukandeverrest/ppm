@@ -63,7 +63,7 @@
         </columns>
         <columns>
             <checkedByDefault>false</checkedByDefault>
-            <field>Go_throw_Corporate__c</field>
+            <field>Go_through_Corporate__c</field>
             <table>Contract_Bid__c</table>
         </columns>
         <columns>
@@ -78,7 +78,7 @@
         </columns>
         <columns>
             <checkedByDefault>false</checkedByDefault>
-            <field>Current_Vendor__c</field>
+            <field>Current_Vendor_Object__c</field>
             <table>Contract_Bid__c</table>
         </columns>
         <columns>
