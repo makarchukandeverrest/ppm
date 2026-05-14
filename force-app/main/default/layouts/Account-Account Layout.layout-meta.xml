@@ -344,7 +344,7 @@
         <fields>NAME</fields>
         <fields>Version__c</fields>
         <fields>Management_Company__c</fields>
-        <fields>Current_Vendor__c</fields>
+        <fields>Current_Vendor_Object__c</fields>
         <fields>LAST_UPDATE</fields>
         <fields>Due_Date__c</fields>
         <fields>EBD_Due_Date__c</fields>

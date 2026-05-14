@@ -6,7 +6,7 @@
     <fields>Due_Date__c</fields>
     <fields>EBD_Due_Date__c</fields>
     <fields>Stage__c</fields>
-    <fields>Current_Vendor__c</fields>
+    <fields>Current_Vendor_Object__c</fields>
     <fields>Renewal_Client__c</fields>
     <fields>Colored_Labels__c</fields>
     <fields>Colored_Stage__c</fields>
