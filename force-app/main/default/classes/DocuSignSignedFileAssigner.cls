@@ -58,11 +58,8 @@ public with sharing class DocuSignSignedFileAssigner {
             return;
         }
 
-        List<ContentVersion> accountSideVersions = [
-            SELECT Id, ContentDocumentId, Title, IsLatest
-            FROM ContentVersion
-            WHERE IsLatest = true
-        ];
+        // Query only likely matches (avoid scanning all ContentVersion rows).
+        List<ContentVersion> accountSideVersions = queryLatestVersionsByBaseTitles(signedBaseTitles);
         if (accountSideVersions.isEmpty()) {
             return;
         }
@@ -214,5 +211,35 @@ public with sharing class DocuSignSignedFileAssigner {
             return title.left(dotIdx);
         }
         return title;
+    }
+
+    private static List<ContentVersion> queryLatestVersionsByBaseTitles(Set<String> baseTitles) {
+        if (baseTitles == null || baseTitles.isEmpty()) {
+            return new List<ContentVersion>();
+        }
+
+        List<String> whereParts = new List<String>();
+        for (String t : baseTitles) {
+            if (String.isBlank(t)) {
+                continue;
+            }
+            String escaped = String.escapeSingleQuotes(t);
+            whereParts.add('Title LIKE \'' + escaped + '%\'');
+        }
+
+        if (whereParts.isEmpty()) {
+            return new List<ContentVersion>();
+        }
+
+        String soql =
+            'SELECT Id, ContentDocumentId, Title, IsLatest ' +
+            'FROM ContentVersion ' +
+            'WHERE IsLatest = true AND (' + String.join(whereParts, ' OR ') + ')';
+
+        List<ContentVersion> results = new List<ContentVersion>();
+        for (SObject row : Database.query(soql)) {
+            results.add((ContentVersion)row);
+        }
+        return results;
     }
 }
