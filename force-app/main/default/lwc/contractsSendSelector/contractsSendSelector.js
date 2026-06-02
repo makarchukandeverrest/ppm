@@ -1,7 +1,7 @@
 import { LightningElement, wire, track, api } from 'lwc';
 import getAccountsWithFiles from '@salesforce/apex/AccountFilesController.getAccountsWithFiles';
 import getFilterOptions from '@salesforce/apex/AccountFilesController.getFilterOptions';
-import sendEnvelopeWithSignature from '@salesforce/apex/DocuSignEnvelopeService.sendEnvelopeWithSignature';
+import sendEnvelopeWithSignature from '@salesforce/apex/DocuSignDfsleEnvelopeService.sendEnvelopeWithSignature';
 import { refreshApex } from '@salesforce/apex';
 
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
@@ -467,6 +467,8 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
                 ...acc,
                 reminderValue: acc.reminderValue === 'custom' ? (acc.reminderCustomDays || '') : (acc.reminderValue || '')
             }));
+            console.log(JSON.stringify(payload));
+            
             await sendEnvelopeWithSignature({
                 accountsWithFilesJSON: JSON.stringify(payload)
             });
