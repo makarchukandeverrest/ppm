@@ -1,7 +1,3 @@
-/**
- * Spike: send envelopes via DocuSign Apex Toolkit (dfsle), not REST.
- * Sandbox: DocuSignDfsleEnvelopeService.sendTestEnvelope(...) from Execute Anonymous or LWC.
- */
 public with sharing class DocuSignDfsleEnvelopeService {
 
     private static final String ANCHOR_MAIN =
@@ -19,17 +15,9 @@ public with sharing class DocuSignDfsleEnvelopeService {
         @AuraEnabled public String message;
     }
 
-    /**
-     * Test-only escape hatch to exercise DocuSignId resolution logic without performing a real send.
-     * Must remain false in production usage.
-     */
     @TestVisible
     public static Boolean FORCE_RESOLVE_DOCUSIGN_ID_IN_TEST = false;
 
-    /**
-     * LWC entry point (same payload as DocuSignEnvelopeService.sendEnvelopeWithSignature).
-     * Sends envelopes via dfsle toolkit for each selected ContentVersion (FileWrapper.ToSent = true).
-     */
     @AuraEnabled
     public static void sendEnvelopeWithSignature(String accountsWithFilesJSON) {
         if (String.isBlank(accountsWithFilesJSON)) {
@@ -58,10 +46,8 @@ public with sharing class DocuSignDfsleEnvelopeService {
             }
         }
 
-        // Keep parity with DocuSignEnvelopeService: derive CC users from active contracts by account.
         Map<Id, List<User>> accountToUsersMap = getAccountToUsersMap(accountIds);
 
-        // Keep parity with DocuSignEnvelopeService: always CC Roman (if present).
         User romanUser;
         try {
             romanUser = [SELECT Id, Name, Email FROM User WHERE Name = 'Roman Shestakov' LIMIT 1];
@@ -69,7 +55,6 @@ public with sharing class DocuSignDfsleEnvelopeService {
             romanUser = null;
         }
 
-        // Basic existence check for selected ContentVersions (avoid NPE on missing ids).
         Map<Id, ContentVersion> cvById = new Map<Id, ContentVersion>();
         if (!mainContentVersionIds.isEmpty()) {
             cvById = new Map<Id, ContentVersion>([
@@ -88,15 +73,14 @@ public with sharing class DocuSignDfsleEnvelopeService {
                 ? accountToUsersMap.get(acc.accountId)
                 : new List<User>();
             if (ccUsers == null) ccUsers = new List<User>();
-            // if (romanUser != null) {
-            //     ccUsers.add(romanUser);
-            // }
+            if (romanUser != null) {
+                ccUsers.add(romanUser);
+            }
 
             for (FileWrapper file : acc.files) {
                 if (file == null || file.ToSent != true || file.Id == null) continue;
                 if (!cvById.containsKey(file.Id)) continue;
 
-                // Send one envelope per selected main contract file (ContentVersion).
                 sendEnvelope(
                     acc.contract.Id,
                     file.Id,
@@ -109,7 +93,7 @@ public with sharing class DocuSignDfsleEnvelopeService {
                     acc.daysBeforeExpires
                 );
 
-                // Mirror existing behavior: stage update + draft EmailMessage log.
+
                 acc.contract.Stage__c = 'Contract Sent via DocuSign';
                 if (!contractIds.contains(acc.contract.Id)) {
                     contractIds.add(acc.contract.Id);
@@ -137,66 +121,7 @@ public with sharing class DocuSignDfsleEnvelopeService {
         }
     }
 
-    /**
-     * Manual / sandbox test entry point.
-     */
-    @AuraEnabled
-    public static SendResult sendTestEnvelope(
-        Id contractBidId,
-        Id mainContentVersionId,
-        String signerEmail,
-        String signerName,
-        Boolean isNewCustomer,
-        Id accountId,
-        List<Id> ccUserIds
-    ) {
-        SendResult result = new SendResult();
-        result.success = false;
 
-        try {
-            if (contractBidId == null || mainContentVersionId == null) {
-                result.message = 'contractBidId and mainContentVersionId are required.';
-                return result;
-            }
-            if (String.isBlank(signerEmail) || String.isBlank(signerName)) {
-                result.message = 'Signer email and name are required.';
-                return result;
-            }
-
-            List<User> ccUsers = new List<User>();
-            if (ccUserIds != null && !ccUserIds.isEmpty()) {
-                ccUsers = [
-                    SELECT Id, Name, Email
-                    FROM User
-                    WHERE Id IN :ccUserIds AND IsActive = TRUE
-                ];
-            }
-
-            result.envelopeId = sendEnvelope(
-                contractBidId,
-                mainContentVersionId,
-                signerEmail,
-                signerName,
-                isNewCustomer == true,
-                accountId,
-                ccUsers,
-                null,
-                null
-            );
-            result.success = String.isNotBlank(result.envelopeId);
-            result.message = result.success
-                ? 'Envelope sent via dfsle. Envelope ID: ' + result.envelopeId
-                : 'Send completed but envelope ID was not resolved.';
-        } catch (Exception ex) {
-            result.message = ex.getMessage();
-        }
-
-        return result;
-    }
-
-    /**
-     * Sends one envelope and writes DocuSign_Envelope_Id__c on the main ContentVersion.
-     */
     public static String sendEnvelope(
         Id contractBidId,
         Id mainContentVersionId,
@@ -307,9 +232,6 @@ public with sharing class DocuSignDfsleEnvelopeService {
         return cvIds;
     }
 
-  /**
-     * Same anchor strings as DocuSignEnvelopeService.buildEnvelopeRequestBody (REST tabs).
-     */
     @TestVisible
     private static List<dfsle.Tab> buildSignerTabs() {
         dfsle.Tab.Anchor mainAnchor = new dfsle.Tab.Anchor(
@@ -427,8 +349,6 @@ public with sharing class DocuSignDfsleEnvelopeService {
         String reminderValue,
         String daysBeforeExpires
     ) {
-        // Write-back signed PDF to the source Contract Bid when completed.
-        // Reminders/expiration: extend here when validated in sandbox (dfsle notification API).
         return new dfsle.Envelope.Options(
             false,
             new dfsle.Document.WriteBack(
@@ -446,9 +366,6 @@ public with sharing class DocuSignDfsleEnvelopeService {
         return queryLatestDocuSignIdForSource(contractBidId);
     }
 
-    /**
-     * Field names differ by DocuSign package version; try common lookups dynamically.
-     */
     private static String queryLatestDocuSignIdForSource(Id sourceRecordId) {
         List<String> objectNames = new List<String>{
             'dfsle__EnvelopeStatus__c',
@@ -504,9 +421,6 @@ public with sharing class DocuSignDfsleEnvelopeService {
         return null;
     }
 
-    /**
-     * Copied from DocuSignEnvelopeService to keep consistent CC user logic.
-     */
     private static Map<Id, List<User>> getAccountToUsersMap(Set<Id> accountIds) {
         Map<Id, List<User>> accountToUsersMap = new Map<Id, List<User>>();
         if (accountIds == null || accountIds.isEmpty()) {
