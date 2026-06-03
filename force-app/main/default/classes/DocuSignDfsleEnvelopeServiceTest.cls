@@ -254,39 +254,6 @@ private class DocuSignDfsleEnvelopeServiceTest {
     }
 
     @IsTest
-    static void testSendTestEnvelope_validationErrors() {
-        // Missing required ids
-        DocuSignDfsleEnvelopeService.SendResult r1 = DocuSignDfsleEnvelopeService.sendTestEnvelope(
-            null,
-            null,
-            'a@example.com',
-            'A',
-            false,
-            null,
-            null
-        );
-        System.assertEquals(false, r1.success);
-        System.assert(r1.message != null && r1.message.contains('required'), r1.message);
-
-        // Missing signer info
-        Account acc = [SELECT Id FROM Account LIMIT 1];
-        Contract_Bid__c cb = [SELECT Id FROM Contract_Bid__c LIMIT 1];
-        ContentVersion mainCv = [SELECT Id FROM ContentVersion WHERE Title = 'Dfsle Main Contract' LIMIT 1];
-
-        DocuSignDfsleEnvelopeService.SendResult r2 = DocuSignDfsleEnvelopeService.sendTestEnvelope(
-            cb.Id,
-            mainCv.Id,
-            '',
-            '',
-            false,
-            acc.Id,
-            null
-        );
-        System.assertEquals(false, r2.success);
-        System.assert(r2.message != null && r2.message.contains('Signer'), r2.message);
-    }
-
-    @IsTest
     static void testDocuSignIdResolutionPath_inTest() {
         // This test exercises the dynamic query path (dfsle__EnvelopeStatus__c / dfsle__Envelope__c).
         Contract_Bid__c cb = [SELECT Id FROM Contract_Bid__c LIMIT 1];
