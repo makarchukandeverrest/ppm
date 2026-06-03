@@ -1,12 +1,13 @@
 public with sharing class AccountCurrentCustomerUpdater {
-  public static void updateCustomers(List<Contract_Bid__c> bidsToUpdate, Boolean customerIsCurrent) {
-    List<Account> accountsToUpdate = new List<Account>();
-    for (Contract_Bid__c bid : bidsToUpdate) {
+  public static void updateCustomers(List<Contract_Bid__c> wonBids) {
+    Map<Id, Account> accountsById = new Map<Id, Account>();
+    for (Contract_Bid__c bid : wonBids) {
       if (bid.Customer__c != null) {
-        accountsToUpdate.add(
+        accountsById.put(
+          bid.Customer__c,
           new Account(
             Id = bid.Customer__c,
-            Current_Customer__c = customerIsCurrent,
+            Current_Customer__c = true,
             Recent_Contract_Bid__c = bid.Id,
             Contract_Start_Date__c = bid.Contract_Start_Date__c,
             Contract_End_Date__c = bid.Contract_End_Date__c
@@ -14,8 +15,8 @@ public with sharing class AccountCurrentCustomerUpdater {
         );
       }
     }
-    if (!accountsToUpdate.isEmpty()) {
-      update accountsToUpdate;
+    if (!accountsById.isEmpty()) {
+      update accountsById.values();
     }
   }
 }
