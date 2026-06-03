@@ -1,4 +1,4 @@
-public without sharing class WorkOrderLineItemsController {
+public with sharing class WorkOrderLineItemsController {
   @AuraEnabled(cacheable=true)
   public static List<Quick_Book_Work_Order_Line_Item__c> getWorkOrderLineItems(
     Id workOrderId
