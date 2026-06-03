@@ -56,7 +56,7 @@
           </tr>
         </thead>
         <tbody class="scrollable-body">
-          <template for:each={workOrderLineItems} for:item="item">
+          <template for:each={lineItemsForDisplay} for:item="item">
             <tr key={item.Id}>
               <!--<td class="slds-cell-wrap centered-cell">
                 <lightning-input
@@ -126,20 +126,12 @@
                 </template>
               </td>
               <td class="slds-cell-wrap centered-cell">
-                <template if:false={item.editingServiceTeamMember}>
+                <template if:false={item.isEditingAssignment}>
                   <div
                     class="slds-grid slds-grid_vertical-align-center slds-gutters_x-small"
                   >
                     <div class="slds-col">
-                      <lightning-record-view-form
-                        record-id={item.Id}
-                        object-api-name="Quick_Book_Work_Order_Line_Item__c"
-                      >
-                        <lightning-output-field
-                          field-name="Service_Team_Member__c"
-                          variant="label-hidden"
-                        ></lightning-output-field>
-                      </lightning-record-view-form>
+                      {item.assignmentDisplayLabel}
                     </div>
                     <div class="slds-col slds-grow-none">
                       <lightning-button-icon
@@ -147,40 +139,23 @@
                         alternative-text="Edit Service Team Member"
                         variant="border-filled"
                         size="small"
-                        data-row-id={item.Id}
-                        onclick={handleBeginEditServiceTeamMember}
+                        data-id={item.Id}
+                        onclick={handleBeginEditAssignment}
                       ></lightning-button-icon>
                     </div>
                   </div>
                 </template>
-                <template if:true={item.editingServiceTeamMember}>
-                  <lightning-record-edit-form
-                    object-api-name="Quick_Book_Work_Order_Line_Item__c"
-                    record-id={item.Id}
-                    onsuccess={handleServiceTeamMemberSaved}
-                  >
-                    <div
-                      class="slds-grid slds-grid_vertical-align-center slds-gutters_x-small"
-                    >
-                      <div class="slds-col">
-                        <lightning-input-field
-                          field-name="Service_Team_Member__c"
-                          variant="label-hidden"
-                        >
-                        </lightning-input-field>
-                      </div>
-                      <div class="slds-col slds-grow-none">
-                        <lightning-button-icon
-                          icon-name="utility:save"
-                          alternative-text="Save"
-                          type="submit"
-                          variant="border-filled"
-                          size="small"
-                        >
-                        </lightning-button-icon>
-                      </div>
-                    </div>
-                  </lightning-record-edit-form>
+                <template if:true={item.isEditingAssignment}>
+                  <lightning-combobox
+                    name="serviceTeamMember"
+                    label="Service Team Member"
+                    variant="label-hidden"
+                    value={item.draftServiceTeamMemberId}
+                    options={serviceTeamMemberOptions}
+                    data-id={item.Id}
+                    onchange={handleServiceTeamMemberDraftChange}
+                    dropdown-alignment="auto"
+                  ></lightning-combobox>
                 </template>
               </td>
             <!-- <td
@@ -265,35 +240,20 @@
       <p>Tel: (301)989-2200 * Fax: (301)989-2261</p>
       <p><strong>www.premierswim.com</strong></p>
     </div> -->
-    <!--<div slot="footer">
-      <template if:true={hasEditingItem}>
-        <lightning-button
-          variant="neutral"
-          label="Cancel"
-          onclick={handleCancel}
-          class="button-footer"
-        ></lightning-button>
-      </template>
-      <template if:true={hasEditingItem}
-        ><lightning-button
-          variant="brand"
-          label="Save"
-          onclick={handleSave}
-          class="button-footer"
-        ></lightning-button
-      ></template>
+    <div slot="footer" class="slds-p-around_small">
       <lightning-button
-        variant="brand-outline"
-        label="Add New"
-        onclick={handleAddNew}
-        class="button-footer"
+        variant="neutral"
+        label="Cancel"
+        onclick={handleCancelAssignments}
+        disabled={isCancelDisabled}
+        class="slds-m-right_x-small"
       ></lightning-button>
       <lightning-button
         variant="brand"
-        label="Delete"
-        onclick={handleDelete}
-        disabled={isDeleteDisabled}
+        label="Save"
+        onclick={handleSaveAssignments}
+        disabled={isSaveDisabled}
       ></lightning-button>
-    </div>-->
+    </div>
   </lightning-card>
 </template>
