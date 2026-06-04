@@ -1,5 +1,6 @@
 import { LightningElement, track, wire, api } from "lwc";
-import { getRecord, getFieldValue, getRecordNotifyChange } from "lightning/uiRecordApi";
+import { getRecord, getFieldValue } from "lightning/uiRecordApi";
+import { refreshApex } from "@salesforce/apex";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 
 import WORK_ORDER_QB_NO from "@salesforce/schema/WorkOrder.Quick_Books_WO_No__c";
@@ -13,11 +14,47 @@ import BILLING_COUNTRY_FIELD from "@salesforce/schema/WorkOrder.Account.BillingC
 import SERVICE_TEAM_MEMBER from "@salesforce/schema/WorkOrder.Service_Team_Member__c";
 
 import getWorkOrderLineItems from "@salesforce/apex/WorkOrderLineItemsController.getWorkOrderLineItems";
+import getServiceTeamMembers from "@salesforce/apex/WorkOrderLineItemsController.getServiceTeamMembers";
+import saveServiceTeamMemberAssignments from "@salesforce/apex/WorkOrderLineItemsController.saveServiceTeamMemberAssignments";
+
+function normalizeMemberId(value) {
+  return value || null;
+}
+
+function assignmentLabelFor(memberId, options) {
+  const id = normalizeMemberId(memberId);
+  if (!id) {
+    return "—";
+  }
+  const match = options.find((option) => option.value === id);
+  return match?.label ?? "—";
+}
+
+function mapLineItemRow(row) {
+  const savedId = normalizeMemberId(row.Service_Team_Member__c);
+  const savedLabel = row.Service_Team_Member__r?.Name ?? "";
+  return {
+    ...row,
+    itemNameDisplay:
+      row.Name?.toLowerCase() === row.Id?.slice(0, 15).toLowerCase()
+        ? ""
+        : row.Name ?? "",
+    savedServiceTeamMemberId: savedId,
+    draftServiceTeamMemberId: savedId || "",
+    serviceTeamMemberLabel: savedLabel,
+    assignmentDisplayLabel: savedLabel || "—"
+  };
+}
 
 export default class WorkOrderLineItemsView extends LightningElement {
   @api recordId;
   @track workOrderDetails = {};
   @track workOrderLineItems = [];
+  @track editingRowIds = [];
+  @track serviceTeamMemberOptions = [{ label: "— None —", value: "" }];
+
+  isSaving = false;
+  wiredLineItemsResult;
 
   @wire(getRecord, {
     recordId: "$recordId",
@@ -47,25 +84,59 @@ export default class WorkOrderLineItemsView extends LightningElement {
       };
     } else if (error) {
       // optional: log header load error
-      // console.error("Error fetching work order:", error);
     }
   }
 
   @wire(getWorkOrderLineItems, { workOrderId: "$recordId" })
   wiredLineItems(result) {
+    this.wiredLineItemsResult = result;
     const { error, data } = result;
     if (data) {
-      const raw = JSON.parse(JSON.stringify(data));
-      this.workOrderLineItems = raw.map((row) => ({
-        ...row,
-        editingServiceTeamMember: false,
-        // Hide default Name when it duplicates the record Id (e.g. placeholder)
-        itemNameDisplay: row.Name.toLowerCase() === row.Id.slice(0, 15).toLowerCase() ? "" : row.Name ?? ""
-      }));
+      this.setLineItemsFromServer(data);
     } else if (error) {
-      // optional: log line items error
-      // console.error("Error fetching line items:", error);
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: "Error loading line items",
+          message: error?.body?.message || error?.message || "Unknown error",
+          variant: "error"
+        })
+      );
     }
+  }
+
+  @wire(getServiceTeamMembers)
+  wiredServiceTeamMembers({ error, data }) {
+    if (data) {
+      const options = data.map((member) => ({
+        label: member.Name,
+        value: member.Id
+      }));
+      this.serviceTeamMemberOptions = [
+        { label: "— None —", value: "" },
+        ...options
+      ];
+    } else if (error) {
+      // optional: log service team member options error
+    }
+  }
+
+  get lineItemsForDisplay() {
+    const editingSet = new Set(this.editingRowIds);
+    return this.workOrderLineItems.map((item) => {
+      const isDirty =
+        normalizeMemberId(item.draftServiceTeamMemberId) !==
+        normalizeMemberId(item.savedServiceTeamMemberId);
+      return {
+        ...item,
+        isEditingAssignment: editingSet.has(item.Id),
+        assignmentDisplayLabel: isDirty
+          ? assignmentLabelFor(
+              item.draftServiceTeamMemberId,
+              this.serviceTeamMemberOptions
+            )
+          : item.serviceTeamMemberLabel || "—"
+      };
+    });
   }
 
   get total() {
@@ -75,33 +146,189 @@ export default class WorkOrderLineItemsView extends LightningElement {
     );
   }
 
-  handleBeginEditServiceTeamMember(event) {
-    const rowId = event.currentTarget.dataset.rowId;
-    if (!rowId) return;
-    this.workOrderLineItems = this.workOrderLineItems.map((item) => ({
-      ...item,
-      editingServiceTeamMember: item.Id === rowId
-    }));
+  get hasPendingAssignmentChanges() {
+    return this.workOrderLineItems.some(
+      (item) =>
+        normalizeMemberId(item.draftServiceTeamMemberId) !==
+        normalizeMemberId(item.savedServiceTeamMemberId)
+    );
   }
 
-  handleServiceTeamMemberSaved(event) {
-    const recordId =
-      event.detail?.id ||
-      this.workOrderLineItems.find((i) => i.editingServiceTeamMember)?.Id;
-    if (recordId) {
-      getRecordNotifyChange([{ recordId }]);
-      this.workOrderLineItems = this.workOrderLineItems.map((item) =>
-        item.Id === recordId
-          ? { ...item, editingServiceTeamMember: false }
-          : item
-      );
+  get isSaveDisabled() {
+    return !this.hasPendingAssignmentChanges || this.isSaving;
+  }
+
+  get isCancelDisabled() {
+    return !this.hasPendingAssignmentChanges || this.isSaving;
+  }
+
+  setLineItemsFromServer(data, preserveEditingRows = false) {
+    const raw = JSON.parse(JSON.stringify(data));
+    this.workOrderLineItems = raw.map(mapLineItemRow);
+    if (!preserveEditingRows) {
+      this.editingRowIds = [];
     }
-    this.dispatchEvent(
-      new ShowToastEvent({
-        title: "Success",
-        message: "Service Team Member updated.",
-        variant: "success"
-      })
+  }
+
+  async reloadLineItemsFromServer() {
+    if (this.wiredLineItemsResult) {
+      await refreshApex(this.wiredLineItemsResult);
+    }
+  }
+
+  handleBeginEditAssignment(event) {
+    const rowId = event.currentTarget.dataset.id;
+    if (!rowId) {
+      return;
+    }
+    if (this.editingRowIds.includes(rowId)) {
+      this.editingRowIds = this.editingRowIds.filter((id) => id !== rowId);
+    } else {
+      this.editingRowIds = [...this.editingRowIds, rowId];
+    }
+  }
+
+  handleServiceTeamMemberDraftChange(event) {
+    const rowId =
+      event.currentTarget?.dataset?.id || event.target?.dataset?.id;
+    const value = event.detail.value;
+    const draftId = value ? value : null;
+
+    if (!rowId) {
+      // Helps debug cases where the data-row id isn't coming through
+      // (e.g., lightning-combobox event target differences).
+      // eslint-disable-next-line no-console
+      console.warn(
+        "[WorkOrderLineItemsView] Missing rowId on draft change",
+        JSON.stringify({ value })
+      );
+      return;
+    }
+
+    this.workOrderLineItems = this.workOrderLineItems.map((item) =>
+      item.Id === rowId
+        ? { ...item, draftServiceTeamMemberId: draftId || "" }
+        : item
     );
+  }
+
+  handleCancelAssignments() {
+    this.workOrderLineItems = this.workOrderLineItems.map((item) => ({
+      ...item,
+      draftServiceTeamMemberId: item.savedServiceTeamMemberId || "",
+      assignmentDisplayLabel: item.serviceTeamMemberLabel || "—"
+    }));
+    this.editingRowIds = [];
+  }
+
+  async handleSaveAssignments() {
+    if (!this.hasPendingAssignmentChanges || this.isSaving) {
+      return;
+    }
+
+    const pendingUpdates = this.workOrderLineItems
+      .filter(
+        (item) =>
+          normalizeMemberId(item.draftServiceTeamMemberId) !==
+          normalizeMemberId(item.savedServiceTeamMemberId)
+      )
+      .map((item) => ({
+        lineItemId: item.Id,
+        serviceTeamMemberId: normalizeMemberId(item.draftServiceTeamMemberId)
+      }));
+
+    if (pendingUpdates.length === 0) {
+      return;
+    }
+
+    const lineItemIds = [];
+    const serviceTeamMemberIds = [];
+    pendingUpdates.forEach((item) => {
+      lineItemIds.push(item.lineItemId);
+      serviceTeamMemberIds.push(item.serviceTeamMemberId);
+    });
+
+    // eslint-disable-next-line no-console
+    console.log(
+      "[WorkOrderLineItemsView] save payload",
+      JSON.stringify({ pendingCount: pendingUpdates.length, lineItemIds, serviceTeamMemberIds })
+    );
+
+    if (lineItemIds.length === 0 || serviceTeamMemberIds.length === 0) {
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: "Nothing to save",
+          message:
+            "No line item IDs were collected from the UI. Check that Service Team Member draft changes are being applied to rows.",
+          variant: "error",
+          mode: "sticky"
+        })
+      );
+      return;
+    }
+
+    this.isSaving = true;
+    try {
+      const result = await saveServiceTeamMemberAssignments({
+        workOrderId: this.recordId,
+        lineItemIds,
+        serviceTeamMemberIds
+      });
+
+      const savedCount = result?.successCount ?? 0;
+
+      if (savedCount > 0) {
+        this.editingRowIds = [];
+        await this.reloadLineItemsFromServer();
+      }
+
+      if (result?.allSucceeded && savedCount > 0) {
+        this.dispatchEvent(
+          new ShowToastEvent({
+            title: "Success",
+            message: `${savedCount} assignment(s) saved.`,
+            variant: "success"
+          })
+        );
+        return;
+      }
+
+      const errorDetail = (result?.errors || []).join(" ");
+
+      if (savedCount > 0) {
+        this.dispatchEvent(
+          new ShowToastEvent({
+            title: "Partially saved",
+            message: `${savedCount} saved, ${result.failureCount} failed. ${errorDetail}`,
+            variant: "warning",
+            mode: "sticky"
+          })
+        );
+        return;
+      }
+
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: "Save failed",
+          message:
+            errorDetail || "No assignments were saved.",
+          variant: "error",
+          mode: "sticky"
+        })
+      );
+    } catch (error) {
+      const message =
+        error?.body?.message || error?.message || "Could not save assignments.";
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: "Save failed",
+          message,
+          variant: "error",
+          mode: "sticky"
+        })
+      );
+    } finally {
+      this.isSaving = false;
+    }
   }
 }
