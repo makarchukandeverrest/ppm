@@ -1,0 +1,107 @@
+.line-items-section {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.description-column {
+  width: 50%;
+  max-width: 50%;
+  min-width: 50%;
+  color: black;
+}
+
+.item-column {
+  width: 20%;
+  max-width: 20%;
+  min-width: 20%;
+  color: black;
+}
+
+.centered-header {
+  text-align: center;
+  color: black;
+}
+
+.centered-cell {
+  text-align: center;
+  width: 10%;
+  color: black;
+}
+
+th,
+td {
+  border: 1px solid #d8dde6;
+  color: black;
+}
+
+.fixed-header {
+  background-color: white;
+  border-bottom: 1px solid #d8dde6;
+  color: black;
+}
+
+.scrollable-body tr {
+  border-bottom: 1px solid #d8dde6;
+  color: black;
+}
+
+.info-section {
+  margin-bottom: 1rem;
+  width: 100%;
+  overflow-x: auto;
+}
+
+.info-section table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.estimate-header {
+  font-weight: bold;
+  text-align: left;
+  padding: 0.5rem;
+  border: none;
+  color: black;
+}
+
+.estimate-label {
+  font-weight: bold;
+  text-align: right;
+  padding: 0.5rem;
+  border: 1px solid #d8dde6;
+  color: black;
+}
+
+.estimate-value {
+  text-align: center;
+  padding: 0.5rem;
+  border: 1px solid #d8dde6;
+  color: black;
+}
+
+.customer-info {
+  padding: 0.5rem;
+  text-align: left;
+  border-left: 1px solid #d8dde6;
+  border-top: 1px solid #d8dde6;
+  border-bottom: 1px solid #d8dde6;
+  color: black;
+}
+
+.spacer {
+  height: 1rem;
+  border: none;
+}
+
+.create-member-modal,
+.create-member-backdrop {
+  position: fixed;
+}
+
+.create-member-modal {
+  z-index: 9001;
+}
+
+.create-member-backdrop {
+  z-index: 9000;
+}
