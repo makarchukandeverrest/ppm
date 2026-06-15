@@ -1,8 +1,11 @@
 import { LightningElement, wire, track } from 'lwc';
-import { getPicklistValues } from 'lightning/uiObjectInfoApi';
+import { getPicklistValues, getObjectInfo } from 'lightning/uiObjectInfoApi';
 import getCustomers from '@salesforce/apex/MapCustomersController.getCustomers';
+import ACCOUNT_OBJECT from '@salesforce/schema/Account';
+import CONTRACT_BID_OBJECT from '@salesforce/schema/Contract_Bid__c';
 import CONTRACT_PERIODS_FIELD from '@salesforce/schema/Account.Contract_Periods__c';
 import COUNTY_FIELD from '@salesforce/schema/Account.County__c';
+import CONTRACT_YEAR_FIELD from '@salesforce/schema/Contract_Bid__c.Contract_Year__c';
 
 const REGIONAL_MANAGER_OPTIONS = [
     { label: 'All', value: '' },
@@ -14,183 +17,145 @@ const REGIONAL_MANAGER_OPTIONS = [
     { label: 'Stanislav Kryshtalian', value: 'Stanislav Kryshtalian' }
 ];
 
-const COLUMNS = [
-    {
-        label: 'Customer Name',
-        type: 'button',
-        typeAttributes: {
-            label: { fieldName: 'Name' },
-            variant: 'base',
-            name: 'view_customer',
-            title: 'Click to view customer details'
-        },
-        sortable: true,
-        wrapText: true
-    },
-    {
-        label: 'Street',
-        fieldName: 'BillingStreet',
-        type: 'text',
-        sortable: true
-    },
-    {
-        label: 'City',
-        fieldName: 'BillingCity',
-        type: 'text',
-        sortable: true
-    },
-    {
-        label: 'State',
-        fieldName: 'BillingState',
-        type: 'text',
-        sortable: true
-    },
-    {
-        label: 'Contract Periods',
-        fieldName: 'Contract_Periods__c',
-        type: 'text',
-        sortable: true
-    }
-];
+const MAP_MARKER_PATH = 'M 0,0 C -2,-20 -10,-22 -10,-30 A 10,10 0 1,1 10,-30 C 10,-22 2,-20 0,0 z';
+const STAGE_CLOSED_WON = 'Closed - WON';
+const STAGE_CLOSED_LOST = 'Closed - LOST';
+const MARKER_COLOR_WON = '#09A711';
+const MARKER_COLOR_LOST = '#000000';
+const MARKER_COLOR_NO_BID = '#EA001E';
+const MARKER_COLOR_OTHER = '#FCC003';
+const MARKER_COLOR_MULTI = '#0176D3';
 
 export default class CustomersMap extends LightningElement {
-    mapMarkers = [];
     allCustomers = [];
     filteredCustomers = [];
     filteredMapMarkers = [];
-    columns = COLUMNS;
+    locationGroupMap = {};
     cardTitle = 'Customer Locations';
-    isLoading = true;
     @track selectedMarkerValue = '';
-    
-    // Pagination
-    @track pageSize = 10;
-    @track currentPage = 1;
-    
+    @track selectedCustomer = null;
+    @track selectedLocationKey = '';
+    @track customersAtSelectedLocation = [];
+
     // Default map settings
     @track zoomLevel = 11;
     @track defaultZoomLevel = 11;
     @track center = {};
     @track defaultCenter = {};
-    
+
     // Search properties
     @track searchTerm = '';
     @track selectedRegionalManager = '';
     @track selectedCounty = '';
     @track selectedContractPeriods = [];
+    @track selectedContractYear = '';
     @track regionalManagerOptions = REGIONAL_MANAGER_OPTIONS;
     @track countyOptions = [];
     @track contractPeriodOptions = [];
-    
-    // Record type ID (use default record type if you have multiple)
-    // For standard objects, you can often use the default record type ID
-    recordTypeId = '012000000000000AAA'; // Default record type ID
-    
-    // Map options
+    @track contractYearOptions = [];
+
+    recordTypeId;
+    contractBidRecordTypeId;
+
     mapOptions = {
-        'disableDefaultUI': false,
-        'draggable': true,
-        'scrollwheel': true
+        disableDefaultUI: false,
+        draggable: true,
+        scrollwheel: true
     };
 
-    // Wire for customers data
+    @wire(getObjectInfo, { objectApiName: ACCOUNT_OBJECT })
+    wiredObjectInfo({ data, error }) {
+        if (data) {
+            this.recordTypeId = data.defaultRecordTypeId;
+        } else if (error) {
+            console.error('Error loading Account object info:', error);
+        }
+    }
+
+    @wire(getObjectInfo, { objectApiName: CONTRACT_BID_OBJECT })
+    wiredContractBidObjectInfo({ data, error }) {
+        if (data) {
+            this.contractBidRecordTypeId = data.defaultRecordTypeId;
+        } else if (error) {
+            console.error('Error loading Contract Bid object info:', error);
+        }
+    }
+
     @wire(getCustomers)
     wiredCustomers({ error, data }) {
-        this.isLoading = false;
         if (data) {
             this.allCustomers = data;
             this.filteredCustomers = data;
             this.cardTitle = `Customer Locations (${data.length})`;
-            
-            // Set initial center
-            if (data.length > 0 && data[0].BillingPostalCode) {
-                this.center = {
-                    location: { PostalCode: data[0].BillingPostalCode }
-                };
-                this.defaultCenter = {
-                    location: { PostalCode: data[0].BillingPostalCode }
-                };
+
+            const firstMappableCustomer = data.find(customer => this.getCustomerMapLocation(customer));
+            if (firstMappableCustomer) {
+                const location = this.getCustomerMapLocation(firstMappableCustomer);
+                this.center = { location };
+                this.defaultCenter = { location };
             }
 
-            // Initialize markers based on current page
             this.updateFilteredMapMarkers(this.filteredCustomers);
         } else if (error) {
             console.error('Error loading customers:', error);
         }
     }
 
-    // Wire for Contract Periods picklist values using getPicklistValues
-    @wire(getPicklistValues, { 
-        recordTypeId: '$recordTypeId', 
-        fieldApiName: CONTRACT_PERIODS_FIELD 
+    @wire(getPicklistValues, {
+        recordTypeId: '$recordTypeId',
+        fieldApiName: CONTRACT_PERIODS_FIELD
     })
     wiredContractPeriods({ error, data }) {
         if (data) {
-            // Convert picklist entries to options array
             this.contractPeriodOptions = data.values.map(entry => ({
                 label: entry.label,
                 value: entry.value
             }));
-            console.log('Contract Period options loaded via getPicklistValues:', this.contractPeriodOptions);
         } else if (error) {
             console.error('Error loading contract period picklist values:', error);
-            // Fallback: You could still call Apex if needed
         }
     }
 
-    // Wire for County picklist values using getPicklistValues
-    @wire(getPicklistValues, { 
-        recordTypeId: '$recordTypeId', 
-        fieldApiName: COUNTY_FIELD 
+    @wire(getPicklistValues, {
+        recordTypeId: '$recordTypeId',
+        fieldApiName: COUNTY_FIELD
     })
     wiredCounty({ error, data }) {
         if (data) {
-            // Convert picklist entries to options array
             this.countyOptions = data.values.map(entry => ({
                 label: entry.label,
                 value: entry.value
             }));
-            
-            // Add "All Counties" option at the beginning
+
             this.countyOptions.unshift({
                 label: 'All Counties',
                 value: ''
             });
-            
-            console.log('County options loaded via getPicklistValues:', this.countyOptions);
         } else if (error) {
             console.error('Error loading county picklist values:', error);
-            // Fallback: You could still call Apex if needed
         }
     }
 
-    updateMapMarkers(customerData) {
-        const staticMarkers = this.mapMarkers.filter(marker => 
-            marker.type === 'Polygon' || marker.mapIcon
-        );
-        
-        // Use current page slice for markers so map matches datatable
-        const start = (this.currentPage - 1) * this.pageSize;
-        const end = start + this.pageSize;
-        const pageCustomers = customerData.slice(start, end);
-        
-        const customerMarkers = pageCustomers.map(customer => {
-            return {
-                location: { 
-                    PostalCode: customer.BillingPostalCode
-                },
-                value: customer.Id,
-                title: customer.Name,
-                description: this.getCustomerDescription(customer),
-                icon: 'standard:account'
-            };
-        });
+    @wire(getPicklistValues, {
+        recordTypeId: '$contractBidRecordTypeId',
+        fieldApiName: CONTRACT_YEAR_FIELD
+    })
+    wiredContractYear({ error, data }) {
+        if (data) {
+            this.contractYearOptions = data.values.map(entry => ({
+                label: entry.label,
+                value: entry.value
+            }));
 
-        this.mapMarkers = [...customerMarkers, ...staticMarkers];
-        this.filteredMapMarkers = [...customerMarkers, ...staticMarkers];
+            this.contractYearOptions.unshift({
+                label: 'All Contract Years',
+                value: ''
+            });
+        } else if (error) {
+            console.error('Error loading contract year picklist values:', error);
+        }
     }
 
-    // Search handlers
     handleSearch(event) {
         this.searchTerm = event.target.value.trim().toLowerCase();
         this.filterCustomers();
@@ -206,208 +171,255 @@ export default class CustomersMap extends LightningElement {
         this.filterCustomers();
     }
 
-    // Handle Contract Periods multi-select
     handleContractPeriodsChange(event) {
-        this.selectedContractPeriods = event.detail.value;
+        this.selectedContractPeriods = event.detail.value || [];
         this.filterCustomers();
-        console.log('Selected Contract Periods:', this.selectedContractPeriods);
     }
 
-    // Clear all filters and reset zoom
+    handleContractYearChange(event) {
+        this.selectedContractYear = event.detail.value;
+        this.filterCustomers();
+    }
+
     handleClearSearch() {
         this.searchTerm = '';
         this.selectedRegionalManager = '';
         this.selectedCounty = '';
         this.selectedContractPeriods = [];
-        
-        // Clear input fields
+        this.selectedContractYear = '';
+
         const inputs = this.template.querySelectorAll('lightning-input');
         inputs.forEach(input => {
             input.value = '';
         });
-        
-        // Clear comboboxes
+
         const stateCombo = this.template.querySelector('[name="countyFilter"]');
-        const contactPeriodCombo = this.template.querySelector('[data-name="contractPeriodFilter"]');
+        const contractPeriodFilter = this.template.querySelector('[name="contractPeriodFilter"]');
+        const contractYearFilter = this.template.querySelector('[name="contractYearFilter"]');
         const regionalManagerCombo = this.template.querySelector('[data-name="regionalManagerFilter"]');
-        
+
         if (stateCombo) stateCombo.value = '';
-        if (contactPeriodCombo) contactPeriodCombo.value = [];
+        if (contractPeriodFilter) contractPeriodFilter.value = [];
+        if (contractYearFilter) contractYearFilter.value = '';
         if (regionalManagerCombo) regionalManagerCombo.value = '';
-        
-        // Reset zoom to default state
+
         this.resetZoomToDefault();
-        
+        this.selectedCustomer = null;
+        this.selectedMarkerValue = '';
+        this.clearLocationSelection();
         this.filterCustomers();
     }
 
-    // Reset zoom and center to default state
     resetZoomToDefault() {
         this.zoomLevel = this.defaultZoomLevel;
-        this.center = {...this.defaultCenter};
-        console.log('Map reset to default zoom and center');
+        this.center = { ...this.defaultCenter };
     }
 
-    // Filter customers based on all search criteria
     filterCustomers() {
         if (!this.hasActiveFilters) {
             this.filteredCustomers = [...this.allCustomers];
             this.cardTitle = `Customer Locations (${this.allCustomers.length})`;
-            this.currentPage = 1;
             this.updateFilteredMapMarkers(this.filteredCustomers);
+            this.syncSelectedCustomer();
             return;
         }
 
-        const filtered = this.allCustomers.filter(customer => 
+        const filtered = this.allCustomers.filter(customer =>
             this.customerMatchesAllFilters(customer)
         );
-        
+
         this.filteredCustomers = filtered;
         this.cardTitle = `Customer Locations (${filtered.length} of ${this.allCustomers.length})`;
-        this.currentPage = 1;
         this.updateFilteredMapMarkers(this.filteredCustomers);
+        this.syncSelectedCustomer();
     }
 
-    // Check if customer matches all active filters
+    syncSelectedCustomer() {
+        if (
+            this.selectedCustomer &&
+            !this.filteredCustomers.some(customer => customer.Id === this.selectedCustomer.Id)
+        ) {
+            this.selectedCustomer = null;
+            this.selectedMarkerValue = '';
+        }
+
+        if (!this.selectedLocationKey) {
+            return;
+        }
+
+        const visibleCustomers = (this.locationGroupMap[this.selectedLocationKey] || [])
+            .filter(customer => this.filteredCustomers.some(filtered => filtered.Id === customer.Id));
+
+        if (visibleCustomers.length === 0) {
+            this.clearLocationSelection();
+            return;
+        }
+
+        this.customersAtSelectedLocation = this.buildLocationCustomerSummaries(visibleCustomers);
+
+        if (
+            this.selectedCustomer &&
+            !visibleCustomers.some(customer => customer.Id === this.selectedCustomer.Id)
+        ) {
+            this.selectedCustomer = null;
+            this.selectedMarkerValue = `group:${this.selectedLocationKey}`;
+        }
+    }
+
+    clearLocationSelection() {
+        this.selectedLocationKey = '';
+        this.customersAtSelectedLocation = [];
+    }
+
     customerMatchesAllFilters(customer) {
-        // Name/Email filter
         if (this.searchTerm) {
             const nameMatch = customer.Name && customer.Name.toLowerCase().includes(this.searchTerm);
             const emailMatch = customer.Email && customer.Email.toLowerCase().includes(this.searchTerm);
             if (!nameMatch && !emailMatch) return false;
         }
 
-        // County filter
         if (this.selectedCounty && customer.County__c !== this.selectedCounty) {
             return false;
         }
 
-        // Regional Manager filter
         if (this.selectedRegionalManager) {
             if (!customer.Regional_Manager__c) {
                 return false;
             }
             const managerName = customer.Regional_Manager__r.Name;
-            const managerMatch = managerName === this.selectedRegionalManager;
-            if (!managerMatch) {
+            if (managerName !== this.selectedRegionalManager) {
                 return false;
             }
         }
 
-        // Contract Periods filter (multi-select picklist)
-        if (this.selectedContractPeriods && this.selectedContractPeriods.length > 0) {
-            if (!customer.Contract_Periods__c) return false;
-            
-            // Split the multi-select picklist value
-            const customerPeriods = customer.Contract_Periods__c.split(';').map(p => p.trim());
-            
-            // Check if ANY of the selected periods match ANY of the customer's periods
-            const hasMatchingPeriod = this.selectedContractPeriods.some(selectedPeriod => 
+        if (this.getSelectedContractPeriods().length > 0) {
+            const customerPeriods = this.getCustomerContractPeriods(customer);
+            if (customerPeriods.length === 0) {
+                return false;
+            }
+
+            const hasMatchingPeriod = this.getSelectedContractPeriods().some(selectedPeriod =>
                 customerPeriods.includes(selectedPeriod)
             );
-            
-            if (!hasMatchingPeriod) return false;
+
+            if (!hasMatchingPeriod) {
+                return false;
+            }
+        }
+
+        if (this.selectedContractYear) {
+            const bid = customer.Recent_Contract_Bid__r;
+            if (!bid || bid.Contract_Year__c !== this.selectedContractYear) {
+                return false;
+            }
         }
 
         return true;
     }
 
-    // Update only the filtered map markers
     updateFilteredMapMarkers(customerData) {
-        const staticMarkers = this.mapMarkers.filter(marker => 
-            marker.type === 'Polygon' || marker.mapIcon
-        );
+        const groups = new Map();
 
-        // Use current page slice so map markers match the datatable page
-        const start = (this.currentPage - 1) * this.pageSize;
-        const end = start + this.pageSize;
-        const pageCustomers = customerData.slice(start, end);
+        customerData.forEach(customer => {
+            const location = this.getCustomerMapLocation(customer);
+            if (!location) {
+                return;
+            }
 
-        const customerMarkers = pageCustomers.map(customer => {
-            return {
-                location: { 
-                    PostalCode: customer.BillingPostalCode
-                },
-                value: customer.Id,
-                title: customer.Name,
-                description: this.getCustomerDescription(customer),
-                icon: 'standard:account'
-            };
+            const locationKey = this.getAddressKey(customer, location);
+            if (!groups.has(locationKey)) {
+                groups.set(locationKey, {
+                    location,
+                    customers: []
+                });
+            }
+
+            groups.get(locationKey).customers.push(customer);
         });
 
-        this.filteredMapMarkers = [...customerMarkers, ...staticMarkers];
+        this.locationGroupMap = {};
+        const customerMarkers = [];
+
+        groups.forEach((group, locationKey) => {
+            this.locationGroupMap[locationKey] = group.customers;
+            const customerCount = group.customers.length;
+
+            if (customerCount === 1) {
+                const customer = group.customers[0];
+                customerMarkers.push({
+                    location: group.location,
+                    value: customer.Id,
+                    title: customer.Name,
+                    description: this.getCustomerDescription(customer),
+                    mapIcon: this.getCustomerMapIcon(customer)
+                });
+                return;
+            }
+
+            customerMarkers.push({
+                location: group.location,
+                value: `group:${locationKey}`,
+                title: `${customerCount} customers at this address`,
+                description: this.getLocationGroupDescription(group.customers),
+                mapIcon: this.getLocationGroupMapIcon(customerCount)
+            });
+        });
+
+        this.filteredMapMarkers = customerMarkers;
     }
 
-    // Pagination helpers
-    get pagedCustomers() {
-        const start = (this.currentPage - 1) * this.pageSize;
-        const end = start + this.pageSize;
-        return this.filteredCustomers.slice(start, end);
-    }
-
-    get totalPages() {
-        if (!this.filteredCustomers || this.filteredCustomers.length === 0) {
-            return 1;
+    getAddressKey(customer, location) {
+        if (location.Latitude != null && location.Longitude != null) {
+            return `coord:${location.Latitude},${location.Longitude}`;
         }
-        return Math.ceil(this.filteredCustomers.length / this.pageSize);
+
+        return [
+            'addr',
+            customer.BillingStreet,
+            customer.BillingCity,
+            customer.BillingState,
+            customer.BillingPostalCode,
+            customer.BillingCountry
+        ].join('|').toLowerCase();
     }
 
-    get isFirstPage() {
-        return this.currentPage <= 1;
+    getLocationGroupDescription(customers) {
+        const address = this.formatCustomerAddress(customers[0]);
+        let description = `<b>${customers.length} customers share this address</b><br/>${address}<br/><br/>`;
+
+        customers.forEach(customer => {
+            const status = this.getCustomerMarkerStatus(customer);
+            description += `&#8226; ${customer.Name} (${status.label})<br/>`;
+        });
+
+        return description;
     }
 
-    get isLastPage() {
-        return this.currentPage >= this.totalPages;
+    getLocationGroupMapIcon(customerCount) {
+        return {
+            path: MAP_MARKER_PATH,
+            fillColor: MARKER_COLOR_MULTI,
+            fillOpacity: 1,
+            strokeColor: '#FFFFFF',
+            strokeOpacity: 1,
+            strokeWeight: 1.5,
+            scale: customerCount > 5 ? 1.25 : 1.1
+        };
     }
 
-    get totalRecords() {
-        return this.filteredCustomers ? this.filteredCustomers.length : 0;
+    buildLocationCustomerSummaries(customers) {
+        return customers.map(customer => {
+            const status = this.getCustomerMarkerStatus(customer);
+            return {
+                id: customer.Id,
+                name: customer.Name,
+                statusLabel: status.label,
+                statusClass: status.badgeClass
+            };
+        });
     }
 
-    handlePageSizeClick(event) {
-        const size = parseInt(event.target.dataset.size, 10);
-        if (!isNaN(size) && size > 0) {
-            this.pageSize = size;
-            this.currentPage = 1;
-            this.updateFilteredMapMarkers(this.filteredCustomers);
-        }
-    }
-
-    handleFirstPage() {
-        if (!this.isFirstPage) {
-            this.currentPage = 1;
-            this.updateFilteredMapMarkers(this.filteredCustomers);
-        }
-    }
-
-    handlePreviousPage() {
-        if (!this.isFirstPage) {
-            this.currentPage -= 1;
-            this.updateFilteredMapMarkers(this.filteredCustomers);
-        }
-    }
-
-    handleNextPage() {
-        if (!this.isLastPage) {
-            this.currentPage += 1;
-            this.updateFilteredMapMarkers(this.filteredCustomers);
-        }
-    }
-
-    handleLastPage() {
-        if (!this.isLastPage) {
-            this.currentPage = this.totalPages;
-            this.updateFilteredMapMarkers(this.filteredCustomers);
-        }
-    }
-
-    // Computed property to check if any filters are active
-    get hasActiveFilters() {
-        return this.searchTerm || this.selectedRegionalManager || 
-               this.selectedCounty || (this.selectedContractPeriods && this.selectedContractPeriods.length > 0);
-    }
-
-    getCustomerDescription(customer) {
+    formatCustomerAddress(customer) {
         const addressParts = [
             customer.BillingStreet,
             customer.BillingCity,
@@ -416,97 +428,299 @@ export default class CustomersMap extends LightningElement {
             customer.BillingCountry
         ].filter(part => part);
 
-        const address = addressParts.length > 0 ? addressParts.join(', ') : 'Address not available';
-        
-        // Add Contract Periods to description if available
-        let description = `Address: ${address}`;
+        return addressParts.length > 0 ? addressParts.join(', ') : 'Address not available';
+    }
+
+    hasCoordinates(customer) {
+        return customer.BillingLatitude != null && customer.BillingLongitude != null;
+    }
+
+    hasPostalCode(customer) {
+        return Boolean(customer.BillingPostalCode);
+    }
+
+    getCustomerMapLocation(customer) {
+        if (this.hasCoordinates(customer)) {
+            return {
+                Latitude: customer.BillingLatitude,
+                Longitude: customer.BillingLongitude
+            };
+        }
+
+        if (customer.BillingStreet || customer.BillingCity || customer.BillingState) {
+            return {
+                Street: customer.BillingStreet,
+                City: customer.BillingCity,
+                State: customer.BillingState,
+                PostalCode: customer.BillingPostalCode,
+                Country: customer.BillingCountry
+            };
+        }
+
+        if (this.hasPostalCode(customer)) {
+            return { PostalCode: customer.BillingPostalCode };
+        }
+
+        return null;
+    }
+
+    getCustomerMapIcon(customer) {
+        const status = this.getCustomerMarkerStatus(customer);
+
+        return {
+            path: MAP_MARKER_PATH,
+            fillColor: status.color,
+            fillOpacity: 1,
+            strokeColor: status.strokeColor,
+            strokeOpacity: 1,
+            strokeWeight: 1,
+            scale: 1
+        };
+    }
+
+    getCustomerMarkerStatus(customer) {
+        const bid = customer.Recent_Contract_Bid__r;
+
+        if (!customer.Recent_Contract_Bid__c || !bid) {
+            return {
+                label: 'No Recent Bid',
+                color: MARKER_COLOR_NO_BID,
+                badgeClass: 'status-badge status-badge_no-bid',
+                strokeColor: '#000000'
+            };
+        }
+
+        if (bid.Stage__c === STAGE_CLOSED_WON) {
+            return {
+                label: STAGE_CLOSED_WON,
+                color: MARKER_COLOR_WON,
+                badgeClass: 'status-badge status-badge_won',
+                strokeColor: '#000000'
+            };
+        }
+
+        if (bid.Stage__c === STAGE_CLOSED_LOST) {
+            return {
+                label: STAGE_CLOSED_LOST,
+                color: MARKER_COLOR_LOST,
+                badgeClass: 'status-badge status-badge_lost',
+                strokeColor: '#FFFFFF'
+            };
+        }
+
+        return {
+            label: bid.Stage__c || 'Other Stage',
+            color: MARKER_COLOR_OTHER,
+            badgeClass: 'status-badge status-badge_other',
+            strokeColor: '#000000'
+        };
+    }
+
+    get hasActiveFilters() {
+        return this.searchTerm || this.selectedRegionalManager ||
+            this.selectedCounty || this.selectedContractYear ||
+            this.getSelectedContractPeriods().length > 0;
+    }
+
+    getSelectedContractPeriods() {
+        if (!this.selectedContractPeriods) {
+            return [];
+        }
+
+        if (Array.isArray(this.selectedContractPeriods)) {
+            return this.selectedContractPeriods;
+        }
+
+        return [this.selectedContractPeriods];
+    }
+
+    getCustomerContractPeriods(customer) {
+        if (!customer.Contract_Periods__c) {
+            return [];
+        }
+
+        return customer.Contract_Periods__c
+            .split(';')
+            .map(period => period.trim())
+            .filter(period => period);
+    }
+
+    getCustomerDescription(customer) {
+        const address = this.formatCustomerAddress(customer);
+        const markerStatus = this.getCustomerMarkerStatus(customer);
+
+        let description = `<b>${markerStatus.label}</b><br/>Address: ${address}`;
+
         if (customer.Contract_Periods__c) {
             description += `<br/>Contract Periods: ${customer.Contract_Periods__c}`;
         }
         if (customer.Email__c) {
             description += `<br/>Email: ${customer.Email__c}`;
         }
-        
+
+        description += this.getRecentContractBidDescription(customer);
+
         return description;
     }
 
-    // ... other computed properties and methods remain the same
-    get hasMarkers() {
-        return this.mapMarkers && this.mapMarkers.length > 0;
+    getRecentContractBidDescription(customer) {
+        const bid = customer.Recent_Contract_Bid__r;
+        if (!bid) {
+            return '<br/><br/><b>Recent Contract Bid:</b> None';
+        }
+
+        let description = '<br/><br/><b>Recent Contract Bid</b>';
+        description += `<br/>Name: ${bid.Name || '—'}`;
+
+        if (bid.Stage__c) {
+            description += `<br/>Stage: ${bid.Stage__c}`;
+        }
+        if (bid.Contract_Year__c) {
+            description += `<br/>Contract Year: ${bid.Contract_Year__c}`;
+        }
+        if (bid.Contract_Start_Date__c) {
+            description += `<br/>Start Date: ${this.formatDate(bid.Contract_Start_Date__c)}`;
+        }
+        if (bid.Contract_End_Date__c) {
+            description += `<br/>End Date: ${this.formatDate(bid.Contract_End_Date__c)}`;
+        }
+        if (bid.Due_Date__c) {
+            description += `<br/>Due Date: ${this.formatDate(bid.Due_Date__c)}`;
+        }
+        if (bid.Total__c != null) {
+            description += `<br/>Total: ${bid.Total__c}`;
+        }
+
+        return description;
     }
 
-    get hasCustomers() {
-        return this.allCustomers && this.allCustomers.length > 0;
+    formatDate(dateValue) {
+        if (!dateValue) {
+            return '';
+        }
+
+        const date = new Date(dateValue);
+        if (Number.isNaN(date.getTime())) {
+            return dateValue;
+        }
+
+        return date.toLocaleDateString();
+    }
+
+    get hasSelectedCustomer() {
+        return Boolean(this.selectedCustomer);
+    }
+
+    get selectedCustomerStatusLabel() {
+        if (!this.selectedCustomer) {
+            return '';
+        }
+
+        return this.getCustomerMarkerStatus(this.selectedCustomer).label;
+    }
+
+    get selectedCustomerStatusClass() {
+        if (!this.selectedCustomer) {
+            return '';
+        }
+
+        return this.getCustomerMarkerStatus(this.selectedCustomer).badgeClass;
+    }
+
+    get selectedCustomerAddress() {
+        if (!this.selectedCustomer) {
+            return '';
+        }
+
+        return this.formatCustomerAddress(this.selectedCustomer);
+    }
+
+    get hasSelectedLocationGroup() {
+        return this.customersAtSelectedLocation.length > 1;
+    }
+
+    get selectedLocationAddress() {
+        if (!this.selectedLocationKey || !this.locationGroupMap[this.selectedLocationKey]?.length) {
+            return '';
+        }
+
+        return this.formatCustomerAddress(this.locationGroupMap[this.selectedLocationKey][0]);
+    }
+
+    get selectedLocationCountLabel() {
+        return `${this.customersAtSelectedLocation.length} customers at this address`;
+    }
+
+    get selectedRecentBid() {
+        return this.selectedCustomer?.Recent_Contract_Bid__r || null;
+    }
+
+    get hasSelectedRecentBid() {
+        return Boolean(this.selectedRecentBid);
+    }
+
+    get showSelectedRecentBidTotal() {
+        return this.selectedRecentBid && this.selectedRecentBid.Total__c != null;
     }
 
     get hasFilteredMarkers() {
         return this.filteredMapMarkers && this.filteredMapMarkers.length > 0;
     }
 
-    get hasFilteredCustomers() {
-        return this.filteredCustomers && this.filteredCustomers.length > 0;
-    }
-
-    handleRowAction(event) {
-        try {
-            const action = event.detail.action;
-            const row = event.detail.row;
-            
-            switch (action.name) {
-                case 'view_customer':
-                    console.log('Customer button clicked:', row.Id);
-                    this.onCustomerSelected(row.Id);
-                    break;
-                default:
-                    console.warn('Unknown action:', action.name);
-                    break;
-            }
-        } catch (error) {
-            console.error('Error in handleRowAction:', error);
+    zoomToCustomer(customer) {
+        const location = this.getCustomerMapLocation(customer);
+        if (!location) {
+            return;
         }
-    }
 
-    onCustomerSelected(selectedId) {
-        this.selectedMarkerValue = selectedId;
-        
-        const selectedCustomer = this.allCustomers.find(customer => customer.Id === selectedId);
-        if (selectedCustomer && selectedCustomer.BillingPostalCode) {
-            this.zoomToMarker(selectedCustomer.BillingPostalCode);
-        }
-        
-        this.handleMarkerSelect({
-            "isTrusted": false,
-            "composed": true, 
-            target: {
-                "$$ShadowedNodeKey$$": 256,
-                "$$HostElementKey$$": 55, 
-                selectedMarkerValue: selectedId
-            }
-        });
-    }
-
-    zoomToMarker(postalCode) {
         this.zoomLevel = 15;
-        this.center = {
-            location: { PostalCode: postalCode }
-        };
-        console.log('Zooming to marker with postal code:', postalCode);
+        this.center = { location };
     }
 
     handleMarkerSelect(event) {
         try {
-            console.log('Map marker selected:', JSON.stringify(event.target.selectedMarkerValue));
-            if (event.target && event.target.selectedMarkerValue) {
-                this.selectedMarkerValue = event.target.selectedMarkerValue;
-                console.log('Selected customer from map:', this.selectedMarkerValue);
-                
-                const selectedCustomer = this.allCustomers.find(customer => customer.Id === this.selectedMarkerValue);
-                if (selectedCustomer && selectedCustomer.BillingPostalCode) {
-                    this.zoomToMarker(selectedCustomer.BillingPostalCode);
+            if (!event.target?.selectedMarkerValue) {
+                return;
+            }
+
+            const markerValue = event.target.selectedMarkerValue;
+            this.selectedMarkerValue = markerValue;
+
+            if (markerValue.startsWith('group:')) {
+                const locationKey = markerValue.replace('group:', '');
+                this.selectedLocationKey = locationKey;
+                this.selectedCustomer = null;
+                this.customersAtSelectedLocation = this.buildLocationCustomerSummaries(
+                    this.locationGroupMap[locationKey] || []
+                );
+
+                const firstCustomer = this.locationGroupMap[locationKey]?.[0];
+                if (firstCustomer) {
+                    this.zoomToCustomer(firstCustomer);
                 }
+                return;
+            }
+
+            this.clearLocationSelection();
+
+            const selectedCustomer = this.allCustomers.find(customer => customer.Id === markerValue);
+            if (selectedCustomer) {
+                this.selectedCustomer = selectedCustomer;
+                this.zoomToCustomer(selectedCustomer);
             }
         } catch (error) {
             console.error('Error in handleMarkerSelect:', error);
+        }
+    }
+
+    handleLocationCustomerSelect(event) {
+        const customerId = event.currentTarget.dataset.id;
+        const selectedCustomer = this.allCustomers.find(customer => customer.Id === customerId);
+
+        if (selectedCustomer) {
+            this.selectedCustomer = selectedCustomer;
+            this.selectedMarkerValue = customerId;
+            this.zoomToCustomer(selectedCustomer);
         }
     }
 }
