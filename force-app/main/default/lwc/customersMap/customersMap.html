@@ -3,6 +3,12 @@
         <div class="slds-p-around_medium">
             <!-- Search Section -->
             <div class="slds-m-bottom_medium">
+                <template if:true={hasLoadError}>
+                    <div class="slds-notify slds-notify_alert slds-alert_error slds-m-bottom_small" role="alert">
+                        <span class="slds-assistive-text">Error</span>
+                        <h2>{loadErrorMessage}</h2>
+                    </div>
+                </template>
                 <div class="slds-grid slds-wrap slds-gutters">
                     <!-- Name/Email Search -->
                     <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-m-bottom_small">
@@ -197,6 +203,75 @@
                                 <strong>Address:</strong> {selectedCustomerAddress}
                             </p>
 
+                            <dl class="detail-list slds-m-bottom_small">
+                                <template if:true={selectedCustomer.managementCompanyName}>
+                                    <div class="detail-list__row">
+                                        <dt>Management Company</dt>
+                                        <dd>
+                                            <lightning-formatted-url
+                                                value={selectedManagementCompanyUrl}
+                                                label={selectedCustomer.managementCompanyName}
+                                                target="_blank">
+                                            </lightning-formatted-url>
+                                        </dd>
+                                    </div>
+                                </template>
+                                <div class="detail-list__row">
+                                    <dt>Primary Contact</dt>
+                                    <dd>
+                                        <template if:true={selectedCustomer.primaryContactId}>
+                                            <lightning-formatted-url
+                                                value={selectedPrimaryContactUrl}
+                                                label={selectedCustomer.primaryContactName}
+                                                target="_blank">
+                                            </lightning-formatted-url>
+                                            <template if:true={selectedCustomer.primaryContactPhone}>
+                                                <div class="slds-text-body_small slds-text-color_weak">
+                                                    <lightning-formatted-phone value={selectedCustomer.primaryContactPhone}></lightning-formatted-phone>
+                                                </div>
+                                            </template>
+                                            <template if:true={selectedCustomer.primaryContactEmail}>
+                                                <div class="slds-text-body_small slds-text-color_weak">
+                                                    <lightning-formatted-email value={selectedCustomer.primaryContactEmail}></lightning-formatted-email>
+                                                </div>
+                                            </template>
+                                        </template>
+                                        <template if:false={selectedCustomer.primaryContactId}>
+                                            <span class="slds-text-color_weak">—</span>
+                                        </template>
+                                    </dd>
+                                </div>
+                                <template if:true={selectedCustomer.regionalManagerName}>
+                                    <div class="detail-list__row">
+                                        <dt>Regional Manager</dt>
+                                        <dd>{selectedCustomer.regionalManagerName}</dd>
+                                    </div>
+                                </template>
+                                <template if:true={selectedCustomer.contractBidColoredLabels}>
+                                    <div class="detail-list__row">
+                                        <dt>Label</dt>
+                                        <dd>
+                                            <lightning-formatted-rich-text
+                                                value={selectedCustomer.contractBidColoredLabels}
+                                            ></lightning-formatted-rich-text>
+                                        </dd>
+                                    </div>
+                                </template>
+                                <template if:true={selectedCustomer.lastActivitySubject}>
+                                    <div class="detail-list__row">
+                                        <dt>Last Activity</dt>
+                                        <dd>
+                                            {selectedCustomer.lastActivityType} — {selectedCustomer.lastActivitySubject}
+                                            <template if:true={selectedCustomer.lastActivityDateTime}>
+                                                <span class="slds-m-left_x-small">
+                                                    (<lightning-formatted-date-time value={selectedCustomer.lastActivityDateTime}></lightning-formatted-date-time>)
+                                                </span>
+                                            </template>
+                                        </dd>
+                                    </div>
+                                </template>
+                            </dl>
+
                             <div class="slds-text-body_small slds-m-bottom_small">
                                 <lightning-formatted-url
                                     value={selectedCustomerUrl}
@@ -287,6 +362,13 @@
                             </template>
                             <template if:false={hasSelectedRecentBid}>
                                 <p class="slds-text-body_regular slds-text-color_weak">No Recent Contract Bid linked.</p>
+                            </template>
+
+                            <template if:true={selectedCustomer.contractBidDescription}>
+                                <div class="slds-m-top_small">
+                                    <h4 class="slds-text-heading_small slds-m-bottom_x-small">Notes</h4>
+                                    <p class="slds-text-body_regular">{selectedCustomer.contractBidDescription}</p>
+                                </div>
                             </template>
                         </div>
                     </template>

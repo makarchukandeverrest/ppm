@@ -33,6 +33,7 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
     filteredMapMarkers = [];
     locationGroupMap = {};
     cardTitle = 'Customer Locations';
+    loadErrorMessage = '';
     @track selectedMarkerValue = '';
     @track selectedCustomer = null;
     @track selectedLocationKey = '';
@@ -85,6 +86,7 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
     @wire(getCustomers)
     wiredCustomers({ error, data }) {
         if (data) {
+            this.loadErrorMessage = '';
             this.allCustomers = data;
             this.filteredCustomers = data;
             this.cardTitle = `Customer Locations (${data.length})`;
@@ -98,8 +100,30 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
 
             this.updateFilteredMapMarkers(this.filteredCustomers);
         } else if (error) {
+            // Show error in UI (wire errors are otherwise invisible)
+            // eslint-disable-next-line no-console
             console.error('Error loading customers:', error);
+            this.loadErrorMessage = this.normalizeErrorMessage(error) || 'Error loading customers.';
+            this.allCustomers = [];
+            this.filteredCustomers = [];
+            this.filteredMapMarkers = [];
         }
+    }
+
+    normalizeErrorMessage(error) {
+        if (!error) return '';
+        const body = error.body;
+        if (Array.isArray(body)) {
+            return body.map(e => e.message).filter(Boolean).join(', ');
+        }
+        if (typeof body === 'string') return body;
+        if (body && typeof body.message === 'string') return body.message;
+        if (typeof error.message === 'string') return error.message;
+        return '';
+    }
+
+    get hasLoadError() {
+        return Boolean(this.loadErrorMessage);
     }
 
     @wire(getPicklistValues, {
@@ -652,6 +676,20 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
             return '';
         }
         return `/lightning/r/Account/${this.selectedCustomer.accountId}/view`;
+    }
+
+    get selectedPrimaryContactUrl() {
+        if (!this.selectedCustomer?.primaryContactId) {
+            return '';
+        }
+        return `/lightning/r/Contact/${this.selectedCustomer.primaryContactId}/view`;
+    }
+
+    get selectedManagementCompanyUrl() {
+        if (!this.selectedCustomer?.managementCompanyId) {
+            return '';
+        }
+        return `/lightning/r/Management_Company__c/${this.selectedCustomer.managementCompanyId}/view`;
     }
 
     get hasSelectedLocationGroup() {

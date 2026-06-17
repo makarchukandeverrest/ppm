@@ -17,6 +17,12 @@ public with sharing class MapCustomersController {
         @AuraEnabled public String regionalManagerName;
         @AuraEnabled public Boolean currentCustomer;
 
+        // Primary Contact (Account)
+        @AuraEnabled public Id primaryContactId;
+        @AuraEnabled public String primaryContactName;
+        @AuraEnabled public String primaryContactPhone;
+        @AuraEnabled public String primaryContactEmail;
+
         // Contract Bid fields (Recent or Latest-by-start-date)
         @AuraEnabled public Id contractBidId;
         @AuraEnabled public String contractBidName;
@@ -26,6 +32,18 @@ public with sharing class MapCustomersController {
         @AuraEnabled public Date dueDate;
         @AuraEnabled public String contractYear;
         @AuraEnabled public Decimal total;
+
+        // Extra Contract Bid fields
+        @AuraEnabled public Id managementCompanyId;
+        @AuraEnabled public String managementCompanyName;
+        @AuraEnabled public String contractBidLabel; // multi-select picklist raw value
+        @AuraEnabled public String contractBidColoredLabels; // formula HTML from Colored_Labels__c
+        @AuraEnabled public String contractBidDescription; // using Additional_Comments__c for notes
+
+        // Latest Activity (Task/Event) on Account
+        @AuraEnabled public String lastActivitySubject;
+        @AuraEnabled public Datetime lastActivityDateTime;
+        @AuraEnabled public String lastActivityType; // 'Task' or 'Event'
     }
 
     private static CustomerMapRow toRow(Account a, Contract_Bid__c bid) {
@@ -47,6 +65,10 @@ public with sharing class MapCustomersController {
         row.email = a.Email__c;
         row.currentCustomer = a.Current_Customer__c;
         row.regionalManagerName = (a.Regional_Manager__r != null) ? a.Regional_Manager__r.Name : null;
+        row.primaryContactId = a.Primary_Contact__c;
+        row.primaryContactName = (a.Primary_Contact__r != null) ? a.Primary_Contact__r.Name : null;
+        row.primaryContactPhone = (a.Primary_Contact__r != null) ? a.Primary_Contact__r.Phone : null;
+        row.primaryContactEmail = (a.Primary_Contact__r != null) ? a.Primary_Contact__r.Email : null;
 
         if (bid != null) {
             row.contractBidId = bid.Id;
@@ -57,9 +79,83 @@ public with sharing class MapCustomersController {
             row.dueDate = bid.Due_Date__c;
             row.contractYear = bid.Contract_Year__c;
             row.total = bid.Total__c;
+
+            row.managementCompanyId = bid.Management_Company__c;
+            row.managementCompanyName = (bid.Management_Company__r != null) ? bid.Management_Company__r.Name : null;
+            row.contractBidLabel = bid.Label__c;
+            row.contractBidColoredLabels = bid.Colored_Labels__c;
+            row.contractBidDescription = bid.Additional_Comments__c;
         }
 
         return row;
+    }
+
+    private class ActivityPick {
+        public String subject;
+        public Datetime dt;
+        public String typeName;
+        public ActivityPick(String subject, Datetime dt, String typeName) {
+            this.subject = subject;
+            this.dt = dt;
+            this.typeName = typeName;
+        }
+    }
+
+    private static void populateLatestActivity(List<CustomerMapRow> rows) {
+        if (rows.isEmpty()) return;
+
+        Set<Id> accountIds = new Set<Id>();
+        Map<Id, CustomerMapRow> rowByAccountId = new Map<Id, CustomerMapRow>();
+        for (CustomerMapRow row : rows) {
+            if (row == null) {
+                continue;
+            }
+            if (row.accountId != null) {
+                accountIds.add(row.accountId);
+                rowByAccountId.put(row.accountId, row);
+            }
+        }
+        if (accountIds.isEmpty()) return;
+
+        Map<Id, ActivityPick> bestByAccount = new Map<Id, ActivityPick>();
+
+        // Tasks
+        for (Task t : [
+            SELECT WhatId, Subject, ActivityDate, CreatedDate
+            FROM Task
+            WHERE WhatId IN :accountIds
+            ORDER BY ActivityDate DESC NULLS LAST, CreatedDate DESC
+        ]) {
+            if (t.WhatId == null || bestByAccount.containsKey(t.WhatId)) continue;
+            Datetime dt = (t.ActivityDate != null)
+                ? Datetime.newInstance(t.ActivityDate, Time.newInstance(0, 0, 0, 0))
+                : t.CreatedDate;
+            bestByAccount.put((Id)t.WhatId, new ActivityPick(t.Subject, dt, 'Task'));
+        }
+
+        // Events
+        for (Event e : [
+            SELECT WhatId, Subject, StartDateTime, CreatedDate
+            FROM Event
+            WHERE WhatId IN :accountIds
+            ORDER BY StartDateTime DESC NULLS LAST, CreatedDate DESC
+        ]) {
+            if (e.WhatId == null) continue;
+            Datetime dt = (e.StartDateTime != null) ? e.StartDateTime : e.CreatedDate;
+            ActivityPick existing = bestByAccount.get((Id)e.WhatId);
+            if (existing == null || (dt != null && existing.dt != null && dt.getTime() > existing.dt.getTime())) {
+                bestByAccount.put((Id)e.WhatId, new ActivityPick(e.Subject, dt, 'Event'));
+            }
+        }
+
+        for (Id accId : bestByAccount.keySet()) {
+            CustomerMapRow row = rowByAccountId.get(accId);
+            if (row == null) continue;
+            ActivityPick pick = bestByAccount.get(accId);
+            row.lastActivitySubject = pick.subject;
+            row.lastActivityDateTime = pick.dt;
+            row.lastActivityType = pick.typeName;
+        }
     }
 
     @AuraEnabled(cacheable=true)
@@ -68,11 +164,14 @@ public with sharing class MapCustomersController {
             SELECT Id, Name, BillingStreet, BillingCity, BillingState,
                    BillingPostalCode, BillingCountry, BillingLatitude, BillingLongitude,
                    Contract_Periods__c, County__c, Regional_Manager__r.Name, Email__c,
-                   Current_Customer__c,
+                   Current_Customer__c, Primary_Contact__c, Primary_Contact__r.Name, Primary_Contact__r.Phone, Primary_Contact__r.Email,
                    Recent_Contract_Bid__r.Id, Recent_Contract_Bid__r.Name, Recent_Contract_Bid__r.Stage__c,
                    Recent_Contract_Bid__r.Contract_Start_Date__c, Recent_Contract_Bid__r.Contract_End_Date__c,
                    Recent_Contract_Bid__r.Due_Date__c, Recent_Contract_Bid__r.Contract_Year__c,
-                   Recent_Contract_Bid__r.Total__c
+                   Recent_Contract_Bid__r.Total__c,
+                   Recent_Contract_Bid__r.Management_Company__c, Recent_Contract_Bid__r.Management_Company__r.Name,
+                   Recent_Contract_Bid__r.Label__c, Recent_Contract_Bid__r.Colored_Labels__c,
+                   Recent_Contract_Bid__r.Additional_Comments__c
             FROM Account
             WHERE BillingPostalCode != null OR (BillingLatitude != null AND BillingLongitude != null)
             ORDER BY Name ASC
@@ -82,6 +181,7 @@ public with sharing class MapCustomersController {
         for (Account a : accounts) {
             rows.add(toRow(a, a.Recent_Contract_Bid__r));
         }
+        populateLatestActivity(rows);
         return rows;
     }
 
@@ -91,10 +191,12 @@ public with sharing class MapCustomersController {
             SELECT Id, Name, BillingStreet, BillingCity, BillingState,
                    BillingPostalCode, BillingCountry, BillingLatitude, BillingLongitude,
                    Contract_Periods__c, County__c, Regional_Manager__r.Name, Email__c,
-                   Current_Customer__c,
+                   Current_Customer__c, Primary_Contact__c, Primary_Contact__r.Name, Primary_Contact__r.Phone, Primary_Contact__r.Email,
                    (
                        SELECT Id, Name, Stage__c, Contract_Start_Date__c, Contract_End_Date__c,
-                              Due_Date__c, Contract_Year__c, Total__c
+                              Due_Date__c, Contract_Year__c, Total__c,
+                              Management_Company__c, Management_Company__r.Name,
+                              Label__c, Colored_Labels__c, Additional_Comments__c
                        FROM Contract_Bids__r
                        ORDER BY Contract_Start_Date__c DESC NULLS LAST, CreatedDate DESC
                        LIMIT 1
@@ -112,6 +214,7 @@ public with sharing class MapCustomersController {
                     : null;
             rows.add(toRow(a, latestBid));
         }
+        populateLatestActivity(rows);
         return rows;
     }
 }
