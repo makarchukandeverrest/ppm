@@ -237,7 +237,7 @@ export default class CustomersMap extends LightningElement {
     syncSelectedCustomer() {
         if (
             this.selectedCustomer &&
-            !this.filteredCustomers.some(customer => customer.Id === this.selectedCustomer.Id)
+            !this.filteredCustomers.some(customer => customer.accountId === this.selectedCustomer.accountId)
         ) {
             this.selectedCustomer = null;
             this.selectedMarkerValue = '';
@@ -248,7 +248,7 @@ export default class CustomersMap extends LightningElement {
         }
 
         const visibleCustomers = (this.locationGroupMap[this.selectedLocationKey] || [])
-            .filter(customer => this.filteredCustomers.some(filtered => filtered.Id === customer.Id));
+            .filter(customer => this.filteredCustomers.some(filtered => filtered.accountId === customer.accountId));
 
         if (visibleCustomers.length === 0) {
             this.clearLocationSelection();
@@ -259,7 +259,7 @@ export default class CustomersMap extends LightningElement {
 
         if (
             this.selectedCustomer &&
-            !visibleCustomers.some(customer => customer.Id === this.selectedCustomer.Id)
+            !visibleCustomers.some(customer => customer.accountId === this.selectedCustomer.accountId)
         ) {
             this.selectedCustomer = null;
             this.selectedMarkerValue = `group:${this.selectedLocationKey}`;
@@ -273,21 +273,20 @@ export default class CustomersMap extends LightningElement {
 
     customerMatchesAllFilters(customer) {
         if (this.searchTerm) {
-            const nameMatch = customer.Name && customer.Name.toLowerCase().includes(this.searchTerm);
-            const emailMatch = customer.Email && customer.Email.toLowerCase().includes(this.searchTerm);
+            const nameMatch = customer.name && customer.name.toLowerCase().includes(this.searchTerm);
+            const emailMatch = customer.email && customer.email.toLowerCase().includes(this.searchTerm);
             if (!nameMatch && !emailMatch) return false;
         }
 
-        if (this.selectedCounty && customer.County__c !== this.selectedCounty) {
+        if (this.selectedCounty && customer.county !== this.selectedCounty) {
             return false;
         }
 
         if (this.selectedRegionalManager) {
-            if (!customer.Regional_Manager__c) {
+            if (!customer.regionalManagerName) {
                 return false;
             }
-            const managerName = customer.Regional_Manager__r.Name;
-            if (managerName !== this.selectedRegionalManager) {
+            if (customer.regionalManagerName !== this.selectedRegionalManager) {
                 return false;
             }
         }
@@ -308,8 +307,7 @@ export default class CustomersMap extends LightningElement {
         }
 
         if (this.selectedContractYear) {
-            const bid = customer.Recent_Contract_Bid__r;
-            if (!bid || bid.Contract_Year__c !== this.selectedContractYear) {
+            if (!customer.contractYear || customer.contractYear !== this.selectedContractYear) {
                 return false;
             }
         }
@@ -348,8 +346,8 @@ export default class CustomersMap extends LightningElement {
                 const customer = group.customers[0];
                 customerMarkers.push({
                     location: group.location,
-                    value: customer.Id,
-                    title: customer.Name,
+                    value: customer.accountId,
+                    title: customer.name,
                     description: this.getCustomerDescription(customer),
                     mapIcon: this.getCustomerMapIcon(customer)
                 });
@@ -375,11 +373,11 @@ export default class CustomersMap extends LightningElement {
 
         return [
             'addr',
-            customer.BillingStreet,
-            customer.BillingCity,
-            customer.BillingState,
-            customer.BillingPostalCode,
-            customer.BillingCountry
+            customer.billingStreet,
+            customer.billingCity,
+            customer.billingState,
+            customer.billingPostalCode,
+            customer.billingCountry
         ].join('|').toLowerCase();
     }
 
@@ -389,7 +387,7 @@ export default class CustomersMap extends LightningElement {
 
         customers.forEach(customer => {
             const status = this.getCustomerMarkerStatus(customer);
-            description += `&#8226; ${customer.Name} (${status.label})<br/>`;
+            description += `&#8226; ${customer.name} (${status.label})<br/>`;
         });
 
         return description;
@@ -411,8 +409,8 @@ export default class CustomersMap extends LightningElement {
         return customers.map(customer => {
             const status = this.getCustomerMarkerStatus(customer);
             return {
-                id: customer.Id,
-                name: customer.Name,
+                id: customer.accountId,
+                name: customer.name,
                 statusLabel: status.label,
                 statusClass: status.badgeClass
             };
@@ -421,44 +419,44 @@ export default class CustomersMap extends LightningElement {
 
     formatCustomerAddress(customer) {
         const addressParts = [
-            customer.BillingStreet,
-            customer.BillingCity,
-            customer.BillingState,
-            customer.BillingPostalCode,
-            customer.BillingCountry
+            customer.billingStreet,
+            customer.billingCity,
+            customer.billingState,
+            customer.billingPostalCode,
+            customer.billingCountry
         ].filter(part => part);
 
         return addressParts.length > 0 ? addressParts.join(', ') : 'Address not available';
     }
 
     hasCoordinates(customer) {
-        return customer.BillingLatitude != null && customer.BillingLongitude != null;
+        return customer.billingLatitude != null && customer.billingLongitude != null;
     }
 
     hasPostalCode(customer) {
-        return Boolean(customer.BillingPostalCode);
+        return Boolean(customer.billingPostalCode);
     }
 
     getCustomerMapLocation(customer) {
         if (this.hasCoordinates(customer)) {
             return {
-                Latitude: customer.BillingLatitude,
-                Longitude: customer.BillingLongitude
+                Latitude: customer.billingLatitude,
+                Longitude: customer.billingLongitude
             };
         }
 
-        if (customer.BillingStreet || customer.BillingCity || customer.BillingState) {
+        if (customer.billingStreet || customer.billingCity || customer.billingState) {
             return {
-                Street: customer.BillingStreet,
-                City: customer.BillingCity,
-                State: customer.BillingState,
-                PostalCode: customer.BillingPostalCode,
-                Country: customer.BillingCountry
+                Street: customer.billingStreet,
+                City: customer.billingCity,
+                State: customer.billingState,
+                PostalCode: customer.billingPostalCode,
+                Country: customer.billingCountry
             };
         }
 
         if (this.hasPostalCode(customer)) {
-            return { PostalCode: customer.BillingPostalCode };
+            return { PostalCode: customer.billingPostalCode };
         }
 
         return null;
@@ -479,9 +477,9 @@ export default class CustomersMap extends LightningElement {
     }
 
     getCustomerMarkerStatus(customer) {
-        const bid = customer.Recent_Contract_Bid__r;
+        const stage = customer.contractBidStage;
 
-        if (!customer.Recent_Contract_Bid__c || !bid) {
+        if (!customer.contractBidId) {
             return {
                 label: 'No Recent Bid',
                 color: MARKER_COLOR_NO_BID,
@@ -490,7 +488,7 @@ export default class CustomersMap extends LightningElement {
             };
         }
 
-        if (bid.Stage__c === STAGE_CLOSED_WON) {
+        if (stage === STAGE_CLOSED_WON) {
             return {
                 label: STAGE_CLOSED_WON,
                 color: MARKER_COLOR_WON,
@@ -499,7 +497,7 @@ export default class CustomersMap extends LightningElement {
             };
         }
 
-        if (bid.Stage__c === STAGE_CLOSED_LOST) {
+        if (stage === STAGE_CLOSED_LOST) {
             return {
                 label: STAGE_CLOSED_LOST,
                 color: MARKER_COLOR_LOST,
@@ -509,7 +507,7 @@ export default class CustomersMap extends LightningElement {
         }
 
         return {
-            label: bid.Stage__c || 'Other Stage',
+            label: stage || 'Other Stage',
             color: MARKER_COLOR_OTHER,
             badgeClass: 'status-badge status-badge_other',
             strokeColor: '#000000'
@@ -535,11 +533,11 @@ export default class CustomersMap extends LightningElement {
     }
 
     getCustomerContractPeriods(customer) {
-        if (!customer.Contract_Periods__c) {
+        if (!customer.contractPeriods) {
             return [];
         }
 
-        return customer.Contract_Periods__c
+        return customer.contractPeriods
             .split(';')
             .map(period => period.trim())
             .filter(period => period);
@@ -551,11 +549,11 @@ export default class CustomersMap extends LightningElement {
 
         let description = `<b>${markerStatus.label}</b><br/>Address: ${address}`;
 
-        if (customer.Contract_Periods__c) {
-            description += `<br/>Contract Periods: ${customer.Contract_Periods__c}`;
+        if (customer.contractPeriods) {
+            description += `<br/>Contract Periods: ${customer.contractPeriods}`;
         }
-        if (customer.Email__c) {
-            description += `<br/>Email: ${customer.Email__c}`;
+        if (customer.email) {
+            description += `<br/>Email: ${customer.email}`;
         }
 
         description += this.getRecentContractBidDescription(customer);
@@ -564,31 +562,30 @@ export default class CustomersMap extends LightningElement {
     }
 
     getRecentContractBidDescription(customer) {
-        const bid = customer.Recent_Contract_Bid__r;
-        if (!bid) {
+        if (!customer.contractBidId) {
             return '<br/><br/><b>Recent Contract Bid:</b> None';
         }
 
         let description = '<br/><br/><b>Recent Contract Bid</b>';
-        description += `<br/>Name: ${bid.Name || '—'}`;
+        description += `<br/>Name: ${customer.contractBidName || '—'}`;
 
-        if (bid.Stage__c) {
-            description += `<br/>Stage: ${bid.Stage__c}`;
+        if (customer.contractBidStage) {
+            description += `<br/>Stage: ${customer.contractBidStage}`;
         }
-        if (bid.Contract_Year__c) {
-            description += `<br/>Contract Year: ${bid.Contract_Year__c}`;
+        if (customer.contractYear) {
+            description += `<br/>Contract Year: ${customer.contractYear}`;
         }
-        if (bid.Contract_Start_Date__c) {
-            description += `<br/>Start Date: ${this.formatDate(bid.Contract_Start_Date__c)}`;
+        if (customer.contractStartDate) {
+            description += `<br/>Start Date: ${this.formatDate(customer.contractStartDate)}`;
         }
-        if (bid.Contract_End_Date__c) {
-            description += `<br/>End Date: ${this.formatDate(bid.Contract_End_Date__c)}`;
+        if (customer.contractEndDate) {
+            description += `<br/>End Date: ${this.formatDate(customer.contractEndDate)}`;
         }
-        if (bid.Due_Date__c) {
-            description += `<br/>Due Date: ${this.formatDate(bid.Due_Date__c)}`;
+        if (customer.dueDate) {
+            description += `<br/>Due Date: ${this.formatDate(customer.dueDate)}`;
         }
-        if (bid.Total__c != null) {
-            description += `<br/>Total: ${bid.Total__c}`;
+        if (customer.total != null) {
+            description += `<br/>Total: ${customer.total}`;
         }
 
         return description;
@@ -652,7 +649,19 @@ export default class CustomersMap extends LightningElement {
     }
 
     get selectedRecentBid() {
-        return this.selectedCustomer?.Recent_Contract_Bid__r || null;
+        if (!this.selectedCustomer || !this.selectedCustomer.contractBidId) {
+            return null;
+        }
+
+        return {
+            Name: this.selectedCustomer.contractBidName,
+            Stage__c: this.selectedCustomer.contractBidStage,
+            Contract_Year__c: this.selectedCustomer.contractYear,
+            Contract_Start_Date__c: this.selectedCustomer.contractStartDate,
+            Contract_End_Date__c: this.selectedCustomer.contractEndDate,
+            Due_Date__c: this.selectedCustomer.dueDate,
+            Total__c: this.selectedCustomer.total
+        };
     }
 
     get hasSelectedRecentBid() {
@@ -703,7 +712,7 @@ export default class CustomersMap extends LightningElement {
 
             this.clearLocationSelection();
 
-            const selectedCustomer = this.allCustomers.find(customer => customer.Id === markerValue);
+            const selectedCustomer = this.allCustomers.find(customer => customer.accountId === markerValue);
             if (selectedCustomer) {
                 this.selectedCustomer = selectedCustomer;
                 this.zoomToCustomer(selectedCustomer);
@@ -715,7 +724,7 @@ export default class CustomersMap extends LightningElement {
 
     handleLocationCustomerSelect(event) {
         const customerId = event.currentTarget.dataset.id;
-        const selectedCustomer = this.allCustomers.find(customer => customer.Id === customerId);
+        const selectedCustomer = this.allCustomers.find(customer => customer.accountId === customerId);
 
         if (selectedCustomer) {
             this.selectedCustomer = selectedCustomer;
