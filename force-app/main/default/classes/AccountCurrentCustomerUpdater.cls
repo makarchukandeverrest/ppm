@@ -1,9 +1,10 @@
 public with sharing class AccountCurrentCustomerUpdater {
   public static void updateCustomers(List<Contract_Bid__c> wonBids) {
-    List<Account> accountsToUpdate = new List<Account>();
+    Map<Id, Account> accountsById = new Map<Id, Account>();
     for (Contract_Bid__c bid : wonBids) {
       if (bid.Customer__c != null) {
-        accountsToUpdate.add(
+        accountsById.put(
+          bid.Customer__c,
           new Account(
             Id = bid.Customer__c,
             Current_Customer__c = true,
@@ -14,8 +15,8 @@ public with sharing class AccountCurrentCustomerUpdater {
         );
       }
     }
-    if (!accountsToUpdate.isEmpty()) {
-      update accountsToUpdate;
+    if (!accountsById.isEmpty()) {
+      update accountsById.values();
     }
   }
 }

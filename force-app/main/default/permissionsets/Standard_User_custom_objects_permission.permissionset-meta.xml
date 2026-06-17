@@ -21,6 +21,14 @@
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
+        <apexClass>DocuSignDfsleEnvelopeService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>DocuSignDfsleEnvelopeServiceTest</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
         <apexClass>ProposalFileSharer</apexClass>
         <enabled>true</enabled>
     </classAccesses>
@@ -56,7 +64,7 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
-        <field>Contract_Bid__c.Current_Vendor__c</field>
+        <field>Contract_Bid__c.Current_Vendor_Object__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -66,7 +74,7 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
-        <field>Contract_Bid__c.Go_throw_Corporate__c</field>
+        <field>Contract_Bid__c.Go_through_Corporate__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
