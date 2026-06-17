@@ -7,6 +7,7 @@ import CONTRACT_BID_OBJECT from '@salesforce/schema/Contract_Bid__c';
 import CONTRACT_PERIODS_FIELD from '@salesforce/schema/Account.Contract_Periods__c';
 import COUNTY_FIELD from '@salesforce/schema/Account.County__c';
 import CONTRACT_YEAR_FIELD from '@salesforce/schema/Contract_Bid__c.Contract_Year__c';
+import STAGE_FIELD from '@salesforce/schema/Contract_Bid__c.Stage__c';
 
 const REGIONAL_MANAGER_OPTIONS = [
     { label: 'All', value: '' },
@@ -59,6 +60,7 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
 
     recordTypeId;
     contractBidRecordTypeId;
+    stageOrder = [];
 
     mapOptions = {
         disableDefaultUI: false,
@@ -81,6 +83,21 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
             this.contractBidRecordTypeId = data.defaultRecordTypeId;
         } else if (error) {
             console.error('Error loading Contract Bid object info:', error);
+        }
+    }
+
+    @wire(getPicklistValues, {
+        recordTypeId: '$contractBidRecordTypeId',
+        fieldApiName: STAGE_FIELD
+    })
+    wiredStageValues({ error, data }) {
+        if (data) {
+            this.stageOrder = data.values.map(entry => entry.value);
+            if (this.hasAnySelection) {
+                this.syncSelectedCustomer();
+            }
+        } else if (error) {
+            console.error('Error loading contract bid stage picklist values:', error);
         }
     }
 
@@ -443,6 +460,7 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
 
     buildCustomerDetailView(customer) {
         const status = this.getCustomerMarkerStatus(customer);
+        const nextStage = this.getNextStage(customer.contractBidStage);
         const recentBid = customer.contractBidId
             ? {
                 Name: customer.contractBidName,
@@ -487,8 +505,27 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
             recentBid,
             hasRecentBid: Boolean(recentBid),
             showRecentBidTotal: recentBid && recentBid.Total__c != null,
-            contractBidDescription: customer.contractBidDescription
+            contractBidDescription: customer.contractBidDescription,
+            nextStage,
+            hasNextStage: Boolean(nextStage)
         };
+    }
+
+    getNextStage(currentStage) {
+        if (!currentStage || !this.stageOrder.length) {
+            return null;
+        }
+
+        if (CLOSED_STAGES.has(currentStage)) {
+            return null;
+        }
+
+        const currentIndex = this.stageOrder.indexOf(currentStage);
+        if (currentIndex === -1 || currentIndex >= this.stageOrder.length - 1) {
+            return null;
+        }
+
+        return this.stageOrder[currentIndex + 1];
     }
 
     formatCustomerAddress(customer) {

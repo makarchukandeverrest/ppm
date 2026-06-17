@@ -281,7 +281,15 @@
                                     <template if:true={detail.recentBid.Stage__c}>
                                         <div class="detail-list__row">
                                             <dt>Stage</dt>
-                                            <dd>{detail.recentBid.Stage__c}</dd>
+                                            <dd>
+                                                <div class="stage-flow">
+                                                    <span class="stage-flow__current">{detail.recentBid.Stage__c}</span>
+                                                    <template if:true={detail.hasNextStage}>
+                                                        <span class="stage-flow__arrow" aria-hidden="true">→</span>
+                                                        <span class="stage-flow__next">{detail.nextStage}</span>
+                                                    </template>
+                                                </div>
+                                            </dd>
                                         </div>
                                     </template>
                                     <template if:true={detail.recentBid.Contract_Year__c}>
