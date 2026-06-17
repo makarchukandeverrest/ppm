@@ -1,4 +1,5 @@
 <template>
+  <div>
   <lightning-card title="WORK ORDER" icon-name="standard:billing">
     <div class="info-section">
       <table class="slds-table slds-table_cell-buffer">
@@ -32,16 +33,7 @@
       </table>
     </div>
     <div class="spacer"></div>
-    <div
-      class="slds-scrollable"
-      style="
-        height: 60%;
-        max-height: 300px;
-        width: 100%;
-        overflow-x: auto;
-        overflow-y: auto;
-      "
-    >
+    <div class="line-items-section">
       <table class="slds-table slds-table_cell-buffer">
         <thead class="fixed-header">
           <tr class="slds-text-title_caps">
@@ -146,100 +138,43 @@
                   </div>
                 </template>
                 <template if:true={item.isEditingAssignment}>
-                  <lightning-combobox
-                    name="serviceTeamMember"
-                    label="Service Team Member"
-                    variant="label-hidden"
-                    value={item.draftServiceTeamMemberId}
-                    options={serviceTeamMemberOptions}
-                    data-id={item.Id}
-                    onchange={handleServiceTeamMemberDraftChange}
-                    dropdown-alignment="auto"
-                  ></lightning-combobox>
+                  <div
+                    class="slds-grid slds-grid_vertical-align-center slds-gutters_x-small"
+                  >
+                    <div class="slds-col slds-grow">
+                      <lightning-record-picker
+                        label="Service Team Member"
+                        variant="label-hidden"
+                        object-api-name="Service_Team_Member__c"
+                        placeholder="Search Service Team Members..."
+                        matching-info={serviceTeamMemberMatchingInfo}
+                        display-info={serviceTeamMemberDisplayInfo}
+                        value={item.draftServiceTeamMemberPickerValue}
+                        data-id={item.Id}
+                        onchange={handleServiceTeamMemberDraftChange}
+                      ></lightning-record-picker>
+                    </div>
+                    <template if:true={canCreateServiceTeamMember}>
+                      <div class="slds-col slds-grow-none">
+                        <lightning-button-icon
+                          icon-name="utility:add"
+                          alternative-text="New Service Team Member"
+                          title="New Service Team Member"
+                          variant="border-filled"
+                          size="small"
+                          data-id={item.Id}
+                          onclick={handleOpenCreateMemberModal}
+                        ></lightning-button-icon>
+                      </div>
+                    </template>
+                  </div>
                 </template>
               </td>
-            <!-- <td
-                class="slds-cell-wrap centered-cell"
-                data-id={item.Id}
-                data-field="Rate__c"
-              >
-                <template if:true={item.isEditing}>
-                  <lightning-input
-                    type="number"
-                    step="0.01"
-                    value={item.Rate__c}
-                    onchange={handleUnitCostChange}
-                    data-id={item.Id}
-                    data-field="Rate__c"
-                    class="slds-input_height-auto"
-                  >
-                  </lightning-input>
-                </template>
-                <template if:false={item.isEditing}>
-                  {item.Rate__c}
-                </template>
-              </td>
-              <td class="slds-cell-wrap centered-cell">
-                <lightning-formatted-number
-                  value={item.Amount__c}
-                  format-style="currency"
-                ></lightning-formatted-number>
-              </td> -->
-              <!--<td
-                class="slds-cell-wrap centered-cell"
-                data-id={item.Id}
-                data-field="Tax__c"
-                onclick={handleCellClick}
-              >
-                <template if:true={item.isEditing}>
-                  <lightning-input
-                    type="text"
-                    value={item.Tax__c}
-                    onchange={handleTaxChange}
-                    data-id={item.Id}
-                    data-field="Tax__c"
-                    class="slds-input_height-auto"
-                  >
-                  </lightning-input>
-                </template>
-                <template if:false={item.isEditing}> {item.Tax__c} </template>
-              </td>-->
             </tr>
           </template>
         </tbody>
       </table>
     </div>
-    <!-- <div class="summary-section">
-      <table class="slds-table slds-table_cell-buffer">
-        <tbody>
-          <tr>
-            <td class="item-column"></td>
-            <td class="summary-name"></td>
-            <td class="summary-name"></td>
-            <td class="summary-name">Total</td>
-            <td class="summary-value">
-              <lightning-formatted-number
-                value={total}
-                format-style="currency"
-              ></lightning-formatted-number>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div> -->
-    <!-- <div class="additional-notes">
-      <p><u>Additional Notes:</u></p>
-      <ul>
-        <li>* Please do not pay from this proposal. Invoice to follow.</li>
-        <li>* Job completion may be delayed due to parts availability.</li>
-        <li>* Additional charges may apply.</li>
-        <li>* Price valid for 30 days.</li>
-      </ul>
-    </div>
-    <div class="contact-info">
-      <p>Tel: (301)989-2200 * Fax: (301)989-2261</p>
-      <p><strong>www.premierswim.com</strong></p>
-    </div> -->
     <div slot="footer" class="slds-p-around_small">
       <lightning-button
         variant="neutral"
@@ -256,4 +191,54 @@
       ></lightning-button>
     </div>
   </lightning-card>
+  <template if:true={showCreateMemberModal}>
+    <section
+      role="dialog"
+      tabindex="-1"
+      aria-modal="true"
+      aria-labelledby="create-member-heading"
+      class="slds-modal slds-fade-in-open create-member-modal"
+    >
+      <div class="slds-modal__container">
+        <header class="slds-modal__header">
+          <lightning-button-icon
+            icon-name="utility:close"
+            alternative-text="Close"
+            title="Close"
+            variant="bare-inverse"
+            class="slds-modal__close"
+            onclick={handleCloseCreateMemberModal}
+          ></lightning-button-icon>
+          <h2 id="create-member-heading" class="slds-text-heading_medium">
+            New Service Team Member
+          </h2>
+        </header>
+        <div class="slds-modal__content slds-p-around_medium">
+          <lightning-record-edit-form
+            object-api-name="Service_Team_Member__c"
+            onsuccess={handleCreateMemberSuccess}
+            onerror={handleCreateMemberError}
+          >
+            <lightning-messages></lightning-messages>
+            <lightning-input-field field-name="Name"></lightning-input-field>
+            <lightning-input-field field-name="Email__c"></lightning-input-field>
+            <div class="slds-m-top_medium slds-text-align_right">
+              <lightning-button
+                label="Cancel"
+                onclick={handleCloseCreateMemberModal}
+                class="slds-m-right_x-small"
+              ></lightning-button>
+              <lightning-button
+                variant="brand"
+                type="submit"
+                label="Save"
+              ></lightning-button>
+            </div>
+          </lightning-record-edit-form>
+        </div>
+      </div>
+    </section>
+    <div class="slds-backdrop slds-backdrop_open create-member-backdrop"></div>
+  </template>
+  </div>
 </template>
