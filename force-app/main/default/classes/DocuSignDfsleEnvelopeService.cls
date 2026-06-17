@@ -16,8 +16,8 @@ public with sharing class DocuSignDfsleEnvelopeService {
 
     private static final Map<String, String> NEW_CUSTOMER_RESOURCE_URL_BY_LABEL = new Map<String, String>{
         'COI' => Document_Link__mdt.getInstance('COI').Sharing_Link__c,
-        'Recommendation Letter' => Document_Link__mdt.getInstance('Recommendation Letter').Sharing_Link__c,
-        'General References' => Document_Link__mdt.getInstance('General References').Sharing_Link__c
+        'Recommendation Letter' => Document_Link__mdt.getInstance('Recommendation_Letter').Sharing_Link__c,
+        'General References' => Document_Link__mdt.getInstance('General_References').Sharing_Link__c
     };
 
     public class SendResult {

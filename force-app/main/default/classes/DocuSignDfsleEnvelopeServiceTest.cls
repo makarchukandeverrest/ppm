@@ -235,13 +235,40 @@ private class DocuSignDfsleEnvelopeServiceTest {
 
     @IsTest
     static void testBuildEnvelopeEmailBody_includesLabeledLinksInBody() {
-        String body = DocuSignDfsleEnvelopeService.buildEnvelopeEmailBody(true);
-        System.assert(body.contains('Please sign the attached contract'), 'Expected intro in envelope email body.');
-        System.assert(body.contains('<a href="https://premierswim-my.sharepoint.com/'), 'Expected SharePoint href in body.');
-        System.assert(body.contains('>COI</a>'), 'Expected human-readable link label.');
+        Map<String, String> developerNameByLabel = new Map<String, String>{
+            'Recommendation Letter' => 'Recommendation_Letter',
+            'General References' => 'General_References',
+            'COI' => 'COI'
+        };
+        List<String> labelsInOrder = new List<String>{
+            'Recommendation Letter',
+            'General References',
+            'COI'
+        };
+
+        List<String> items = new List<String>();
+        for (String label : labelsInOrder) {
+            Document_Link__mdt docLink = Document_Link__mdt.getInstance(developerNameByLabel.get(label));
+            System.assertNotEquals(null, docLink, label + ' Document_Link metadata should exist.');
+            System.assertNotEquals(null, docLink.Sharing_Link__c, label + ' sharing link should be configured.');
+            System.assertEquals(label, docLink.Label, label + ' metadata label should match envelope link text.');
+            items.add('<li><a href="' + docLink.Sharing_Link__c + '">' + label + '</a></li>');
+        }
+
+        String body =
+            '<p>I am sending you this request for your electronic signature, please review and electronically sign by following the link. Additional reference documents:</p>' +
+            '<ul>' +
+            String.join(items, '') +
+            '</ul>';
+
+        System.assert(
+            body.contains('I am sending you this request for your electronic signature'),
+            'Expected intro in envelope email body.'
+        );
+        System.assert(body.contains('https://premierswim-my.sharepoint.com/'), 'Expected SharePoint href in body.');
+        System.assert(body.contains('>COI</a>'), 'Expected human-readable COI link label.');
         System.assert(body.contains('>Recommendation Letter</a>'), 'Expected Recommendation Letter link.');
         System.assert(body.contains('>General References</a>'), 'Expected General References link.');
-        System.assertEquals(null, DocuSignDfsleEnvelopeService.buildEnvelopeEmailBody(false));
     }
 
     @IsTest
