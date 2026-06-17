@@ -12,8 +12,11 @@ public class ContentVersionFromItemsSharePointBatch implements Database.Batchabl
             FROM Items_SharePoint__x
             WHERE CreationDate__c >= :cutoff
             AND IsFolder__c = false 
-            AND (MimeType__c = 'application/pdf' 
-                 OR MimeType__c = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+            AND MimeType__c IN (
+                'application/pdf',
+                'application/msword',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            )
         ];
     }
 
