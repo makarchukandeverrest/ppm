@@ -15,9 +15,9 @@ public with sharing class DocuSignDfsleEnvelopeService {
     };
 
     private static final Map<String, String> NEW_CUSTOMER_RESOURCE_URL_BY_LABEL = new Map<String, String>{
-        'COI' => 'https://premierswim-my.sharepoint.com/:b:/p/office/IQBClJ8mmzh0RZpTVlPwukx2AbKf6zoS6uHp53bhBqyMEhA?e=WEboG8',
-        'Recommendation Letter' => 'https://premierswim-my.sharepoint.com/:b:/p/office/IQAulEg5vRB8QJMjT7Rt-iXtASRFZya9n3Y0Bd2X4tVnhhw?e=lANcKM',
-        'General References' => 'https://premierswim-my.sharepoint.com/:b:/p/office/IQA9ifdkLZYJR63ZSYR8LDqkAVmugYVI_P3DrRY-0UbIeOY?e=Te8xQZ'
+        'COI' => Document_Link__mdt.getInstance('COI').Sharing_Link__c,
+        'Recommendation Letter' => Document_Link__mdt.getInstance('Recommendation Letter').Sharing_Link__c,
+        'General References' => Document_Link__mdt.getInstance('General References').Sharing_Link__c
     };
 
     public class SendResult {
