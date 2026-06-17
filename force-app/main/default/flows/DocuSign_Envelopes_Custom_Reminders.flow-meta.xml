@@ -876,9 +876,14 @@ $Record.Deal__r.Name &amp;
         <name>Reminder1Body</name>
         <isViewedAsPlainText>true</isViewedAsPlainText>
         <text>Hi {!Get_Recipients.Name},
+
 Just a quick note to confirm confirm that the {!$Record.Deal__r.Name} - {!$Record.Deal__r.Reference_Number__c} came through on your end.
-If you didn’t receive it or would like it to be resent, I’m glad to do so. Please let me know if you have any questions or would like to review any items together.
-Thank you,
+If you didn’t receive it or would like it to resent, I’m glad to do so. Please let me know if you have any questions or would like to review any items together. 
+
+ 
+ 
+
+Thank you, 
 {!Get_Regional_Manager.Name}</text>
     </textTemplates>
     <textTemplates>
@@ -886,7 +891,13 @@ Thank you,
         <isViewedAsPlainText>true</isViewedAsPlainText>
         <text>Hi {!Get_Recipients_2.Name},
 
-Just a quick note to confirm that the {!$Record.Deal__r.Name} - {!$Record.Deal__r.Reference_Number__c} came through on your end.
+Hi [Name], 
+
+I wanted to follow up as we continue scheduling upcoming repair work and ordering materials. Approving the proposal allows us to secure your spot on the schedule and ensure supplies are allocated in time. 
+
+Whenever you have a moment, I’d appreciate knowing your anticipated timeline so we can plan accordingly. 
+
+Looking forward to supporting you. 
 
 Whenever you have a moment, I’d appreciate knowing your anticipated timeline so we can plan accordingly. 
 
@@ -903,7 +914,13 @@ Best,
         <isViewedAsPlainText>true</isViewedAsPlainText>
         <text>Hi {!Get_Recipients_3.Name},
 
-Just following up on my previous email. If helpful, I’d be glad to schedule a quick call or site visit to walk through the {!$Record.Deal__r.Name} - {!$Record.Deal__r.Reference_Number__c}, answer any questions, and align on priorities. Please let me know what works best for you.
+Just following up on my previous email. If helpful, I’d be glad to schedule a quick call or site visit to walk through the {!$Record.Deal__r.Name} - {!$Record.Deal__r.Reference_Number__c}, answer any questions, and align on priorities. 
+
+ 
+
+Please let me know what works best for you. 
+
+ 
 
 Please let me know what works best for you. 
 

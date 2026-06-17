@@ -140,6 +140,10 @@
         <apexClass>WorkOrderLineItemCreator</apexClass>
         <enabled>true</enabled>
     </classAccesses>
+    <customMetadataTypeAccesses>
+        <enabled>true</enabled>
+        <name>Document_Link__mdt</name>
+    </customMetadataTypeAccesses>
     <fieldPermissions>
         <editable>true</editable>
         <field>Account.AccountNumber</field>
@@ -773,6 +777,11 @@
     <fieldPermissions>
         <editable>true</editable>
         <field>Contract_Bid__c.Winterization__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Document_Link__mdt.Sharing_Link__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>

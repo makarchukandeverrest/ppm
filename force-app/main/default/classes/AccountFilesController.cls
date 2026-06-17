@@ -212,7 +212,7 @@ public with sharing class AccountFilesController {
             SELECT Id, Title, ContentDocumentId, FileExtension, To_Sent__c
             FROM ContentVersion
             WHERE Id IN :latestVersionIds
-            AND FileExtension = 'pdf'
+            AND FileExtension IN ('pdf', 'doc', 'docx')
         ];
 
         List<ContentVersion> filteredVersions = new List<ContentVersion>();

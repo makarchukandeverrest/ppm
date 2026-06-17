@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>COI</label>
+    <protected>false</protected>
+    <values>
+        <field>Sharing_Link__c</field>
+        <value xsi:type="xsd:string">https://premierswim-my.sharepoint.com/:b:/p/office/IQBClJ8mmzh0RZpTVlPwukx2AbKf6zoS6uHp53bhBqyMEhA?e=WEboG8</value>
+    </values>
+</CustomMetadata>
