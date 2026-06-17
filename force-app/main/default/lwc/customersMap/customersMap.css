@@ -51,24 +51,30 @@
     border: 1px solid #080707;
 }
 
-.legend-dot_won {
+.legend-dot_current {
     background-color: #09A711;
 }
 
-.legend-dot_lost {
-    background-color: #000000;
-}
-
-.legend-dot_no-bid {
-    background-color: #EA001E;
-}
-
-.legend-dot_other {
+.legend-dot_contract-sent {
     background-color: #FCC003;
 }
 
+.legend-dot_opportunity {
+    background-color: #1B96FF;
+    border-color: #032D60;
+}
+
+.legend-dot_closed-lost {
+    background-color: #EA001E;
+}
+
+.legend-dot_active-bid {
+    background-color: #FF7A00;
+}
+
 .legend-dot_multi {
-    background-color: #0176D3;
+    background-color: #032D60;
+    border-color: #FFFFFF;
 }
 
 .customer-detail {
@@ -88,24 +94,29 @@
     text-transform: uppercase;
 }
 
-.status-badge_won {
+.status-badge_current {
     background-color: #d9f0da;
     color: #056764;
 }
 
-.status-badge_lost {
-    background-color: #e5e5e5;
-    color: #080707;
+.status-badge_contract-sent {
+    background-color: #fef3c8;
+    color: #8c6b00;
 }
 
-.status-badge_no-bid {
+.status-badge_opportunity {
+    background-color: #d8e6fe;
+    color: #014486;
+}
+
+.status-badge_closed-lost {
     background-color: #feded8;
     color: #ba0517;
 }
 
-.status-badge_other {
-    background-color: #fef3c8;
-    color: #8c6b00;
+.status-badge_active-bid {
+    background-color: #ffe6cc;
+    color: #8a4b00;
 }
 
 .detail-list {

@@ -19,13 +19,15 @@ const REGIONAL_MANAGER_OPTIONS = [
 ];
 
 const MAP_MARKER_PATH = 'M 0,0 C -2,-20 -10,-22 -10,-30 A 10,10 0 1,1 10,-30 C 10,-22 2,-20 0,0 z';
-const STAGE_CLOSED_WON = 'Closed - WON';
 const STAGE_CLOSED_LOST = 'Closed - LOST';
-const MARKER_COLOR_WON = '#09A711';
-const MARKER_COLOR_LOST = '#000000';
-const MARKER_COLOR_NO_BID = '#EA001E';
-const MARKER_COLOR_OTHER = '#FCC003';
-const MARKER_COLOR_MULTI = '#0176D3';
+const STAGE_CONTRACT_SENT = 'Contract Sent via DocuSign';
+const CLOSED_STAGES = new Set(['Closed - WON', STAGE_CLOSED_LOST]);
+const MARKER_COLOR_CURRENT = '#09A711';
+const MARKER_COLOR_CONTRACT_SENT = '#FCC003';
+const MARKER_COLOR_OPPORTUNITY = '#1B96FF';
+const MARKER_COLOR_CLOSED_LOST = '#EA001E';
+const MARKER_COLOR_ACTIVE_BID = '#FF7A00';
+const MARKER_COLOR_MULTI = '#032D60';
 
 export default class CustomersMap extends NavigationMixin(LightningElement) {
     allCustomers = [];
@@ -550,21 +552,13 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
 
     getCustomerMarkerStatus(customer) {
         const stage = customer.contractBidStage;
+        const today = this.getTodayDate();
 
-        if (!customer.contractBidId) {
+        if (customer.currentCustomer === true) {
             return {
-                label: 'No Recent Bid',
-                color: MARKER_COLOR_NO_BID,
-                badgeClass: 'status-badge status-badge_no-bid',
-                strokeColor: '#000000'
-            };
-        }
-
-        if (stage === STAGE_CLOSED_WON) {
-            return {
-                label: STAGE_CLOSED_WON,
-                color: MARKER_COLOR_WON,
-                badgeClass: 'status-badge status-badge_won',
+                label: 'Current Customer',
+                color: MARKER_COLOR_CURRENT,
+                badgeClass: 'status-badge status-badge_current',
                 strokeColor: '#000000'
             };
         }
@@ -572,18 +566,115 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
         if (stage === STAGE_CLOSED_LOST) {
             return {
                 label: STAGE_CLOSED_LOST,
-                color: MARKER_COLOR_LOST,
-                badgeClass: 'status-badge status-badge_lost',
+                color: MARKER_COLOR_CLOSED_LOST,
+                badgeClass: 'status-badge status-badge_closed-lost',
                 strokeColor: '#FFFFFF'
             };
         }
 
+        if (stage === STAGE_CONTRACT_SENT) {
+            return {
+                label: STAGE_CONTRACT_SENT,
+                color: MARKER_COLOR_CONTRACT_SENT,
+                badgeClass: 'status-badge status-badge_contract-sent',
+                strokeColor: '#000000'
+            };
+        }
+
+        if (this.isBidOpportunity(customer, today)) {
+            return {
+                label: 'Bid Opportunity',
+                color: MARKER_COLOR_OPPORTUNITY,
+                badgeClass: 'status-badge status-badge_opportunity',
+                strokeColor: '#FFFFFF'
+            };
+        }
+
+        if (this.isActivePipeline(customer, today)) {
+            return {
+                label: stage || 'Active Bid',
+                color: MARKER_COLOR_ACTIVE_BID,
+                badgeClass: 'status-badge status-badge_active-bid',
+                strokeColor: '#000000'
+            };
+        }
+
         return {
-            label: stage || 'Other Stage',
-            color: MARKER_COLOR_OTHER,
-            badgeClass: 'status-badge status-badge_other',
+            label: stage || 'Active Bid',
+            color: MARKER_COLOR_ACTIVE_BID,
+            badgeClass: 'status-badge status-badge_active-bid',
             strokeColor: '#000000'
         };
+    }
+
+    getTodayDate() {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return today;
+    }
+
+    parseSalesforceDate(dateValue) {
+        if (!dateValue) {
+            return null;
+        }
+
+        if (typeof dateValue === 'string') {
+            const [year, month, day] = dateValue.split('T')[0].split('-').map(Number);
+            return new Date(year, month - 1, day);
+        }
+
+        const date = new Date(dateValue);
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    isDateInCurrentCalendarYear(dateValue, today) {
+        const date = this.parseSalesforceDate(dateValue);
+        if (!date) {
+            return false;
+        }
+
+        return date.getFullYear() === today.getFullYear();
+    }
+
+    isDateAfterToday(dateValue, today) {
+        const date = this.parseSalesforceDate(dateValue);
+        if (!date) {
+            return false;
+        }
+
+        return date.getTime() > today.getTime();
+    }
+
+    isClosedStage(stage) {
+        return CLOSED_STAGES.has(stage);
+    }
+
+    isBidOpportunity(customer, today) {
+        if (!customer.contractBidId) {
+            return true;
+        }
+
+        if (!customer.hasCurrentYearBid) {
+            return true;
+        }
+
+        if (!this.isDateInCurrentCalendarYear(customer.accountContractEndDate, today)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    isActivePipeline(customer, today) {
+        if (!customer.contractBidId) {
+            return false;
+        }
+
+        if (!this.isClosedStage(customer.contractBidStage)) {
+            return true;
+        }
+
+        return this.isDateAfterToday(customer.contractEndDate, today);
     }
 
     get hasActiveFilters() {

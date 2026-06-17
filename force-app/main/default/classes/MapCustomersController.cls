@@ -16,6 +16,8 @@ public with sharing class MapCustomersController {
         @AuraEnabled public String email;
         @AuraEnabled public String regionalManagerName;
         @AuraEnabled public Boolean currentCustomer;
+        @AuraEnabled public Date accountContractEndDate;
+        @AuraEnabled public Boolean hasCurrentYearBid;
 
         // Primary Contact (Account)
         @AuraEnabled public Id primaryContactId;
@@ -64,6 +66,7 @@ public with sharing class MapCustomersController {
         row.county = a.County__c;
         row.email = a.Email__c;
         row.currentCustomer = a.Current_Customer__c;
+        row.accountContractEndDate = a.Contract_End_Date__c;
         row.regionalManagerName = (a.Regional_Manager__r != null) ? a.Regional_Manager__r.Name : null;
         row.primaryContactId = a.Primary_Contact__c;
         row.primaryContactName = (a.Primary_Contact__r != null) ? a.Primary_Contact__r.Name : null;
@@ -88,6 +91,49 @@ public with sharing class MapCustomersController {
         }
 
         return row;
+    }
+
+    private static String getCurrentContractYear() {
+        Integer year = Date.today().year();
+        Integer startYear = (Date.today().month() >= 7) ? year : year - 1;
+        return startYear + '-' + (startYear + 1);
+    }
+
+    private static void populateHasCurrentYearBid(List<CustomerMapRow> rows) {
+        if (rows.isEmpty()) {
+            return;
+        }
+
+        Set<Id> accountIds = new Set<Id>();
+        for (CustomerMapRow row : rows) {
+            if (row == null || row.accountId == null) {
+                continue;
+            }
+            accountIds.add(row.accountId);
+        }
+        if (accountIds.isEmpty()) {
+            return;
+        }
+
+        String currentContractYear = getCurrentContractYear();
+        Set<Id> accountsWithCurrentYearBid = new Set<Id>();
+        for (Contract_Bid__c bid : [
+            SELECT Customer__c
+            FROM Contract_Bid__c
+            WHERE Customer__c IN :accountIds
+            AND Contract_Year__c = :currentContractYear
+        ]) {
+            if (bid.Customer__c != null) {
+                accountsWithCurrentYearBid.add(bid.Customer__c);
+            }
+        }
+
+        for (CustomerMapRow row : rows) {
+            if (row == null || row.accountId == null) {
+                continue;
+            }
+            row.hasCurrentYearBid = accountsWithCurrentYearBid.contains(row.accountId);
+        }
     }
 
     private class ActivityPick {
@@ -164,7 +210,8 @@ public with sharing class MapCustomersController {
             SELECT Id, Name, BillingStreet, BillingCity, BillingState,
                    BillingPostalCode, BillingCountry, BillingLatitude, BillingLongitude,
                    Contract_Periods__c, County__c, Regional_Manager__r.Name, Email__c,
-                   Current_Customer__c, Primary_Contact__c, Primary_Contact__r.Name, Primary_Contact__r.Phone, Primary_Contact__r.Email,
+                   Current_Customer__c, Contract_End_Date__c,
+                   Primary_Contact__c, Primary_Contact__r.Name, Primary_Contact__r.Phone, Primary_Contact__r.Email,
                    Recent_Contract_Bid__r.Id, Recent_Contract_Bid__r.Name, Recent_Contract_Bid__r.Stage__c,
                    Recent_Contract_Bid__r.Contract_Start_Date__c, Recent_Contract_Bid__r.Contract_End_Date__c,
                    Recent_Contract_Bid__r.Due_Date__c, Recent_Contract_Bid__r.Contract_Year__c,
@@ -177,10 +224,11 @@ public with sharing class MapCustomersController {
             ORDER BY Name ASC
         ];
 
-        List<CustomerMapRow> rows = new List<CustomerMapRow>(accounts.size());
+        List<CustomerMapRow> rows = new List<CustomerMapRow>();
         for (Account a : accounts) {
             rows.add(toRow(a, a.Recent_Contract_Bid__r));
         }
+        populateHasCurrentYearBid(rows);
         populateLatestActivity(rows);
         return rows;
     }
@@ -191,7 +239,8 @@ public with sharing class MapCustomersController {
             SELECT Id, Name, BillingStreet, BillingCity, BillingState,
                    BillingPostalCode, BillingCountry, BillingLatitude, BillingLongitude,
                    Contract_Periods__c, County__c, Regional_Manager__r.Name, Email__c,
-                   Current_Customer__c, Primary_Contact__c, Primary_Contact__r.Name, Primary_Contact__r.Phone, Primary_Contact__r.Email,
+                   Current_Customer__c, Contract_End_Date__c,
+                   Primary_Contact__c, Primary_Contact__r.Name, Primary_Contact__r.Phone, Primary_Contact__r.Email,
                    (
                        SELECT Id, Name, Stage__c, Contract_Start_Date__c, Contract_End_Date__c,
                               Due_Date__c, Contract_Year__c, Total__c,
@@ -206,7 +255,7 @@ public with sharing class MapCustomersController {
             ORDER BY Name ASC
         ];
 
-        List<CustomerMapRow> rows = new List<CustomerMapRow>(accounts.size());
+        List<CustomerMapRow> rows = new List<CustomerMapRow>();
         for (Account a : accounts) {
             Contract_Bid__c latestBid =
                 (a.Contract_Bids__r != null && !a.Contract_Bids__r.isEmpty())
@@ -214,6 +263,7 @@ public with sharing class MapCustomersController {
                     : null;
             rows.add(toRow(a, latestBid));
         }
+        populateHasCurrentYearBid(rows);
         populateLatestActivity(rows);
         return rows;
     }
