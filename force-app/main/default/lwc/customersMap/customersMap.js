@@ -35,9 +35,8 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
     cardTitle = 'Customer Locations';
     loadErrorMessage = '';
     @track selectedMarkerValue = '';
-    @track selectedCustomer = null;
+    @track selectedCustomerDetails = [];
     @track selectedLocationKey = '';
-    @track customersAtSelectedLocation = [];
 
     // Default map settings
     @track zoomLevel = 11;
@@ -229,7 +228,7 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
         if (regionalManagerCombo) regionalManagerCombo.value = '';
 
         this.resetZoomToDefault();
-        this.selectedCustomer = null;
+        this.selectedCustomerDetails = [];
         this.selectedMarkerValue = '';
         this.clearLocationSelection();
         this.filterCustomers();
@@ -260,50 +259,50 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
     }
 
     syncSelectedCustomer() {
-        if (
-            this.selectedCustomer &&
-            !this.filteredCustomers.some(customer => customer.accountId === this.selectedCustomer.accountId)
-        ) {
-            this.selectedCustomer = null;
-            this.selectedMarkerValue = '';
-        }
+        if (this.selectedLocationKey) {
+            const visibleCustomers = (this.locationGroupMap[this.selectedLocationKey] || [])
+                .filter(customer => this.filteredCustomers.some(filtered => filtered.accountId === customer.accountId));
 
-        if (!this.selectedLocationKey) {
-            return;
-        }
+            if (visibleCustomers.length === 0) {
+                this.clearSelection();
+                return;
+            }
 
-        const visibleCustomers = (this.locationGroupMap[this.selectedLocationKey] || [])
-            .filter(customer => this.filteredCustomers.some(filtered => filtered.accountId === customer.accountId));
-
-        if (visibleCustomers.length === 0) {
-            this.clearLocationSelection();
-            return;
-        }
-
-        this.customersAtSelectedLocation = this.buildLocationCustomerSummaries(visibleCustomers);
-
-        if (
-            this.selectedCustomer &&
-            !visibleCustomers.some(customer => customer.accountId === this.selectedCustomer.accountId)
-        ) {
-            this.selectedCustomer = null;
+            this.selectedCustomerDetails = visibleCustomers.map(customer =>
+                this.buildCustomerDetailView(customer)
+            );
             this.selectedMarkerValue = `group:${this.selectedLocationKey}`;
+            return;
         }
+
+        if (!this.selectedMarkerValue || this.selectedMarkerValue.startsWith('group:')) {
+            return;
+        }
+
+        const customer = this.filteredCustomers.find(
+            filtered => filtered.accountId === this.selectedMarkerValue
+        );
+
+        if (!customer) {
+            this.clearSelection();
+            return;
+        }
+
+        this.selectedCustomerDetails = [this.buildCustomerDetailView(customer)];
     }
 
     clearLocationSelection() {
         this.selectedLocationKey = '';
-        this.customersAtSelectedLocation = [];
     }
 
     clearSelection() {
-        this.selectedCustomer = null;
+        this.selectedCustomerDetails = [];
         this.selectedMarkerValue = '';
         this.clearLocationSelection();
     }
 
     get hasAnySelection() {
-        return this.hasSelectedCustomer || this.hasSelectedLocationGroup;
+        return this.selectedCustomerDetails.length > 0;
     }
 
     customerMatchesAllFilters(customer) {
@@ -440,16 +439,54 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
         };
     }
 
-    buildLocationCustomerSummaries(customers) {
-        return customers.map(customer => {
-            const status = this.getCustomerMarkerStatus(customer);
-            return {
-                id: customer.accountId,
-                name: customer.name,
-                statusLabel: status.label,
-                statusClass: status.badgeClass
-            };
-        });
+    buildCustomerDetailView(customer) {
+        const status = this.getCustomerMarkerStatus(customer);
+        const recentBid = customer.contractBidId
+            ? {
+                Name: customer.contractBidName,
+                Stage__c: customer.contractBidStage,
+                Contract_Year__c: customer.contractYear,
+                Contract_Start_Date__c: customer.contractStartDate,
+                Contract_End_Date__c: customer.contractEndDate,
+                Due_Date__c: customer.dueDate,
+                Total__c: customer.total
+            }
+            : null;
+
+        return {
+            accountId: customer.accountId,
+            name: customer.name,
+            statusLabel: status.label,
+            statusClass: status.badgeClass,
+            address: this.formatCustomerAddress(customer),
+            accountUrl: `/lightning/r/Account/${customer.accountId}/view`,
+            managementCompanyName: customer.managementCompanyName,
+            managementCompanyUrl: customer.managementCompanyId
+                ? `/lightning/r/Management_Company__c/${customer.managementCompanyId}/view`
+                : '',
+            hasManagementCompany: Boolean(customer.managementCompanyName),
+            primaryContactId: customer.primaryContactId,
+            primaryContactName: customer.primaryContactName,
+            primaryContactUrl: customer.primaryContactId
+                ? `/lightning/r/Contact/${customer.primaryContactId}/view`
+                : '',
+            primaryContactPhone: customer.primaryContactPhone,
+            primaryContactEmail: customer.primaryContactEmail,
+            hasPrimaryContact: Boolean(customer.primaryContactId),
+            regionalManagerName: customer.regionalManagerName,
+            contractBidColoredLabels: customer.contractBidColoredLabels,
+            lastActivitySubject: customer.lastActivitySubject,
+            lastActivityType: customer.lastActivityType,
+            lastActivityDateTime: customer.lastActivityDateTime,
+            contractBidUrl: customer.contractBidId
+                ? `/lightning/r/Contract_Bid__c/${customer.contractBidId}/view`
+                : '',
+            hasContractBid: Boolean(customer.contractBidId),
+            recentBid,
+            hasRecentBid: Boolean(recentBid),
+            showRecentBidTotal: recentBid && recentBid.Total__c != null,
+            contractBidDescription: customer.contractBidDescription
+        };
     }
 
     formatCustomerAddress(customer) {
@@ -643,57 +680,8 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
         return date.toLocaleDateString();
     }
 
-    get hasSelectedCustomer() {
-        return Boolean(this.selectedCustomer);
-    }
-
-    get selectedCustomerStatusLabel() {
-        if (!this.selectedCustomer) {
-            return '';
-        }
-
-        return this.getCustomerMarkerStatus(this.selectedCustomer).label;
-    }
-
-    get selectedCustomerStatusClass() {
-        if (!this.selectedCustomer) {
-            return '';
-        }
-
-        return this.getCustomerMarkerStatus(this.selectedCustomer).badgeClass;
-    }
-
-    get selectedCustomerAddress() {
-        if (!this.selectedCustomer) {
-            return '';
-        }
-
-        return this.formatCustomerAddress(this.selectedCustomer);
-    }
-
-    get selectedCustomerUrl() {
-        if (!this.selectedCustomer?.accountId) {
-            return '';
-        }
-        return `/lightning/r/Account/${this.selectedCustomer.accountId}/view`;
-    }
-
-    get selectedPrimaryContactUrl() {
-        if (!this.selectedCustomer?.primaryContactId) {
-            return '';
-        }
-        return `/lightning/r/Contact/${this.selectedCustomer.primaryContactId}/view`;
-    }
-
-    get selectedManagementCompanyUrl() {
-        if (!this.selectedCustomer?.managementCompanyId) {
-            return '';
-        }
-        return `/lightning/r/Management_Company__c/${this.selectedCustomer.managementCompanyId}/view`;
-    }
-
     get hasSelectedLocationGroup() {
-        return this.customersAtSelectedLocation.length > 1;
+        return this.selectedCustomerDetails.length > 1;
     }
 
     get selectedLocationAddress() {
@@ -705,38 +693,7 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
     }
 
     get selectedLocationCountLabel() {
-        return `${this.customersAtSelectedLocation.length} customers at this address`;
-    }
-
-    get selectedRecentBid() {
-        if (!this.selectedCustomer || !this.selectedCustomer.contractBidId) {
-            return null;
-        }
-
-        return {
-            Name: this.selectedCustomer.contractBidName,
-            Stage__c: this.selectedCustomer.contractBidStage,
-            Contract_Year__c: this.selectedCustomer.contractYear,
-            Contract_Start_Date__c: this.selectedCustomer.contractStartDate,
-            Contract_End_Date__c: this.selectedCustomer.contractEndDate,
-            Due_Date__c: this.selectedCustomer.dueDate,
-            Total__c: this.selectedCustomer.total
-        };
-    }
-
-    get selectedContractBidUrl() {
-        if (!this.selectedCustomer?.contractBidId) {
-            return '';
-        }
-        return `/lightning/r/Contract_Bid__c/${this.selectedCustomer.contractBidId}/view`;
-    }
-
-    get hasSelectedRecentBid() {
-        return Boolean(this.selectedRecentBid);
-    }
-
-    get showSelectedRecentBidTotal() {
-        return this.selectedRecentBid && this.selectedRecentBid.Total__c != null;
+        return `${this.selectedCustomerDetails.length} customers at this address`;
     }
 
     get hasFilteredMarkers() {
@@ -764,13 +721,13 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
 
             if (markerValue.startsWith('group:')) {
                 const locationKey = markerValue.replace('group:', '');
+                const customers = this.locationGroupMap[locationKey] || [];
                 this.selectedLocationKey = locationKey;
-                this.selectedCustomer = null;
-                this.customersAtSelectedLocation = this.buildLocationCustomerSummaries(
-                    this.locationGroupMap[locationKey] || []
+                this.selectedCustomerDetails = customers.map(customer =>
+                    this.buildCustomerDetailView(customer)
                 );
 
-                const firstCustomer = this.locationGroupMap[locationKey]?.[0];
+                const firstCustomer = customers[0];
                 if (firstCustomer) {
                     this.zoomToCustomer(firstCustomer);
                 }
@@ -782,7 +739,7 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
 
             const selectedCustomer = this.allCustomers.find(customer => customer.accountId === markerValue);
             if (selectedCustomer) {
-                this.selectedCustomer = selectedCustomer;
+                this.selectedCustomerDetails = [this.buildCustomerDetailView(selectedCustomer)];
                 this.zoomToCustomer(selectedCustomer);
             }
             this.scrollToDetails();
@@ -791,20 +748,11 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
         }
     }
 
-    handleLocationCustomerSelect(event) {
-        const customerId = event.currentTarget.dataset.id;
-        const selectedCustomer = this.allCustomers.find(customer => customer.accountId === customerId);
-
-        if (selectedCustomer) {
-            this.selectedCustomer = selectedCustomer;
-            this.selectedMarkerValue = customerId;
-            this.zoomToCustomer(selectedCustomer);
-            this.scrollToDetails();
-        }
+    handleNavigateToAccountFromDetail(event) {
+        this.navigateToAccount(event.currentTarget.dataset.id);
     }
 
     scrollToDetails() {
-        // Ensure DOM updated before scrolling
         requestAnimationFrame(() => {
             const anchor = this.template.querySelector('[data-id="detailsAnchor"]');
             if (anchor && typeof anchor.scrollIntoView === 'function') {
@@ -824,14 +772,5 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
                 actionName: 'view'
             }
         });
-    }
-
-    handleNavigateToSelectedCustomer() {
-        this.navigateToAccount(this.selectedCustomer?.accountId);
-    }
-
-    handleNavigateToAccountFromList(event) {
-        event.stopPropagation();
-        this.navigateToAccount(event.currentTarget.dataset.id);
     }
 }

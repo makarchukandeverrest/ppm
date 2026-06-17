@@ -156,61 +156,40 @@
                         </lightning-button>
                     </div>
                     <template if:true={hasSelectedLocationGroup}>
-                        <div class="customer-detail slds-box slds-theme_default">
+                        <div class="shared-address-header slds-box slds-theme_shade slds-m-bottom_small">
                             <h3 class="slds-text-heading_small slds-m-bottom_x-small">Shared Address</h3>
                             <p class="slds-text-body_regular slds-m-bottom_x-small">
                                 <strong>Address:</strong> {selectedLocationAddress}
                             </p>
-                            <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_small">{selectedLocationCountLabel}</p>
-
-                            <ul class="location-customer-list">
-                                <template for:each={customersAtSelectedLocation} for:item="customer">
-                                    <li key={customer.id} class="location-customer-list__item">
-                                        <div
-                                            class="location-customer-list__button"
-                                            data-id={customer.id}
-                                            onclick={handleLocationCustomerSelect}
-                                            role="button"
-                                            tabindex="0">
-                                            <lightning-button
-                                                class="location-customer-list__name-link"
-                                                variant="base"
-                                                label={customer.name}
-                                                data-id={customer.id}
-                                                onclick={handleNavigateToAccountFromList}>
-                                            </lightning-button>
-                                            <span class={customer.statusClass}>{customer.statusLabel}</span>
-                                        </div>
-                                    </li>
-                                </template>
-                            </ul>
+                            <p class="slds-text-body_small slds-text-color_weak">{selectedLocationCountLabel}</p>
                         </div>
                     </template>
 
-                    <template if:true={hasSelectedCustomer}>
-                        <div class="customer-detail slds-box slds-theme_default">
+                    <template for:each={selectedCustomerDetails} for:item="detail">
+                        <div key={detail.accountId} class="customer-detail slds-box slds-theme_default slds-m-bottom_medium">
                             <div class="slds-grid slds-grid_vertical-align-center slds-wrap slds-m-bottom_small">
                                 <lightning-button
                                     class="selected-customer-link slds-m-right_small"
                                     variant="base"
-                                    label={selectedCustomer.name}
-                                    onclick={handleNavigateToSelectedCustomer}>
+                                    label={detail.name}
+                                    data-id={detail.accountId}
+                                    onclick={handleNavigateToAccountFromDetail}>
                                 </lightning-button>
-                                <span class={selectedCustomerStatusClass}>{selectedCustomerStatusLabel}</span>
+                                <span class={detail.statusClass}>{detail.statusLabel}</span>
                             </div>
 
                             <p class="slds-text-body_regular slds-m-bottom_small">
-                                <strong>Address:</strong> {selectedCustomerAddress}
+                                <strong>Address:</strong> {detail.address}
                             </p>
 
                             <dl class="detail-list slds-m-bottom_small">
-                                <template if:true={selectedCustomer.managementCompanyName}>
+                                <template if:true={detail.hasManagementCompany}>
                                     <div class="detail-list__row">
                                         <dt>Management Company</dt>
                                         <dd>
                                             <lightning-formatted-url
-                                                value={selectedManagementCompanyUrl}
-                                                label={selectedCustomer.managementCompanyName}
+                                                value={detail.managementCompanyUrl}
+                                                label={detail.managementCompanyName}
                                                 target="_blank">
                                             </lightning-formatted-url>
                                         </dd>
@@ -219,52 +198,52 @@
                                 <div class="detail-list__row">
                                     <dt>Primary Contact</dt>
                                     <dd>
-                                        <template if:true={selectedCustomer.primaryContactId}>
+                                        <template if:true={detail.hasPrimaryContact}>
                                             <lightning-formatted-url
-                                                value={selectedPrimaryContactUrl}
-                                                label={selectedCustomer.primaryContactName}
+                                                value={detail.primaryContactUrl}
+                                                label={detail.primaryContactName}
                                                 target="_blank">
                                             </lightning-formatted-url>
-                                            <template if:true={selectedCustomer.primaryContactPhone}>
+                                            <template if:true={detail.primaryContactPhone}>
                                                 <div class="slds-text-body_small slds-text-color_weak">
-                                                    <lightning-formatted-phone value={selectedCustomer.primaryContactPhone}></lightning-formatted-phone>
+                                                    <lightning-formatted-phone value={detail.primaryContactPhone}></lightning-formatted-phone>
                                                 </div>
                                             </template>
-                                            <template if:true={selectedCustomer.primaryContactEmail}>
+                                            <template if:true={detail.primaryContactEmail}>
                                                 <div class="slds-text-body_small slds-text-color_weak">
-                                                    <lightning-formatted-email value={selectedCustomer.primaryContactEmail}></lightning-formatted-email>
+                                                    <lightning-formatted-email value={detail.primaryContactEmail}></lightning-formatted-email>
                                                 </div>
                                             </template>
                                         </template>
-                                        <template if:false={selectedCustomer.primaryContactId}>
+                                        <template if:false={detail.hasPrimaryContact}>
                                             <span class="slds-text-color_weak">—</span>
                                         </template>
                                     </dd>
                                 </div>
-                                <template if:true={selectedCustomer.regionalManagerName}>
+                                <template if:true={detail.regionalManagerName}>
                                     <div class="detail-list__row">
                                         <dt>Regional Manager</dt>
-                                        <dd>{selectedCustomer.regionalManagerName}</dd>
+                                        <dd>{detail.regionalManagerName}</dd>
                                     </div>
                                 </template>
-                                <template if:true={selectedCustomer.contractBidColoredLabels}>
+                                <template if:true={detail.contractBidColoredLabels}>
                                     <div class="detail-list__row">
                                         <dt>Label</dt>
                                         <dd>
                                             <lightning-formatted-rich-text
-                                                value={selectedCustomer.contractBidColoredLabels}
-                                            ></lightning-formatted-rich-text>
+                                                value={detail.contractBidColoredLabels}>
+                                            </lightning-formatted-rich-text>
                                         </dd>
                                     </div>
                                 </template>
-                                <template if:true={selectedCustomer.lastActivitySubject}>
+                                <template if:true={detail.lastActivitySubject}>
                                     <div class="detail-list__row">
                                         <dt>Last Activity</dt>
                                         <dd>
-                                            {selectedCustomer.lastActivityType} — {selectedCustomer.lastActivitySubject}
-                                            <template if:true={selectedCustomer.lastActivityDateTime}>
+                                            {detail.lastActivityType} — {detail.lastActivitySubject}
+                                            <template if:true={detail.lastActivityDateTime}>
                                                 <span class="slds-m-left_x-small">
-                                                    (<lightning-formatted-date-time value={selectedCustomer.lastActivityDateTime}></lightning-formatted-date-time>)
+                                                    (<lightning-formatted-date-time value={detail.lastActivityDateTime}></lightning-formatted-date-time>)
                                                 </span>
                                             </template>
                                         </dd>
@@ -274,45 +253,45 @@
 
                             <div class="slds-text-body_small slds-m-bottom_small">
                                 <lightning-formatted-url
-                                    value={selectedCustomerUrl}
+                                    value={detail.accountUrl}
                                     label="Open Account"
                                     target="_blank">
                                 </lightning-formatted-url>
-                                <template if:true={selectedContractBidUrl}>
+                                <template if:true={detail.hasContractBid}>
                                     <span class="slds-m-horizontal_x-small">|</span>
                                     <lightning-formatted-url
-                                        value={selectedContractBidUrl}
+                                        value={detail.contractBidUrl}
                                         label="Open Contract Bid"
                                         target="_blank">
                                     </lightning-formatted-url>
                                 </template>
                             </div>
 
-                            <template if:true={hasSelectedRecentBid}>
+                            <template if:true={detail.hasRecentBid}>
                                 <h4 class="slds-text-heading_small slds-m-bottom_x-small">Recent Contract Bid</h4>
                                 <dl class="detail-list">
                                     <div class="detail-list__row">
                                         <dt>Name</dt>
-                                        <dd>{selectedRecentBid.Name}</dd>
+                                        <dd>{detail.recentBid.Name}</dd>
                                     </div>
-                                    <template if:true={selectedRecentBid.Stage__c}>
+                                    <template if:true={detail.recentBid.Stage__c}>
                                         <div class="detail-list__row">
                                             <dt>Stage</dt>
-                                            <dd>{selectedRecentBid.Stage__c}</dd>
+                                            <dd>{detail.recentBid.Stage__c}</dd>
                                         </div>
                                     </template>
-                                    <template if:true={selectedRecentBid.Contract_Year__c}>
+                                    <template if:true={detail.recentBid.Contract_Year__c}>
                                         <div class="detail-list__row">
                                             <dt>Contract Year</dt>
-                                            <dd>{selectedRecentBid.Contract_Year__c}</dd>
+                                            <dd>{detail.recentBid.Contract_Year__c}</dd>
                                         </div>
                                     </template>
-                                    <template if:true={selectedRecentBid.Contract_Start_Date__c}>
+                                    <template if:true={detail.recentBid.Contract_Start_Date__c}>
                                         <div class="detail-list__row">
                                             <dt>Start Date</dt>
                                             <dd>
                                                 <lightning-formatted-date-time
-                                                    value={selectedRecentBid.Contract_Start_Date__c}
+                                                    value={detail.recentBid.Contract_Start_Date__c}
                                                     year="numeric"
                                                     month="short"
                                                     day="2-digit">
@@ -320,12 +299,12 @@
                                             </dd>
                                         </div>
                                     </template>
-                                    <template if:true={selectedRecentBid.Contract_End_Date__c}>
+                                    <template if:true={detail.recentBid.Contract_End_Date__c}>
                                         <div class="detail-list__row">
                                             <dt>End Date</dt>
                                             <dd>
                                                 <lightning-formatted-date-time
-                                                    value={selectedRecentBid.Contract_End_Date__c}
+                                                    value={detail.recentBid.Contract_End_Date__c}
                                                     year="numeric"
                                                     month="short"
                                                     day="2-digit">
@@ -333,12 +312,12 @@
                                             </dd>
                                         </div>
                                     </template>
-                                    <template if:true={selectedRecentBid.Due_Date__c}>
+                                    <template if:true={detail.recentBid.Due_Date__c}>
                                         <div class="detail-list__row">
                                             <dt>Due Date</dt>
                                             <dd>
                                                 <lightning-formatted-date-time
-                                                    value={selectedRecentBid.Due_Date__c}
+                                                    value={detail.recentBid.Due_Date__c}
                                                     year="numeric"
                                                     month="short"
                                                     day="2-digit">
@@ -346,12 +325,12 @@
                                             </dd>
                                         </div>
                                     </template>
-                                    <template if:true={showSelectedRecentBidTotal}>
+                                    <template if:true={detail.showRecentBidTotal}>
                                         <div class="detail-list__row">
                                             <dt>Total</dt>
                                             <dd>
                                                 <lightning-formatted-number
-                                                    value={selectedRecentBid.Total__c}
+                                                    value={detail.recentBid.Total__c}
                                                     format-style="currency"
                                                     currency-code="USD">
                                                 </lightning-formatted-number>
@@ -360,14 +339,14 @@
                                     </template>
                                 </dl>
                             </template>
-                            <template if:false={hasSelectedRecentBid}>
+                            <template if:false={detail.hasRecentBid}>
                                 <p class="slds-text-body_regular slds-text-color_weak">No Recent Contract Bid linked.</p>
                             </template>
 
-                            <template if:true={selectedCustomer.contractBidDescription}>
+                            <template if:true={detail.contractBidDescription}>
                                 <div class="slds-m-top_small">
                                     <h4 class="slds-text-heading_small slds-m-bottom_x-small">Notes</h4>
-                                    <p class="slds-text-body_regular">{selectedCustomer.contractBidDescription}</p>
+                                    <p class="slds-text-body_regular">{detail.contractBidDescription}</p>
                                 </div>
                             </template>
                         </div>
