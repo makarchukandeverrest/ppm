@@ -83,174 +83,219 @@
                 </div>
             </div>
 
-            <!-- Map Section -->
-            <div class="slds-m-bottom_medium">
-                <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small map-header">
-                    <h3 class="slds-text-heading_small">Customer Locations Map</h3>
-                    <div class="map-legend slds-text-body_small">
-                        <span class="legend-item">
-                            <span class="legend-dot legend-dot_won"></span>
-                            Closed - WON
-                        </span>
-                        <span class="legend-item">
-                            <span class="legend-dot legend-dot_lost"></span>
-                            Closed - LOST
-                        </span>
-                        <span class="legend-item">
-                            <span class="legend-dot legend-dot_no-bid"></span>
-                            No Recent Bid
-                        </span>
-                        <span class="legend-item">
-                            <span class="legend-dot legend-dot_other"></span>
-                            Other Stage
-                        </span>
-                        <span class="legend-item">
-                            <span class="legend-dot legend-dot_multi"></span>
-                            Multiple Customers
-                        </span>
+            <div class="map-layout">
+                <!-- Map Column -->
+                <div class="map-layout__map">
+                    <div class="slds-grid slds-grid_vertical-align-center slds-m-bottom_small map-header">
+                        <h3 class="slds-text-heading_small">Customer Locations Map</h3>
+                        <div class="map-legend slds-text-body_small">
+                            <span class="legend-item">
+                                <span class="legend-dot legend-dot_won"></span>
+                                Closed - WON
+                            </span>
+                            <span class="legend-item">
+                                <span class="legend-dot legend-dot_lost"></span>
+                                Closed - LOST
+                            </span>
+                            <span class="legend-item">
+                                <span class="legend-dot legend-dot_no-bid"></span>
+                                No Recent Bid
+                            </span>
+                            <span class="legend-item">
+                                <span class="legend-dot legend-dot_other"></span>
+                                Other Stage
+                            </span>
+                            <span class="legend-item">
+                                <span class="legend-dot legend-dot_multi"></span>
+                                Multiple Customers
+                            </span>
+                        </div>
                     </div>
+                    <template if:true={hasFilteredMarkers}>
+                        <div class="map-container">
+                            <lightning-map
+                                map-markers={filteredMapMarkers}
+                                markers-title="Customers"
+                                onmarkerselect={handleMarkerSelect}
+                                selected-marker-value={selectedMarkerValue}
+                                list-view="hidden"
+                                zoom-level={zoomLevel}
+                                center={center}
+                                options={mapOptions}>
+                            </lightning-map>
+                        </div>
+                    </template>
+                    <template if:false={hasFilteredMarkers}>
+                        <div class="slds-text-align_center slds-p-vertical_medium">
+                            <template if:true={hasActiveFilters}>
+                                <p class="slds-text-body_regular">No customer locations match your search criteria.</p>
+                                <p class="slds-text-body_regular slds-m-top_x-small">Try adjusting your filters or clear them to see all customers.</p>
+                            </template>
+                            <template if:false={hasActiveFilters}>
+                                <p class="slds-text-body_regular">No customer locations available to display on the map.</p>
+                                <p class="slds-text-body_regular slds-m-top_x-small">Ensure customers have valid billing address coordinates.</p>
+                            </template>
+                        </div>
+                    </template>
                 </div>
-                <template if:true={hasFilteredMarkers}>
-                    <div class="map-container">
-                        <lightning-map
-                            map-markers={filteredMapMarkers}
-                            markers-title="Customers"
-                            onmarkerselect={handleMarkerSelect}
-                            selected-marker-value={selectedMarkerValue}
-                            list-view="hidden"
-                            zoom-level={zoomLevel}
-                            center={center}
-                            options={mapOptions}>
-                        </lightning-map>
+
+                <!-- Details Column -->
+                <template if:true={hasAnySelection}>
+                <div data-id="detailsAnchor" class="map-layout__details">
+                    <div class="details-actions slds-m-bottom_small">
+                        <lightning-button
+                            label="Clear Selection"
+                            variant="neutral"
+                            onclick={clearSelection}>
+                        </lightning-button>
                     </div>
-                </template>
-                <template if:false={hasFilteredMarkers}>
-                    <div class="slds-text-align_center slds-p-vertical_medium">
-                        <template if:true={hasActiveFilters}>
-                            <p class="slds-text-body_regular">No customer locations match your search criteria.</p>
-                            <p class="slds-text-body_regular slds-m-top_x-small">Try adjusting your filters or clear them to see all customers.</p>
-                        </template>
-                        <template if:false={hasActiveFilters}>
-                            <p class="slds-text-body_regular">No customer locations available to display on the map.</p>
-                            <p class="slds-text-body_regular slds-m-top_x-small">Ensure customers have valid billing address coordinates.</p>
-                        </template>
-                    </div>
+                    <template if:true={hasSelectedLocationGroup}>
+                        <div class="customer-detail slds-box slds-theme_default">
+                            <h3 class="slds-text-heading_small slds-m-bottom_x-small">Shared Address</h3>
+                            <p class="slds-text-body_regular slds-m-bottom_x-small">
+                                <strong>Address:</strong> {selectedLocationAddress}
+                            </p>
+                            <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_small">{selectedLocationCountLabel}</p>
+
+                            <ul class="location-customer-list">
+                                <template for:each={customersAtSelectedLocation} for:item="customer">
+                                    <li key={customer.id} class="location-customer-list__item">
+                                        <div
+                                            class="location-customer-list__button"
+                                            data-id={customer.id}
+                                            onclick={handleLocationCustomerSelect}
+                                            role="button"
+                                            tabindex="0">
+                                            <lightning-button
+                                                class="location-customer-list__name-link"
+                                                variant="base"
+                                                label={customer.name}
+                                                data-id={customer.id}
+                                                onclick={handleNavigateToAccountFromList}>
+                                            </lightning-button>
+                                            <span class={customer.statusClass}>{customer.statusLabel}</span>
+                                        </div>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                    </template>
+
+                    <template if:true={hasSelectedCustomer}>
+                        <div class="customer-detail slds-box slds-theme_default">
+                            <div class="slds-grid slds-grid_vertical-align-center slds-wrap slds-m-bottom_small">
+                                <lightning-button
+                                    class="selected-customer-link slds-m-right_small"
+                                    variant="base"
+                                    label={selectedCustomer.name}
+                                    onclick={handleNavigateToSelectedCustomer}>
+                                </lightning-button>
+                                <span class={selectedCustomerStatusClass}>{selectedCustomerStatusLabel}</span>
+                            </div>
+
+                            <p class="slds-text-body_regular slds-m-bottom_small">
+                                <strong>Address:</strong> {selectedCustomerAddress}
+                            </p>
+
+                            <div class="slds-text-body_small slds-m-bottom_small">
+                                <lightning-formatted-url
+                                    value={selectedCustomerUrl}
+                                    label="Open Account"
+                                    target="_blank">
+                                </lightning-formatted-url>
+                                <template if:true={selectedContractBidUrl}>
+                                    <span class="slds-m-horizontal_x-small">|</span>
+                                    <lightning-formatted-url
+                                        value={selectedContractBidUrl}
+                                        label="Open Contract Bid"
+                                        target="_blank">
+                                    </lightning-formatted-url>
+                                </template>
+                            </div>
+
+                            <template if:true={hasSelectedRecentBid}>
+                                <h4 class="slds-text-heading_small slds-m-bottom_x-small">Recent Contract Bid</h4>
+                                <dl class="detail-list">
+                                    <div class="detail-list__row">
+                                        <dt>Name</dt>
+                                        <dd>{selectedRecentBid.Name}</dd>
+                                    </div>
+                                    <template if:true={selectedRecentBid.Stage__c}>
+                                        <div class="detail-list__row">
+                                            <dt>Stage</dt>
+                                            <dd>{selectedRecentBid.Stage__c}</dd>
+                                        </div>
+                                    </template>
+                                    <template if:true={selectedRecentBid.Contract_Year__c}>
+                                        <div class="detail-list__row">
+                                            <dt>Contract Year</dt>
+                                            <dd>{selectedRecentBid.Contract_Year__c}</dd>
+                                        </div>
+                                    </template>
+                                    <template if:true={selectedRecentBid.Contract_Start_Date__c}>
+                                        <div class="detail-list__row">
+                                            <dt>Start Date</dt>
+                                            <dd>
+                                                <lightning-formatted-date-time
+                                                    value={selectedRecentBid.Contract_Start_Date__c}
+                                                    year="numeric"
+                                                    month="short"
+                                                    day="2-digit">
+                                                </lightning-formatted-date-time>
+                                            </dd>
+                                        </div>
+                                    </template>
+                                    <template if:true={selectedRecentBid.Contract_End_Date__c}>
+                                        <div class="detail-list__row">
+                                            <dt>End Date</dt>
+                                            <dd>
+                                                <lightning-formatted-date-time
+                                                    value={selectedRecentBid.Contract_End_Date__c}
+                                                    year="numeric"
+                                                    month="short"
+                                                    day="2-digit">
+                                                </lightning-formatted-date-time>
+                                            </dd>
+                                        </div>
+                                    </template>
+                                    <template if:true={selectedRecentBid.Due_Date__c}>
+                                        <div class="detail-list__row">
+                                            <dt>Due Date</dt>
+                                            <dd>
+                                                <lightning-formatted-date-time
+                                                    value={selectedRecentBid.Due_Date__c}
+                                                    year="numeric"
+                                                    month="short"
+                                                    day="2-digit">
+                                                </lightning-formatted-date-time>
+                                            </dd>
+                                        </div>
+                                    </template>
+                                    <template if:true={showSelectedRecentBidTotal}>
+                                        <div class="detail-list__row">
+                                            <dt>Total</dt>
+                                            <dd>
+                                                <lightning-formatted-number
+                                                    value={selectedRecentBid.Total__c}
+                                                    format-style="currency"
+                                                    currency-code="USD">
+                                                </lightning-formatted-number>
+                                            </dd>
+                                        </div>
+                                    </template>
+                                </dl>
+                            </template>
+                            <template if:false={hasSelectedRecentBid}>
+                                <p class="slds-text-body_regular slds-text-color_weak">No Recent Contract Bid linked.</p>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- hidden when nothing selected -->
+                </div>
                 </template>
             </div>
 
-            <template if:true={hasSelectedLocationGroup}>
-                <div class="customer-detail slds-box slds-theme_default">
-                    <h3 class="slds-text-heading_small slds-m-bottom_x-small">Shared Address</h3>
-                    <p class="slds-text-body_regular slds-m-bottom_x-small">
-                        <strong>Address:</strong> {selectedLocationAddress}
-                    </p>
-                    <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_small">{selectedLocationCountLabel}</p>
-
-                    <ul class="location-customer-list">
-                        <template for:each={customersAtSelectedLocation} for:item="customer">
-                            <li key={customer.id} class="location-customer-list__item">
-                                <button
-                                    type="button"
-                                    class="location-customer-list__button"
-                                    data-id={customer.id}
-                                    onclick={handleLocationCustomerSelect}>
-                                    <span class="location-customer-list__name">{customer.name}</span>
-                                    <span class={customer.statusClass}>{customer.statusLabel}</span>
-                                </button>
-                            </li>
-                        </template>
-                    </ul>
-                </div>
-            </template>
-
-            <template if:true={hasSelectedCustomer}>
-                <div class="customer-detail slds-box slds-theme_default">
-                    <div class="slds-grid slds-grid_vertical-align-center slds-wrap slds-m-bottom_small">
-                        <h3 class="slds-text-heading_small slds-m-right_small">{selectedCustomer.Name}</h3>
-                        <span class={selectedCustomerStatusClass}>{selectedCustomerStatusLabel}</span>
-                    </div>
-
-                    <p class="slds-text-body_regular slds-m-bottom_small">
-                        <strong>Address:</strong> {selectedCustomerAddress}
-                    </p>
-
-                    <template if:true={hasSelectedRecentBid}>
-                        <h4 class="slds-text-heading_small slds-m-bottom_x-small">Recent Contract Bid</h4>
-                        <dl class="detail-list">
-                            <div class="detail-list__row">
-                                <dt>Name</dt>
-                                <dd>{selectedRecentBid.Name}</dd>
-                            </div>
-                            <template if:true={selectedRecentBid.Stage__c}>
-                                <div class="detail-list__row">
-                                    <dt>Stage</dt>
-                                    <dd>{selectedRecentBid.Stage__c}</dd>
-                                </div>
-                            </template>
-                            <template if:true={selectedRecentBid.Contract_Year__c}>
-                                <div class="detail-list__row">
-                                    <dt>Contract Year</dt>
-                                    <dd>{selectedRecentBid.Contract_Year__c}</dd>
-                                </div>
-                            </template>
-                            <template if:true={selectedRecentBid.Contract_Start_Date__c}>
-                                <div class="detail-list__row">
-                                    <dt>Start Date</dt>
-                                    <dd>
-                                        <lightning-formatted-date-time
-                                            value={selectedRecentBid.Contract_Start_Date__c}
-                                            year="numeric"
-                                            month="short"
-                                            day="2-digit">
-                                        </lightning-formatted-date-time>
-                                    </dd>
-                                </div>
-                            </template>
-                            <template if:true={selectedRecentBid.Contract_End_Date__c}>
-                                <div class="detail-list__row">
-                                    <dt>End Date</dt>
-                                    <dd>
-                                        <lightning-formatted-date-time
-                                            value={selectedRecentBid.Contract_End_Date__c}
-                                            year="numeric"
-                                            month="short"
-                                            day="2-digit">
-                                        </lightning-formatted-date-time>
-                                    </dd>
-                                </div>
-                            </template>
-                            <template if:true={selectedRecentBid.Due_Date__c}>
-                                <div class="detail-list__row">
-                                    <dt>Due Date</dt>
-                                    <dd>
-                                        <lightning-formatted-date-time
-                                            value={selectedRecentBid.Due_Date__c}
-                                            year="numeric"
-                                            month="short"
-                                            day="2-digit">
-                                        </lightning-formatted-date-time>
-                                    </dd>
-                                </div>
-                            </template>
-                            <template if:true={showSelectedRecentBidTotal}>
-                                <div class="detail-list__row">
-                                    <dt>Total</dt>
-                                    <dd>
-                                        <lightning-formatted-number
-                                            value={selectedRecentBid.Total__c}
-                                            format-style="currency"
-                                            currency-code="USD">
-                                        </lightning-formatted-number>
-                                    </dd>
-                                </div>
-                            </template>
-                        </dl>
-                    </template>
-                    <template if:false={hasSelectedRecentBid}>
-                        <p class="slds-text-body_regular slds-text-color_weak">No Recent Contract Bid linked.</p>
-                    </template>
-                </div>
-            </template>
         </div>
     </lightning-card>
 </template>

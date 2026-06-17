@@ -4,6 +4,27 @@
     min-height: 300px;
     height: 400px;
     width: 100%;
+    position: relative;
+    z-index: 1;
+    margin-bottom: 1rem;
+}
+
+.map-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.map-layout__details {
+    min-width: 0;
+    position: relative;
+    z-index: 2;
+}
+
+.details-actions {
+    display: flex;
+    justify-content: flex-end;
 }
 
 .map-header {
@@ -51,7 +72,11 @@
 }
 
 .customer-detail {
-    margin-top: 1rem;
+    margin-top: 0;
+}
+
+.customer-detail_placeholder {
+    border-style: dashed;
 }
 
 .status-badge {
@@ -136,6 +161,10 @@
 .location-customer-list__name {
     font-weight: 600;
     color: #080707;
+}
+
+.location-customer-list__name-link {
+    flex: 1 1 auto;
 }
 
 .clear-button-container {

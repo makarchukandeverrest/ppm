@@ -1,4 +1,5 @@
 import { LightningElement, wire, track } from 'lwc';
+import { NavigationMixin } from 'lightning/navigation';
 import { getPicklistValues, getObjectInfo } from 'lightning/uiObjectInfoApi';
 import getCustomers from '@salesforce/apex/MapCustomersController.getCustomers';
 import ACCOUNT_OBJECT from '@salesforce/schema/Account';
@@ -26,7 +27,7 @@ const MARKER_COLOR_NO_BID = '#EA001E';
 const MARKER_COLOR_OTHER = '#FCC003';
 const MARKER_COLOR_MULTI = '#0176D3';
 
-export default class CustomersMap extends LightningElement {
+export default class CustomersMap extends NavigationMixin(LightningElement) {
     allCustomers = [];
     filteredCustomers = [];
     filteredMapMarkers = [];
@@ -269,6 +270,16 @@ export default class CustomersMap extends LightningElement {
     clearLocationSelection() {
         this.selectedLocationKey = '';
         this.customersAtSelectedLocation = [];
+    }
+
+    clearSelection() {
+        this.selectedCustomer = null;
+        this.selectedMarkerValue = '';
+        this.clearLocationSelection();
+    }
+
+    get hasAnySelection() {
+        return this.hasSelectedCustomer || this.hasSelectedLocationGroup;
     }
 
     customerMatchesAllFilters(customer) {
@@ -547,7 +558,10 @@ export default class CustomersMap extends LightningElement {
         const address = this.formatCustomerAddress(customer);
         const markerStatus = this.getCustomerMarkerStatus(customer);
 
-        let description = `<b>${markerStatus.label}</b><br/>Address: ${address}`;
+        const accountUrl = `/lightning/r/Account/${customer.accountId}/view`;
+        let description =
+            `<a href="${accountUrl}" target="_blank" rel="noopener noreferrer">${customer.name}</a>` +
+            `<br/><b>${markerStatus.label}</b><br/>Address: ${address}`;
 
         if (customer.contractPeriods) {
             description += `<br/>Contract Periods: ${customer.contractPeriods}`;
@@ -566,8 +580,9 @@ export default class CustomersMap extends LightningElement {
             return '<br/><br/><b>Recent Contract Bid:</b> None';
         }
 
+        const bidUrl = `/lightning/r/Contract_Bid__c/${customer.contractBidId}/view`;
         let description = '<br/><br/><b>Recent Contract Bid</b>';
-        description += `<br/>Name: ${customer.contractBidName || '—'}`;
+        description += `<br/>Name: <a href="${bidUrl}" target="_blank" rel="noopener noreferrer">${customer.contractBidName || '—'}</a>`;
 
         if (customer.contractBidStage) {
             description += `<br/>Stage: ${customer.contractBidStage}`;
@@ -632,6 +647,13 @@ export default class CustomersMap extends LightningElement {
         return this.formatCustomerAddress(this.selectedCustomer);
     }
 
+    get selectedCustomerUrl() {
+        if (!this.selectedCustomer?.accountId) {
+            return '';
+        }
+        return `/lightning/r/Account/${this.selectedCustomer.accountId}/view`;
+    }
+
     get hasSelectedLocationGroup() {
         return this.customersAtSelectedLocation.length > 1;
     }
@@ -662,6 +684,13 @@ export default class CustomersMap extends LightningElement {
             Due_Date__c: this.selectedCustomer.dueDate,
             Total__c: this.selectedCustomer.total
         };
+    }
+
+    get selectedContractBidUrl() {
+        if (!this.selectedCustomer?.contractBidId) {
+            return '';
+        }
+        return `/lightning/r/Contract_Bid__c/${this.selectedCustomer.contractBidId}/view`;
     }
 
     get hasSelectedRecentBid() {
@@ -707,6 +736,7 @@ export default class CustomersMap extends LightningElement {
                 if (firstCustomer) {
                     this.zoomToCustomer(firstCustomer);
                 }
+                this.scrollToDetails();
                 return;
             }
 
@@ -717,6 +747,7 @@ export default class CustomersMap extends LightningElement {
                 this.selectedCustomer = selectedCustomer;
                 this.zoomToCustomer(selectedCustomer);
             }
+            this.scrollToDetails();
         } catch (error) {
             console.error('Error in handleMarkerSelect:', error);
         }
@@ -730,6 +761,39 @@ export default class CustomersMap extends LightningElement {
             this.selectedCustomer = selectedCustomer;
             this.selectedMarkerValue = customerId;
             this.zoomToCustomer(selectedCustomer);
+            this.scrollToDetails();
         }
+    }
+
+    scrollToDetails() {
+        // Ensure DOM updated before scrolling
+        requestAnimationFrame(() => {
+            const anchor = this.template.querySelector('[data-id="detailsAnchor"]');
+            if (anchor && typeof anchor.scrollIntoView === 'function') {
+                anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    }
+
+    navigateToAccount(recordId) {
+        if (!recordId) return;
+
+        this[NavigationMixin.Navigate]({
+            type: 'standard__recordPage',
+            attributes: {
+                recordId,
+                objectApiName: 'Account',
+                actionName: 'view'
+            }
+        });
+    }
+
+    handleNavigateToSelectedCustomer() {
+        this.navigateToAccount(this.selectedCustomer?.accountId);
+    }
+
+    handleNavigateToAccountFromList(event) {
+        event.stopPropagation();
+        this.navigateToAccount(event.currentTarget.dataset.id);
     }
 }
