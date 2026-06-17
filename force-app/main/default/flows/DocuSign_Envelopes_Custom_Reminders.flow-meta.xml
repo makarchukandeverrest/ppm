@@ -899,6 +899,10 @@ Whenever you have a moment, I’d appreciate knowing your anticipated timeline s
 
 Looking forward to supporting you. 
 
+Whenever you have a moment, I’d appreciate knowing your anticipated timeline so we can plan accordingly. 
+
+Looking forward to supporting you. 
+
  
  
 
@@ -911,6 +915,10 @@ Best,
         <text>Hi {!Get_Recipients_3.Name},
 
 Just following up on my previous email. If helpful, I’d be glad to schedule a quick call or site visit to walk through the {!$Record.Deal__r.Name} - {!$Record.Deal__r.Reference_Number__c}, answer any questions, and align on priorities. 
+
+ 
+
+Please let me know what works best for you. 
 
  
 
