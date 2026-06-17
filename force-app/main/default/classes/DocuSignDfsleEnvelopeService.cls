@@ -3,10 +3,21 @@ public with sharing class DocuSignDfsleEnvelopeService {
     private static final String ANCHOR_MAIN =
         'Please initial page(s) 2, 3, 4 and 5 of this contract where indicated. ';
 
-    private static final List<String> ADDITIONAL_FILE_NAMES = new List<String>{
+    private static final String ENVELOPE_EMAIL_SUBJECT = 'Please sign this document';
+
+    private static final String ENVELOPE_EMAIL_BODY_INTRO =
+        'I am sending you this request for your electronic signature, please review and electronically sign by following the link. Additional reference documents:';
+
+    private static final List<String> NEW_CUSTOMER_RESOURCE_LABELS = new List<String>{
         'Recommendation Letter',
         'General References',
         'COI'
+    };
+
+    private static final Map<String, String> NEW_CUSTOMER_RESOURCE_URL_BY_LABEL = new Map<String, String>{
+        'COI' => Document_Link__mdt.getInstance('COI').Sharing_Link__c,
+        'Recommendation Letter' => Document_Link__mdt.getInstance('Recommendation_Letter').Sharing_Link__c,
+        'General References' => Document_Link__mdt.getInstance('General_References').Sharing_Link__c
     };
 
     public class SendResult {
@@ -143,6 +154,11 @@ public with sharing class DocuSignDfsleEnvelopeService {
             new dfsle.Entity(contractBidId)
         );
 
+        String envelopeEmailBody = buildEnvelopeEmailBody(isNewCustomer);
+        if (String.isNotBlank(envelopeEmailBody)) {
+            env = env.withEmail(ENVELOPE_EMAIL_SUBJECT, envelopeEmailBody);
+        }
+
         List<dfsle.Document> docs = dfsle.DocumentService.getDocuments(
             ContentVersion.SObjectType,
             new Set<Id>(documentCvIds)
@@ -197,39 +213,72 @@ public with sharing class DocuSignDfsleEnvelopeService {
             contentDocIds.add(link.ContentDocumentId);
         }
 
-        List<ContentVersion> extraDocs = [
+        List<ContentVersion> welcomeLetters = [
             SELECT Id, Title
             FROM ContentVersion
             WHERE
-                Title IN :ADDITIONAL_FILE_NAMES
-                OR (
-                    Title LIKE '%Welcome Letter%'
-                    AND ContentDocumentId IN :contentDocIds
-                )
+                Title LIKE '%Welcome Letter%'
+                AND ContentDocumentId IN :contentDocIds
+            LIMIT 1
         ];
 
-        ContentVersion welcomeLetter;
-        List<ContentVersion> otherDocs = new List<ContentVersion>();
-
-        for (ContentVersion cv : extraDocs) {
-            if (cv.Title != null && cv.Title.contains('Welcome Letter')) {
-                if (welcomeLetter == null) {
-                    welcomeLetter = cv;
-                }
-            } else {
-                otherDocs.add(cv);
-            }
-        }
-
-        if (welcomeLetter != null) {
-            cvIds.add(welcomeLetter.Id);
+        if (!welcomeLetters.isEmpty()) {
+            cvIds.add(welcomeLetters[0].Id);
         }
         cvIds.add(mainContentVersionId);
-        for (ContentVersion cv : otherDocs) {
-            cvIds.add(cv.Id);
-        }
 
         return cvIds;
+    }
+
+    @TestVisible
+    private static String buildEnvelopeEmailBody(Boolean isNewCustomer) {
+        if (isNewCustomer != true) {
+            return null;
+        }
+
+        String resourceLinksHtml = buildEnvelopeResourceLinksHtml();
+        if (String.isBlank(resourceLinksHtml)) {
+            return null;
+        }
+
+        return '<p>' + escapeHtmlText(ENVELOPE_EMAIL_BODY_INTRO) + '</p>' + resourceLinksHtml;
+    }
+
+    private static String buildEnvelopeResourceLinksHtml() {
+        List<String> items = new List<String>();
+        for (String label : NEW_CUSTOMER_RESOURCE_LABELS) {
+            String url = NEW_CUSTOMER_RESOURCE_URL_BY_LABEL.get(label);
+            if (String.isBlank(url)) {
+                continue;
+            }
+            items.add(
+                '<li><a href="' +
+                escapeHtmlAttribute(url) +
+                '">' +
+                escapeHtmlText(label) +
+                '</a></li>'
+            );
+        }
+        if (items.isEmpty()) {
+            return '';
+        }
+        return '<ul>' + String.join(items, '') + '</ul>';
+    }
+
+    private static String escapeHtmlText(String value) {
+        if (value == null) {
+            return '';
+        }
+        return value.replace('&', '&amp;')
+            .replace('<', '&lt;')
+            .replace('>', '&gt;');
+    }
+
+    private static String escapeHtmlAttribute(String value) {
+        if (value == null) {
+            return '';
+        }
+        return escapeHtmlText(value).replace('"', '&quot;');
     }
 
     @TestVisible

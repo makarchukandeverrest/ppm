@@ -1,5 +1,6 @@
 import { LightningElement, track, wire, api } from "lwc";
 import { getRecord, getFieldValue } from "lightning/uiRecordApi";
+import { getObjectInfo } from "lightning/uiObjectInfoApi";
 import { refreshApex } from "@salesforce/apex";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 
@@ -12,22 +13,14 @@ import BILLING_STATE_FIELD from "@salesforce/schema/WorkOrder.Account.BillingSta
 import BILLING_POSTAL_CODE_FIELD from "@salesforce/schema/WorkOrder.Account.BillingPostalCode";
 import BILLING_COUNTRY_FIELD from "@salesforce/schema/WorkOrder.Account.BillingCountry";
 import SERVICE_TEAM_MEMBER from "@salesforce/schema/WorkOrder.Service_Team_Member__c";
+import SERVICE_TEAM_MEMBER_OBJECT from "@salesforce/schema/Service_Team_Member__c";
+import SERVICE_TEAM_MEMBER_NAME from "@salesforce/schema/Service_Team_Member__c.Name";
 
 import getWorkOrderLineItems from "@salesforce/apex/WorkOrderLineItemsController.getWorkOrderLineItems";
-import getServiceTeamMembers from "@salesforce/apex/WorkOrderLineItemsController.getServiceTeamMembers";
 import saveServiceTeamMemberAssignments from "@salesforce/apex/WorkOrderLineItemsController.saveServiceTeamMemberAssignments";
 
 function normalizeMemberId(value) {
   return value || null;
-}
-
-function assignmentLabelFor(memberId, options) {
-  const id = normalizeMemberId(memberId);
-  if (!id) {
-    return "—";
-  }
-  const match = options.find((option) => option.value === id);
-  return match?.label ?? "—";
 }
 
 function mapLineItemRow(row) {
@@ -41,6 +34,7 @@ function mapLineItemRow(row) {
         : row.Name ?? "",
     savedServiceTeamMemberId: savedId,
     draftServiceTeamMemberId: savedId || "",
+    draftServiceTeamMemberLabel: savedLabel,
     serviceTeamMemberLabel: savedLabel,
     assignmentDisplayLabel: savedLabel || "—"
   };
@@ -51,10 +45,29 @@ export default class WorkOrderLineItemsView extends LightningElement {
   @track workOrderDetails = {};
   @track workOrderLineItems = [];
   @track editingRowIds = [];
-  @track serviceTeamMemberOptions = [{ label: "— None —", value: "" }];
 
   isSaving = false;
   wiredLineItemsResult;
+  labelLookupRecordId;
+  labelLookupRowId;
+  showCreateMemberModal = false;
+  createMemberForRowId;
+  canCreateServiceTeamMember = false;
+
+  serviceTeamMemberMatchingInfo = {
+    primaryField: { fieldPath: "Name" },
+    additionalFields: [{ fieldPath: "Email__c" }]
+  };
+
+  serviceTeamMemberDisplayInfo = {
+    primaryField: "Name",
+    additionalFields: ["Email__c"]
+  };
+
+  @wire(getObjectInfo, { objectApiName: SERVICE_TEAM_MEMBER_OBJECT })
+  wiredServiceTeamMemberObjectInfo({ data }) {
+    this.canCreateServiceTeamMember = data?.createable ?? false;
+  }
 
   @wire(getRecord, {
     recordId: "$recordId",
@@ -87,6 +100,24 @@ export default class WorkOrderLineItemsView extends LightningElement {
     }
   }
 
+  @wire(getRecord, {
+    recordId: "$labelLookupRecordId",
+    fields: [SERVICE_TEAM_MEMBER_NAME]
+  })
+  wiredServiceTeamMemberLabel({ data }) {
+    if (!data || !this.labelLookupRowId) {
+      return;
+    }
+
+    const rowId = this.labelLookupRowId;
+    const name = getFieldValue(data, SERVICE_TEAM_MEMBER_NAME) || "—";
+    this.workOrderLineItems = this.workOrderLineItems.map((item) =>
+      item.Id === rowId ? { ...item, draftServiceTeamMemberLabel: name } : item
+    );
+    this.labelLookupRecordId = undefined;
+    this.labelLookupRowId = undefined;
+  }
+
   @wire(getWorkOrderLineItems, { workOrderId: "$recordId" })
   wiredLineItems(result) {
     this.wiredLineItemsResult = result;
@@ -104,22 +135,6 @@ export default class WorkOrderLineItemsView extends LightningElement {
     }
   }
 
-  @wire(getServiceTeamMembers)
-  wiredServiceTeamMembers({ error, data }) {
-    if (data) {
-      const options = data.map((member) => ({
-        label: member.Name,
-        value: member.Id
-      }));
-      this.serviceTeamMemberOptions = [
-        { label: "— None —", value: "" },
-        ...options
-      ];
-    } else if (error) {
-      // optional: log service team member options error
-    }
-  }
-
   get lineItemsForDisplay() {
     const editingSet = new Set(this.editingRowIds);
     return this.workOrderLineItems.map((item) => {
@@ -129,11 +144,10 @@ export default class WorkOrderLineItemsView extends LightningElement {
       return {
         ...item,
         isEditingAssignment: editingSet.has(item.Id),
+        draftServiceTeamMemberPickerValue:
+          item.draftServiceTeamMemberId || undefined,
         assignmentDisplayLabel: isDirty
-          ? assignmentLabelFor(
-              item.draftServiceTeamMemberId,
-              this.serviceTeamMemberOptions
-            )
+          ? item.draftServiceTeamMemberLabel || "—"
           : item.serviceTeamMemberLabel || "—"
       };
     });
@@ -191,31 +205,83 @@ export default class WorkOrderLineItemsView extends LightningElement {
   handleServiceTeamMemberDraftChange(event) {
     const rowId =
       event.currentTarget?.dataset?.id || event.target?.dataset?.id;
-    const value = event.detail.value;
-    const draftId = value ? value : null;
+    const recordId = event.detail?.recordId || null;
 
     if (!rowId) {
-      // Helps debug cases where the data-row id isn't coming through
-      // (e.g., lightning-combobox event target differences).
-      // eslint-disable-next-line no-console
-      console.warn(
-        "[WorkOrderLineItemsView] Missing rowId on draft change",
-        JSON.stringify({ value })
-      );
       return;
     }
 
+    this.applyDraftServiceTeamMember(rowId, recordId);
+  }
+
+  handleOpenCreateMemberModal(event) {
+    const rowId = event.currentTarget?.dataset?.id;
+    if (!rowId) {
+      return;
+    }
+    this.createMemberForRowId = rowId;
+    this.showCreateMemberModal = true;
+  }
+
+  handleCloseCreateMemberModal() {
+    this.showCreateMemberModal = false;
+    this.createMemberForRowId = null;
+  }
+
+  handleCreateMemberSuccess(event) {
+    const newMemberId = event.detail?.id;
+    const rowId = this.createMemberForRowId;
+
+    this.handleCloseCreateMemberModal();
+
+    if (newMemberId && rowId) {
+      this.applyDraftServiceTeamMember(rowId, newMemberId);
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: "Success",
+          message: "Service Team Member created.",
+          variant: "success"
+        })
+      );
+    }
+  }
+
+  handleCreateMemberError(event) {
+    const message =
+      event.detail?.message || "Could not create Service Team Member.";
+    this.dispatchEvent(
+      new ShowToastEvent({
+        title: "Create failed",
+        message,
+        variant: "error"
+      })
+    );
+  }
+
+  applyDraftServiceTeamMember(rowId, recordId) {
     this.workOrderLineItems = this.workOrderLineItems.map((item) =>
       item.Id === rowId
-        ? { ...item, draftServiceTeamMemberId: draftId || "" }
+        ? {
+            ...item,
+            draftServiceTeamMemberId: recordId || "",
+            draftServiceTeamMemberLabel: recordId
+              ? item.draftServiceTeamMemberLabel
+              : "—"
+          }
         : item
     );
+
+    if (recordId) {
+      this.labelLookupRowId = rowId;
+      this.labelLookupRecordId = recordId;
+    }
   }
 
   handleCancelAssignments() {
     this.workOrderLineItems = this.workOrderLineItems.map((item) => ({
       ...item,
       draftServiceTeamMemberId: item.savedServiceTeamMemberId || "",
+      draftServiceTeamMemberLabel: item.serviceTeamMemberLabel || "",
       assignmentDisplayLabel: item.serviceTeamMemberLabel || "—"
     }));
     this.editingRowIds = [];
