@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>Recommendation Letter</label>
+    <protected>false</protected>
+    <values>
+        <field>Sharing_Link__c</field>
+        <value xsi:type="xsd:string">https://premierswim-my.sharepoint.com/:b:/p/office/IQAulEg5vRB8QJMjT7Rt-iXtASRFZya9n3Y0Bd2X4tVnhhw?e=lANcKM</value>
+    </values>
+</CustomMetadata>
