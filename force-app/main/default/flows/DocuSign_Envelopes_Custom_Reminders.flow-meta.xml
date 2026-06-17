@@ -680,7 +680,7 @@ $Record.Deal__r.Name &amp;
             <field>dfsle__Role__c</field>
             <operator>Contains</operator>
             <value>
-                <stringValue>Recipient</stringValue>
+                <stringValue>Signer</stringValue>
             </value>
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
@@ -708,7 +708,7 @@ $Record.Deal__r.Name &amp;
             <field>dfsle__Role__c</field>
             <operator>Contains</operator>
             <value>
-                <stringValue>Recipient</stringValue>
+                <stringValue>Signer</stringValue>
             </value>
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
@@ -790,6 +790,13 @@ $Record.Deal__r.Name &amp;
                 <stringValue>Sent</stringValue>
             </value>
         </filters>
+        <filters>
+            <field>Deal__c</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </filters>
         <object>dfsle__Envelope__c</object>
         <recordTriggerType>Update</recordTriggerType>
         <scheduledPaths>
@@ -869,9 +876,14 @@ $Record.Deal__r.Name &amp;
         <name>Reminder1Body</name>
         <isViewedAsPlainText>true</isViewedAsPlainText>
         <text>Hi {!Get_Recipients.Name},
+
 Just a quick note to confirm confirm that the {!$Record.Deal__r.Name} - {!$Record.Deal__r.Reference_Number__c} came through on your end.
-If you didn’t receive it or would like it to be resent, I’m glad to do so. Please let me know if you have any questions or would like to review any items together.
-Thank you,
+If you didn’t receive it or would like it to resent, I’m glad to do so. Please let me know if you have any questions or would like to review any items together. 
+
+ 
+ 
+
+Thank you, 
 {!Get_Regional_Manager.Name}</text>
     </textTemplates>
     <textTemplates>
@@ -879,11 +891,18 @@ Thank you,
         <isViewedAsPlainText>true</isViewedAsPlainText>
         <text>Hi {!Get_Recipients_2.Name},
 
-Just a quick note to confirm that the {!$Record.Deal__r.Name} - {!$Record.Deal__r.Reference_Number__c} came through on your end.
+Hi [Name], 
 
-If you didn’t receive it or would like it to be resent, I’m glad to do so. Please let me know if you have any questions or would like to review any items together.
+I wanted to follow up as we continue scheduling upcoming repair work and ordering materials. Approving the proposal allows us to secure your spot on the schedule and ensure supplies are allocated in time. 
 
-Thank you,
+Whenever you have a moment, I’d appreciate knowing your anticipated timeline so we can plan accordingly. 
+
+Looking forward to supporting you. 
+
+ 
+ 
+
+Best, 
 {!Get_Regional_Manager_2.Name}</text>
     </textTemplates>
     <textTemplates>
@@ -891,9 +910,15 @@ Thank you,
         <isViewedAsPlainText>true</isViewedAsPlainText>
         <text>Hi {!Get_Recipients_3.Name},
 
-Just following up on my previous email. If helpful, I’d be glad to schedule a quick call or site visit to walk through the {!$Record.Deal__r.Name} - {!$Record.Deal__r.Reference_Number__c}, answer any questions, and align on priorities. Please let me know what works best for you.
+Just following up on my previous email. If helpful, I’d be glad to schedule a quick call or site visit to walk through the {!$Record.Deal__r.Name} - {!$Record.Deal__r.Reference_Number__c}, answer any questions, and align on priorities. 
 
-Thank you,
+ 
+
+Please let me know what works best for you. 
+
+ 
+
+Thank you, 
 {!Regional_Manager_3.Name}</text>
     </textTemplates>
     <textTemplates>
