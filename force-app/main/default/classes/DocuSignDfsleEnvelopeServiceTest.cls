@@ -234,41 +234,66 @@ private class DocuSignDfsleEnvelopeServiceTest {
     }
 
     @IsTest
-    static void testBuildEnvelopeEmailBody_includesLabeledLinksInBody() {
-        Map<String, String> developerNameByLabel = new Map<String, String>{
-            'Recommendation Letter' => 'Recommendation_Letter',
-            'General References' => 'General_References',
-            'COI' => 'COI'
-        };
-        List<String> labelsInOrder = new List<String>{
-            'Recommendation Letter',
-            'General References',
-            'COI'
-        };
-
-        List<String> items = new List<String>();
-        for (String label : labelsInOrder) {
-            Document_Link__mdt docLink = Document_Link__mdt.getInstance(developerNameByLabel.get(label));
-            System.assertNotEquals(null, docLink, label + ' Document_Link metadata should exist.');
-            System.assertNotEquals(null, docLink.Sharing_Link__c, label + ' sharing link should be configured.');
-            System.assertEquals(label, docLink.Label, label + ' metadata label should match envelope link text.');
-            items.add('<li><a href="' + docLink.Sharing_Link__c + '">' + label + '</a></li>');
-        }
-
-        String body =
-            '<p>I am sending you this request for your electronic signature, please review and electronically sign by following the link. Additional reference documents:</p>' +
-            '<ul>' +
-            String.join(items, '') +
-            '</ul>';
-
-        System.assert(
-            body.contains('I am sending you this request for your electronic signature'),
-            'Expected intro in envelope email body.'
+    static void testBuildEnvelopeEmailSubject_usesSecondYearFromContractFileName() {
+        String subject = DocuSignDfsleEnvelopeService.buildEnvelopeEmailSubject(
+            'Regents Park Pool 1',
+            'Regents Park Pool 1-2026-2027 Bids-Regents Park Pool 1 10290 A--Contract.docx'
         );
-        System.assert(body.contains('https://premierswim-my.sharepoint.com/'), 'Expected SharePoint href in body.');
-        System.assert(body.contains('>COI</a>'), 'Expected human-readable COI link label.');
-        System.assert(body.contains('>Recommendation Letter</a>'), 'Expected Recommendation Letter link.');
-        System.assert(body.contains('>General References</a>'), 'Expected General References link.');
+
+        System.assertEquals(
+            '2027 Premier Pool Management Proposal - Regents Park Pool 1',
+            subject,
+            'Expected subject to use the second year from the contract file name.'
+        );
+    }
+
+    @IsTest
+    static void testBuildEnvelopeEmailSubject_withoutYearRange_omitsYearPrefix() {
+        String subject = DocuSignDfsleEnvelopeService.buildEnvelopeEmailSubject(
+            'Regents Park Pool 1',
+            'Regents Park Pool 1 Contract'
+        );
+
+        System.assertEquals(
+            'Premier Pool Management Proposal - Regents Park Pool 1',
+            subject,
+            'Expected subject without a year range to omit the year prefix.'
+        );
+    }
+
+    @IsTest
+    static void testBuildEnvelopeEmailBody_includesContractCopyWithContactFirstName() {
+        Contact primaryContact = new Contact(
+            FirstName = 'Jane',
+            LastName = 'Smith',
+            Email = 'jane.smith@example.com'
+        );
+        insert primaryContact;
+
+        Account acc = [SELECT Id FROM Account LIMIT 1];
+        acc.Primary_Contact__c = primaryContact.Id;
+        update acc;
+
+        String body = DocuSignDfsleEnvelopeService.buildEnvelopeEmailBody(true, acc.Id);
+
+        System.assertNotEquals(null, body, 'Expected envelope email body for new customers.');
+        System.assert(body.contains('Hello Jane,'), 'Expected greeting with contact first name.');
+        System.assert(
+            body.contains('Thank you for considering our pool management proposal'),
+            'Expected proposal intro in envelope email body.'
+        );
+        System.assert(
+            body.contains('Our "turn-key" pool management contract includes:'),
+            'Expected turn-key contract section in envelope email body.'
+        );
+        System.assert(
+            body.contains('Spring Start-up (inspection, repairs, health department inspection and permits)'),
+            'Expected contract bullet list in envelope email body.'
+        );
+        System.assert(
+            body.contains('Please let us know if there is anything else that we can do to earn your business.'),
+            'Expected closing paragraph in envelope email body.'
+        );
     }
 
     @IsTest

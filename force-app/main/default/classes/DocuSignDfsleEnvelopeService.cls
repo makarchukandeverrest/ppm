@@ -3,21 +3,16 @@ public with sharing class DocuSignDfsleEnvelopeService {
     private static final String ANCHOR_MAIN =
         'Please initial page(s) 2, 3, 4 and 5 of this contract where indicated. ';
 
-    private static final String ENVELOPE_EMAIL_SUBJECT = 'Please sign this document';
+    private static final String ENVELOPE_EMAIL_SUBJECT_PROPOSAL_LABEL = 'Premier Pool Management Proposal';
 
-    private static final String ENVELOPE_EMAIL_BODY_INTRO =
-        'I am sending you this request for your electronic signature, please review and electronically sign by following the link. Additional reference documents:';
-
-    private static final List<String> NEW_CUSTOMER_RESOURCE_LABELS = new List<String>{
-        'Recommendation Letter',
-        'General References',
-        'COI'
-    };
-
-    private static final Map<String, String> NEW_CUSTOMER_RESOURCE_URL_BY_LABEL = new Map<String, String>{
-        'COI' => Document_Link__mdt.getInstance('COI').Sharing_Link__c,
-        'Recommendation Letter' => Document_Link__mdt.getInstance('Recommendation_Letter').Sharing_Link__c,
-        'General References' => Document_Link__mdt.getInstance('General_References').Sharing_Link__c
+    private static final List<String> ENVELOPE_EMAIL_BODY_BULLETS = new List<String>{
+        'Spring Start-up (inspection, repairs, health department inspection and permits)',
+        'American Red Cross certified lifeguards and pool operators fully trained to your property\'s specific needs',
+        'General liability insurance with a $10,000,000 limit',
+        'ALL pool chemicals are included',
+        'A minimum of 3 weekly visits by our supervisory staff',
+        'Our management and service teams are available and On-call 24/7',
+        'A timely and thorough winterization of your facility with ALL winterization chemicals included'
     };
 
     public class SendResult {
@@ -154,10 +149,19 @@ public with sharing class DocuSignDfsleEnvelopeService {
             new dfsle.Entity(contractBidId)
         );
 
-        String envelopeEmailBody = buildEnvelopeEmailBody(isNewCustomer);
-        if (String.isNotBlank(envelopeEmailBody)) {
-            env = env.withEmail(ENVELOPE_EMAIL_SUBJECT, envelopeEmailBody);
-        }
+        ContentVersion mainCv = [
+            SELECT Title
+            FROM ContentVersion
+            WHERE Id = :mainContentVersionId
+            LIMIT 1
+        ];
+
+        String envelopeEmailSubject = buildEnvelopeEmailSubject(signerName, mainCv.Title);
+        String envelopeEmailBody = buildEnvelopeEmailBody(isNewCustomer, accountId);
+        env = env.withEmail(
+            envelopeEmailSubject,
+            envelopeEmailBody != null ? envelopeEmailBody : ''
+        );
 
         List<dfsle.Document> docs = dfsle.DocumentService.getDocuments(
             ContentVersion.SObjectType,
@@ -231,38 +235,102 @@ public with sharing class DocuSignDfsleEnvelopeService {
     }
 
     @TestVisible
-    private static String buildEnvelopeEmailBody(Boolean isNewCustomer) {
+    private static String buildEnvelopeEmailSubject(String accountName, String contractFileTitle) {
+        String proposalLabel = ENVELOPE_EMAIL_SUBJECT_PROPOSAL_LABEL;
+        String safeAccountName = String.isBlank(accountName) ? '' : accountName.trim();
+        String secondYear = extractSecondContractYear(contractFileTitle);
+
+        if (String.isNotBlank(secondYear)) {
+            return secondYear + ' ' + proposalLabel + ' - ' + safeAccountName;
+        }
+        return proposalLabel + ' - ' + safeAccountName;
+    }
+
+    @TestVisible
+    private static String extractSecondContractYear(String contractFileTitle) {
+        if (String.isBlank(contractFileTitle)) {
+            return null;
+        }
+
+        Matcher yearRangeMatcher = Pattern.compile('(\\d{4})-(\\d{4})').matcher(contractFileTitle);
+        if (yearRangeMatcher.find()) {
+            return yearRangeMatcher.group(2);
+        }
+        return null;
+    }
+
+    @TestVisible
+    private static String buildEnvelopeEmailBody(Boolean isNewCustomer, Id accountId) {
         if (isNewCustomer != true) {
             return null;
         }
 
-        String resourceLinksHtml = buildEnvelopeResourceLinksHtml();
-        if (String.isBlank(resourceLinksHtml)) {
+        return buildContractEmailBodyHtml(resolveContactFirstName(accountId));
+    }
+
+    @TestVisible
+    private static String resolveContactFirstName(Id accountId) {
+        if (accountId == null) {
             return null;
         }
 
-        return '<p>' + escapeHtmlText(ENVELOPE_EMAIL_BODY_INTRO) + '</p>' + resourceLinksHtml;
+        List<Account> accounts = [
+            SELECT Primary_Contact__r.FirstName
+            FROM Account
+            WHERE Id = :accountId
+            LIMIT 1
+        ];
+        if (accounts.isEmpty() || accounts[0].Primary_Contact__r == null) {
+            return null;
+        }
+        return accounts[0].Primary_Contact__r.FirstName;
     }
 
-    private static String buildEnvelopeResourceLinksHtml() {
-        List<String> items = new List<String>();
-        for (String label : NEW_CUSTOMER_RESOURCE_LABELS) {
-            String url = NEW_CUSTOMER_RESOURCE_URL_BY_LABEL.get(label);
-            if (String.isBlank(url)) {
-                continue;
-            }
-            items.add(
-                '<li><a href="' +
-                escapeHtmlAttribute(url) +
-                '">' +
-                escapeHtmlText(label) +
-                '</a></li>'
-            );
+    private static String buildContractEmailBodyHtml(String contactFirstName) {
+        List<String> parts = new List<String>();
+
+        String greeting = String.isNotBlank(contactFirstName)
+            ? 'Hello ' + escapeHtmlText(contactFirstName) + ','
+            : 'Hello,';
+        parts.add('<p>' + greeting + '</p>');
+
+        parts.add(
+            '<p>' +
+            escapeHtmlText(
+                'Thank you for considering our pool management proposal. I\'m attaching the contract, along with our welcome letter, general references, recommendation letters and a copy of our certificate of insurance. Please review everything and see how we compare to the competition and let me know if we can schedule a time to discuss how we can be of service to you in the future.'
+            ) +
+            '</p>'
+        );
+
+        parts.add(
+            '<p>' +
+            escapeHtmlText('Our "turn-key" pool management contract includes:') +
+            '</p>'
+        );
+
+        List<String> bulletItems = new List<String>();
+        for (String bullet : ENVELOPE_EMAIL_BODY_BULLETS) {
+            bulletItems.add('<li>' + escapeHtmlText(bullet) + '</li>');
         }
-        if (items.isEmpty()) {
-            return '';
-        }
-        return '<ul>' + String.join(items, '') + '</ul>';
+        parts.add('<ul>' + String.join(bulletItems, '') + '</ul>');
+
+        parts.add(
+            '<p>' +
+            escapeHtmlText(
+                'We have years of experience in providing excellent pool management services with a long list of references to back it up. In addition to our reliable service, we also offer very competitive prices along with great discounts for new and existing customers.'
+            ) +
+            '</p>'
+        );
+
+        parts.add(
+            '<p>' +
+            escapeHtmlText(
+                'Please let us know if there is anything else that we can do to earn your business.'
+            ) +
+            '</p>'
+        );
+
+        return String.join(parts, '');
     }
 
     private static String escapeHtmlText(String value) {
@@ -272,13 +340,6 @@ public with sharing class DocuSignDfsleEnvelopeService {
         return value.replace('&', '&amp;')
             .replace('<', '&lt;')
             .replace('>', '&gt;');
-    }
-
-    private static String escapeHtmlAttribute(String value) {
-        if (value == null) {
-            return '';
-        }
-        return escapeHtmlText(value).replace('"', '&quot;');
     }
 
     @TestVisible
