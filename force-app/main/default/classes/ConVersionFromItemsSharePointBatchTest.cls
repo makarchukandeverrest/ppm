@@ -383,6 +383,47 @@ private class ConVersionFromItemsSharePointBatchTest {
     }
 
     @isTest
+    static void testBatchExecute_MultipleAccountMatches() {
+        // One SharePoint item matching multiple accounts requires multiple callouts
+        // before any DML — the scenario that caused "uncommitted work pending"
+        Account acc1 = [SELECT Id FROM Account WHERE Name = 'Customer A' LIMIT 1];
+        Account acc2 = [SELECT Id FROM Account WHERE Name = 'Test Customer ABC' LIMIT 1];
+
+        Map<String, Object> row = new Map<String, Object>{
+            'Id' => 'x00Vv00000wQszSIAS',
+            'Name__c' => 'Welcome Letter',
+            'UniqueId__c' => '{da2c3ea5-3954-44ee-a81e-9f2c31dfbfb8}',
+            'Path__c' => 'https://example.sharepoint.com/sites/Salesforce/Customer A/Welcome Letter.pdf',
+            'MimeType__c' => 'application/pdf',
+            'CreationDate__c' => DateTime.now(),
+            'IsFolder__c' => false
+        };
+        Items_SharePoint__x item = (Items_SharePoint__x) Test.createStubQueryRow(
+            Items_SharePoint__x.SObjectType, row
+        );
+
+        Test.startTest();
+        Test.setMock(HttpCalloutMock.class, new SharePointMock(200, 'PDF content'));
+
+        ContentVersionFromItemsSharePointBatch batch = new ContentVersionFromItemsSharePointBatch();
+        batch.execute(null, new List<Items_SharePoint__x>{ item });
+        Test.stopTest();
+
+        List<ContentVersion> cvs = [
+            SELECT Id FROM ContentVersion WHERE SharePoint_External_Id__c = :item.UniqueId__c
+        ];
+        System.assert(cvs.size() >= 1, 'Should create ContentVersion after multiple callouts');
+
+        Set<Id> matchedAccountIds = new Set<Id>{ acc1.Id, acc2.Id };
+        List<ContentDocumentLink> links = [
+            SELECT Id, LinkedEntityId
+            FROM ContentDocumentLink
+            WHERE LinkedEntityId IN :matchedAccountIds
+        ];
+        System.assert(links.size() >= 1, 'Should link file to at least one matched account');
+    }
+
+    @isTest
     static void testBatchWithMockCallout() {
         // Comprehensive test with mock
         Test.startTest();
