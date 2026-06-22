@@ -5,6 +5,21 @@ public with sharing class DocuSignDfsleEnvelopeService {
 
     private static final String ENVELOPE_EMAIL_SUBJECT_PROPOSAL_LABEL = 'Premier Pool Management Proposal';
 
+    private static final String ENVELOPE_EMAIL_WEBSITE_URL = 'https://www.premierswim.com/';
+    private static final String ENVELOPE_EMAIL_SIGNATURE_TEAM = 'Premier Pool Management Team';
+
+    private static final List<String> NEW_CUSTOMER_RESOURCE_LABELS = new List<String>{
+        'Recommendation Letter',
+        'General References',
+        'COI'
+    };
+
+    private static final Map<String, String> NEW_CUSTOMER_RESOURCE_URL_BY_LABEL = new Map<String, String>{
+        'COI' => Document_Link__mdt.getInstance('COI').Sharing_Link__c,
+        'Recommendation Letter' => Document_Link__mdt.getInstance('Recommendation_Letter').Sharing_Link__c,
+        'General References' => Document_Link__mdt.getInstance('General_References').Sharing_Link__c
+    };
+
     private static final List<String> ENVELOPE_EMAIL_BODY_BULLETS = new List<String>{
         'Spring Start-up (inspection, repairs, health department inspection and permits)',
         'American Red Cross certified lifeguards and pool operators fully trained to your property\'s specific needs',
@@ -157,11 +172,8 @@ public with sharing class DocuSignDfsleEnvelopeService {
         ];
 
         String envelopeEmailSubject = buildEnvelopeEmailSubject(signerName, mainCv.Title);
-        String envelopeEmailBody = buildEnvelopeEmailBody(isNewCustomer, accountId);
-        env = env.withEmail(
-            envelopeEmailSubject,
-            envelopeEmailBody != null ? envelopeEmailBody : ''
-        );
+        String envelopeEmailBody = resolveEnvelopeEmailBody(isNewCustomer, accountId);
+        env = env.withEmail(envelopeEmailSubject, envelopeEmailBody);
 
         List<dfsle.Document> docs = dfsle.DocumentService.getDocuments(
             ContentVersion.SObjectType,
@@ -260,12 +272,21 @@ public with sharing class DocuSignDfsleEnvelopeService {
     }
 
     @TestVisible
-    private static String buildEnvelopeEmailBody(Boolean isNewCustomer, Id accountId) {
-        if (isNewCustomer != true) {
-            return null;
+    private static String resolveEnvelopeEmailBody(Boolean isNewCustomer, Id accountId) {
+        if (isNewCustomer == true) {
+            return buildContractEmailBodyHtml(resolveContactFirstName(accountId));
         }
 
-        return buildContractEmailBodyHtml(resolveContactFirstName(accountId));
+        return '<p>' +
+            escapeHtmlText(
+                'Please review and electronically sign the attached contract by following the link.'
+            ) +
+            '</p>';
+    }
+
+    @TestVisible
+    private static String buildEnvelopeEmailBody(Boolean isNewCustomer, Id accountId) {
+        return resolveEnvelopeEmailBody(isNewCustomer, accountId);
     }
 
     @TestVisible
@@ -330,7 +351,49 @@ public with sharing class DocuSignDfsleEnvelopeService {
             '</p>'
         );
 
+        String resourceLinksHtml = buildEnvelopeResourceLinksHtml();
+        if (String.isNotBlank(resourceLinksHtml)) {
+            parts.add(
+                '<p>' + escapeHtmlText('Additional reference documents:') + '</p>' + resourceLinksHtml
+            );
+        }
+
+        parts.add(
+            '<p>' +
+            'Best Regards,<br/><br/>' +
+            escapeHtmlText(ENVELOPE_EMAIL_SIGNATURE_TEAM) +
+            '</p>'
+        );
+        parts.add(
+            '<p>Check out our website: <a href="' +
+            escapeHtmlAttribute(ENVELOPE_EMAIL_WEBSITE_URL) +
+            '">' +
+            escapeHtmlText(ENVELOPE_EMAIL_WEBSITE_URL) +
+            '</a></p>'
+        );
+
         return String.join(parts, '');
+    }
+
+    private static String buildEnvelopeResourceLinksHtml() {
+        List<String> items = new List<String>();
+        for (String label : NEW_CUSTOMER_RESOURCE_LABELS) {
+            String url = NEW_CUSTOMER_RESOURCE_URL_BY_LABEL.get(label);
+            if (String.isBlank(url)) {
+                continue;
+            }
+            items.add(
+                '<li><a href="' +
+                escapeHtmlAttribute(url) +
+                '">' +
+                escapeHtmlText(label) +
+                '</a></li>'
+            );
+        }
+        if (items.isEmpty()) {
+            return '';
+        }
+        return '<ul>' + String.join(items, '') + '</ul>';
     }
 
     private static String escapeHtmlText(String value) {
@@ -340,6 +403,13 @@ public with sharing class DocuSignDfsleEnvelopeService {
         return value.replace('&', '&amp;')
             .replace('<', '&lt;')
             .replace('>', '&gt;');
+    }
+
+    private static String escapeHtmlAttribute(String value) {
+        if (value == null) {
+            return '';
+        }
+        return escapeHtmlText(value).replace('"', '&quot;');
     }
 
     @TestVisible

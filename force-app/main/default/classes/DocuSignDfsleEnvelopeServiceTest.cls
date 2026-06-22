@@ -262,6 +262,32 @@ private class DocuSignDfsleEnvelopeServiceTest {
     }
 
     @IsTest
+    static void testBuildEnvelopeEmailBody_existingClient_usesDefaultBodyAndSameSubjectFormat() {
+        Account acc = [SELECT Id FROM Account LIMIT 1];
+
+        String subject = DocuSignDfsleEnvelopeService.buildEnvelopeEmailSubject(
+            'Regents Park Pool 1',
+            'Regents Park Pool 1-2026-2027 Bids-Regents Park Pool 1 10290 A--Contract.docx'
+        );
+        String body = DocuSignDfsleEnvelopeService.buildEnvelopeEmailBody(false, acc.Id);
+
+        System.assertEquals(
+            '2027 Premier Pool Management Proposal - Regents Park Pool 1',
+            subject,
+            'Existing clients should use the same dynamic subject format as new clients.'
+        );
+        System.assertNotEquals(null, body, 'Expected a default envelope body for existing clients.');
+        System.assert(
+            body.contains('Please review and electronically sign the attached contract'),
+            'Expected default signing instructions for existing clients.'
+        );
+        System.assert(
+            !body.contains('Thank you for considering our pool management proposal'),
+            'Existing clients should not receive the new-customer proposal email body.'
+        );
+    }
+
+    @IsTest
     static void testBuildEnvelopeEmailBody_includesContractCopyWithContactFirstName() {
         Contact primaryContact = new Contact(
             FirstName = 'Jane',
@@ -293,6 +319,19 @@ private class DocuSignDfsleEnvelopeServiceTest {
         System.assert(
             body.contains('Please let us know if there is anything else that we can do to earn your business.'),
             'Expected closing paragraph in envelope email body.'
+        );
+        System.assert(
+            body.contains('Additional reference documents:'),
+            'Expected reference documents section in envelope email body.'
+        );
+        System.assert(body.contains('>COI</a>'), 'Expected human-readable COI link label.');
+        System.assert(body.contains('>Recommendation Letter</a>'), 'Expected Recommendation Letter link.');
+        System.assert(body.contains('>General References</a>'), 'Expected General References link.');
+        System.assert(body.contains('Best Regards,'), 'Expected email signature greeting.');
+        System.assert(body.contains('Premier Pool Management Team'), 'Expected email signature team name.');
+        System.assert(
+            body.contains('href="https://www.premierswim.com/"'),
+            'Expected website link in envelope email body.'
         );
     }
 
