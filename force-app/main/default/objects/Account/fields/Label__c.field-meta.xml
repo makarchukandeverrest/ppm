@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Label__c</fullName>
+    <label>Label</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <type>MultiselectPicklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Hot Lead</fullName>
+                <default>false</default>
+                <label>Hot Lead</label>
+            </value>
+            <value>
+                <fullName>Warm Lead</fullName>
+                <default>false</default>
+                <label>Warm Lead</label>
+            </value>
+            <value>
+                <fullName>Cold Lead</fullName>
+                <default>false</default>
+                <label>Cold Lead</label>
+            </value>
+            <value>
+                <fullName>Need More Info</fullName>
+                <default>false</default>
+                <label>Need More Info</label>
+            </value>
+            <value>
+                <fullName>Assumptive Lead</fullName>
+                <default>false</default>
+                <label>Assumptive Lead</label>
+            </value>
+            <value>
+                <fullName>On Hold</fullName>
+                <default>false</default>
+                <label>On Hold</label>
+            </value>
+            <value>
+                <fullName>Contract Created</fullName>
+                <default>false</default>
+                <label>Contract Created</label>
+            </value>
+            <value>
+                <fullName>Revision Needed</fullName>
+                <default>false</default>
+                <label>Revision Needed</label>
+            </value>
+            <value>
+                <fullName>Keep Same Info</fullName>
+                <default>false</default>
+                <label>Keep Same Info</label>
+            </value>
+            <value>
+                <fullName>Contract Approved</fullName>
+                <default>false</default>
+                <label>Contract Approved</label>
+            </value>
+            <value>
+                <fullName>Sales Form Lead</fullName>
+                <default>false</default>
+                <label>Sales Form Lead</label>
+            </value>
+            <value>
+                <fullName>Marijana to Complete</fullName>
+                <default>false</default>
+                <label>Marijana to Complete</label>
+            </value>
+            <value>
+                <fullName>Natasa to Complete</fullName>
+                <default>false</default>
+                <label>Natasa to Complete</label>
+            </value>
+            <value>
+                <fullName>Goran to Complete</fullName>
+                <default>false</default>
+                <label>Goran to Complete</label>
+            </value>
+            <value>
+                <fullName>Rania to Complete</fullName>
+                <default>false</default>
+                <label>Rania to Complete</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+    <visibleLines>4</visibleLines>
+</CustomField>
