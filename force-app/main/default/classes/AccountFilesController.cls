@@ -220,7 +220,10 @@ public with sharing class AccountFilesController {
         for (ContentVersion cv : versions) {
             if (
                 cv.Title != null &&
-                !cv.Title.contains('Welcome Letter')
+                !cv.Title.contains('Welcome Letter') 
+                && !cv.Title.contains('Bid Worksheet') 
+                && !cv.Title.contains('Signed Contract') 
+                && !cv.Title.contains('Completed')
             ) {
                 filteredVersions.add(cv);
             }
