@@ -21,6 +21,7 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     @track selectedCounty = '';
     @track customerNameFilter = '';
     @track selectedSupervisor = '';
+    @track contractYearFilter = '';
 
     // Automatic Reminders
     @track automaticReminderValue = '';
@@ -60,6 +61,7 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
         this.envelopeExpiresDate = computed >= this.envelopeExpiresMinDate
             ? computed
             : this.envelopeExpiresMinDate;
+        this.contractYearFilter = String(new Date().getFullYear());
     }
 
     _datePlusDays(date, days) {
@@ -113,7 +115,8 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
         regionalManagerId: '$selectedRegionalManager',
         county: '$selectedCounty',
         customerName: '$customerNameFilter',
-        supervisorId: '$selectedSupervisor'
+        supervisorId: '$selectedSupervisor',
+        contractYear: '$contractYearFilter'
     })
     wiredAccounts(result) {
         this.wiredAccountsResult = result;
@@ -151,10 +154,14 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
 
     // Check if any filters are active
     get hasActiveFilters() {
+        const yearIsCustom = this.contractYearFilter
+            && this.contractYearFilter !== String(new Date().getFullYear());
+
         return this.selectedRegionalManager || 
                this.selectedCounty || 
                this.customerNameFilter || 
-               this.selectedSupervisor;
+               this.selectedSupervisor ||
+               yearIsCustom;
     }
 
     // Getter for disabling Clear Filters button
@@ -340,12 +347,22 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
         this.selectedSupervisor = event.detail.value;
     }
 
+    handleContractYearChange(event) {
+        const val = (event.detail.value || '').replace(/\D/g, '');
+        if (!val) {
+            this.contractYearFilter = '';
+            return;
+        }
+        this.contractYearFilter = val.slice(0, 4);
+    }
+
     // Clear all filters
     clearFilters() {
         this.selectedRegionalManager = '';
         this.selectedCounty = '';
         this.customerNameFilter = '';
         this.selectedSupervisor = '';
+        this.contractYearFilter = this._getCurrentContractYear();
     }
 
     // Getter: returns only accounts that have selected files

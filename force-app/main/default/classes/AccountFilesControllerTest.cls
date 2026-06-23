@@ -233,7 +233,8 @@ public class AccountFilesControllerTest {
             rm1.Id,        // regionalManagerId
             county1,       // county
             null,          // customerName
-            sup1.Id        // supervisorId
+            sup1.Id,       // supervisorId
+            null           // contractYear
         );
         Test.stopTest();
 
@@ -273,7 +274,7 @@ public class AccountFilesControllerTest {
 
         Test.startTest();
         List<AccountWithFiles> results = AccountFilesController.getAccountsWithFiles(
-            null, null, null, null, null
+            null, null, null, null, null, null
         );
         Test.stopTest();
 
@@ -293,7 +294,7 @@ public class AccountFilesControllerTest {
 
         Test.startTest();
         List<AccountWithFiles> results = AccountFilesController.getAccountsWithFiles(
-            null, null, null, null, null
+            null, null, null, null, null, null
         );
         Test.stopTest();
 
@@ -323,6 +324,7 @@ public class AccountFilesControllerTest {
             null,
             null,
             'Acme',  // partial name
+            null,
             null
         );
         Test.stopTest();

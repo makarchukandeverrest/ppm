@@ -48,6 +48,18 @@
                         placeholder="Select Supervisor">
                     </lightning-combobox>
                 </div>
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 slds-m-bottom_small">
+                    <lightning-input
+                        type="text"
+                        name="contractYear"
+                        label="Contract Year"
+                        value={contractYearFilter}
+                        onchange={handleContractYearChange}
+                        maxlength="4"
+                        placeholder="e.g. 2026"
+                        field-level-help="Show contract files whose title contains this year">
+                    </lightning-input>
+                </div>
             </div>
             <div class="slds-m-top_small">
                 <lightning-button
