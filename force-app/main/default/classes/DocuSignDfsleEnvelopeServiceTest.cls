@@ -278,8 +278,16 @@ private class DocuSignDfsleEnvelopeServiceTest {
         );
         System.assertNotEquals(null, body, 'Expected a default envelope body for existing clients.');
         System.assert(
-            body.contains('Please review and electronically sign the attached contract'),
-            'Expected default signing instructions for existing clients.'
+            body.contains('Please review the attached pool management proposal'),
+            'Expected proposal review instructions for existing clients.'
+        );
+        System.assert(
+            body.contains('Best regards'),
+            'Expected closing signature for existing clients.'
+        );
+        System.assert(
+            body.contains('Premier Pool Management Team'),
+            'Expected team signature for existing clients.'
         );
         System.assert(
             !body.contains('Thank you for considering our pool management proposal'),

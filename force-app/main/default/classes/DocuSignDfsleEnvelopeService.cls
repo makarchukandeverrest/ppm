@@ -276,11 +276,7 @@ public with sharing class DocuSignDfsleEnvelopeService {
             return buildContractEmailBodyHtml(resolveContactFirstName(accountId));
         }
 
-        return '<p>' +
-            escapeHtmlText(
-                'Please review and electronically sign the attached contract by following the link.'
-            ) +
-            '</p>';
+        return buildProposalEmailBodyHtml(resolveContactFirstName(accountId));
     }
 
     @TestVisible
@@ -304,6 +300,47 @@ public with sharing class DocuSignDfsleEnvelopeService {
             return null;
         }
         return accounts[0].Primary_Contact__r.FirstName;
+    }
+
+    private static String buildProposalEmailBodyHtml(String contactFirstName) {
+        List<String> parts = new List<String>();
+
+        String greeting = String.isNotBlank(contactFirstName)
+            ? 'Hi ' + escapeHtmlText(contactFirstName) + ','
+            : 'Hi,';
+        parts.add('<p>' + greeting + '</p>');
+
+        parts.add(
+            '<p>' +
+            escapeHtmlText(
+                'Please review the attached pool management proposal and let us know if you have any questions or would like to discuss any aspect of the agreement.'
+            ) +
+            '</p>'
+        );
+
+        parts.add(
+            '<p>' +
+            escapeHtmlText(
+                'Thank you for your time and consideration. We appreciate the opportunity and look forward to the possibility of working with you.'
+            ) +
+            '</p>'
+        );
+
+        parts.add(
+            '<p>' +
+            'Best regards,<br/><br/>' +
+            escapeHtmlText(ENVELOPE_EMAIL_SIGNATURE_TEAM) +
+            '</p>'
+        );
+        parts.add(
+            '<p>Check out our website: <a href="' +
+            escapeHtmlAttribute(ENVELOPE_EMAIL_WEBSITE_URL) +
+            '">' +
+            escapeHtmlText(ENVELOPE_EMAIL_WEBSITE_URL) +
+            '</a></p>'
+        );
+
+        return String.join(parts, '');
     }
 
     private static String buildContractEmailBodyHtml(String contactFirstName) {
