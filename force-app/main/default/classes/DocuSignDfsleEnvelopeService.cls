@@ -20,6 +20,12 @@ public with sharing class DocuSignDfsleEnvelopeService {
         'General References' => Document_Link__mdt.getInstance('General_References').Sharing_Link__c
     };
 
+    private static final Set<String> DEFAULT_CC_USER_NAMES = new Set<String>{
+        'Roman Shestakov',
+        'Stephanie Pratt',
+        'Jessica Floyd'
+    };
+
     private static final List<String> ENVELOPE_EMAIL_BODY_BULLETS = new List<String>{
         'Spring Start-up (inspection, repairs, health department inspection and permits)',
         'American Red Cross certified lifeguards and pool operators fully trained to your property\'s specific needs',
@@ -69,12 +75,7 @@ public with sharing class DocuSignDfsleEnvelopeService {
 
         Map<Id, List<User>> accountToUsersMap = getAccountToUsersMap(accountIds);
 
-        User romanUser;
-        try {
-            romanUser = [SELECT Id, Name, Email FROM User WHERE Name = 'Roman Shestakov' LIMIT 1];
-        } catch (Exception ex) {
-            romanUser = null;
-        }
+        List<User> defaultCcUsers = getDefaultCcUsers();
 
         Map<Id, ContentVersion> cvById = new Map<Id, ContentVersion>();
         if (!mainContentVersionIds.isEmpty()) {
@@ -94,9 +95,7 @@ public with sharing class DocuSignDfsleEnvelopeService {
                 ? accountToUsersMap.get(acc.accountId)
                 : new List<User>();
             if (ccUsers == null) ccUsers = new List<User>();
-            if (romanUser != null) {
-                ccUsers.add(romanUser);
-            }
+            ccUsers.addAll(defaultCcUsers);
 
             for (FileWrapper file : acc.files) {
                 if (file == null || file.ToSent != true || file.Id == null) continue;
@@ -599,6 +598,19 @@ public with sharing class DocuSignDfsleEnvelopeService {
         }
 
         return null;
+    }
+
+    private static List<User> getDefaultCcUsers() {
+        try {
+            return [
+                SELECT Id, Name, Email
+                FROM User
+                WHERE Name IN :DEFAULT_CC_USER_NAMES
+                AND IsActive = true
+            ];
+        } catch (Exception ex) {
+            return new List<User>();
+        }
     }
 
     private static Map<Id, List<User>> getAccountToUsersMap(Set<Id> accountIds) {

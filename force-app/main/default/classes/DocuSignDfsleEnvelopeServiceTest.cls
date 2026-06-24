@@ -4,7 +4,7 @@ private class DocuSignDfsleEnvelopeServiceTest {
     static void setupTestData() {
         Profile p = [SELECT Id FROM Profile WHERE Name = 'Standard User' LIMIT 1];
 
-        // Create "Roman Shestakov" so the service's hard-coded CC query finds a row.
+        // Create default CC users so the service's hard-coded CC query finds rows.
         User romanUser = new User(
             FirstName = 'Roman',
             LastName = 'Shestakov',
