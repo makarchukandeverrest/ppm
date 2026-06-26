@@ -102,7 +102,8 @@ public with sharing class AccountFilesController {
         String regionalManagerId,
         String county,
         String customerName,
-        String supervisorId
+        String supervisorId,
+        String contractYear
     ) {
         List<AccountWithFiles> result = new List<AccountWithFiles>();
         
@@ -208,19 +209,34 @@ public with sharing class AccountFilesController {
             }
         }
 
-        List<ContentVersion> versions = [
-            SELECT Id, Title, ContentDocumentId, FileExtension, To_Sent__c
-            FROM ContentVersion
-            WHERE Id IN :latestVersionIds
-            AND FileExtension IN ('pdf', 'doc', 'docx')
-        ];
+        String contractYearFilter = String.isNotBlank(contractYear)
+            ? contractYear.trim()
+            : String.valueOf(Date.today().year());
+        String contractYearLike = '%' + String.escapeSingleQuotes(contractYearFilter) + '%';
+
+        List<ContentVersion> versions = latestVersionIds.isEmpty()
+            ? new List<ContentVersion>()
+            : [
+                SELECT Id, Title, ContentDocumentId, FileExtension, To_Sent__c
+                FROM ContentVersion
+                WHERE Id IN :latestVersionIds
+                    AND FileExtension IN ('pdf', 'doc', 'docx')
+                    AND Title LIKE '%Contract%'
+                    AND Title LIKE :contractYearLike
+                    AND (NOT Title LIKE '%Signed Contract%')
+                    AND (NOT Title LIKE '%Completed%')
+              ];
 
         List<ContentVersion> filteredVersions = new List<ContentVersion>();
 
         for (ContentVersion cv : versions) {
             if (
                 cv.Title != null &&
-                !cv.Title.contains('Welcome Letter')
+                cv.Title.contains(contractYearFilter) &&
+                !cv.Title.contains('Welcome Letter') 
+                && !cv.Title.contains('Bid Worksheet') 
+                && !cv.Title.contains('Signed Contract') 
+                && !cv.Title.contains('Completed')
             ) {
                 filteredVersions.add(cv);
             }

@@ -41,7 +41,12 @@ public with sharing class DocuSignEnvelopeService {
         // Get all related Contract_Bid__c records and users
         Map<Id, List<User>> accountToUsersMap = getAccountToUsersMap(accountIds);
 
-        User romanUser = [SELECT Id, Name, Email FROM User WHERE Name = 'Roman Shestakov' LIMIT 1]; //TODO make user dynamical in future
+        List<User> defaultCcUsers = [
+            SELECT Id, Name, Email
+            FROM User
+            WHERE Name IN ('Roman Shestakov', 'Stephanie Pratt', 'Jessica Floyd')
+            AND IsActive = true
+        ];
 
         for (AccountWithFiles acc : accountWithFilesList) {
             for (FileWrapper file : acc.files) {
@@ -58,9 +63,7 @@ public with sharing class DocuSignEnvelopeService {
                     String title = mainCv.Title;
 
                     List<User> ccUsers = accountToUsersMap.get(acc.accountId);
-                    if(romanUser != null){
-                        ccUsers.add(romanUser); // Always add Roman as CC
-                    }
+                    ccUsers.addAll(defaultCcUsers);
                     
                     String body = buildEnvelopeRequestBody(base64Doc, title, recipientEmail, recipientName, acc.newClient, ccUsers, acc.accountId,
                         acc.reminderValue, acc.daysBeforeExpires);

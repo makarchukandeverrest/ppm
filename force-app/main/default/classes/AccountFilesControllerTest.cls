@@ -117,6 +117,13 @@ public class AccountFilesControllerTest {
     }
 
     /**
+     * Builds a file title that passes getAccountsWithFiles ContentVersion filters.
+     */
+    private static String buildContractFileTitle(String suffix) {
+        return 'Contract ' + Date.today().year() + ' ' + suffix;
+    }
+
+    /**
      * Creates a test file (ContentVersion) linked to an Account
      */
     private static ContentDocument createTestFile(
@@ -124,9 +131,10 @@ public class AccountFilesControllerTest {
         String title,
         String fileExtension
     ) {
+        String fileTitle = buildContractFileTitle(title);
         ContentVersion cv = new ContentVersion(
-            Title           = title,
-            PathOnClient    = title + '.' + fileExtension,
+            Title           = fileTitle,
+            PathOnClient    = fileTitle + '.' + fileExtension,
             VersionData     = Blob.valueOf('Test PDF Content'),
             IsMajorVersion  = true
         );
@@ -233,7 +241,8 @@ public class AccountFilesControllerTest {
             rm1.Id,        // regionalManagerId
             county1,       // county
             null,          // customerName
-            sup1.Id        // supervisorId
+            sup1.Id,       // supervisorId
+            null           // contractYear
         );
         Test.stopTest();
 
@@ -273,7 +282,7 @@ public class AccountFilesControllerTest {
 
         Test.startTest();
         List<AccountWithFiles> results = AccountFilesController.getAccountsWithFiles(
-            null, null, null, null, null
+            null, null, null, null, null, null
         );
         Test.stopTest();
 
@@ -293,7 +302,7 @@ public class AccountFilesControllerTest {
 
         Test.startTest();
         List<AccountWithFiles> results = AccountFilesController.getAccountsWithFiles(
-            null, null, null, null, null
+            null, null, null, null, null, null
         );
         Test.stopTest();
 
@@ -323,6 +332,7 @@ public class AccountFilesControllerTest {
             null,
             null,
             'Acme',  // partial name
+            null,
             null
         );
         Test.stopTest();
