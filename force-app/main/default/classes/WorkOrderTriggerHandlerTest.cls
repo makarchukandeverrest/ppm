@@ -186,7 +186,7 @@ private class WorkOrderTriggerHandlerTest {
 
 
         Opportunity updatedProposal = [SELECT Id, StageName FROM Opportunity WHERE Id = :testProposal.Id];
-        System.assertEquals('Approved - WO Issued', updatedProposal.StageName, 'Proposal stage should be updated by the trigger.');
+        System.assertEquals('WO Issued', updatedProposal.StageName, 'Proposal stage should be updated by the trigger.');
     }
 
     /**

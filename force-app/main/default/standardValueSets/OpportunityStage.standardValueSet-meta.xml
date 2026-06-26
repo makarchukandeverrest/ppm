@@ -53,7 +53,7 @@
         <label>Negotiation</label>
         <closed>false</closed>
         <forecastCategory>Forecast</forecastCategory>
-        <probability>80</probability>
+        <probability>60</probability>
         <won>false</won>
     </standardValue>
     <standardValue>
@@ -62,16 +62,25 @@
         <label>Client Revisions</label>
         <closed>false</closed>
         <forecastCategory>Pipeline</forecastCategory>
+        <probability>70</probability>
+        <won>false</won>
+    </standardValue>
+    <standardValue>
+        <fullName>Approved</fullName>
+        <default>false</default>
+        <label>Approved</label>
+        <closed>false</closed>
+        <forecastCategory>Omitted</forecastCategory>
         <probability>80</probability>
         <won>false</won>
     </standardValue>
     <standardValue>
-        <fullName>Approved - WO Issued</fullName>
+        <fullName>WO Issued</fullName>
         <default>false</default>
-        <label>Approved - WO Issued</label>
+        <label>WO Issued</label>
         <closed>false</closed>
         <forecastCategory>Pipeline</forecastCategory>
-        <probability>70</probability>
+        <probability>80</probability>
         <won>false</won>
     </standardValue>
     <standardValue>
