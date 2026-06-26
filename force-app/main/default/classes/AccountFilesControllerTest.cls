@@ -117,6 +117,13 @@ public class AccountFilesControllerTest {
     }
 
     /**
+     * Builds a file title that passes getAccountsWithFiles ContentVersion filters.
+     */
+    private static String buildContractFileTitle(String suffix) {
+        return 'Contract ' + Date.today().year() + ' ' + suffix;
+    }
+
+    /**
      * Creates a test file (ContentVersion) linked to an Account
      */
     private static ContentDocument createTestFile(
@@ -124,9 +131,10 @@ public class AccountFilesControllerTest {
         String title,
         String fileExtension
     ) {
+        String fileTitle = buildContractFileTitle(title);
         ContentVersion cv = new ContentVersion(
-            Title           = title,
-            PathOnClient    = title + '.' + fileExtension,
+            Title           = fileTitle,
+            PathOnClient    = fileTitle + '.' + fileExtension,
             VersionData     = Blob.valueOf('Test PDF Content'),
             IsMajorVersion  = true
         );
