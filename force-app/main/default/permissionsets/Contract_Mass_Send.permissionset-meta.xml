@@ -67,21 +67,6 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
-        <field>ContentVersion.DocuSign_Envelope_Id__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
-        <field>ContentVersion.DocuSign_Envelope_Status__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
-        <field>ContentVersion.To_Sent__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
         <field>Contract_Bid__c.Additional_Comments__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -812,6 +797,16 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
+        <field>dfsle__EnvelopeStatus__c.dfsle__DocuSignId__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>dfsle__EnvelopeStatus__c.dfsle__SourceId__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
         <field>dfsle__Envelope__c.Account__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -927,16 +922,6 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
-        <field>dfsle__EnvelopeStatus__c.dfsle__DocuSignId__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
-        <field>dfsle__EnvelopeStatus__c.dfsle__SourceId__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
         <field>dfsle__Recipient__c.dfsle__Email__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -983,7 +968,7 @@
         <allowEdit>true</allowEdit>
         <allowRead>true</allowRead>
         <modifyAllRecords>false</modifyAllRecords>
-        <object>dfsle__Envelope__c</object>
+        <object>dfsle__EnvelopeStatus__c</object>
         <viewAllFields>false</viewAllFields>
         <viewAllRecords>false</viewAllRecords>
     </objectPermissions>
@@ -993,7 +978,7 @@
         <allowEdit>true</allowEdit>
         <allowRead>true</allowRead>
         <modifyAllRecords>false</modifyAllRecords>
-        <object>dfsle__EnvelopeStatus__c</object>
+        <object>dfsle__Envelope__c</object>
         <viewAllFields>false</viewAllFields>
         <viewAllRecords>false</viewAllRecords>
     </objectPermissions>
