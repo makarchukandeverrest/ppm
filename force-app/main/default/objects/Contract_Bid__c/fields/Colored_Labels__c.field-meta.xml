@@ -59,23 +59,23 @@
      &quot;&quot;) &amp;
 TRIM(
   /* Marijana to do */
-  IF(INCLUDES(Label__c, &quot;Marijana to do&quot;),
-     IMAGE(&quot;/resource/Black&quot;, &quot;Marijana to do&quot;, 30, 30) &amp; &quot; Marijana to do &quot;,
+  IF(INCLUDES(Label__c, &quot;Marijana to Complete&quot;),
+     IMAGE(&quot;/resource/Black&quot;, &quot;Marijana to do&quot;, 30, 30) &amp; &quot; Marijana to Complete &quot;,
      &quot;&quot;) &amp;
 
   /* Natasa to do */
   IF(INCLUDES(Label__c, &quot;Natasa to do&quot;),
-     IMAGE(&quot;/resource/Black&quot;, &quot;Natasa to do&quot;, 30, 30) &amp; &quot; Natasa to do &quot;,
+     IMAGE(&quot;/resource/Black&quot;, &quot;Natasa to Complete&quot;, 30, 30) &amp; &quot; Natasa to Complete &quot;,
      &quot;&quot;) &amp;
 
   /* Rania to do */
   IF(INCLUDES(Label__c, &quot;Rania to do&quot;),
-     IMAGE(&quot;/resource/Black&quot;, &quot;Rania to do&quot;, 30, 30) &amp; &quot; Rania to do &quot;,
+     IMAGE(&quot;/resource/Black&quot;, &quot;Rania to Complete&quot;, 30, 30) &amp; &quot; Rania to Complete &quot;,
      &quot;&quot;) &amp;
 
   /* Goran to do */
   IF(INCLUDES(Label__c, &quot;Goran to do&quot;),
-     IMAGE(&quot;/resource/Black&quot;, &quot;Goran to do&quot;, 30, 30) &amp; &quot; Goran to do &quot;,
+     IMAGE(&quot;/resource/Black&quot;, &quot;Goran to Complete&quot;, 30, 30) &amp; &quot; Goran to Complete &quot;,
      &quot;&quot;))
 )</formula>
     <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
