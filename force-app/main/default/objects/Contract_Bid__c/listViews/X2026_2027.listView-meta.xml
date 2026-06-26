@@ -3,13 +3,15 @@
     <fullName>X2026_2027</fullName>
     <columns>NAME</columns>
     <columns>Customer__c</columns>
-    <columns>Colored_Labels__c</columns>
-    <columns>Colored_Stage__c</columns>
-    <columns>Stage__c</columns>
-    <columns>RFP__c</columns>
-    <columns>Renewal_Client__c</columns>
     <columns>Management_Company__c</columns>
-    <columns>UPDATEDBY_USER.ALIAS</columns>
+    <columns>Label__c</columns>
+    <columns>Colored_Labels__c</columns>
+    <columns>LAST_UPDATE</columns>
+    <columns>CREATED_DATE</columns>
+    <columns>Current_Vendor_Object__c</columns>
+    <columns>Stage__c</columns>
+    <columns>Colored_Stage__c</columns>
+    <columns>Due_Date__c</columns>
     <columns>Lead_Generator__c</columns>
     <filterScope>Everything</filterScope>
     <filters>

@@ -6,11 +6,10 @@
     <columns>Colored_Labels__c</columns>
     <columns>Colored_Stage__c</columns>
     <columns>Stage__c</columns>
-    <columns>RFP__c</columns>
     <columns>Renewal_Client__c</columns>
     <columns>Management_Company__c</columns>
-    <columns>UPDATEDBY_USER.ALIAS</columns>
     <columns>Lead_Generator__c</columns>
+    <columns>Label__c</columns>
     <filterScope>Everything</filterScope>
     <filters>
         <field>Contract_Year__c</field>
