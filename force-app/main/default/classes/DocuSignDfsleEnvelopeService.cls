@@ -184,11 +184,7 @@ public with sharing class DocuSignDfsleEnvelopeService {
         String reminderValue,
         String daysBeforeExpires
     ) {
-        List<Id> documentCvIds = getContentVersionIdsForEnvelope(
-            mainContentVersionId,
-            isNewCustomer,
-            accountId
-        );
+        List<Id> documentCvIds = new List<Id>{ mainContentVersionId };
 
         dfsle.Envelope env = dfsle.EnvelopeService.getEmptyEnvelope(
             new dfsle.Entity(contractBidId)
@@ -234,46 +230,6 @@ public with sharing class DocuSignDfsleEnvelopeService {
         }
 
         return envelopeId;
-    }
-
-    @TestVisible
-    private static List<Id> getContentVersionIdsForEnvelope(
-        Id mainContentVersionId,
-        Boolean isNewCustomer,
-        Id accountId
-    ) {
-        List<Id> cvIds = new List<Id>();
-
-        if (!isNewCustomer) {
-            cvIds.add(mainContentVersionId);
-            return cvIds;
-        }
-
-        List<ContentDocumentLink> contentLinks = [
-            SELECT ContentDocumentId
-            FROM ContentDocumentLink
-            WHERE LinkedEntityId = :accountId
-        ];
-        Set<Id> contentDocIds = new Set<Id>();
-        for (ContentDocumentLink link : contentLinks) {
-            contentDocIds.add(link.ContentDocumentId);
-        }
-
-        List<ContentVersion> welcomeLetters = [
-            SELECT Id, Title
-            FROM ContentVersion
-            WHERE
-                Title LIKE '%Welcome Letter%'
-                AND ContentDocumentId IN :contentDocIds
-            LIMIT 1
-        ];
-
-        if (!welcomeLetters.isEmpty()) {
-            cvIds.add(welcomeLetters[0].Id);
-        }
-        cvIds.add(mainContentVersionId);
-
-        return cvIds;
     }
 
     @TestVisible

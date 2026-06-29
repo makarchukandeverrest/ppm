@@ -95,28 +95,6 @@ private class DocuSignDfsleEnvelopeServiceTest {
         );
         insert mainCv;
 
-        // Welcome letter for new customer envelope (extra docs are SharePoint links in email).
-        ContentVersion welcomeCv = new ContentVersion(
-            Title = 'Customer Welcome Letter',
-            PathOnClient = 'Welcome.pdf',
-            VersionData = Blob.valueOf('%PDF-1.4 welcome'),
-            IsMajorVersion = true
-        );
-        insert welcomeCv;
-
-        ContentVersion welcomeReloaded = [
-            SELECT Id, ContentDocumentId
-            FROM ContentVersion
-            WHERE Id = :welcomeCv.Id
-            LIMIT 1
-        ];
-        insert new ContentDocumentLink(
-            ContentDocumentId = welcomeReloaded.ContentDocumentId,
-            LinkedEntityId = acc.Id,
-            ShareType = 'V',
-            Visibility = 'AllUsers'
-        );
-
     }
 
     @IsTest
@@ -303,17 +281,12 @@ private class DocuSignDfsleEnvelopeServiceTest {
     }
 
     @IsTest
-    static void testGetContentVersionIds_newCustomer_includesWelcomeAndMainOnly() {
-        Account acc = [SELECT Id FROM Account LIMIT 1];
+    static void testGetContentVersionIds_newCustomer_includesMainContractOnly() {
         ContentVersion mainCv = [SELECT Id FROM ContentVersion WHERE Title = 'Dfsle Main Contract' LIMIT 1];
 
-        List<Id> cvIds = DocuSignDfsleEnvelopeService.getContentVersionIdsForEnvelope(
-            mainCv.Id,
-            true,
-            acc.Id
-        );
-        System.assertEquals(2, cvIds.size(), 'Expected welcome letter + main contract only.');
-        System.assertEquals(mainCv.Id, cvIds[1], 'Main contract should come right after welcome letter when present.');
+        List<Id> cvIds = DocuSignDfsleEnvelopeService.getContentVersionIdsForEnvelope(mainCv.Id);
+        System.assertEquals(1, cvIds.size(), 'Expected main contract only.');
+        System.assertEquals(mainCv.Id, cvIds[0], 'Main contract should be the only envelope document.');
     }
 
     @IsTest
