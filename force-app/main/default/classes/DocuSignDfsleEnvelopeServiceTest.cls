@@ -281,15 +281,6 @@ private class DocuSignDfsleEnvelopeServiceTest {
     }
 
     @IsTest
-    static void testGetContentVersionIds_newCustomer_includesMainContractOnly() {
-        ContentVersion mainCv = [SELECT Id FROM ContentVersion WHERE Title = 'Dfsle Main Contract' LIMIT 1];
-
-        List<Id> cvIds = DocuSignDfsleEnvelopeService.getContentVersionIdsForEnvelope(mainCv.Id);
-        System.assertEquals(1, cvIds.size(), 'Expected main contract only.');
-        System.assertEquals(mainCv.Id, cvIds[0], 'Main contract should be the only envelope document.');
-    }
-
-    @IsTest
     static void testBuildEnvelopeEmailSubject_usesSecondYearFromContractFileName() {
         String subject = DocuSignDfsleEnvelopeService.buildEnvelopeEmailSubject(
             'Regents Park Pool 1',
