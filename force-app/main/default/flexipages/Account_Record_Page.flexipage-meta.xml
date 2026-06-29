@@ -34,6 +34,10 @@
                     <value>false</value>
                 </componentInstanceProperties>
                 <componentInstanceProperties>
+                    <name>hideSlackAction</name>
+                    <value>false</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
                     <name>numVisibleActions</name>
                     <value>3</value>
                 </componentInstanceProperties>
@@ -638,6 +642,88 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
+                <fieldItem>Record.Lead_Generator__c</fieldItem>
+                <identifier>RecordLead_Generator_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Contract_Creator__c</fieldItem>
+                <identifier>RecordContract_Creator_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Budget_Season__c</fieldItem>
+                <identifier>RecordBudget_Season_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Label__c</fieldItem>
+                <identifier>RecordLabel_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Additional_Comments__c</fieldItem>
+                <identifier>RecordAdditional_Comments_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <name>Facet-d641163b-7287-42b0-8e1c-d84e66bcf507</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <name>Facet-57791d6c-e3f8-4d5d-942b-2b67599b2b9b</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>body</name>
+                    <value>Facet-d641163b-7287-42b0-8e1c-d84e66bcf507</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:column</componentName>
+                <identifier>flexipage_column3</identifier>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>body</name>
+                    <value>Facet-57791d6c-e3f8-4d5d-942b-2b67599b2b9b</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:column</componentName>
+                <identifier>flexipage_column8</identifier>
+            </componentInstance>
+        </itemInstances>
+        <name>Facet-c2ee5310-8aff-4475-aebb-357c56e15f46</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
                 <fieldItem>Record.BillingAddress</fieldItem>
                 <identifier>RecordBillingAddressField</identifier>
             </fieldInstance>
@@ -780,6 +866,24 @@
                 </componentInstanceProperties>
                 <componentName>flexipage:fieldSection</componentName>
                 <identifier>flexipage_fieldSection7</identifier>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>columns</name>
+                    <value>Facet-c2ee5310-8aff-4475-aebb-357c56e15f46</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>horizontalAlignment</name>
+                    <value>false</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>label</name>
+                    <value>Lead Details</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:fieldSection</componentName>
+                <identifier>flexipage_fieldSection2</identifier>
             </componentInstance>
         </itemInstances>
         <itemInstances>

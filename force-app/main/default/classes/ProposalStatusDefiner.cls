@@ -86,7 +86,7 @@ public inherited sharing class ProposalStatusDefiner {
             WHERE Id IN :proposalIds
         ];
         for (Opportunity p : proposalsToUpdate) {
-                p.StageName = 'Approved - WO Issued';
+                p.StageName = 'WO Issued';
         }
         if (!proposalsToUpdate.isEmpty()) {
             update proposalsToUpdate;

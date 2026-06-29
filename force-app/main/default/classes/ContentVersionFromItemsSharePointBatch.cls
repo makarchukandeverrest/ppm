@@ -31,29 +31,35 @@ public class ContentVersionFromItemsSharePointBatch implements Database.Batchabl
             return;
         }
 
-        List<Id> cvsToInsert = new List<Id>();
-        Map<String, Id> titleToAccountMap = new Map<String, Id>();
-        
-        // Download & prepare ContentVersions
+        Map<String, ContentVersion> uniqueIdToVersion = new Map<String, ContentVersion>();
+        Map<String, Set<Id>> uniqueIdToAccountIds = new Map<String, Set<Id>>();
+
+        // Phase 1: callouts only — download each unique file once
         for (Id parentId : recordsToItemsMap.keySet()) {
             for (Items_SharePoint__x item : recordsToItemsMap.get(parentId)) {
+                String uniqueKey = item.UniqueId__c;
+                if (!uniqueIdToAccountIds.containsKey(uniqueKey)) {
+                    uniqueIdToAccountIds.put(uniqueKey, new Set<Id>());
+                }
+                uniqueIdToAccountIds.get(uniqueKey).add(parentId);
+
+                if (uniqueIdToVersion.containsKey(uniqueKey)) {
+                    continue;
+                }
+
                 try {
                     Blob fileBody = downloadFile(EncodingUtil.urlEncode(item.UniqueId__c, 'UTF-8'));
                     String fileName = getFileName(item.Name__c, item.MimeType__c);
 
-                    ContentVersion cv = new ContentVersion(
+                    uniqueIdToVersion.put(uniqueKey, new ContentVersion(
                         Title = fileName,
                         PathOnClient = '/' + fileName,
                         VersionData = fileBody,
                         To_Sent__c = (item.MimeType__c == 'application/pdf'),
                         DocuSign_Envelope_Status__c = 'Start',
                         SharePoint_External_Id__c = item.UniqueId__c
-                    );
-
-                    insert cv;
-                    fileBody = null; // Clear Blob to free memory
-                    cvsToInsert.add(cv.Id);
-                    titleToAccountMap.put(fileName, parentId);
+                    ));
+                    fileBody = null;
 
                 } catch (Exception e) {
                     System.debug('Error downloading item ' + item.Id + ': ' + e.getMessage());
@@ -61,17 +67,22 @@ public class ContentVersionFromItemsSharePointBatch implements Database.Batchabl
             }
         }
 
-        if (!cvsToInsert.isEmpty()) {
+        // Phase 2: DML only
+        List<ContentVersion> versionsToInsert = uniqueIdToVersion.values();
+        if (!versionsToInsert.isEmpty()) {
+            insert versionsToInsert;
 
-            // Retrieve ContentDocumentIds
             Map<Id, ContentVersion> cvMap = new Map<Id, ContentVersion>(
-                [SELECT Id, Title, ContentDocumentId FROM ContentVersion WHERE Id IN :cvsToInsert]
+                [SELECT Id, SharePoint_External_Id__c, ContentDocumentId FROM ContentVersion WHERE Id IN :versionsToInsert]
             );
 
             List<ContentDocumentLink> linksToInsert = new List<ContentDocumentLink>();
             for (ContentVersion cv : cvMap.values()) {
-                Id accId = titleToAccountMap.get(cv.Title);
-                if (accId != null) {
+                Set<Id> accountIds = uniqueIdToAccountIds.get(cv.SharePoint_External_Id__c);
+                if (accountIds == null || cv.ContentDocumentId == null) {
+                    continue;
+                }
+                for (Id accId : accountIds) {
                     linksToInsert.add(new ContentDocumentLink(
                         ContentDocumentId = cv.ContentDocumentId,
                         LinkedEntityId = accId,

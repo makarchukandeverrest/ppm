@@ -36,6 +36,17 @@ private class MapCustomersControllerTest {
         }
         insert accts;
 
+        // Add a primary contact and relate to one account
+        Contact primary = new Contact(
+            LastName = 'Primary Contact',
+            Phone = '555-0100',
+            Email = 'primary@example.com'
+        );
+        insert primary;
+        Account updatePrimary = [SELECT Id FROM Account WHERE Name = 'Test Customer 0' LIMIT 1];
+        updatePrimary.Primary_Contact__c = primary.Id;
+        update updatePrimary;
+
         // Manually share all accounts with the standard user (OWD = Private)
         List<AccountShare> shares = new List<AccountShare>();
         for (Account a : accts) {
@@ -69,56 +80,116 @@ private class MapCustomersControllerTest {
 
         System.runAs(u) {
             Test.startTest();
-            List<Account> results = MapCustomersController.getCustomers();
+            List<MapCustomersController.CustomerMapRow> results = MapCustomersController.getCustomers();
             Test.stopTest();
 
             System.assertNotEquals(null, results, 'Results should not be null');
-            System.assert(results.size() > 0, 'Should return at least one Account');
+            System.assert(results.size() > 0, 'Should return at least one row');
             System.assertEquals(3, results.size(), 'Should return all 3 test accounts');
 
             // Verify ordering by Name ASC
-            List<Account> sortedResults = new List<Account>(results);
-            sortedResults.sort(new AccountNameComparator());
+            List<MapCustomersController.CustomerMapRow> sortedResults = new List<MapCustomersController.CustomerMapRow>(results);
+            sortedResults.sort(new CustomerMapRowNameComparator());
 
             for (Integer i = 0; i < results.size(); i++) {
                 System.assertEquals(
-                    sortedResults[i].Name,
-                    results[i].Name,
+                    sortedResults[i].name,
+                    results[i].name,
                     'Results should be ordered by Name ASC. Expected: ' +
-                    sortedResults[i].Name + ', Actual: ' + results[i].Name
+                    sortedResults[i].name + ', Actual: ' + results[i].name
                 );
             }
 
             // Validate fields on a sample record
-            for (Account a : results) {
-                System.assertNotEquals(null, a.Id, 'Id should be populated');
-                System.assertNotEquals(null, a.Name, 'Name should be populated');
+            for (MapCustomersController.CustomerMapRow row : results) {
+                System.assertNotEquals(null, row.accountId, 'accountId should be populated');
+                System.assertNotEquals(null, row.name, 'name should be populated');
 
                 // Address fields inserted in setup
-                System.assertEquals('123 Test St', a.BillingStreet, 'BillingStreet mismatch');
-                System.assertEquals('Test City', a.BillingCity, 'BillingCity mismatch');
-                System.assertEquals('CA', a.BillingState, 'BillingState mismatch');
-                System.assert(a.BillingPostalCode != null, 'BillingPostalCode should be populated');
-                System.assertEquals('USA', a.BillingCountry, 'BillingCountry mismatch');
+                System.assertEquals('123 Test St', row.billingStreet, 'BillingStreet mismatch');
+                System.assertEquals('Test City', row.billingCity, 'BillingCity mismatch');
+                System.assertEquals('CA', row.billingState, 'BillingState mismatch');
+                System.assert(row.billingPostalCode != null, 'BillingPostalCode should be populated');
+                System.assertEquals('USA', row.billingCountry, 'BillingCountry mismatch');
 
                 // Geo fields
-                System.assertNotEquals(null, a.BillingLatitude, 'BillingLatitude should be populated');
-                System.assertNotEquals(null, a.BillingLongitude, 'BillingLongitude should be populated');
+                System.assertNotEquals(null, row.billingLatitude, 'BillingLatitude should be populated');
+                System.assertNotEquals(null, row.billingLongitude, 'BillingLongitude should be populated');
 
                 // Check Regional Manager relationship if present
-                if (a.Regional_Manager__c != null) {
-                    System.assertNotEquals(null, a.Regional_Manager__r, 'Regional_Manager__r should be populated');
-                    System.assertNotEquals(null, a.Regional_Manager__r.Name, 'Regional_Manager__r.Name should be populated');
+                if (row.regionalManagerName != null) {
+                    System.assertNotEquals('', row.regionalManagerName, 'regionalManagerName should be populated');
                 }
             }
         }
     }
 
-    // Helper comparator class for sorting Accounts by Name
-    private class AccountNameComparator implements System.Comparator<Account> {
-        public Integer compare(Account a1, Account a2) {
-            if (a1.Name == a2.Name) return 0;
-            if (a1.Name > a2.Name) return 1;
+    @IsTest
+    static void testGetCustomersWithLatestContractBid_ReturnsLatestBidByStartDate() {
+        Account account = [SELECT Id FROM Account WHERE Name = 'Test Customer 0' LIMIT 1];
+
+        Integer year = Date.today().year();
+        Integer startYear = (Date.today().month() >= 7) ? year : year - 1;
+        String currentContractYear = startYear + '-' + (startYear + 1);
+
+        insert new List<Contract_Bid__c>{
+            new Contract_Bid__c(
+                Customer__c = account.Id,
+                Contract_Start_Date__c = Date.today().addYears(-2),
+                Stage__c = 'Closed - LOST',
+                Contract_Year__c = '2021-2022'
+            ),
+            new Contract_Bid__c(
+                Customer__c = account.Id,
+                Contract_Start_Date__c = Date.today(),
+                Stage__c = 'Closed - WON',
+                Contract_Year__c = currentContractYear,
+                Label__c = 'Hot Lead'
+            )
+        };
+
+        User u = [SELECT Id FROM User WHERE Username LIKE 'stdusr%' LIMIT 1];
+
+        System.runAs(u) {
+            Test.startTest();
+            List<MapCustomersController.CustomerMapRow> results = MapCustomersController.getCustomersWithLatestContractBid();
+            Test.stopTest();
+
+            MapCustomersController.CustomerMapRow result = null;
+            for (MapCustomersController.CustomerMapRow row : results) {
+                if (row.accountId == account.Id) {
+                    result = row;
+                    break;
+                }
+            }
+
+            System.assertNotEquals(null, result, 'Row should be returned');
+            System.assertNotEquals(null, result.contractBidId, 'Latest bid should be populated');
+            System.assertEquals(
+                'Closed - WON',
+                result.contractBidStage,
+                'Latest bid should be selected by Contract_Start_Date__c'
+            );
+            System.assertEquals(
+                currentContractYear,
+                result.contractYear,
+                'Latest bid fields should be populated'
+            );
+            System.assertNotEquals(null, result.contractBidColoredLabels, 'Colored labels should be populated');
+            System.assert(result.contractBidColoredLabels.contains('Hot Lead'), 'Colored labels should include label text');
+            System.assertEquals(true, result.hasCurrentYearBid, 'Should detect current-year bid');
+
+            // Newly added fields should not break serialization
+            System.assertNotEquals(null, result.primaryContactId, 'primaryContactId should be populated');
+            System.assertNotEquals(null, result.primaryContactName, 'primaryContactName should be populated');
+        }
+    }
+
+    // Helper comparator class for sorting CustomerMapRow by Name
+    private class CustomerMapRowNameComparator implements System.Comparator<MapCustomersController.CustomerMapRow> {
+        public Integer compare(MapCustomersController.CustomerMapRow a1, MapCustomersController.CustomerMapRow a2) {
+            if (a1.name == a2.name) return 0;
+            if (a1.name > a2.name) return 1;
             return -1;
         }
     }
