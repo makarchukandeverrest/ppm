@@ -12,7 +12,10 @@
             <name>recipientAddresses</name>
             <value>
                 <collectionElements>
-                    <elementReference>RecipientEmails</elementReference>
+                    <stringValue>artem@premierswim.com</stringValue>
+                </collectionElements>
+                <collectionElements>
+                    <stringValue>Rania@premierswim.com</stringValue>
                 </collectionElements>
             </value>
         </inputParameters>
