@@ -36,10 +36,38 @@ public with sharing class DocuSignDfsleEnvelopeService {
         'A timely and thorough winterization of your facility with ALL winterization chemicals included'
     };
 
-    public class SendResult {
-        @AuraEnabled public Boolean success;
-        @AuraEnabled public String envelopeId;
-        @AuraEnabled public String message;
+    public class DfsleEnvelopeSendRequest {
+        public Id contractBidId;
+        public Id mainContentVersionId;
+        public String signerEmail;
+        public String signerName;
+        public Boolean isNewCustomer;
+        public Id accountId;
+        public List<User> ccUsers;
+        public String reminderValue;
+        public String daysBeforeExpires;
+
+        public DfsleEnvelopeSendRequest(
+            Id contractBidId,
+            Id mainContentVersionId,
+            String signerEmail,
+            String signerName,
+            Boolean isNewCustomer,
+            Id accountId,
+            List<User> ccUsers,
+            String reminderValue,
+            String daysBeforeExpires
+        ) {
+            this.contractBidId = contractBidId;
+            this.mainContentVersionId = mainContentVersionId;
+            this.signerEmail = signerEmail;
+            this.signerName = signerName;
+            this.isNewCustomer = isNewCustomer;
+            this.accountId = accountId;
+            this.ccUsers = ccUsers;
+            this.reminderValue = reminderValue;
+            this.daysBeforeExpires = daysBeforeExpires;
+        }
     }
 
     @TestVisible
@@ -61,6 +89,7 @@ public with sharing class DocuSignDfsleEnvelopeService {
         List<Contract_Bid__c> contractsToUpdate = new List<Contract_Bid__c>();
         Set<Id> contractIds = new Set<Id>();
         List<EmailMessage> emailMessages = new List<EmailMessage>();
+        List<DfsleEnvelopeSendRequest> sendRequests = new List<DfsleEnvelopeSendRequest>();
 
         for (AccountWithFiles acc : accountWithFilesList) {
             if (acc == null) continue;
@@ -91,17 +120,17 @@ public with sharing class DocuSignDfsleEnvelopeService {
             if (acc.contract == null || acc.contract.Id == null) continue;
             if (String.isBlank(acc.email) || String.isBlank(acc.accountName)) continue;
 
-            List<User> ccUsers = accountToUsersMap.containsKey(acc.accountId)
-                ? accountToUsersMap.get(acc.accountId)
-                : new List<User>();
-            if (ccUsers == null) ccUsers = new List<User>();
+            List<User> ccUsers = new List<User>();
+            if (accountToUsersMap.containsKey(acc.accountId)) {
+                ccUsers.addAll(accountToUsersMap.get(acc.accountId));
+            }
             ccUsers.addAll(defaultCcUsers);
 
             for (FileWrapper file : acc.files) {
                 if (file == null || file.ToSent != true || file.Id == null) continue;
                 if (!cvById.containsKey(file.Id)) continue;
 
-                sendEnvelope(
+                sendRequests.add(new DfsleEnvelopeSendRequest(
                     acc.contract.Id,
                     file.Id,
                     acc.email,
@@ -111,8 +140,7 @@ public with sharing class DocuSignDfsleEnvelopeService {
                     ccUsers,
                     acc.reminderValue,
                     acc.daysBeforeExpires
-                );
-
+                ));
 
                 acc.contract.Stage__c = 'Contract Sent via DocuSign';
                 if (!contractIds.contains(acc.contract.Id)) {
@@ -133,6 +161,9 @@ public with sharing class DocuSignDfsleEnvelopeService {
             }
         }
 
+        if (!sendRequests.isEmpty()) {
+            Database.executeBatch(new BatchHttpSender(sendRequests), 1);
+        }
         if (!emailMessages.isEmpty()) {
             System.enqueueJob(new InsertEmailMessagesJob(emailMessages));
         }
@@ -153,11 +184,7 @@ public with sharing class DocuSignDfsleEnvelopeService {
         String reminderValue,
         String daysBeforeExpires
     ) {
-        List<Id> documentCvIds = getContentVersionIdsForEnvelope(
-            mainContentVersionId,
-            isNewCustomer,
-            accountId
-        );
+        List<Id> documentCvIds = new List<Id>{ mainContentVersionId };
 
         dfsle.Envelope env = dfsle.EnvelopeService.getEmptyEnvelope(
             new dfsle.Entity(contractBidId)
@@ -188,7 +215,7 @@ public with sharing class DocuSignDfsleEnvelopeService {
         if (Test.isRunningTest() && FORCE_RESOLVE_DOCUSIGN_ID_IN_TEST == true) {
             envelopeId = resolveDocuSignEnvelopeId(null, contractBidId);
         } else if (Test.isRunningTest()) {
-            envelopeId = 'TEST-DFSLE-ENVELOPE';
+            envelopeId = 'TEST-DFSLE-ENVELOPE-' + mainContentVersionId;
         } else {
             dfsle.Envelope sent = dfsle.EnvelopeService.sendEnvelope(env, true);
             envelopeId = resolveDocuSignEnvelopeId(sent, contractBidId);
@@ -203,46 +230,6 @@ public with sharing class DocuSignDfsleEnvelopeService {
         }
 
         return envelopeId;
-    }
-
-    @TestVisible
-    private static List<Id> getContentVersionIdsForEnvelope(
-        Id mainContentVersionId,
-        Boolean isNewCustomer,
-        Id accountId
-    ) {
-        List<Id> cvIds = new List<Id>();
-
-        if (!isNewCustomer) {
-            cvIds.add(mainContentVersionId);
-            return cvIds;
-        }
-
-        List<ContentDocumentLink> contentLinks = [
-            SELECT ContentDocumentId
-            FROM ContentDocumentLink
-            WHERE LinkedEntityId = :accountId
-        ];
-        Set<Id> contentDocIds = new Set<Id>();
-        for (ContentDocumentLink link : contentLinks) {
-            contentDocIds.add(link.ContentDocumentId);
-        }
-
-        List<ContentVersion> welcomeLetters = [
-            SELECT Id, Title
-            FROM ContentVersion
-            WHERE
-                Title LIKE '%Welcome Letter%'
-                AND ContentDocumentId IN :contentDocIds
-            LIMIT 1
-        ];
-
-        if (!welcomeLetters.isEmpty()) {
-            cvIds.add(welcomeLetters[0].Id);
-        }
-        cvIds.add(mainContentVersionId);
-
-        return cvIds;
     }
 
     @TestVisible

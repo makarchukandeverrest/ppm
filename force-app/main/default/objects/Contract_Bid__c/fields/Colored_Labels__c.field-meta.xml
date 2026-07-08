@@ -3,80 +3,69 @@
     <fullName>Colored_Labels__c</fullName>
     <externalId>false</externalId>
     <formula>TRIM(
-  /* Revision Needed */
-  IF(INCLUDES(Label__c, &quot;Revision Needed&quot;),
-     IMAGE(&quot;/resource/Red_Orange&quot;, &quot;Revision Needed&quot;, 30, 30) &amp; &quot; Revision Needed &quot;,
-     &quot;&quot;) &amp;
+IF(INCLUDES(Label__c, &quot;Revision Needed&quot;),
+IMAGE(&quot;/resource/Red_Orange&quot;, &quot;Revision Needed&quot;, 30, 30) &amp; &quot; Revision Needed &quot;,
+&quot;&quot;) &amp;
 
-  /* Keep Same Info */
-  IF(INCLUDES(Label__c, &quot;Keep Same Info&quot;),
-     IMAGE(&quot;/resource/Green&quot;, &quot;Keep Same Info&quot;, 30, 30) &amp; &quot; Keep Same Info &quot;,
-     &quot;&quot;) &amp;
+IF(INCLUDES(Label__c, &quot;Keep Same Info&quot;),
+IMAGE(&quot;/resource/Green&quot;, &quot;Keep Same Info&quot;, 30, 30) &amp; &quot; Keep Same Info &quot;,
+&quot;&quot;) &amp;
 
-  /* Contract Created */
-  IF(INCLUDES(Label__c, &quot;Contract Created&quot;),
-     IMAGE(&quot;/resource/Purple&quot;, &quot;Contract Created&quot;, 30, 30) &amp; &quot; Contract Created &quot;,
-     &quot;&quot;) &amp;
+IF(INCLUDES(Label__c, &quot;Contract Created&quot;),
+IMAGE(&quot;/resource/Purple&quot;, &quot;Contract Created&quot;, 30, 30) &amp; &quot; Contract Created &quot;,
+&quot;&quot;) &amp;
 
-  /* Contract Approved */
-  IF(INCLUDES(Label__c, &quot;Contract Approved&quot;),
-     IMAGE(&quot;/resource/Dark_Purple&quot;, &quot;Contract Approved&quot;, 30, 30) &amp; &quot; Contract Approved &quot;,
-     &quot;&quot;) &amp;
+IF(INCLUDES(Label__c, &quot;Contract Approved&quot;),
+IMAGE(&quot;/resource/Dark_Purple&quot;, &quot;Contract Approved&quot;, 30, 30) &amp; &quot; Contract Approved &quot;,
+&quot;&quot;) &amp;
 
-  /* Hot Lead */
-  IF(INCLUDES(Label__c, &quot;Hot Lead&quot;),
-     IMAGE(&quot;/resource/Red&quot;, &quot;Hot Lead&quot;, 30, 30) &amp; &quot; Hot Lead &quot;,
-     &quot;&quot;) &amp;
+IF(INCLUDES(Label__c, &quot;Hot Lead&quot;),
+IMAGE(&quot;/resource/Red&quot;, &quot;Hot Lead&quot;, 30, 30) &amp; &quot; Hot Lead &quot;,
+&quot;&quot;) &amp;
 
-  /* Need More Info */
-  IF(INCLUDES(Label__c, &quot;Need More Info&quot;),
-     IMAGE(&quot;/resource/Orange&quot;, &quot;Need More Info&quot;, 30, 30) &amp; &quot; Need More Info &quot;,
-     &quot;&quot;) &amp;
+IF(INCLUDES(Label__c, &quot;Need More Info&quot;),
+IMAGE(&quot;/resource/Orange&quot;, &quot;Need More Info&quot;, 30, 30) &amp; &quot; Need More Info &quot;,
+&quot;&quot;) &amp;
 
-  /* Cold Lead */
-  IF(INCLUDES(Label__c, &quot;Cold Lead&quot;),
-     IMAGE(&quot;/resource/Blue&quot;, &quot;Cold Lead&quot;, 30, 30) &amp; &quot; Cold Lead &quot;,
-     &quot;&quot;) &amp;
+IF(INCLUDES(Label__c, &quot;Cold Lead&quot;),
+IMAGE(&quot;/resource/Blue&quot;, &quot;Cold Lead&quot;, 30, 30) &amp; &quot; Cold Lead &quot;,
+&quot;&quot;) &amp;
 
-  /* Warm Lead */
-  IF(INCLUDES(Label__c, &quot;Warm Lead&quot;),
-     IMAGE(&quot;/resource/Light_Grey&quot;, &quot;Warm Lead&quot;, 30, 30) &amp; &quot; Warm Lead &quot;,
-     &quot;&quot;) &amp;
+IF(INCLUDES(Label__c, &quot;Warm Lead&quot;),
+IMAGE(&quot;/resource/Light_Grey&quot;, &quot;Warm Lead&quot;, 30, 30) &amp; &quot; Warm Lead &quot;,
+&quot;&quot;) &amp;
 
-  /* Assumptive Lead */
-  IF(INCLUDES(Label__c, &quot;Assumptive Lead&quot;),
-     IMAGE(&quot;/resource/Grey&quot;, &quot;Assumptive Lead&quot;, 30, 30) &amp; &quot; Assumptive Lead &quot;,
-     &quot;&quot;) &amp;
+IF(INCLUDES(Label__c, &quot;Assumptive Lead&quot;),
+IMAGE(&quot;/resource/Grey&quot;, &quot;Assumptive Lead&quot;, 30, 30) &amp; &quot; Assumptive Lead &quot;,
+&quot;&quot;) &amp;
 
-  /* Sales Form Lead */
-  IF(INCLUDES(Label__c, &quot;Sales Form Lead&quot;),
-     IMAGE(&quot;/resource/Dark_Purple&quot;, &quot;Sales Form Lead&quot;, 30, 30) &amp; &quot; Sales Form Lead &quot;,
-     &quot;&quot;) &amp;
+IF(INCLUDES(Label__c, &quot;Sales Form Lead&quot;),
+IMAGE(&quot;/resource/Dark_Purple&quot;, &quot;Sales Form Lead&quot;, 30, 30) &amp; &quot; Sales Form Lead &quot;,
+&quot;&quot;) &amp;
 
-  /* On Hold */
-  IF(INCLUDES(Label__c, &quot;On Hold&quot;),
-     IMAGE(&quot;/resource/Hard_Blue&quot;, &quot;On Hold&quot;, 30, 30) &amp; &quot; On Hold&quot;,
-     &quot;&quot;) &amp;
-TRIM(
-  /* Marijana to do */
-  IF(INCLUDES(Label__c, &quot;Marijana to Complete&quot;),
-     IMAGE(&quot;/resource/Black&quot;, &quot;Marijana to do&quot;, 30, 30) &amp; &quot; Marijana to Complete &quot;,
-     &quot;&quot;) &amp;
+IF(INCLUDES(Label__c, &quot;On Hold&quot;),
+IMAGE(&quot;/resource/Hard_Blue&quot;, &quot;On Hold&quot;, 30, 30) &amp; &quot; On Hold &quot;,
+&quot;&quot;) &amp;
 
-  /* Natasa to do */
-  IF(INCLUDES(Label__c, &quot;Natasa to do&quot;),
-     IMAGE(&quot;/resource/Black&quot;, &quot;Natasa to Complete&quot;, 30, 30) &amp; &quot; Natasa to Complete &quot;,
-     &quot;&quot;) &amp;
+IF(INCLUDES(Label__c, &quot;Marijana to Complete&quot;),
+IMAGE(&quot;/resource/Black&quot;, &quot;Marijana to Complete&quot;, 30, 30) &amp; &quot; Marijana to Complete &quot;,
+&quot;&quot;) &amp;
 
-  /* Rania to do */
-  IF(INCLUDES(Label__c, &quot;Rania to do&quot;),
-     IMAGE(&quot;/resource/Black&quot;, &quot;Rania to Complete&quot;, 30, 30) &amp; &quot; Rania to Complete &quot;,
-     &quot;&quot;) &amp;
+IF(INCLUDES(Label__c, &quot;Natasa to Complete&quot;),
+IMAGE(&quot;/resource/Hard_Yellow&quot;, &quot;Natasa to Complete&quot;, 30, 30) &amp; &quot; Natasa to Complete &quot;,
+&quot;&quot;) &amp;
 
-  /* Goran to do */
-  IF(INCLUDES(Label__c, &quot;Goran to do&quot;),
-     IMAGE(&quot;/resource/Black&quot;, &quot;Goran to Complete&quot;, 30, 30) &amp; &quot; Goran to Complete &quot;,
-     &quot;&quot;))
+IF(INCLUDES(Label__c, &quot;Rania to Complete&quot;),
+IMAGE(&quot;/resource/Orange&quot;, &quot;Rania to Complete&quot;, 30, 30) &amp; &quot; Rania to Complete &quot;,
+&quot;&quot;) &amp;
+
+IF(INCLUDES(Label__c, &quot;Goran to Complete&quot;),
+IMAGE(&quot;/resource/Black&quot;, &quot;Goran to Complete&quot;, 30, 30) &amp; &quot; Goran to Complete &quot;,
+&quot;&quot;) &amp;
+
+IF(INCLUDES(Label__c, &quot;New record created&quot;),
+IMAGE(&quot;/resource/Pink&quot;, &quot;New record created&quot;, 30, 30) &amp; &quot; New record created &quot;,
+&quot;&quot;)
 )</formula>
     <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
     <label>Colored Labels</label>

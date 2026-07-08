@@ -76,6 +76,11 @@
         <label>Rania to Complete</label>
     </customValue>
     <customValue>
+        <fullName>New record created</fullName>
+        <default>false</default>
+        <label>New record created</label>
+    </customValue>
+    <customValue>
         <fullName>Goran to do</fullName>
         <default>false</default>
         <isActive>false</isActive>
