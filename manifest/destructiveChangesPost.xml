@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
     <types>
+        <members>DocuSignEnvelopeService</members>
+        <members>DocuSignEnvelopeServiceTest</members>
+        <members>HttpRequestWrapper</members>
+        <name>ApexClass</name>
+    </types>
+    <types>
         <members>Contract_Bid__c.Cost_Per_Lifeguard_Hour__c</members>
         <members>Contract_Bid__c.Increased_Percent__c</members>
         <members>Contract_Bid__c.Total_Guard_Hours__c</members>
@@ -9,11 +15,6 @@
         <members>Contract_Bid__c.Total_Weekly_Peak_Hours_All_Guards__c</members>
         <members>Contract_Bid__c.Total_Weekly_School_Hours_All_Guards__c</members>
         <name>CustomField</name>
-    </types>
-    <types>
-        <members>DocuSignEnvelopeService</members>
-        <members>DocuSignEnvelopeServiceTest</members>
-        <name>ApexClass</name>
     </types>
     <version>67.0</version>
 </Package>
