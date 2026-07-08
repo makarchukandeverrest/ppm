@@ -446,6 +446,12 @@
                 <identifier>RecordPrimary_Contact_rEmailField</identifier>
             </fieldInstance>
         </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldItem>Record.Primary_Contact__r.Email__c</fieldItem>
+                <identifier>RecordPrimary_Contact_rEmail_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
         <name>Facet-397c709c-d598-4a2c-a8c6-909d8c1571cd</name>
         <type>Facet</type>
     </flexiPageRegions>
@@ -498,6 +504,12 @@
             <fieldInstance>
                 <fieldItem>Record.Secondary_Contact__r.Email</fieldItem>
                 <identifier>RecordSecondary_Contact_rEmailField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldItem>Record.Secondary_Contact__r.Email__c</fieldItem>
+                <identifier>RecordSecondary_Contact_rEmail_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <name>Facet-dc3070f0-f48d-48f7-ad6a-8f5dfa60773b</name>
@@ -554,6 +566,12 @@
                 <identifier>RecordMaintenance_Contact_rEmailField</identifier>
             </fieldInstance>
         </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldItem>Record.Maintenance_Contact__r.Email__c</fieldItem>
+                <identifier>RecordMaintenance_Contact_rEmail_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
         <name>Facet-61973289-e05d-4ea8-81a7-7f38546ad6f6</name>
         <type>Facet</type>
     </flexiPageRegions>
@@ -606,6 +624,12 @@
             <fieldInstance>
                 <fieldItem>Record.Billing_Contact__r.Email</fieldItem>
                 <identifier>RecordBilling_Contact_rEmailField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldItem>Record.Billing_Contact__r.Email__c</fieldItem>
+                <identifier>RecordBilling_Contact_rEmail_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <name>Facet-fa4fbea2-9992-4777-b9f6-4a56cd52b14d</name>
