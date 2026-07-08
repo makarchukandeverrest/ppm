@@ -30,21 +30,19 @@
                 <label>4</label>
             </value>
             <value>
-                <fullName>5</fullName>
-                <default>false</default>
-                <label>5</label>
-            </value>
-            <value>
                 <fullName>Indoor</fullName>
                 <default>false</default>
-                <isActive>false</isActive>
                 <label>Indoor</label>
             </value>
             <value>
-                <fullName>Outdoor</fullName>
+                <fullName>Outdoor Rooftop</fullName>
                 <default>false</default>
-                <isActive>false</isActive>
-                <label>Outdoor</label>
+                <label>Outdoor Rooftop</label>
+            </value>
+            <value>
+                <fullName>Outdoor Inground</fullName>
+                <default>false</default>
+                <label>Outdoor Inground</label>
             </value>
         </valueSetDefinition>
     </valueSet>
