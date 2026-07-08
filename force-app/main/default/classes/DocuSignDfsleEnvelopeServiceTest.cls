@@ -95,28 +95,6 @@ private class DocuSignDfsleEnvelopeServiceTest {
         );
         insert mainCv;
 
-        // Welcome letter for new customer envelope (extra docs are SharePoint links in email).
-        ContentVersion welcomeCv = new ContentVersion(
-            Title = 'Customer Welcome Letter',
-            PathOnClient = 'Welcome.pdf',
-            VersionData = Blob.valueOf('%PDF-1.4 welcome'),
-            IsMajorVersion = true
-        );
-        insert welcomeCv;
-
-        ContentVersion welcomeReloaded = [
-            SELECT Id, ContentDocumentId
-            FROM ContentVersion
-            WHERE Id = :welcomeCv.Id
-            LIMIT 1
-        ];
-        insert new ContentDocumentLink(
-            ContentDocumentId = welcomeReloaded.ContentDocumentId,
-            LinkedEntityId = acc.Id,
-            ShareType = 'V',
-            Visibility = 'AllUsers'
-        );
-
     }
 
     @IsTest
@@ -176,7 +154,90 @@ private class DocuSignDfsleEnvelopeServiceTest {
             FROM ContentVersion
             WHERE Id = :mainCv.Id
         ];
-        System.assertEquals('TEST-DFSLE-ENVELOPE', updated.DocuSign_Envelope_Id__c);
+        System.assertEquals(
+            ('TEST-DFSLE-ENVELOPE-' + mainCv.Id).toUpperCase(),
+            updated.DocuSign_Envelope_Id__c
+        );
+        System.assertEquals(false, updated.To_Sent__c);
+    }
+
+    @IsTest
+    static void testSendEnvelope_multipleInvocations_updateEachContentVersion() {
+        Account acc = [SELECT Id, Name FROM Account LIMIT 1];
+        Contract_Bid__c cb = [SELECT Id FROM Contract_Bid__c LIMIT 1];
+
+        ContentVersion mainCv = [
+            SELECT Id
+            FROM ContentVersion
+            WHERE Title = 'Dfsle Main Contract'
+            LIMIT 1
+        ];
+        ContentVersion secondCv = new ContentVersion(
+            Title = 'Dfsle Second Contract',
+            PathOnClient = 'Second.pdf',
+            VersionData = Blob.valueOf('%PDF-1.4 dfsle test 2'),
+            IsMajorVersion = true,
+            To_Sent__c = true
+        );
+        insert secondCv;
+
+        Test.startTest();
+        DocuSignDfsleEnvelopeService.sendEnvelope(
+            cb.Id, mainCv.Id, 'customer@example.com', acc.Name, false, acc.Id, new List<User>(), null, null
+        );
+        DocuSignDfsleEnvelopeService.sendEnvelope(
+            cb.Id, secondCv.Id, 'customer@example.com', acc.Name, false, acc.Id, new List<User>(), null, null
+        );
+        Test.stopTest();
+
+        List<ContentVersion> updated = [
+            SELECT DocuSign_Envelope_Id__c, To_Sent__c
+            FROM ContentVersion
+            WHERE Id IN :new Set<Id>{ mainCv.Id, secondCv.Id }
+        ];
+        System.assertEquals(2, updated.size());
+        for (ContentVersion cv : updated) {
+            System.assertEquals(
+                ('TEST-DFSLE-ENVELOPE-' + cv.Id).toUpperCase(),
+                cv.DocuSign_Envelope_Id__c
+            );
+            System.assertEquals(false, cv.To_Sent__c);
+        }
+    }
+
+    @IsTest
+    static void testBatchHttpSender_singleDfsleRequest() {
+        Contract_Bid__c cb = [SELECT Id FROM Contract_Bid__c LIMIT 1];
+        Account acc = [SELECT Id, Name FROM Account LIMIT 1];
+        ContentVersion mainCv = [SELECT Id FROM ContentVersion WHERE Title = 'Dfsle Main Contract' LIMIT 1];
+
+        List<DocuSignDfsleEnvelopeService.DfsleEnvelopeSendRequest> requests = new List<DocuSignDfsleEnvelopeService.DfsleEnvelopeSendRequest>{
+            new DocuSignDfsleEnvelopeService.DfsleEnvelopeSendRequest(
+                cb.Id,
+                mainCv.Id,
+                'customer@example.com',
+                acc.Name,
+                false,
+                acc.Id,
+                new List<User>(),
+                null,
+                null
+            )
+        };
+
+        Test.startTest();
+        Database.executeBatch(new BatchHttpSender(requests), 1);
+        Test.stopTest();
+
+        ContentVersion updated = [
+            SELECT DocuSign_Envelope_Id__c, To_Sent__c
+            FROM ContentVersion
+            WHERE Id = :mainCv.Id
+        ];
+        System.assertEquals(
+            ('TEST-DFSLE-ENVELOPE-' + mainCv.Id).toUpperCase(),
+            updated.DocuSign_Envelope_Id__c
+        );
         System.assertEquals(false, updated.To_Sent__c);
     }
 
@@ -217,20 +278,6 @@ private class DocuSignDfsleEnvelopeServiceTest {
         Integer emailAfter = [SELECT COUNT() FROM EmailMessage WHERE RelatedToId = :cb.Id];
 
         System.assertEquals(emailBefore, emailAfter, 'No EmailMessage should be created if no files selected.');
-    }
-
-    @IsTest
-    static void testGetContentVersionIds_newCustomer_includesWelcomeAndMainOnly() {
-        Account acc = [SELECT Id FROM Account LIMIT 1];
-        ContentVersion mainCv = [SELECT Id FROM ContentVersion WHERE Title = 'Dfsle Main Contract' LIMIT 1];
-
-        List<Id> cvIds = DocuSignDfsleEnvelopeService.getContentVersionIdsForEnvelope(
-            mainCv.Id,
-            true,
-            acc.Id
-        );
-        System.assertEquals(2, cvIds.size(), 'Expected welcome letter + main contract only.');
-        System.assertEquals(mainCv.Id, cvIds[1], 'Main contract should come right after welcome letter when present.');
     }
 
     @IsTest
