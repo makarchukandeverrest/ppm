@@ -30,6 +30,24 @@
         <locationX>0</locationX>
         <locationY>0</locationY>
         <inputAssignments>
+            <field>Additional_Comments__c</field>
+            <value>
+                <elementReference>$Record.Recent_Contract_Bid__r.Additional_Comments__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Budget_Season__c</field>
+            <value>
+                <elementReference>$Record.Recent_Contract_Bid__r.Budget_Season__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Contract_Creator__c</field>
+            <value>
+                <elementReference>$Record.Recent_Contract_Bid__r.Record_Manager__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
             <field>Contract_End_Date__c</field>
             <value>
                 <elementReference>$Record.Recent_Contract_Bid__r.Contract_End_Date__c</elementReference>
@@ -39,6 +57,18 @@
             <field>Contract_Start_Date__c</field>
             <value>
                 <elementReference>$Record.Recent_Contract_Bid__r.Contract_Start_Date__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Label__c</field>
+            <value>
+                <elementReference>$Record.Recent_Contract_Bid__r.Label__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Lead_Generator__c</field>
+            <value>
+                <elementReference>$Record.Recent_Contract_Bid__r.Lead_Generator__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
