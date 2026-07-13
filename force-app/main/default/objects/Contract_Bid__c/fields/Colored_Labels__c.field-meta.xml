@@ -32,7 +32,7 @@ IMAGE(&quot;/resource/Blue&quot;, &quot;Cold Lead&quot;, 30, 30) &amp; &quot; Co
 &quot;&quot;) &amp;
 
 IF(INCLUDES(Label__c, &quot;Warm Lead&quot;),
-IMAGE(&quot;/resource/Light_Grey&quot;, &quot;Warm Lead&quot;, 30, 30) &amp; &quot; Warm Lead &quot;,
+IMAGE(&quot;/resource/Orange&quot;, &quot;Warm Lead&quot;, 30, 30) &amp; &quot; Warm Lead &quot;,
 &quot;&quot;) &amp;
 
 IF(INCLUDES(Label__c, &quot;Assumptive Lead&quot;),
