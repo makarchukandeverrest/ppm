@@ -383,6 +383,46 @@ private class ConVersionFromItemsSharePointBatchTest {
     }
 
     @isTest
+    static void testBatchExecute_NoAccountMatchStillCreatesContentVersion() {
+        Map<String, Object> row = new Map<String, Object>{
+            'Id' => 'x00Vv00000wQszUNOMATCH',
+            'Name__c' => 'Orphan File',
+            'UniqueId__c' => '{11111111-1111-1111-1111-111111111111}',
+            'Path__c' => 'https://example.sharepoint.com/sites/Salesforce/Unknown Customer/Orphan File.pdf',
+            'MimeType__c' => 'application/pdf',
+            'CreationDate__c' => DateTime.now(),
+            'IsFolder__c' => false
+        };
+        Items_SharePoint__x item = (Items_SharePoint__x) Test.createStubQueryRow(
+            Items_SharePoint__x.SObjectType, row
+        );
+
+        Test.startTest();
+        Test.setMock(HttpCalloutMock.class, new SharePointMock(200, 'PDF content'));
+
+        ContentVersionFromItemsSharePointBatch batch = new ContentVersionFromItemsSharePointBatch();
+        batch.execute(null, new List<Items_SharePoint__x>{ item });
+        Test.stopTest();
+
+        List<ContentVersion> cvs = [
+            SELECT Id, SharePoint_External_Id__c
+            FROM ContentVersion
+            WHERE SharePoint_External_Id__c = :item.UniqueId__c
+        ];
+        System.assertEquals(1, cvs.size(), 'Should create ContentVersion even without account match');
+
+        List<ContentDocumentLink> accountLinks = [
+            SELECT Id
+            FROM ContentDocumentLink
+            WHERE ContentDocumentId IN (
+                SELECT ContentDocumentId FROM ContentVersion WHERE Id = :cvs[0].Id
+            )
+            AND LinkedEntityId IN (SELECT Id FROM Account)
+        ];
+        System.assertEquals(0, accountLinks.size(), 'Should not create account links when no account matches');
+    }
+
+    @isTest
     static void testBatchExecute_MultipleAccountMatches() {
         // One SharePoint item matching multiple accounts requires multiple callouts
         // before any DML — the scenario that caused "uncommitted work pending"
