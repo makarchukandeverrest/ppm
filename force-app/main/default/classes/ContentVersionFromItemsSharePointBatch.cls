@@ -23,18 +23,15 @@ public class ContentVersionFromItemsSharePointBatch implements Database.Batchabl
     public void execute(Database.BatchableContext bc, List<Items_SharePoint__x> scope) {
         if (scope.isEmpty()) return;
 
-        // Map accounts to items
         Map<Id, List<Items_SharePoint__x>> recordsToItemsMap = buildAccountMapping(scope);
 
         if (recordsToItemsMap.isEmpty()) {
-            System.debug('No account matches found for this scope.');
-            return;
+            System.debug('No account matches found for this scope. ContentVersions will be created without links.');
         }
 
         Map<String, ContentVersion> uniqueIdToVersion = new Map<String, ContentVersion>();
         Map<String, Set<Id>> uniqueIdToAccountIds = new Map<String, Set<Id>>();
 
-        // Phase 1: callouts only — download each unique file once
         for (Id parentId : recordsToItemsMap.keySet()) {
             for (Items_SharePoint__x item : recordsToItemsMap.get(parentId)) {
                 String uniqueKey = item.UniqueId__c;
@@ -42,28 +39,32 @@ public class ContentVersionFromItemsSharePointBatch implements Database.Batchabl
                     uniqueIdToAccountIds.put(uniqueKey, new Set<Id>());
                 }
                 uniqueIdToAccountIds.get(uniqueKey).add(parentId);
+            }
+        }
 
-                if (uniqueIdToVersion.containsKey(uniqueKey)) {
-                    continue;
-                }
+        // Phase 1: callouts only — download each unique file once
+        for (Items_SharePoint__x item : scope) {
+            String uniqueKey = item.UniqueId__c;
+            if (String.isBlank(uniqueKey) || uniqueIdToVersion.containsKey(uniqueKey)) {
+                continue;
+            }
 
-                try {
-                    Blob fileBody = downloadFile(EncodingUtil.urlEncode(item.UniqueId__c, 'UTF-8'));
-                    String fileName = getFileName(item.Name__c, item.MimeType__c);
+            try {
+                Blob fileBody = downloadFile(EncodingUtil.urlEncode(item.UniqueId__c, 'UTF-8'));
+                String fileName = getFileName(item.Name__c, item.MimeType__c);
 
-                    uniqueIdToVersion.put(uniqueKey, new ContentVersion(
-                        Title = fileName,
-                        PathOnClient = '/' + fileName,
-                        VersionData = fileBody,
-                        To_Sent__c = (item.MimeType__c == 'application/pdf'),
-                        DocuSign_Envelope_Status__c = 'Start',
-                        SharePoint_External_Id__c = item.UniqueId__c
-                    ));
-                    fileBody = null;
+                uniqueIdToVersion.put(uniqueKey, new ContentVersion(
+                    Title = fileName,
+                    PathOnClient = '/' + fileName,
+                    VersionData = fileBody,
+                    To_Sent__c = (item.MimeType__c == 'application/pdf'),
+                    DocuSign_Envelope_Status__c = 'Start',
+                    SharePoint_External_Id__c = item.UniqueId__c
+                ));
+                fileBody = null;
 
-                } catch (Exception e) {
-                    System.debug('Error downloading item ' + item.Id + ': ' + e.getMessage());
-                }
+            } catch (Exception e) {
+                System.debug('Error downloading item ' + item.Id + ': ' + e.getMessage());
             }
         }
 
