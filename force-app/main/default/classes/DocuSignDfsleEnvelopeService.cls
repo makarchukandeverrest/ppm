@@ -209,7 +209,8 @@ public with sharing class DocuSignDfsleEnvelopeService {
         env = env.withRecipients(
             buildRecipients(contractBidId, signerEmail, signerName, ccUsers)
         );
-        env = env.withOptions(buildEnvelopeOptions(contractBidId, reminderValue, daysBeforeExpires));
+        env = env.withOptions(buildEnvelopeOptions(contractBidId));
+        env = env.withNotifications(buildEnvelopeNotifications(reminderValue, daysBeforeExpires));
 
         String envelopeId;
         if (Test.isRunningTest() && FORCE_RESOLVE_DOCUSIGN_ID_IN_TEST == true) {
@@ -547,11 +548,7 @@ public with sharing class DocuSignDfsleEnvelopeService {
     }
 
     @TestVisible
-    private static dfsle.Envelope.Options buildEnvelopeOptions(
-        Id contractBidId,
-        String reminderValue,
-        String daysBeforeExpires
-    ) {
+    private static dfsle.Envelope.Options buildEnvelopeOptions(Id contractBidId) {
         return new dfsle.Envelope.Options(
             false,
             new dfsle.Document.WriteBack(
@@ -563,6 +560,40 @@ public with sharing class DocuSignDfsleEnvelopeService {
             null,
             null
         );
+    }
+
+    @TestVisible
+    private static dfsle.Notifications buildEnvelopeNotifications(
+        String reminderValue,
+        String daysBeforeExpires
+    ) {
+        Integer expireAfterDays = parsePositiveDays(daysBeforeExpires, 120);
+        Integer expireWarnDays = expireAfterDays > 10 ? 10 : Math.max(1, expireAfterDays - 1);
+        Boolean remindEnabled = String.isNotBlank(reminderValue);
+        Integer reminderDays = remindEnabled ? parsePositiveDays(reminderValue, 1) : 1;
+
+        return new dfsle.Notifications(
+            remindEnabled,
+            reminderDays,
+            reminderDays,
+            true,
+            expireAfterDays,
+            expireWarnDays,
+            false
+        );
+    }
+
+    @TestVisible
+    private static Integer parsePositiveDays(String value, Integer defaultValue) {
+        if (String.isBlank(value)) {
+            return defaultValue;
+        }
+        try {
+            Integer days = Integer.valueOf(value.trim());
+            return days >= 1 ? days : defaultValue;
+        } catch (Exception ex) {
+            return defaultValue;
+        }
     }
 
     private static String resolveDocuSignEnvelopeId(dfsle.Envelope sent, Id contractBidId) {
