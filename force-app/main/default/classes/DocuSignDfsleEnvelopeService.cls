@@ -3,6 +3,8 @@ public with sharing class DocuSignDfsleEnvelopeService {
     private static final String ANCHOR_MAIN =
         'Please initial page(s) 2, 3, 4 and 5 of this contract where indicated. ';
 
+    private static final String ANCHOR_OWNERS_INITIALS = 'Owner\'s Initials:';
+
     private static final String ENVELOPE_EMAIL_SUBJECT_PROPOSAL_LABEL = 'Premier Pool Management Proposal';
 
     private static final String ENVELOPE_EMAIL_WEBSITE_URL = 'https://www.premierswim.com/';
@@ -209,7 +211,8 @@ public with sharing class DocuSignDfsleEnvelopeService {
         env = env.withRecipients(
             buildRecipients(contractBidId, signerEmail, signerName, ccUsers)
         );
-        env = env.withOptions(buildEnvelopeOptions(contractBidId, reminderValue, daysBeforeExpires));
+        env = env.withOptions(buildEnvelopeOptions(contractBidId));
+        env = env.withNotifications(buildEnvelopeNotifications(reminderValue, daysBeforeExpires));
 
         String envelopeId;
         if (Test.isRunningTest() && FORCE_RESOLVE_DOCUSIGN_ID_IN_TEST == true) {
@@ -485,6 +488,18 @@ public with sharing class DocuSignDfsleEnvelopeService {
             10
         );
 
+        dfsle.Tab.Anchor ownersInitialsAnchor = new dfsle.Tab.Anchor(
+            ANCHOR_OWNERS_INITIALS,
+            false,
+            false,
+            null,
+            true,
+            false,
+            'pixels',
+            75,
+            15
+        );
+
         return new List<dfsle.Tab>{
             new dfsle.SignHereTab()
                 .withRequired(true)
@@ -496,7 +511,11 @@ public with sharing class DocuSignDfsleEnvelopeService {
                 .withAnchor(mainAnchorDateSigned),
             new dfsle.InitialHereTab()
                 .withScale(0.6)
-                .withAnchor(initialAnchor)
+                .withAnchor(initialAnchor),
+            new dfsle.InitialHereTab()
+                .withScale(0.6)
+                .withRequired(false)
+                .withAnchor(ownersInitialsAnchor)
         };
     }
 
@@ -547,11 +566,7 @@ public with sharing class DocuSignDfsleEnvelopeService {
     }
 
     @TestVisible
-    private static dfsle.Envelope.Options buildEnvelopeOptions(
-        Id contractBidId,
-        String reminderValue,
-        String daysBeforeExpires
-    ) {
+    private static dfsle.Envelope.Options buildEnvelopeOptions(Id contractBidId) {
         return new dfsle.Envelope.Options(
             false,
             new dfsle.Document.WriteBack(
@@ -563,6 +578,40 @@ public with sharing class DocuSignDfsleEnvelopeService {
             null,
             null
         );
+    }
+
+    @TestVisible
+    private static dfsle.Notifications buildEnvelopeNotifications(
+        String reminderValue,
+        String daysBeforeExpires
+    ) {
+        Integer expireAfterDays = parsePositiveDays(daysBeforeExpires, 120);
+        Integer expireWarnDays = expireAfterDays > 10 ? 10 : Math.max(1, expireAfterDays - 1);
+        Boolean remindEnabled = String.isNotBlank(reminderValue);
+        Integer reminderDays = remindEnabled ? parsePositiveDays(reminderValue, 1) : 1;
+
+        return new dfsle.Notifications(
+            remindEnabled,
+            reminderDays,
+            reminderDays,
+            true,
+            expireAfterDays,
+            expireWarnDays,
+            false
+        );
+    }
+
+    @TestVisible
+    private static Integer parsePositiveDays(String value, Integer defaultValue) {
+        if (String.isBlank(value)) {
+            return defaultValue;
+        }
+        try {
+            Integer days = Integer.valueOf(value.trim());
+            return days >= 1 ? days : defaultValue;
+        } catch (Exception ex) {
+            return defaultValue;
+        }
     }
 
     private static String resolveDocuSignEnvelopeId(dfsle.Envelope sent, Id contractBidId) {
