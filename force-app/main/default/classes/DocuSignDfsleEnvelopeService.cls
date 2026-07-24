@@ -1,7 +1,6 @@
 public with sharing class DocuSignDfsleEnvelopeService {
 
-    private static final String ANCHOR_MAIN =
-        'Please initial page(s) 2, 3, 4 and 5 of this contract where indicated. ';
+    private static final String ANCHOR_MAIN = 'SECTION V. ACCEPTANCE OF PROPOSAL';
 
     private static final String ANCHOR_OWNERS_INITIALS = 'Owner\'s Initials:';
 
@@ -440,40 +439,41 @@ public with sharing class DocuSignDfsleEnvelopeService {
 
     @TestVisible
     private static List<dfsle.Tab> buildSignerTabs() {
+        // OWNER column — offsets from SECTION V header (right and down)
         dfsle.Tab.Anchor mainAnchor = new dfsle.Tab.Anchor(
             ANCHOR_MAIN,
             false,
-            false,
+            true,
             null,
             true,
-            false,
+            true,
             'pixels',
-            0,
-            -10
+            350,
+            48
         );
 
         dfsle.Tab.Anchor mainAnchorFullName = new dfsle.Tab.Anchor(
             ANCHOR_MAIN,
             false,
-            false,
+            true,
             null,
             true,
-            false,
+            true,
             'pixels',
-            -40,
-            20
+            325,
+            72
         );
 
         dfsle.Tab.Anchor mainAnchorDateSigned = new dfsle.Tab.Anchor(
             ANCHOR_MAIN,
             false,
-            false,
+            true,
             null,
             true,
-            false,
+            true,
             'pixels',
-            120,
-            20
+            480,
+            72
         );
 
         dfsle.Tab.Anchor initialAnchor = new dfsle.Tab.Anchor(
