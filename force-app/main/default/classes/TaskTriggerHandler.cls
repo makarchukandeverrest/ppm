@@ -7,6 +7,10 @@ public with sharing class TaskTriggerHandler extends TriggerHandler {
         this.oldMap = (Map<Id, Task>) Trigger.oldMap;
     }
 
+    protected override void beforeInsert() {
+        TaskRegionalManagerRequestDefaults.applyBeforeInsert(this.newList);
+    }
+
     protected override void afterInsert() {
         TaskQueueNotificationService.notifyQueueMembers(this.newList, null);
     }

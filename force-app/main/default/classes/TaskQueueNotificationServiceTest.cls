@@ -230,6 +230,52 @@ private class TaskQueueNotificationServiceTest {
     }
 
     @IsTest
+    static void testRegionalManagerRequestDefaultDueDate() {
+        Task regionalManagerTask = new Task(
+            Subject = 'Due date default test',
+            Status = 'Not Started',
+            RecordTypeId = getRegionalManagerRequestRecordTypeId()
+        );
+
+        Test.startTest();
+        insert regionalManagerTask;
+        Test.stopTest();
+
+        Task insertedTask = [
+            SELECT ActivityDate
+            FROM Task
+            WHERE Id = :regionalManagerTask.Id
+        ];
+        System.assertEquals(
+            Date.today().addDays(1),
+            insertedTask.ActivityDate,
+            'Regional Manager Request tasks should default Due Date to tomorrow.'
+        );
+    }
+
+    @IsTest
+    static void testRegionalManagerRequestKeepsProvidedDueDate() {
+        Date customDueDate = Date.today().addDays(5);
+        Task regionalManagerTask = new Task(
+            Subject = 'Custom due date test',
+            Status = 'Not Started',
+            ActivityDate = customDueDate,
+            RecordTypeId = getRegionalManagerRequestRecordTypeId()
+        );
+
+        Test.startTest();
+        insert regionalManagerTask;
+        Test.stopTest();
+
+        Task insertedTask = [
+            SELECT ActivityDate
+            FROM Task
+            WHERE Id = :regionalManagerTask.Id
+        ];
+        System.assertEquals(customDueDate, insertedTask.ActivityDate);
+    }
+
+    @IsTest
     static void testExpandRolesWithSubordinates() {
         UserRole parentRole = new UserRole(
             Name = 'Coverage Parent Role ' + System.currentTimeMillis(),
