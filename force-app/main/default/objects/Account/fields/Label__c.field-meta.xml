@@ -84,6 +84,11 @@
                 <default>false</default>
                 <label>Rania to Complete</label>
             </value>
+            <value>
+                <fullName>New record created</fullName>
+                <default>false</default>
+                <label>New record created</label>
+            </value>
         </valueSetDefinition>
     </valueSet>
     <visibleLines>4</visibleLines>
