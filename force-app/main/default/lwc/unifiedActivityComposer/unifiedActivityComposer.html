@@ -1,0 +1,30 @@
+<template>
+    <div class="slds-form-element">
+        <label class="slds-form-element__label" for="composer-body">Share an update</label>
+        <div class="slds-form-element__control">
+            <lightning-textarea
+                id="composer-body"
+                value={body}
+                placeholder="Write something..."
+                onchange={handleBodyChange}
+                disabled={isPosting}>
+            </lightning-textarea>
+        </div>
+    </div>
+    <div class="slds-m-top_small slds-grid slds-grid_align-end">
+        <lightning-button
+            label="Cancel"
+            variant="neutral"
+            onclick={handleCancel}
+            disabled={isPosting}
+            class="slds-m-right_x-small">
+        </lightning-button>
+        <lightning-button
+            label="Post"
+            variant="brand"
+            onclick={handlePost}
+            disabled={isDisabled}
+            loading={isPosting}>
+        </lightning-button>
+    </div>
+</template>

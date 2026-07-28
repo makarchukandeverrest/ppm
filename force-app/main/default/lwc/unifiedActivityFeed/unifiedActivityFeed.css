@@ -1,0 +1,20 @@
+.activity-description img,
+.activity-image {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin-top: 0.25rem;
+}
+
+.activity-image[role='button'] {
+    cursor: pointer;
+}
+
+.activity-image[role='button']:hover {
+    opacity: 0.92;
+}
+
+.activity-image[role='button']:focus {
+    outline: 2px solid var(--lwc-brandAccessible, #0176d3);
+    outline-offset: 2px;
+}
