@@ -1681,20 +1681,6 @@
                 <identifier>flexipage_tabset</identifier>
             </componentInstance>
         </itemInstances>
-        <itemInstances>
-            <componentInstance>
-                <componentInstanceProperties>
-                    <name>maxItems</name>
-                    <value>500</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>sortDirection</name>
-                    <value>DESC</value>
-                </componentInstanceProperties>
-                <componentName>unifiedActivityFeed</componentName>
-                <identifier>c_unifiedActivityFeed</identifier>
-            </componentInstance>
-        </itemInstances>
         <name>leftcol</name>
         <type>Region</type>
     </flexiPageRegions>
