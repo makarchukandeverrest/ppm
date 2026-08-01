@@ -227,20 +227,245 @@ public with sharing class UnifiedActivityController {
     }
 
     @AuraEnabled
-    public static void createChatterPost(Id recordId, String body) {
+    public static void createChatterPost(Id recordId, String body, List<String> imageContentVersionIds) {
         if (recordId == null) {
             throw new IllegalArgumentException('recordId is required');
         }
-        if (String.isBlank(body)) {
+        if (isBlankRichText(body)) {
+            throw new IllegalArgumentException('body is required');
+        }
+        if (!Schema.sObjectType.FeedItem.isCreateable()) {
+            throw new AuraHandledException('Insufficient permissions to create Chatter posts');
+        }
+
+        String trimmedBody = body.trim();
+        if (containsInlineHtmlImage(trimmedBody)) {
+            createChatterPostWithConnectApi(recordId, trimmedBody, imageContentVersionIds);
+            return;
+        }
+
+        FeedItem feedItem = new FeedItem();
+        feedItem.ParentId = recordId;
+        feedItem.Body = trimmedBody;
+        feedItem.IsRichText = true;
+        insert feedItem;
+    }
+
+    private static void createChatterPostWithConnectApi(
+        Id recordId,
+        String htmlBody,
+        List<String> imageContentVersionIds
+    ) {
+        ConnectApi.FeedItemInput input = new ConnectApi.FeedItemInput();
+        input.subjectId = recordId;
+        input.feedElementType = ConnectApi.FeedElementType.FeedItem;
+
+        ConnectApi.MessageBodyInput messageBody = new ConnectApi.MessageBodyInput();
+        messageBody.messageSegments = buildConnectApiSegmentsFromRichTextHtml(
+            htmlBody,
+            imageContentVersionIds
+        );
+        if (messageBody.messageSegments.isEmpty()) {
             throw new IllegalArgumentException('body is required');
         }
 
-        ConnectApi.ChatterFeeds.postFeedElement(
-            null,
-            recordId,
-            ConnectApi.FeedElementType.FeedItem,
-            body
-        );
+        input.body = messageBody;
+        ConnectApi.ChatterFeeds.postFeedElement(null, input);
+    }
+
+    private static Boolean containsInlineHtmlImage(String body) {
+        return String.isNotBlank(body) && body.toLowerCase().contains('<img');
+    }
+
+    private static List<ConnectApi.MessageSegmentInput> buildConnectApiSegmentsFromRichTextHtml(
+        String html,
+        List<String> imageContentVersionIds
+    ) {
+        List<ConnectApi.MessageSegmentInput> segments = new List<ConnectApi.MessageSegmentInput>();
+
+        Pattern imgPattern = Pattern.compile('(?i)<img[^>]+src="([^"]+)"[^>]*>');
+        Matcher matcher = imgPattern.matcher(html);
+        Integer lastEnd = 0;
+        Integer imageIndex = 0;
+
+        while (matcher.find()) {
+            appendTextSegmentFromHtml(segments, html.substring(lastEnd, matcher.start()));
+
+            String imageUrl = unescapeHtmlAttribute(matcher.group(1));
+            Id contentDocumentId = resolveInlineImageContentDocumentId(
+                imageUrl,
+                imageContentVersionIds,
+                imageIndex
+            );
+            imageIndex++;
+
+            if (contentDocumentId == null) {
+                throw new AuraHandledException(
+                    'Could not attach the uploaded image to the Chatter post. Wait for the image upload to finish, then try again.'
+                );
+            }
+
+            ConnectApi.InlineImageSegmentInput imageSegment = new ConnectApi.InlineImageSegmentInput();
+            imageSegment.altText = 'Image';
+            imageSegment.fileId = contentDocumentId;
+            segments.add(imageSegment);
+            lastEnd = matcher.end();
+        }
+
+        if (lastEnd == 0) {
+            Matcher singleQuoteMatcher = Pattern.compile('(?i)<img[^>]+src=\'([^\']+)\'[^>]*>').matcher(html);
+            lastEnd = 0;
+            imageIndex = 0;
+            segments.clear();
+
+            while (singleQuoteMatcher.find()) {
+                appendTextSegmentFromHtml(segments, html.substring(lastEnd, singleQuoteMatcher.start()));
+
+                String imageUrl = unescapeHtmlAttribute(singleQuoteMatcher.group(1));
+                Id contentDocumentId = resolveInlineImageContentDocumentId(
+                    imageUrl,
+                    imageContentVersionIds,
+                    imageIndex
+                );
+                imageIndex++;
+
+                if (contentDocumentId == null) {
+                    throw new AuraHandledException(
+                        'Could not attach the uploaded image to the Chatter post. Wait for the image upload to finish, then try again.'
+                    );
+                }
+
+                ConnectApi.InlineImageSegmentInput imageSegment = new ConnectApi.InlineImageSegmentInput();
+                imageSegment.altText = 'Image';
+                imageSegment.fileId = contentDocumentId;
+                segments.add(imageSegment);
+                lastEnd = singleQuoteMatcher.end();
+            }
+        }
+
+        appendTextSegmentFromHtml(segments, html.substring(lastEnd));
+        return segments;
+    }
+
+    private static Id resolveInlineImageContentDocumentId(
+        String imageUrl,
+        List<String> imageContentVersionIds,
+        Integer imageIndex
+    ) {
+        if (imageContentVersionIds != null
+            && imageIndex < imageContentVersionIds.size()
+            && String.isNotBlank(imageContentVersionIds[imageIndex])) {
+            Id fromVersionId = resolveContentDocumentIdFromVersionId(imageContentVersionIds[imageIndex]);
+            if (fromVersionId != null) {
+                return fromVersionId;
+            }
+        }
+
+        return resolveContentDocumentIdFromImageUrl(imageUrl);
+    }
+
+    private static Id resolveContentDocumentIdFromVersionId(String versionIdValue) {
+        if (String.isBlank(versionIdValue)) {
+            return null;
+        }
+
+        String versionKey = versionIdValue.trim();
+        if (versionKey.length() == 15 || versionKey.length() == 18) {
+            try {
+                Id versionId = (Id) versionKey;
+                if (String.valueOf(versionId).startsWith('069')) {
+                    return versionId;
+                }
+            } catch (Exception ex) {
+                // Not a valid Salesforce Id.
+            }
+        }
+
+        List<ContentVersion> versions = [
+            SELECT ContentDocumentId
+            FROM ContentVersion
+            WHERE Id = :versionKey
+            LIMIT 1
+        ];
+        return versions.isEmpty() ? null : versions[0].ContentDocumentId;
+    }
+
+    private static Id resolveContentDocumentIdFromImageUrl(String imageUrl) {
+        if (String.isBlank(imageUrl)) {
+            return null;
+        }
+
+        String normalizedUrl = unescapeHtmlAttribute(imageUrl);
+
+        Id contentDocumentId = extractContentDocumentIdFromImageUrl(normalizedUrl);
+        if (contentDocumentId != null) {
+            return contentDocumentId;
+        }
+
+        String versionId = extractVersionIdFromImageUrl(normalizedUrl);
+        if (String.isNotBlank(versionId)) {
+            return resolveContentDocumentIdFromVersionId(versionId);
+        }
+
+        Matcher idMatcher = Pattern.compile('(?:refid|id)=([a-zA-Z0-9]{15,18})').matcher(normalizedUrl);
+        if (idMatcher.find()) {
+            return resolveContentDocumentIdFromVersionId(idMatcher.group(1));
+        }
+
+        return null;
+    }
+
+    private static void appendTextSegmentFromHtml(
+        List<ConnectApi.MessageSegmentInput> segments,
+        String htmlFragment
+    ) {
+        String plainText = stripHtmlToPlainText(htmlFragment);
+        if (String.isBlank(plainText)) {
+            return;
+        }
+
+        ConnectApi.TextSegmentInput textSegment = new ConnectApi.TextSegmentInput();
+        textSegment.text = plainText;
+        segments.add(textSegment);
+    }
+
+    private static String stripHtmlToPlainText(String htmlFragment) {
+        if (String.isBlank(htmlFragment)) {
+            return '';
+        }
+
+        String text = htmlFragment.replaceAll('<br\\s*/?>', '\n');
+        text = text.replaceAll('</p\\s*>', '\n');
+        text = text.replaceAll('<[^>]+>', '');
+        text = unescapeHtmlAttribute(text);
+        text = text.replace('\u00a0', ' ').trim();
+        return text;
+    }
+
+    private static String unescapeHtmlAttribute(String value) {
+        if (String.isBlank(value)) {
+            return value;
+        }
+        String amp = String.fromCharArray(new List<Integer>{ 38 });
+        value = value.replace(amp + 'amp;', amp);
+        value = value.replace(amp + 'quot;', '"');
+        value = value.replace(amp + '#39;', String.fromCharArray(new List<Integer>{ 39 }));
+        value = value.replace(amp + 'lt;', '<');
+        value = value.replace(amp + 'gt;', '>');
+        return value;
+    }
+
+    private static Boolean isBlankRichText(String body) {
+        if (String.isBlank(body)) {
+            return true;
+        }
+        String stripped = body.replaceAll('<[^>]+>', '');
+        stripped = stripped.replace('&nbsp;', ' ').trim();
+        return String.isBlank(stripped);
+    }
+
+    private static Boolean isRichTextBody(String body) {
+        return String.isNotBlank(body) && body.contains('<') && body.contains('>');
     }
 
     private static List<ActivityItem> getTasks(Map<Id, String> recordLabels) {
@@ -402,7 +627,7 @@ public with sharing class UnifiedActivityController {
         if (String.isNotBlank(fi.Body)) {
             ActivityContentPart textPart = new ActivityContentPart();
             textPart.partType = 'text';
-            textPart.text = escapeHtml(fi.Body);
+            textPart.text = isRichTextBody(fi.Body) ? fi.Body : escapeHtml(fi.Body);
             return new List<ActivityContentPart>{ textPart };
         }
         return new List<ActivityContentPart>();
@@ -599,6 +824,9 @@ public with sharing class UnifiedActivityController {
     private static Boolean containsInlineImageReference(String body) {
         if (String.isBlank(body)) {
             return false;
+        }
+        if (body.toLowerCase().contains('<img')) {
+            return true;
         }
         Pattern uuidPattern = Pattern.compile(
             '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'

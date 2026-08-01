@@ -299,7 +299,35 @@ public class UnifiedActivityControllerTest {
         }
         Test.stopTest();
 
-        List<FeedItem> posts = [SELECT Id FROM FeedItem WHERE ParentId = :acc.Id];
+        List<FeedItem> posts = [SELECT Id, IsRichText FROM FeedItem WHERE ParentId = :acc.Id];
         System.assertEquals(1, posts.size(), 'Chatter post should be created');
+        System.assertEquals(true, posts[0].IsRichText, 'Post should be rich text');
+    }
+
+    @IsTest
+    static void testCreateChatterPost_richText() {
+        User u = createTestUser();
+        Account acc;
+        System.runAs(u) {
+            acc = createTestAccount();
+        }
+
+        Test.startTest();
+        System.runAs(u) {
+            UnifiedActivityController.createChatterPost(
+                acc.Id,
+                '<p><strong>Bold</strong> and <em>italic</em></p>'
+            );
+        }
+        Test.stopTest();
+
+        FeedItem post = [
+            SELECT Id, Body, IsRichText
+            FROM FeedItem
+            WHERE ParentId = :acc.Id
+            LIMIT 1
+        ];
+        System.assertEquals(true, post.IsRichText);
+        System.assert(post.Body.contains('Bold'), 'Rich text body should be preserved');
     }
 }

@@ -1,14 +1,16 @@
 <template>
     <div class="slds-form-element">
-        <label class="slds-form-element__label" for="composer-body">Share an update</label>
+        <label class="slds-form-element__label">Share an update</label>
         <div class="slds-form-element__control">
-            <lightning-textarea
-                id="composer-body"
+            <lightning-input-rich-text
                 value={body}
-                placeholder="Write something..."
+                share-with-entity-id={recordId}
+                formats={richTextFormats}
                 onchange={handleBodyChange}
+                onimageupload={handleImageUpload}
+                onimageuploaderror={handleImageUploadError}
                 disabled={isPosting}>
-            </lightning-textarea>
+            </lightning-input-rich-text>
         </div>
     </div>
     <div class="slds-m-top_small slds-grid slds-grid_align-end">
