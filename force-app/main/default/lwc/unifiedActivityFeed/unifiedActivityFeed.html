@@ -120,7 +120,11 @@
                                                         <strong>{item.title}</strong>
                                                     </p>
                                                     <p class="slds-text-body_small slds-text-color_weak">
-                                                        {item.formattedType} • {item.createdByName} • {item.displayDate}
+                                                        {item.formattedType}
+                                                        <template if:true={item.showSourceLabel}>
+                                                            • {item.sourceLabel}
+                                                        </template>
+                                                        • {item.createdByName} • {item.displayDate}
                                                     </p>
                                                 </div>
                                             </div>

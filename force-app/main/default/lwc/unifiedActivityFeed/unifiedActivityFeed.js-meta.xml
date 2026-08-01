@@ -23,6 +23,18 @@
         label="Page Size"
         description="Number of activities loaded per page. Default is 20."
         default="20" />
+      <property
+        name="relatedRecordConfig"
+        type="String"
+        label="Related Record Fields"
+        description="Comma-separated lookup fields to include. Format: FieldApiName:Label. Example: Customer__c:Customer or AccountId:Account,ContactId:Contact. Leave empty for current record only."
+        default="" />
+      <property
+        name="currentRecordLabel"
+        type="String"
+        label="Current Record Label"
+        description="Optional label for activities on the current record. Defaults to the object label."
+        default="" />
       <objects>
         <object>Account</object>
         <object>Contact</object>

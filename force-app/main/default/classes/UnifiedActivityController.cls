@@ -34,6 +34,7 @@ public with sharing class UnifiedActivityController {
         @AuraEnabled public String status;
         @AuraEnabled public String iconName;
         @AuraEnabled public String formattedType;
+        @AuraEnabled public String sourceLabel;
 
         public ActivityItem(
             Id id,
@@ -45,7 +46,7 @@ public with sharing class UnifiedActivityController {
             String createdByName,
             String status
         ) {
-            this(id, type, title, description, createdDate, createdById, createdByName, status, null);
+            this(id, type, title, description, createdDate, createdById, createdByName, status, null, null);
         }
 
         public ActivityItem(
@@ -59,6 +60,21 @@ public with sharing class UnifiedActivityController {
             String status,
             List<ActivityContentPart> contentParts
         ) {
+            this(id, type, title, description, createdDate, createdById, createdByName, status, contentParts, null);
+        }
+
+        public ActivityItem(
+            Id id,
+            String type,
+            String title,
+            String description,
+            Datetime createdDate,
+            Id createdById,
+            String createdByName,
+            String status,
+            List<ActivityContentPart> contentParts,
+            String sourceLabel
+        ) {
             this.id = id;
             this.type = type;
             this.title = title;
@@ -68,6 +84,7 @@ public with sharing class UnifiedActivityController {
             this.createdById = createdById;
             this.createdByName = createdByName;
             this.status = status;
+            this.sourceLabel = sourceLabel;
             this.iconName = iconNameFor(type);
             this.formattedType = formattedTypeFor(type);
         }
@@ -83,7 +100,9 @@ public with sharing class UnifiedActivityController {
         Integer pageSize,
         Integer offset,
         String activityType,
-        String searchTerm
+        String searchTerm,
+        String relatedRecordConfig,
+        String currentRecordLabel
     ) {
         if (recordId == null) {
             throw new IllegalArgumentException('recordId is required');
@@ -92,16 +111,119 @@ public with sharing class UnifiedActivityController {
         SortDirection direction = parseSortDirection(sortDirection);
         Integer safePageSize = normalizePageSize(pageSize);
         Integer safeOffset = offset == null || offset < 0 ? 0 : offset;
+        Map<Id, String> recordLabels = resolveActivityRecordIds(recordId, relatedRecordConfig, currentRecordLabel);
 
         List<ActivityItem> items = new List<ActivityItem>();
-        items.addAll(getTasks(recordId));
-        items.addAll(getEvents(recordId));
-        items.addAll(getEmailMessages(recordId));
-        items.addAll(getFeedItems(recordId));
+        items.addAll(getTasks(recordLabels));
+        items.addAll(getEvents(recordLabels));
+        items.addAll(getEmailMessages(recordLabels));
+        items.addAll(getFeedItems(recordLabels));
 
         sortItems(items, direction);
         List<ActivityItem> filteredItems = applyFilters(items, activityType, searchTerm);
         return paginate(filteredItems, safePageSize, safeOffset);
+    }
+
+    private static Map<Id, String> resolveActivityRecordIds(
+        Id recordId,
+        String relatedRecordConfig,
+        String currentRecordLabel
+    ) {
+        Map<Id, String> recordLabels = new Map<Id, String>();
+        Schema.SObjectType sObjectType = recordId.getSObjectType();
+        String objectLabel = String.isNotBlank(currentRecordLabel)
+            ? currentRecordLabel.trim()
+            : sObjectType.getDescribe().getLabel();
+        recordLabels.put(recordId, objectLabel);
+
+        if (String.isBlank(relatedRecordConfig)) {
+            return recordLabels;
+        }
+
+        Map<String, String> fieldToLabel = parseRelatedRecordConfig(relatedRecordConfig);
+        if (fieldToLabel.isEmpty()) {
+            return recordLabels;
+        }
+
+        Set<String> validFields = filterValidLookupFields(sObjectType, fieldToLabel.keySet());
+        if (validFields.isEmpty()) {
+            return recordLabels;
+        }
+
+        List<String> selectFields = new List<String>{ 'Id' };
+        selectFields.addAll(validFields);
+        String query =
+            'SELECT ' + String.join(selectFields, ', ') +
+            ' FROM ' + sObjectType.getDescribe().getName() +
+            ' WHERE Id = :recordId LIMIT 1';
+        SObject parentRecord = Database.query(query);
+
+        for (String fieldName : validFields) {
+            Id relatedRecordId = (Id) parentRecord.get(fieldName);
+            if (relatedRecordId != null && !recordLabels.containsKey(relatedRecordId)) {
+                recordLabels.put(relatedRecordId, fieldToLabel.get(fieldName));
+            }
+        }
+
+        return recordLabels;
+    }
+
+    private static Map<String, String> parseRelatedRecordConfig(String relatedRecordConfig) {
+        Map<String, String> fieldToLabel = new Map<String, String>();
+        for (String entry : relatedRecordConfig.split(',')) {
+            String trimmedEntry = entry != null ? entry.trim() : null;
+            if (String.isBlank(trimmedEntry)) {
+                continue;
+            }
+
+            List<String> parts = trimmedEntry.split(':');
+            String fieldName = parts[0].trim();
+            if (String.isBlank(fieldName)) {
+                continue;
+            }
+
+            String label = parts.size() > 1 && String.isNotBlank(parts[1])
+                ? parts[1].trim()
+                : formatFieldLabel(fieldName);
+            fieldToLabel.put(fieldName, label);
+        }
+        return fieldToLabel;
+    }
+
+    private static Set<String> filterValidLookupFields(Schema.SObjectType sObjectType, Set<String> fieldNames) {
+        Set<String> validFields = new Set<String>();
+        Map<String, Schema.SObjectField> fieldMap = sObjectType.getDescribe().fields.getMap();
+
+        for (String fieldName : fieldNames) {
+            if (!fieldMap.containsKey(fieldName)) {
+                continue;
+            }
+            Schema.DescribeFieldResult fieldDescribe = fieldMap.get(fieldName).getDescribe();
+            if (fieldDescribe.getType() == Schema.DisplayType.REFERENCE && fieldDescribe.isAccessible()) {
+                validFields.add(fieldName);
+            }
+        }
+        return validFields;
+    }
+
+    private static String formatFieldLabel(String fieldName) {
+        if (fieldName.endsWith('__c')) {
+            return fieldName.removeEnd('__c').replace('_', ' ');
+        }
+        if (fieldName.endsWith('Id')) {
+            return fieldName.removeEnd('Id');
+        }
+        return fieldName;
+    }
+
+    private static String resolveSourceLabel(Id primaryId, Id secondaryId, Map<Id, String> recordLabels) {
+        if (primaryId != null && recordLabels.containsKey(primaryId)) {
+            return recordLabels.get(primaryId);
+        }
+        if (secondaryId != null && recordLabels.containsKey(secondaryId)) {
+            return recordLabels.get(secondaryId);
+        }
+        return null;
     }
 
     @AuraEnabled
@@ -121,12 +243,13 @@ public with sharing class UnifiedActivityController {
         );
     }
 
-    private static List<ActivityItem> getTasks(Id recordId) {
+    private static List<ActivityItem> getTasks(Map<Id, String> recordLabels) {
+        Set<Id> recordIds = recordLabels.keySet();
         List<ActivityItem> result = new List<ActivityItem>();
         for (Task t : [
-            SELECT Id, Subject, Description, CreatedDate, CreatedById, CreatedBy.Name, Status, IsClosed, TaskSubtype
+            SELECT Id, Subject, Description, WhatId, WhoId, CreatedDate, CreatedById, CreatedBy.Name, Status, IsClosed, TaskSubtype
             FROM Task
-            WHERE WhatId = :recordId OR WhoId = :recordId
+            WHERE WhatId IN :recordIds OR WhoId IN :recordIds
             ORDER BY CreatedDate DESC
             LIMIT :MAX_AGGREGATE_ITEMS
         ]) {
@@ -141,7 +264,9 @@ public with sharing class UnifiedActivityController {
                 t.CreatedDate,
                 t.CreatedById,
                 t.CreatedBy?.Name,
-                t.Status
+                t.Status,
+                null,
+                resolveSourceLabel(t.WhatId, t.WhoId, recordLabels)
             ));
         }
         return result;
@@ -159,12 +284,13 @@ public with sharing class UnifiedActivityController {
             && description.contains('Subject:');
     }
 
-    private static List<ActivityItem> getEvents(Id recordId) {
+    private static List<ActivityItem> getEvents(Map<Id, String> recordLabels) {
+        Set<Id> recordIds = recordLabels.keySet();
         List<ActivityItem> result = new List<ActivityItem>();
         for (Event e : [
-            SELECT Id, Subject, Description, CreatedDate, CreatedById, CreatedBy.Name, StartDateTime, EndDateTime
+            SELECT Id, Subject, Description, WhatId, WhoId, CreatedDate, CreatedById, CreatedBy.Name, StartDateTime, EndDateTime
             FROM Event
-            WHERE WhatId = :recordId OR WhoId = :recordId
+            WHERE WhatId IN :recordIds OR WhoId IN :recordIds
             ORDER BY CreatedDate DESC
             LIMIT :MAX_AGGREGATE_ITEMS
         ]) {
@@ -176,18 +302,21 @@ public with sharing class UnifiedActivityController {
                 e.CreatedDate,
                 e.CreatedById,
                 e.CreatedBy?.Name,
-                null
+                null,
+                null,
+                resolveSourceLabel(e.WhatId, e.WhoId, recordLabels)
             ));
         }
         return result;
     }
 
-    private static List<ActivityItem> getEmailMessages(Id recordId) {
+    private static List<ActivityItem> getEmailMessages(Map<Id, String> recordLabels) {
+        Set<Id> recordIds = recordLabels.keySet();
         List<ActivityItem> result = new List<ActivityItem>();
         for (EmailMessage em : [
-            SELECT Id, Subject, TextBody, HtmlBody, CreatedDate, CreatedById, CreatedBy.Name, Status
+            SELECT Id, Subject, TextBody, HtmlBody, RelatedToId, ActivityId, CreatedDate, CreatedById, CreatedBy.Name, Status
             FROM EmailMessage
-            WHERE RelatedToId = :recordId OR ActivityId = :recordId
+            WHERE RelatedToId IN :recordIds OR ActivityId IN :recordIds
             ORDER BY CreatedDate DESC
             LIMIT :MAX_AGGREGATE_ITEMS
         ]) {
@@ -200,21 +329,24 @@ public with sharing class UnifiedActivityController {
                 em.CreatedDate,
                 em.CreatedById,
                 em.CreatedBy?.Name,
-                em.Status
+                em.Status,
+                null,
+                resolveSourceLabel(em.RelatedToId, em.ActivityId, recordLabels)
             ));
         }
         return result;
     }
 
-    private static List<ActivityItem> getFeedItems(Id recordId) {
+    private static List<ActivityItem> getFeedItems(Map<Id, String> recordLabels) {
+        Set<Id> recordIds = recordLabels.keySet();
         List<ActivityItem> result = new List<ActivityItem>();
         if (!Schema.sObjectType.FeedItem.isAccessible()) {
             return result;
         }
         List<FeedItem> feedItems = [
-            SELECT Id, Body, Title, Type, RelatedRecordId, CreatedDate, CreatedById, CreatedBy.Name
+            SELECT Id, Body, Title, Type, RelatedRecordId, ParentId, CreatedDate, CreatedById, CreatedBy.Name
             FROM FeedItem
-            WHERE ParentId = :recordId
+            WHERE ParentId IN :recordIds
             ORDER BY CreatedDate DESC
             LIMIT :MAX_AGGREGATE_ITEMS
         ];
@@ -229,7 +361,8 @@ public with sharing class UnifiedActivityController {
                 fi.CreatedById,
                 fi.CreatedBy?.Name,
                 null,
-                contentParts
+                contentParts,
+                recordLabels.get(fi.ParentId)
             ));
         }
         return result;
@@ -518,7 +651,8 @@ public with sharing class UnifiedActivityController {
     private static Boolean matchesSearch(ActivityItem item, String term) {
         return (item.title != null && item.title.toLowerCase().contains(term))
             || (item.description != null && item.description.toLowerCase().contains(term))
-            || (item.createdByName != null && item.createdByName.toLowerCase().contains(term));
+            || (item.createdByName != null && item.createdByName.toLowerCase().contains(term))
+            || (item.sourceLabel != null && item.sourceLabel.toLowerCase().contains(term));
     }
 
     private static ActivityPageResult paginate(List<ActivityItem> items, Integer pageSize, Integer offset) {

@@ -1,15 +1,23 @@
-import { LightningElement, api } from 'lwc';
+import { LightningElement, api, wire } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
+import { encodeDefaultFieldValues } from 'lightning/pageReferenceUtils';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import { registerRefreshHandler, unregisterRefreshHandler } from 'lightning/refresh';
+import { getRecord } from 'lightning/uiRecordApi';
 import getUnifiedActivities from '@salesforce/apex/UnifiedActivityController.getUnifiedActivities';
 
 const SEARCH_DEBOUNCE_MS = 300;
+const WHO_ID_OBJECTS = new Set(['Contact', 'Lead']);
 
 export default class UnifiedActivityFeed extends NavigationMixin(LightningElement) {
     @api sortDirection = 'DESC';
     @api maxItems = 20;
+    @api relatedRecordConfig = '';
+    @api currentRecordLabel = '';
 
     _recordId;
+    objectApiName;
+    refreshHandlerId;
     activities = [];
     totalCount = 0;
     nextOffset = 0;
@@ -20,6 +28,13 @@ export default class UnifiedActivityFeed extends NavigationMixin(LightningElemen
     searchTerm = '';
     showComposer = false;
     searchTimeout;
+
+    @wire(getRecord, { recordId: '$recordId', layoutTypes: ['Compact'] })
+    wiredRecord({ data }) {
+        if (data) {
+            this.objectApiName = data.apiName;
+        }
+    }
 
     @api
     get recordId() {
@@ -85,6 +100,10 @@ export default class UnifiedActivityFeed extends NavigationMixin(LightningElemen
         return `${this.activities.length} of ${this.totalCount}`;
     }
 
+    get showSourceLabels() {
+        return !!this.relatedRecordConfig && this.relatedRecordConfig.trim().length > 0;
+    }
+
     get emptyMessage() {
         if (this.selectedType === 'All' && !this.searchTerm) {
             return 'No activities or chatter to show.';
@@ -96,6 +115,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(LightningElemen
     }
 
     connectedCallback() {
+        this.refreshHandlerId = registerRefreshHandler(this, this.handleRefreshView.bind(this));
         if (this.recordId) {
             this.loadActivities(true);
         }
@@ -105,6 +125,15 @@ export default class UnifiedActivityFeed extends NavigationMixin(LightningElemen
         if (this.searchTimeout) {
             clearTimeout(this.searchTimeout);
         }
+        if (this.refreshHandlerId) {
+            unregisterRefreshHandler(this.refreshHandlerId);
+        }
+    }
+
+    handleRefreshView() {
+        return this.loadActivities(true)
+            .then(() => true)
+            .catch(() => false);
     }
 
     resetState() {
@@ -135,7 +164,9 @@ export default class UnifiedActivityFeed extends NavigationMixin(LightningElemen
                 pageSize: this.maxItems,
                 offset: reset ? 0 : this.nextOffset,
                 activityType: this.selectedType,
-                searchTerm: this.searchTerm
+                searchTerm: this.searchTerm,
+                relatedRecordConfig: this.relatedRecordConfig,
+                currentRecordLabel: this.currentRecordLabel
             });
 
             const enriched = this.enrichActivities(result.items || []);
@@ -165,6 +196,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(LightningElemen
                 ...item,
                 contentParts,
                 hasContentParts: contentParts.length > 0,
+                showSourceLabel: this.showSourceLabels && !!item.sourceLabel,
                 displayDate: this.formatDate(item.createdDate),
                 isTask: item.type === 'Task',
                 isEvent: item.type === 'Event',
@@ -220,11 +252,11 @@ export default class UnifiedActivityFeed extends NavigationMixin(LightningElemen
     }
 
     handleNewTask() {
-        this.openRecordModal('NewTask', this.recordId);
+        this.openNewActivityRecord('Task');
     }
 
     handleNewEvent() {
-        this.openRecordModal('NewEvent', this.recordId);
+        this.openNewActivityRecord('Event');
     }
 
     handleNewPost() {
@@ -232,7 +264,44 @@ export default class UnifiedActivityFeed extends NavigationMixin(LightningElemen
     }
 
     handleNewEmail() {
-        this.openRecordModal('SendEmail', this.recordId);
+        this.openGlobalQuickAction('Global.SendEmail');
+    }
+
+    getActivityDefaults() {
+        if (WHO_ID_OBJECTS.has(this.objectApiName)) {
+            return { WhoId: this.recordId };
+        }
+        return { WhatId: this.recordId };
+    }
+
+    openGlobalQuickAction(apiName) {
+        if (!this.recordId) {
+            return;
+        }
+
+        this[NavigationMixin.Navigate]({
+            type: 'standard__quickAction',
+            attributes: { apiName },
+            state: { recordId: this.recordId }
+        });
+    }
+
+    openNewActivityRecord(objectApiName) {
+        if (!this.recordId) {
+            return;
+        }
+
+        this[NavigationMixin.Navigate]({
+            type: 'standard__objectPage',
+            attributes: {
+                objectApiName,
+                actionName: 'new'
+            },
+            state: {
+                defaultFieldValues: encodeDefaultFieldValues(this.getActivityDefaults()),
+                navigationLocation: 'RELATED_LIST'
+            }
+        });
     }
 
     handleItemClick(event) {
@@ -262,18 +331,6 @@ export default class UnifiedActivityFeed extends NavigationMixin(LightningElemen
             event.preventDefault();
             this.handleImageClick(event);
         }
-    }
-
-    openRecordModal(actionName, recordId) {
-        this[NavigationMixin.Navigate]({
-            type: 'standard__quickAction',
-            attributes: {
-                apiName: actionName
-            },
-            state: {
-                recordId: recordId
-            }
-        });
     }
 
     openRecordPage(recordId) {

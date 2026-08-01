@@ -1668,6 +1668,14 @@
                     <value>20</value>
                 </componentInstanceProperties>
                 <componentInstanceProperties>
+                    <name>relatedRecordConfig</name>
+                    <value>Customer__c:Customer</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>currentRecordLabel</name>
+                    <value>Contract Bid</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
                     <name>sortDirection</name>
                     <value>DESC</value>
                 </componentInstanceProperties>

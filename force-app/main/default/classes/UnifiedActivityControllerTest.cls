@@ -36,13 +36,37 @@ public class UnifiedActivityControllerTest {
         String activityType,
         String searchTerm
     ) {
+        return getActivities(
+            recordId,
+            sortDirection,
+            pageSize,
+            offset,
+            activityType,
+            searchTerm,
+            null,
+            null
+        );
+    }
+
+    private static UnifiedActivityController.ActivityPageResult getActivities(
+        Id recordId,
+        String sortDirection,
+        Integer pageSize,
+        Integer offset,
+        String activityType,
+        String searchTerm,
+        String relatedRecordConfig,
+        String currentRecordLabel
+    ) {
         return UnifiedActivityController.getUnifiedActivities(
             recordId,
             sortDirection,
             pageSize,
             offset,
             activityType,
-            searchTerm
+            searchTerm,
+            relatedRecordConfig,
+            currentRecordLabel
         );
     }
 
@@ -165,6 +189,31 @@ public class UnifiedActivityControllerTest {
 
         System.assertEquals(1, result.totalCount);
         System.assertEquals(UnifiedActivityController.TYPE_TASK, result.items[0].type);
+    }
+
+    @IsTest
+    static void testGetUnifiedActivities_includesRelatedRecords() {
+        Account acc = createTestAccount();
+        Contact con = new Contact(LastName = 'Related Activity Test', AccountId = acc.Id);
+        insert con;
+
+        insert new Task(WhatId = acc.Id, Subject = 'Account Task', Status = 'Not Started');
+        insert new Task(WhoId = con.Id, Subject = 'Contact Task', Status = 'Not Started');
+
+        Test.startTest();
+        UnifiedActivityController.ActivityPageResult result = getActivities(
+            con.Id,
+            'DESC',
+            20,
+            0,
+            'All',
+            null,
+            'AccountId:Account',
+            'Contact'
+        );
+        Test.stopTest();
+
+        System.assertEquals(2, result.totalCount, 'Should include Contact and Account activities');
     }
 
     @IsTest
