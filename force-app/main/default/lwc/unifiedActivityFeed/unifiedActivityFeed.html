@@ -5,7 +5,7 @@
             <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
                 <div class="slds-grid slds-grid_vertical-align-center">
                     <h2 class="slds-text-heading_small slds-m-right_small">Activity</h2>
-                    <span class="slds-badge slds-badge_lightest">{filteredActivities.length}</span>
+                    <span class="slds-badge slds-badge_lightest">{countLabel}</span>
                 </div>
             </div>
             <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
@@ -95,7 +95,7 @@
         <!-- Activity list -->
         <template if:true={hasActivities}>
             <ul class="slds-timeline">
-                <template for:each={filteredActivities} for:item="item">
+                <template for:each={activities} for:item="item">
                     <li key={item.id} class="slds-timeline__item_expandable slds-timeline__item_call">
                         <div class="slds-media">
                             <div class="slds-media__figure">
@@ -185,6 +185,23 @@
                     </li>
                 </template>
             </ul>
+
+            <template if:true={showLoadMore}>
+                <div class="slds-align_absolute-center slds-m-top_medium load-more-container">
+                    <lightning-button
+                        label="Show more activities"
+                        variant="base"
+                        onclick={handleLoadMore}
+                        disabled={isLoadingMore}>
+                    </lightning-button>
+                </div>
+            </template>
+
+            <template if:true={isLoadingMore}>
+                <div class="slds-align_absolute-center slds-p-around_small">
+                    <lightning-spinner alternative-text="Loading more activities" size="small"></lightning-spinner>
+                </div>
+            </template>
         </template>
 
         <!-- Chatter composer placeholder -->

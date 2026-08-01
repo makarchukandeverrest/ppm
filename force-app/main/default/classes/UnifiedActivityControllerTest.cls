@@ -28,6 +28,24 @@ public class UnifiedActivityControllerTest {
         return acc;
     }
 
+    private static UnifiedActivityController.ActivityPageResult getActivities(
+        Id recordId,
+        String sortDirection,
+        Integer pageSize,
+        Integer offset,
+        String activityType,
+        String searchTerm
+    ) {
+        return UnifiedActivityController.getUnifiedActivities(
+            recordId,
+            sortDirection,
+            pageSize,
+            offset,
+            activityType,
+            searchTerm
+        );
+    }
+
     @IsTest
     static void testGetUnifiedActivities_returnsAllTypes() {
         User u = createTestUser();
@@ -52,19 +70,20 @@ public class UnifiedActivityControllerTest {
         }
 
         Test.startTest();
-        List<UnifiedActivityController.ActivityItem> result;
+        UnifiedActivityController.ActivityPageResult result;
         System.runAs(u) {
-            result = UnifiedActivityController.getUnifiedActivities(acc.Id, 'DESC');
+            result = getActivities(acc.Id, 'DESC', 20, 0, 'All', null);
         }
         Test.stopTest();
 
         System.assertNotEquals(null, result, 'Result should not be null');
-        System.assertEquals(3, result.size(), 'Expected Task, Event and FeedItem');
+        System.assertEquals(3, result.totalCount, 'Expected Task, Event and FeedItem');
+        System.assertEquals(3, result.items.size(), 'First page should include all records');
 
         Boolean foundTask = false;
         Boolean foundEvent = false;
         Boolean foundFeed = false;
-        for (UnifiedActivityController.ActivityItem item : result) {
+        for (UnifiedActivityController.ActivityItem item : result.items) {
             if (item.type == UnifiedActivityController.TYPE_TASK) {
                 foundTask = true;
                 System.assertEquals('Test Task', item.title);
@@ -86,6 +105,69 @@ public class UnifiedActivityControllerTest {
     }
 
     @IsTest
+    static void testGetUnifiedActivities_pagination() {
+        User u = createTestUser();
+        Account acc;
+        System.runAs(u) {
+            acc = createTestAccount();
+            for (Integer index = 0; index < 5; index++) {
+                insert new Task(
+                    WhatId = acc.Id,
+                    Subject = 'Task ' + index,
+                    Status = 'Not Started'
+                );
+            }
+        }
+
+        Test.startTest();
+        UnifiedActivityController.ActivityPageResult firstPage;
+        UnifiedActivityController.ActivityPageResult secondPage;
+        System.runAs(u) {
+            firstPage = getActivities(acc.Id, 'DESC', 2, 0, 'All', null);
+            secondPage = getActivities(acc.Id, 'DESC', 2, firstPage.nextOffset, 'All', null);
+        }
+        Test.stopTest();
+
+        System.assertEquals(5, firstPage.totalCount);
+        System.assertEquals(2, firstPage.items.size());
+        System.assertEquals(true, firstPage.hasMore);
+        System.assertEquals(2, secondPage.items.size());
+        System.assertEquals(true, secondPage.hasMore);
+
+        UnifiedActivityController.ActivityPageResult thirdPage = getActivities(
+            acc.Id,
+            'DESC',
+            2,
+            secondPage.nextOffset,
+            'All',
+            null
+        );
+        System.assertEquals(1, thirdPage.items.size());
+        System.assertEquals(false, thirdPage.hasMore);
+    }
+
+    @IsTest
+    static void testGetUnifiedActivities_filtersByType() {
+        User u = createTestUser();
+        Account acc;
+        System.runAs(u) {
+            acc = createTestAccount();
+            insert new Task(WhatId = acc.Id, Subject = 'Only Task', Status = 'Not Started');
+            insert new FeedItem(ParentId = acc.Id, Body = 'Only Feed');
+        }
+
+        Test.startTest();
+        UnifiedActivityController.ActivityPageResult result;
+        System.runAs(u) {
+            result = getActivities(acc.Id, 'DESC', 20, 0, UnifiedActivityController.TYPE_TASK, null);
+        }
+        Test.stopTest();
+
+        System.assertEquals(1, result.totalCount);
+        System.assertEquals(UnifiedActivityController.TYPE_TASK, result.items[0].type);
+    }
+
+    @IsTest
     static void testGetUnifiedActivities_sortsDescending() {
         User u = createTestUser();
         Account acc;
@@ -98,20 +180,20 @@ public class UnifiedActivityControllerTest {
         }
 
         Test.startTest();
-        List<UnifiedActivityController.ActivityItem> result;
+        UnifiedActivityController.ActivityPageResult result;
         System.runAs(u) {
-            result = UnifiedActivityController.getUnifiedActivities(acc.Id, 'DESC');
+            result = getActivities(acc.Id, 'DESC', 20, 0, 'All', null);
         }
         Test.stopTest();
 
-        System.assert(result[0].createdDate >= result[1].createdDate, 'Descending sort should put newest first');
+        System.assert(result.items[0].createdDate >= result.items[1].createdDate, 'Descending sort should put newest first');
     }
 
     @IsTest
     static void testGetUnifiedActivities_emptyRecord() {
         Test.startTest();
         try {
-            UnifiedActivityController.getUnifiedActivities(null, 'DESC');
+            getActivities(null, 'DESC', 20, 0, 'All', null);
             System.assert(false, 'Expected IllegalArgumentException');
         } catch (UnifiedActivityController.IllegalArgumentException ex) {
             System.assertEquals('recordId is required', ex.getMessage());
@@ -124,11 +206,13 @@ public class UnifiedActivityControllerTest {
         Account acc = createTestAccount();
 
         Test.startTest();
-        List<UnifiedActivityController.ActivityItem> result = UnifiedActivityController.getUnifiedActivities(acc.Id, 'DESC');
+        UnifiedActivityController.ActivityPageResult result = getActivities(acc.Id, 'DESC', 20, 0, 'All', null);
         Test.stopTest();
 
         System.assertNotEquals(null, result);
-        System.assertEquals(0, result.size());
+        System.assertEquals(0, result.totalCount);
+        System.assertEquals(0, result.items.size());
+        System.assertEquals(false, result.hasMore);
     }
 
     @IsTest

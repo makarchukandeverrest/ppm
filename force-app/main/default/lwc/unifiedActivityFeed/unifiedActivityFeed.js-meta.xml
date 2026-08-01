@@ -20,9 +20,9 @@
       <property
         name="maxItems"
         type="Integer"
-        label="Max Items"
-        description="Maximum number of items to display."
-        default="500" />
+        label="Page Size"
+        description="Number of activities loaded per page. Default is 20."
+        default="20" />
       <objects>
         <object>Account</object>
         <object>Contact</object>

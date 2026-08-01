@@ -15,6 +15,13 @@ public with sharing class UnifiedActivityController {
         @AuraEnabled public String altText;
     }
 
+    public class ActivityPageResult {
+        @AuraEnabled public List<ActivityItem> items;
+        @AuraEnabled public Integer totalCount;
+        @AuraEnabled public Boolean hasMore;
+        @AuraEnabled public Integer nextOffset;
+    }
+
     public class ActivityItem {
         @AuraEnabled public Id id;
         @AuraEnabled public String type;
@@ -66,13 +73,25 @@ public with sharing class UnifiedActivityController {
         }
     }
 
+    private static final Integer DEFAULT_PAGE_SIZE = 20;
+    private static final Integer MAX_AGGREGATE_ITEMS = 2000;
+
     @AuraEnabled(cacheable=true)
-    public static List<ActivityItem> getUnifiedActivities(Id recordId, String sortDirection) {
+    public static ActivityPageResult getUnifiedActivities(
+        Id recordId,
+        String sortDirection,
+        Integer pageSize,
+        Integer offset,
+        String activityType,
+        String searchTerm
+    ) {
         if (recordId == null) {
             throw new IllegalArgumentException('recordId is required');
         }
 
         SortDirection direction = parseSortDirection(sortDirection);
+        Integer safePageSize = normalizePageSize(pageSize);
+        Integer safeOffset = offset == null || offset < 0 ? 0 : offset;
 
         List<ActivityItem> items = new List<ActivityItem>();
         items.addAll(getTasks(recordId));
@@ -81,7 +100,8 @@ public with sharing class UnifiedActivityController {
         items.addAll(getFeedItems(recordId));
 
         sortItems(items, direction);
-        return items;
+        List<ActivityItem> filteredItems = applyFilters(items, activityType, searchTerm);
+        return paginate(filteredItems, safePageSize, safeOffset);
     }
 
     @AuraEnabled
@@ -104,12 +124,15 @@ public with sharing class UnifiedActivityController {
     private static List<ActivityItem> getTasks(Id recordId) {
         List<ActivityItem> result = new List<ActivityItem>();
         for (Task t : [
-            SELECT Id, Subject, Description, CreatedDate, CreatedById, CreatedBy.Name, Status, IsClosed
+            SELECT Id, Subject, Description, CreatedDate, CreatedById, CreatedBy.Name, Status, IsClosed, TaskSubtype
             FROM Task
             WHERE WhatId = :recordId OR WhoId = :recordId
             ORDER BY CreatedDate DESC
-            LIMIT 500
+            LIMIT :MAX_AGGREGATE_ITEMS
         ]) {
+            if (isEmailLikeTask(t)) {
+                continue;
+            }
             result.add(new ActivityItem(
                 t.Id,
                 TYPE_TASK,
@@ -124,6 +147,18 @@ public with sharing class UnifiedActivityController {
         return result;
     }
 
+    private static Boolean isEmailLikeTask(Task taskRecord) {
+        if (taskRecord.TaskSubtype == 'Email' || taskRecord.TaskSubtype == 'ListEmail') {
+            return true;
+        }
+        if (String.isBlank(taskRecord.Description)) {
+            return false;
+        }
+        String description = taskRecord.Description;
+        return description.contains('To:')
+            && description.contains('Subject:');
+    }
+
     private static List<ActivityItem> getEvents(Id recordId) {
         List<ActivityItem> result = new List<ActivityItem>();
         for (Event e : [
@@ -131,7 +166,7 @@ public with sharing class UnifiedActivityController {
             FROM Event
             WHERE WhatId = :recordId OR WhoId = :recordId
             ORDER BY CreatedDate DESC
-            LIMIT 500
+            LIMIT :MAX_AGGREGATE_ITEMS
         ]) {
             result.add(new ActivityItem(
                 e.Id,
@@ -154,7 +189,7 @@ public with sharing class UnifiedActivityController {
             FROM EmailMessage
             WHERE RelatedToId = :recordId OR ActivityId = :recordId
             ORDER BY CreatedDate DESC
-            LIMIT 500
+            LIMIT :MAX_AGGREGATE_ITEMS
         ]) {
             String body = resolveEmailBody(em);
             result.add(new ActivityItem(
@@ -181,7 +216,7 @@ public with sharing class UnifiedActivityController {
             FROM FeedItem
             WHERE ParentId = :recordId
             ORDER BY CreatedDate DESC
-            LIMIT 500
+            LIMIT :MAX_AGGREGATE_ITEMS
         ];
         for (FeedItem fi : feedItems) {
             List<ActivityContentPart> contentParts = buildFeedItemContentParts(fi);
@@ -447,6 +482,64 @@ public with sharing class UnifiedActivityController {
             .replace('>', '&gt;')
             .replace('"', '&quot;')
             .replace('\'', '&#39;');
+    }
+
+    private static Integer normalizePageSize(Integer pageSize) {
+        if (pageSize == null || pageSize < 1) {
+            return DEFAULT_PAGE_SIZE;
+        }
+        return pageSize;
+    }
+
+    private static List<ActivityItem> applyFilters(
+        List<ActivityItem> items,
+        String activityType,
+        String searchTerm
+    ) {
+        String typeFilter = String.isBlank(activityType) || activityType == 'All' ? null : activityType;
+        String term = String.isBlank(searchTerm) ? null : searchTerm.trim().toLowerCase();
+        if (typeFilter == null && term == null) {
+            return items;
+        }
+
+        List<ActivityItem> filteredItems = new List<ActivityItem>();
+        for (ActivityItem item : items) {
+            if (typeFilter != null && item.type != typeFilter) {
+                continue;
+            }
+            if (term != null && !matchesSearch(item, term)) {
+                continue;
+            }
+            filteredItems.add(item);
+        }
+        return filteredItems;
+    }
+
+    private static Boolean matchesSearch(ActivityItem item, String term) {
+        return (item.title != null && item.title.toLowerCase().contains(term))
+            || (item.description != null && item.description.toLowerCase().contains(term))
+            || (item.createdByName != null && item.createdByName.toLowerCase().contains(term));
+    }
+
+    private static ActivityPageResult paginate(List<ActivityItem> items, Integer pageSize, Integer offset) {
+        ActivityPageResult result = new ActivityPageResult();
+        result.totalCount = items.size();
+        result.items = new List<ActivityItem>();
+
+        if (offset >= items.size()) {
+            result.hasMore = false;
+            result.nextOffset = offset;
+            return result;
+        }
+
+        Integer endIndex = Math.min(offset + pageSize, items.size());
+        for (Integer index = offset; index < endIndex; index++) {
+            result.items.add(items[index]);
+        }
+
+        result.hasMore = endIndex < items.size();
+        result.nextOffset = endIndex;
+        return result;
     }
 
     private static void sortItems(List<ActivityItem> items, SortDirection direction) {

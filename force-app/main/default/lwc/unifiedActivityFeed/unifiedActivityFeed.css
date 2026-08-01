@@ -18,3 +18,8 @@
     outline: 2px solid var(--lwc-brandAccessible, #0176d3);
     outline-offset: 2px;
 }
+
+.load-more-container {
+    border-top: 1px solid var(--lwc-colorBorder, #e5e5e5);
+    padding-top: 0.75rem;
+}
