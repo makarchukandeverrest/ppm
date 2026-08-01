@@ -270,14 +270,14 @@ public class UnifiedActivityControllerTest {
 
         Test.startTest();
         try {
-            UnifiedActivityController.createChatterPost(null, 'Hello');
+            UnifiedActivityController.createChatterPost(null, 'Hello', null);
             System.assert(false, 'Expected IllegalArgumentException for null recordId');
         } catch (UnifiedActivityController.IllegalArgumentException ex) {
             System.assertEquals('recordId is required', ex.getMessage());
         }
 
         try {
-            UnifiedActivityController.createChatterPost(acc.Id, null);
+            UnifiedActivityController.createChatterPost(acc.Id, null, null);
             System.assert(false, 'Expected IllegalArgumentException for blank body');
         } catch (UnifiedActivityController.IllegalArgumentException ex) {
             System.assertEquals('body is required', ex.getMessage());
@@ -295,7 +295,7 @@ public class UnifiedActivityControllerTest {
 
         Test.startTest();
         System.runAs(u) {
-            UnifiedActivityController.createChatterPost(acc.Id, 'Test post from composer');
+            UnifiedActivityController.createChatterPost(acc.Id, 'Test post from composer', null);
         }
         Test.stopTest();
 
@@ -316,7 +316,8 @@ public class UnifiedActivityControllerTest {
         System.runAs(u) {
             UnifiedActivityController.createChatterPost(
                 acc.Id,
-                '<p><strong>Bold</strong> and <em>italic</em></p>'
+                '<p><strong>Bold</strong> and <em>italic</em></p>',
+                null
             );
         }
         Test.stopTest();
@@ -329,5 +330,61 @@ public class UnifiedActivityControllerTest {
         ];
         System.assertEquals(true, post.IsRichText);
         System.assert(post.Body.contains('Bold'), 'Rich text body should be preserved');
+    }
+
+    @IsTest
+    static void testGetUnifiedActivities_emailAttachmentCount() {
+        User u = createTestUser();
+        Account acc;
+        System.runAs(u) {
+            acc = createTestAccount();
+
+            EmailMessage emailMessage = new EmailMessage(
+                Subject = 'Email with attachment',
+                FromAddress = 'sender@example.com',
+                ToAddress = 'recipient@example.com',
+                TextBody = 'Body',
+                Status = '3',
+                Incoming = false,
+                RelatedToId = acc.Id
+            );
+            insert emailMessage;
+
+            ContentVersion contentVersion = new ContentVersion(
+                Title = 'Attachment.pdf',
+                PathOnClient = 'Attachment.pdf',
+                VersionData = Blob.valueOf('pdf'),
+                IsMajorVersion = true
+            );
+            insert contentVersion;
+
+            contentVersion = [
+                SELECT ContentDocumentId
+                FROM ContentVersion
+                WHERE Id = :contentVersion.Id
+                LIMIT 1
+            ];
+
+            insert new ContentDocumentLink(
+                ContentDocumentId = contentVersion.ContentDocumentId,
+                LinkedEntityId = emailMessage.Id,
+                ShareType = 'V',
+                Visibility = 'AllUsers'
+            );
+        }
+
+        Test.startTest();
+        UnifiedActivityController.ActivityPageResult result;
+        System.runAs(u) {
+            result = getActivities(acc.Id, 'DESC', 20, 0, 'EmailMessage', null);
+        }
+        Test.stopTest();
+
+        System.assertEquals(1, result.items.size(), 'Expected one email activity');
+        System.assertEquals(
+            UnifiedActivityController.TYPE_EMAIL,
+            result.items[0].type
+        );
+        System.assertEquals(1, result.items[0].attachmentCount, 'Email should report one attachment');
     }
 }

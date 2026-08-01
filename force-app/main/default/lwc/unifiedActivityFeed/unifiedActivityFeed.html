@@ -124,6 +124,9 @@
                                                         <template if:true={item.showSourceLabel}>
                                                             • {item.sourceLabel}
                                                         </template>
+                                                        <template if:true={item.hasAttachments}>
+                                                            • {item.attachmentLabel}
+                                                        </template>
                                                         • {item.createdByName} • {item.displayDate}
                                                     </p>
                                                 </div>

@@ -201,7 +201,12 @@ export default class UnifiedActivityFeed extends NavigationMixin(LightningElemen
                 isTask: item.type === 'Task',
                 isEvent: item.type === 'Event',
                 isEmail: item.type === 'EmailMessage',
-                isFeed: item.type === 'FeedItem'
+                isFeed: item.type === 'FeedItem',
+                attachmentCount: item.attachmentCount || 0,
+                hasAttachments: item.type === 'EmailMessage' && (item.attachmentCount || 0) > 0,
+                attachmentLabel: item.type === 'EmailMessage' && (item.attachmentCount || 0) > 0
+                    ? ((item.attachmentCount === 1) ? '1 attachment' : `${item.attachmentCount} attachments`)
+                    : ''
             };
         });
     }

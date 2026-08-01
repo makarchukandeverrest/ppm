@@ -35,6 +35,7 @@ public with sharing class UnifiedActivityController {
         @AuraEnabled public String iconName;
         @AuraEnabled public String formattedType;
         @AuraEnabled public String sourceLabel;
+        @AuraEnabled public Integer attachmentCount;
 
         public ActivityItem(
             Id id,
@@ -85,6 +86,7 @@ public with sharing class UnifiedActivityController {
             this.createdByName = createdByName;
             this.status = status;
             this.sourceLabel = sourceLabel;
+            this.attachmentCount = 0;
             this.iconName = iconNameFor(type);
             this.formattedType = formattedTypeFor(type);
         }
@@ -93,7 +95,7 @@ public with sharing class UnifiedActivityController {
     private static final Integer DEFAULT_PAGE_SIZE = 20;
     private static final Integer MAX_AGGREGATE_ITEMS = 2000;
 
-    @AuraEnabled(cacheable=true)
+    @AuraEnabled
     public static ActivityPageResult getUnifiedActivities(
         Id recordId,
         String sortDirection,
@@ -538,15 +540,20 @@ public with sharing class UnifiedActivityController {
     private static List<ActivityItem> getEmailMessages(Map<Id, String> recordLabels) {
         Set<Id> recordIds = recordLabels.keySet();
         List<ActivityItem> result = new List<ActivityItem>();
-        for (EmailMessage em : [
+        List<EmailMessage> emailMessages = [
             SELECT Id, Subject, TextBody, HtmlBody, RelatedToId, ActivityId, CreatedDate, CreatedById, CreatedBy.Name, Status
             FROM EmailMessage
             WHERE RelatedToId IN :recordIds OR ActivityId IN :recordIds
             ORDER BY CreatedDate DESC
             LIMIT :MAX_AGGREGATE_ITEMS
-        ]) {
+        ];
+        Map<Id, Integer> attachmentCounts = countEmailAttachments(
+            new Map<Id, EmailMessage>(emailMessages).keySet()
+        );
+
+        for (EmailMessage em : emailMessages) {
             String body = resolveEmailBody(em);
-            result.add(new ActivityItem(
+            ActivityItem item = new ActivityItem(
                 em.Id,
                 TYPE_EMAIL,
                 em.Subject,
@@ -557,9 +564,52 @@ public with sharing class UnifiedActivityController {
                 em.Status,
                 null,
                 resolveSourceLabel(em.RelatedToId, em.ActivityId, recordLabels)
-            ));
+            );
+            item.attachmentCount = attachmentCounts.containsKey(em.Id)
+                ? attachmentCounts.get(em.Id)
+                : 0;
+            result.add(item);
         }
         return result;
+    }
+
+    private static Map<Id, Integer> countEmailAttachments(Set<Id> emailMessageIds) {
+        Map<Id, Integer> counts = new Map<Id, Integer>();
+        if (emailMessageIds == null || emailMessageIds.isEmpty()) {
+            return counts;
+        }
+
+        if (Schema.sObjectType.ContentDocumentLink.isAccessible()) {
+            for (AggregateResult aggregateResult : [
+                SELECT LinkedEntityId entityId, COUNT(Id) attachmentTotal
+                FROM ContentDocumentLink
+                WHERE LinkedEntityId IN :emailMessageIds
+                GROUP BY LinkedEntityId
+            ]) {
+                counts.put(
+                    (Id) aggregateResult.get('entityId'),
+                    (Integer) aggregateResult.get('attachmentTotal')
+                );
+            }
+        }
+
+        if (Schema.sObjectType.Attachment.isAccessible()) {
+            for (AggregateResult aggregateResult : [
+                SELECT ParentId parentId, COUNT(Id) attachmentTotal
+                FROM Attachment
+                WHERE ParentId IN :emailMessageIds
+                GROUP BY ParentId
+            ]) {
+                Id parentId = (Id) aggregateResult.get('parentId');
+                Integer attachmentTotal = (Integer) aggregateResult.get('attachmentTotal');
+                counts.put(
+                    parentId,
+                    (counts.containsKey(parentId) ? counts.get(parentId) : 0) + attachmentTotal
+                );
+            }
+        }
+
+        return counts;
     }
 
     private static List<ActivityItem> getFeedItems(Map<Id, String> recordLabels) {
