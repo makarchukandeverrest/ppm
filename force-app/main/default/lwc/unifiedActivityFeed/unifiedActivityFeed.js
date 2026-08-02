@@ -196,6 +196,8 @@ export default class UnifiedActivityFeed extends NavigationMixin(LightningElemen
                 ...item,
                 contentParts,
                 hasContentParts: contentParts.length > 0,
+                hasDescription: !!(item.description && String(item.description).trim()),
+                hasDisplayBody: contentParts.length > 0 || !!(item.description && String(item.description).trim()),
                 showSourceLabel: this.showSourceLabels && !!item.sourceLabel,
                 displayDate: this.formatDate(item.createdDate),
                 isTask: item.type === 'Task',

@@ -636,10 +636,13 @@ public with sharing class UnifiedActivityController {
         ];
         for (FeedItem fi : feedItems) {
             List<ActivityContentPart> contentParts = buildFeedItemContentParts(fi);
+            String feedTitle = fi.Type == 'TrackedChange'
+                ? buildTrackedChangeTitle(contentParts, fi)
+                : buildFeedItemTitle(fi);
             result.add(new ActivityItem(
                 fi.Id,
                 TYPE_FEED,
-                buildFeedItemTitle(fi),
+                feedTitle,
                 buildPlainTextFromParts(contentParts, fi.Body),
                 fi.CreatedDate,
                 fi.CreatedById,
@@ -677,19 +680,41 @@ public with sharing class UnifiedActivityController {
                 )
             };
         }
-        if (containsInlineImageReference(fi.Body) || fi.Type == 'ContentPost') {
-            List<ActivityContentPart> parts = buildFeedContentPartsFromConnectApi(fi.Id);
-            if (!parts.isEmpty()) {
-                return parts;
-            }
+
+        List<ActivityContentPart> connectApiParts = buildFeedContentPartsFromConnectApi(fi.Id);
+        if (!connectApiParts.isEmpty()) {
+            return connectApiParts;
         }
+
         if (String.isNotBlank(fi.Body)) {
             ActivityContentPart textPart = new ActivityContentPart();
             textPart.partType = 'text';
             textPart.text = isRichTextBody(fi.Body) ? fi.Body : escapeHtml(fi.Body);
             return new List<ActivityContentPart>{ textPart };
         }
+
+        if (String.isNotBlank(fi.Title)) {
+            ActivityContentPart titlePart = new ActivityContentPart();
+            titlePart.partType = 'text';
+            titlePart.text = escapeHtml(fi.Title);
+            return new List<ActivityContentPart>{ titlePart };
+        }
+
         return new List<ActivityContentPart>();
+    }
+
+    private static String buildTrackedChangeTitle(List<ActivityContentPart> parts, FeedItem fi) {
+        if (parts != null && !parts.isEmpty() && String.isNotBlank(parts[0].text)) {
+            String plainText = parts[0].text.replaceAll('<[^>]+>', ' ').replaceAll('\\s+', ' ').trim();
+            Integer newlineIndex = plainText.indexOf('\n');
+            if (newlineIndex > 0) {
+                plainText = plainText.substring(0, newlineIndex).trim();
+            }
+            if (String.isNotBlank(plainText)) {
+                return plainText.length() > 80 ? plainText.substring(0, 80) + '...' : plainText;
+            }
+        }
+        return buildFeedItemTitle(fi);
     }
 
     private static ActivityContentPart buildImagePart(Id contentDocumentId, String imageUrl, String altText) {
@@ -709,14 +734,12 @@ public with sharing class UnifiedActivityController {
             }
 
             ConnectApi.FeedItem feedItem = (ConnectApi.FeedItem) element;
-            if (feedItem.body == null || feedItem.body.messageSegments == null) {
-                return new List<ActivityContentPart>();
-            }
 
             List<ActivityContentPart> parts = new List<ActivityContentPart>();
             List<String> versionIds = new List<String>();
             List<Integer> imagePartIndexes = new List<Integer>();
 
+            if (feedItem.body != null && feedItem.body.messageSegments != null) {
             for (ConnectApi.MessageSegment segment : feedItem.body.messageSegments) {
                 if (segment instanceof ConnectApi.TextSegment) {
                     ActivityContentPart textPart = new ActivityContentPart();
@@ -756,7 +779,37 @@ public with sharing class UnifiedActivityController {
                         escapeHtml(linkSegment.url) +
                         '</a>';
                     parts.add(linkPart);
+                } else if (segment instanceof ConnectApi.EntityLinkSegment) {
+                    ConnectApi.EntityLinkSegment entityLinkSegment = (ConnectApi.EntityLinkSegment) segment;
+                    ActivityContentPart entityPart = new ActivityContentPart();
+                    entityPart.partType = 'text';
+                    entityPart.text = escapeHtml(entityLinkSegment.text);
+                    parts.add(entityPart);
+                } else if (segment instanceof ConnectApi.FieldChangeNameSegment) {
+                    ConnectApi.FieldChangeNameSegment nameSegment = (ConnectApi.FieldChangeNameSegment) segment;
+                    ActivityContentPart namePart = new ActivityContentPart();
+                    namePart.partType = 'text';
+                    namePart.text = '<strong>' + escapeHtml(nameSegment.text) + '</strong>';
+                    parts.add(namePart);
+                } else if (segment instanceof ConnectApi.FieldChangeValueSegment) {
+                    ConnectApi.FieldChangeValueSegment valueSegment = (ConnectApi.FieldChangeValueSegment) segment;
+                    if (String.isNotBlank(valueSegment.text)) {
+                        ActivityContentPart valuePart = new ActivityContentPart();
+                        valuePart.partType = 'text';
+                        valuePart.text = escapeHtml(valueSegment.text);
+                        parts.add(valuePart);
+                    }
+                } else if (String.isNotBlank(segment.text)) {
+                    ActivityContentPart fallbackPart = new ActivityContentPart();
+                    fallbackPart.partType = 'text';
+                    fallbackPart.text = escapeHtml(segment.text);
+                    parts.add(fallbackPart);
                 }
+            }
+            }
+
+            if (parts.isEmpty()) {
+                parts.addAll(buildTrackedChangesCapabilityParts(feedItem));
             }
 
             Map<String, Id> versionToDocumentId = resolveContentDocumentIds(versionIds);
@@ -776,6 +829,55 @@ public with sharing class UnifiedActivityController {
         } catch (Exception ex) {
             return new List<ActivityContentPart>();
         }
+    }
+
+    private static List<ActivityContentPart> buildTrackedChangesCapabilityParts(ConnectApi.FeedItem feedItem) {
+        List<ActivityContentPart> parts = new List<ActivityContentPart>();
+        if (feedItem.capabilities == null
+            || feedItem.capabilities.trackedChanges == null
+            || feedItem.capabilities.trackedChanges.changes == null) {
+            return parts;
+        }
+
+        for (ConnectApi.TrackedChangeItem changeItem : feedItem.capabilities.trackedChanges.changes) {
+            if (String.isNotBlank(changeItem.fieldName)) {
+                ActivityContentPart namePart = new ActivityContentPart();
+                namePart.partType = 'text';
+                namePart.text = '<strong>' + escapeHtml(formatFieldApiName(changeItem.fieldName)) + '</strong>';
+                parts.add(namePart);
+            }
+
+            String oldValueText = changeItem.oldValue;
+            String newValueText = changeItem.newValue;
+            String valueText;
+            if (String.isNotBlank(oldValueText) && String.isNotBlank(newValueText)) {
+                valueText = oldValueText + ' to ' + newValueText;
+            } else if (String.isNotBlank(newValueText)) {
+                valueText = newValueText;
+            } else if (String.isNotBlank(oldValueText)) {
+                valueText = oldValueText;
+            } else {
+                valueText = null;
+            }
+
+            if (String.isNotBlank(valueText)) {
+                ActivityContentPart valuePart = new ActivityContentPart();
+                valuePart.partType = 'text';
+                valuePart.text = escapeHtml(valueText);
+                parts.add(valuePart);
+            }
+        }
+        return parts;
+    }
+
+    private static String formatFieldApiName(String fieldName) {
+        if (String.isBlank(fieldName)) {
+            return fieldName;
+        }
+        String label = fieldName.endsWith('__c')
+            ? fieldName.substring(0, fieldName.length() - 3)
+            : fieldName;
+        return label.replace('_', ' ');
     }
 
     private static Id extractContentDocumentIdFromImageUrl(String imageUrl) {

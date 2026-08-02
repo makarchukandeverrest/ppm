@@ -138,6 +138,7 @@
                                     </div>
                                 </div>
 
+                                <template if:true={item.hasDisplayBody}>
                                 <div class="slds-box slds-theme_shade slds-m-top_x-small slds-m-left_xx-large activity-description">
                                     <template if:true={item.hasContentParts}>
                                         <template for:each={item.contentParts} for:item="part">
@@ -187,6 +188,7 @@
                                         </p>
                                     </template>
                                 </div>
+                                </template>
                             </div>
                         </div>
                     </li>
