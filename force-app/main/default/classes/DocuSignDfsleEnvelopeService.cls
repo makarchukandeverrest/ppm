@@ -23,7 +23,8 @@ public with sharing class DocuSignDfsleEnvelopeService {
     private static final Set<String> DEFAULT_CC_USER_NAMES = new Set<String>{
         'Roman Shestakov',
         'Stephanie Pratt',
-        'Jessica Floyd'
+        'Jessica Floyd',
+        'Adrian Voicu'
     };
 
     private static final List<String> ENVELOPE_EMAIL_BODY_BULLETS = new List<String>{
