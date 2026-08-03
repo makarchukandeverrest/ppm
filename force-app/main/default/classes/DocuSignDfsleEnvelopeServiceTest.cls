@@ -138,7 +138,7 @@ private class DocuSignDfsleEnvelopeServiceTest {
             FROM Contract_Bid__c
             WHERE Id = :cb.Id
         ];
-        System.assertEquals('Contract Sent via DocuSign', cbAfter.Stage__c);
+        System.assertEquals(DocuSignDfsleEnvelopeService.STAGE_CONTRACT_SENT, cbAfter.Stage__c);
 
         // Assert: EmailMessage created (InsertEmailMessagesJob runs in stopTest)
         Integer emailCount = [
@@ -183,10 +183,10 @@ private class DocuSignDfsleEnvelopeServiceTest {
 
         Test.startTest();
         DocuSignDfsleEnvelopeService.sendEnvelope(
-            cb.Id, mainCv.Id, 'customer@example.com', acc.Name, false, acc.Id, new List<User>(), null, null
+            cb.Id, mainCv.Id, 'customer@example.com', acc.Name, false, acc.Id, null, null, null, null
         );
         DocuSignDfsleEnvelopeService.sendEnvelope(
-            cb.Id, secondCv.Id, 'customer@example.com', acc.Name, false, acc.Id, new List<User>(), null, null
+            cb.Id, secondCv.Id, 'customer@example.com', acc.Name, false, acc.Id, null, null, null, null
         );
         Test.stopTest();
 
@@ -219,7 +219,8 @@ private class DocuSignDfsleEnvelopeServiceTest {
                 acc.Name,
                 false,
                 acc.Id,
-                new List<User>(),
+                null,
+                null,
                 null,
                 null
             )
@@ -445,7 +446,8 @@ private class DocuSignDfsleEnvelopeServiceTest {
             'Customer Name',
             false,
             null,
-            new List<User>(),
+            null,
+            null,
             null,
             null
         );
@@ -453,5 +455,34 @@ private class DocuSignDfsleEnvelopeServiceTest {
         DocuSignDfsleEnvelopeService.FORCE_RESOLVE_DOCUSIGN_ID_IN_TEST = false;
 
         System.assertEquals(expected, resolved, 'Expected dynamic DocuSignId resolver to return inserted id.');
+    }
+
+    @IsTest
+    static void testGetAccountSecondaryContactCcRecipients_returnsSecondaryContact() {
+        Account acc = [SELECT Id FROM Account LIMIT 1];
+
+        Contact primaryContact = new Contact(
+            FirstName = 'Primary',
+            LastName = 'Signer',
+            Email = 'primary.signer@example.com'
+        );
+        Contact secondaryContact = new Contact(
+            FirstName = 'Secondary',
+            LastName = 'Contact',
+            Email = 'secondary.contact@example.com'
+        );
+        insert new List<Contact>{ primaryContact, secondaryContact };
+
+        acc.Primary_Contact__c = primaryContact.Id;
+        acc.Secondary_Contact__c = secondaryContact.Id;
+        update acc;
+
+        Map<Id, DocuSignDfsleEnvelopeService.CcRecipient> contactCcMap =
+            DocuSignDfsleEnvelopeService.getAccountSecondaryContactCcRecipients(new Set<Id>{ acc.Id });
+
+        System.assertEquals(true, contactCcMap.containsKey(acc.Id));
+        DocuSignDfsleEnvelopeService.CcRecipient contactRecipient = contactCcMap.get(acc.Id);
+        System.assertEquals('secondary.contact@example.com', contactRecipient.email);
+        System.assertEquals('Secondary Contact', contactRecipient.name);
     }
 }
