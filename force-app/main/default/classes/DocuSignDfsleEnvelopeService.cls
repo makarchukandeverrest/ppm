@@ -38,6 +38,7 @@ public with sharing class DocuSignDfsleEnvelopeService {
         'A timely and thorough winterization of your facility with ALL winterization chemicals included'
     };
 
+    @TestVisible
     private static final String STAGE_CONTRACT_SENT = 'Contract Sent via DocuSign';
     private static final String STAGE_REFERENCE_ACTIVE_STAGES = 'Active_Stages';
     private static final String STATUS_EMAIL_DRAFT = '0';
