@@ -249,7 +249,7 @@ public with sharing class UnifiedActivityController {
             throw new AuraHandledException('Insufficient permissions to create Chatter posts');
         }
 
-        String trimmedBody = body.trim();
+        String trimmedBody = normalizeFeedItemRichText(body.trim());
         if (containsInlineHtmlImage(trimmedBody)) {
             createChatterPostWithConnectApi(recordId, trimmedBody, imageContentVersionIds);
             return;
@@ -260,6 +260,23 @@ public with sharing class UnifiedActivityController {
         feedItem.Body = trimmedBody;
         feedItem.IsRichText = true;
         insert feedItem;
+    }
+
+    /**
+     * FeedItem rich text supports only a subset of HTML tags (p, a, b, code, i, u, s, ul, ol, li, img).
+     * Lightning rich text editors commonly emit strong/em — map those to supported equivalents.
+     */
+    @TestVisible
+    private static String normalizeFeedItemRichText(String html) {
+        if (String.isBlank(html)) {
+            return html;
+        }
+        String normalized = html;
+        normalized = normalized.replaceAll('(?i)<strong\\b[^>]*>', '<b>');
+        normalized = normalized.replaceAll('(?i)</strong\\s*>', '</b>');
+        normalized = normalized.replaceAll('(?i)<em\\b[^>]*>', '<i>');
+        normalized = normalized.replaceAll('(?i)</em\\s*>', '</i>');
+        return normalized;
     }
 
     private static void createChatterPostWithConnectApi(
@@ -624,16 +641,10 @@ public with sharing class UnifiedActivityController {
     private static List<ActivityItem> getFeedItems(Map<Id, String> recordLabels) {
         Set<Id> recordIds = recordLabels.keySet();
         List<ActivityItem> result = new List<ActivityItem>();
-        if (!Schema.sObjectType.FeedItem.isAccessible()) {
+        if (recordIds.isEmpty() || !Schema.sObjectType.FeedItem.isAccessible()) {
             return result;
         }
-        List<FeedItem> feedItems = [
-            SELECT Id, Body, Title, Type, RelatedRecordId, ParentId, CreatedDate, CreatedById, CreatedBy.Name
-            FROM FeedItem
-            WHERE ParentId IN :recordIds
-            ORDER BY CreatedDate DESC
-            LIMIT :MAX_AGGREGATE_ITEMS
-        ];
+        List<FeedItem> feedItems = queryFeedItemsByParentIds(recordIds);
         for (FeedItem fi : feedItems) {
             List<ActivityContentPart> contentParts = buildFeedItemContentParts(fi);
             String feedTitle = fi.Type == 'TrackedChange'
@@ -653,6 +664,65 @@ public with sharing class UnifiedActivityController {
             ));
         }
         return result;
+    }
+
+    /**
+     * Non-admin users cannot query FeedItem by ParentId ("requires a filter by Id").
+     * Query object-specific *Feed tables first, then load FeedItem by Id.
+     */
+    private static List<FeedItem> queryFeedItemsByParentIds(Set<Id> recordIds) {
+        Map<String, Set<Id>> parentIdsByFeedObject = new Map<String, Set<Id>>();
+        Map<String, Schema.SObjectType> globalDescribe = Schema.getGlobalDescribe();
+
+        for (Id parentId : recordIds) {
+            String feedObjectName = resolveFeedObjectName(parentId.getSObjectType());
+            if (String.isBlank(feedObjectName) || !globalDescribe.containsKey(feedObjectName)) {
+                continue;
+            }
+            if (!parentIdsByFeedObject.containsKey(feedObjectName)) {
+                parentIdsByFeedObject.put(feedObjectName, new Set<Id>());
+            }
+            parentIdsByFeedObject.get(feedObjectName).add(parentId);
+        }
+
+        Set<Id> feedItemIds = new Set<Id>();
+        for (String feedObjectName : parentIdsByFeedObject.keySet()) {
+            Set<Id> parentIds = parentIdsByFeedObject.get(feedObjectName);
+            String soql =
+                'SELECT Id FROM ' + feedObjectName +
+                ' WHERE ParentId IN :parentIds' +
+                ' ORDER BY CreatedDate DESC' +
+                ' LIMIT ' + MAX_AGGREGATE_ITEMS;
+            for (SObject row : Database.query(soql)) {
+                feedItemIds.add((Id) row.get('Id'));
+            }
+        }
+
+        if (feedItemIds.isEmpty()) {
+            return new List<FeedItem>();
+        }
+
+        return [
+            SELECT Id, Body, Title, Type, RelatedRecordId, ParentId, CreatedDate, CreatedById, CreatedBy.Name
+            FROM FeedItem
+            WHERE Id IN :feedItemIds
+            ORDER BY CreatedDate DESC
+            LIMIT :MAX_AGGREGATE_ITEMS
+        ];
+    }
+
+    private static String resolveFeedObjectName(Schema.SObjectType sObjectType) {
+        if (sObjectType == null) {
+            return null;
+        }
+        String objectName = sObjectType.getDescribe().getName();
+        if (objectName == 'User') {
+            return 'UserProfileFeed';
+        }
+        if (objectName.endsWith('__c')) {
+            return objectName.removeEnd('__c') + '__Feed';
+        }
+        return objectName + 'Feed';
     }
 
     private static String buildPlainTextFromParts(List<ActivityContentPart> parts, String fallback) {
