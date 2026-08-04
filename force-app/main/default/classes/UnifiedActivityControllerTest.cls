@@ -387,4 +387,256 @@ public class UnifiedActivityControllerTest {
         );
         System.assertEquals(1, result.items[0].attachmentCount, 'Email should report one attachment');
     }
+
+    @IsTest
+    static void testGetUnifiedActivities_ascendingSort() {
+        User u = createTestUser();
+        Account acc;
+        System.runAs(u) {
+            acc = createTestAccount();
+            insert new Task(WhatId = acc.Id, Subject = 'Older', Status = 'Not Started');
+            insert new Task(WhatId = acc.Id, Subject = 'Newer', Status = 'Not Started');
+        }
+
+        Test.startTest();
+        UnifiedActivityController.ActivityPageResult result;
+        System.runAs(u) {
+            result = getActivities(acc.Id, 'ASC', 20, 0, 'All', null);
+        }
+        Test.stopTest();
+
+        System.assert(result.items[0].createdDate <= result.items[1].createdDate, 'Ascending sort should put oldest first');
+    }
+
+    @IsTest
+    static void testGetUnifiedActivities_searchTerm() {
+        User u = createTestUser();
+        Account acc;
+        System.runAs(u) {
+            acc = createTestAccount();
+            insert new Task(WhatId = acc.Id, Subject = 'Match me', Status = 'Not Started');
+            insert new Task(WhatId = acc.Id, Subject = 'Something else', Status = 'Not Started');
+        }
+
+        Test.startTest();
+        UnifiedActivityController.ActivityPageResult result;
+        System.runAs(u) {
+            result = getActivities(acc.Id, 'DESC', 20, 0, 'All', 'Match me');
+        }
+        Test.stopTest();
+
+        System.assertEquals(1, result.totalCount, 'Search should filter to one matching task');
+        System.assertEquals('Match me', result.items[0].title);
+    }
+
+    @IsTest
+    static void testGetUnifiedActivities_invalidRelatedRecordConfig() {
+        Account acc = createTestAccount();
+        Contact con = new Contact(LastName = 'Invalid Config Test', AccountId = acc.Id);
+        insert con;
+        insert new Task(WhatId = acc.Id, Subject = 'Account Task', Status = 'Not Started');
+
+        Test.startTest();
+        UnifiedActivityController.ActivityPageResult result = getActivities(
+            con.Id,
+            'DESC',
+            20,
+            0,
+            'All',
+            null,
+            'Name:Name,AccountId:Account',
+            'Contact'
+        );
+        Test.stopTest();
+
+        System.assertEquals(1, result.totalCount, 'Should ignore invalid non-lookup field and use valid AccountId');
+    }
+
+    @IsTest
+    static void testGetUnifiedActivities_offsetBeyondRange() {
+        Account acc = createTestAccount();
+        insert new Task(WhatId = acc.Id, Subject = 'Only', Status = 'Not Started');
+
+        Test.startTest();
+        UnifiedActivityController.ActivityPageResult result = getActivities(acc.Id, 'DESC', 20, 100, 'All', null);
+        Test.stopTest();
+
+        System.assertEquals(1, result.totalCount);
+        System.assertEquals(0, result.items.size());
+        System.assertEquals(false, result.hasMore);
+        System.assertEquals(100, result.nextOffset);
+    }
+
+    @IsTest
+    static void testGetUnifiedActivities_emailLikeTask() {
+        User u = createTestUser();
+        Account acc;
+        System.runAs(u) {
+            acc = createTestAccount();
+            insert new Task(
+                WhatId = acc.Id,
+                Subject = 'Email Task',
+                Description = 'To: someone@example.com\nSubject: hello',
+                Status = 'Not Started'
+            );
+            insert new Task(WhatId = acc.Id, Subject = 'Normal Task', Status = 'Not Started');
+        }
+
+        Test.startTest();
+        UnifiedActivityController.ActivityPageResult result;
+        System.runAs(u) {
+            result = getActivities(acc.Id, 'DESC', 20, 0, 'All', null);
+        }
+        Test.stopTest();
+
+        System.assertEquals(1, result.totalCount, 'Email-like task should be excluded');
+        System.assertEquals('Normal Task', result.items[0].title);
+    }
+
+    @IsTest(SeeAllData=true)
+    static void testGetUnifiedActivities_contentPost() {
+        User u = createTestUser();
+        Account acc;
+        ContentVersion cv;
+        System.runAs(u) {
+            acc = createTestAccount();
+            cv = new ContentVersion(
+                Title = 'Test File',
+                PathOnClient = 'test.txt',
+                VersionData = Blob.valueOf('data'),
+                IsMajorVersion = true
+            );
+            insert cv;
+            cv = [SELECT ContentDocumentId FROM ContentVersion WHERE Id = :cv.Id];
+
+        }
+
+        ConnectApi.FeedItemInput input = new ConnectApi.FeedItemInput();
+        input.subjectId = acc.Id;
+        input.feedElementType = ConnectApi.FeedElementType.FeedItem;
+
+        ConnectApi.FilesCapabilityInput filesInput = new ConnectApi.FilesCapabilityInput();
+        filesInput.items = new List<ConnectApi.FileIdInput>();
+        ConnectApi.FileIdInput fileIdInput = new ConnectApi.FileIdInput();
+        fileIdInput.id = cv.ContentDocumentId;
+        filesInput.items.add(fileIdInput);
+
+        input.capabilities = new ConnectApi.FeedElementCapabilitiesInput();
+        input.capabilities.files = filesInput;
+
+        Test.startTest();
+        System.runAs(u) {
+            ConnectApi.ChatterFeeds.postFeedElement(null, input);
+        }
+        UnifiedActivityController.ActivityPageResult result;
+        System.runAs(u) {
+            result = getActivities(acc.Id, 'DESC', 20, 0, 'All', null);
+        }
+        Test.stopTest();
+
+        System.assertEquals(1, result.totalCount);
+        System.assertEquals('Test File', result.items[0].title);
+        System.assert(!result.items[0].contentParts.isEmpty(), 'ContentPost should have image part');
+        System.assertEquals('image', result.items[0].contentParts[0].partType);
+    }
+
+    @IsTest
+    static void testGetUnifiedActivities_richTextFeed() {
+        User u = createTestUser();
+        Account acc;
+        System.runAs(u) {
+            acc = createTestAccount();
+            FeedItem fi = new FeedItem(
+                ParentId = acc.Id,
+                Body = '<p>Hello <a href="http://example.com">link</a></p>',
+                IsRichText = true
+            );
+            insert fi;
+        }
+
+        Test.startTest();
+        UnifiedActivityController.ActivityPageResult result;
+        System.runAs(u) {
+            result = getActivities(acc.Id, 'DESC', 20, 0, 'All', null);
+        }
+        Test.stopTest();
+
+        System.assertEquals(1, result.totalCount);
+        System.assert(!result.items[0].contentParts.isEmpty(), 'Rich text feed should have content parts');
+    }
+
+    @IsTest(SeeAllData=true)
+    static void testCreateChatterPost_withInlineImage() {
+        User u = createTestUser();
+        Account acc;
+        ContentVersion cv;
+        System.runAs(u) {
+            acc = createTestAccount();
+            cv = new ContentVersion(
+                Title = 'Inline Image',
+                PathOnClient = 'img.png',
+                VersionData = Blob.valueOf('PNG'),
+                IsMajorVersion = true
+            );
+            insert cv;
+        }
+        cv = [SELECT ContentDocumentId FROM ContentVersion WHERE Id = :cv.Id];
+
+        Test.startTest();
+        System.runAs(u) {
+            UnifiedActivityController.createChatterPost(
+                acc.Id,
+                '<p>Hello <img src="sfdc://' + cv.ContentDocumentId + '"></p>',
+                new List<String>{ cv.ContentDocumentId }
+            );
+        }
+        Test.stopTest();
+
+        List<FeedItem> posts = [SELECT Id FROM FeedItem WHERE ParentId = :acc.Id];
+        System.assertEquals(1, posts.size(), 'Chatter post with inline image should be created');
+    }
+
+    @IsTest
+    static void testGetUnifiedActivities_htmlEmailWithCid() {
+        User u = createTestUser();
+        Account acc;
+        System.runAs(u) {
+            acc = createTestAccount();
+            EmailMessage em = new EmailMessage(
+                Subject = 'HTML email',
+                FromAddress = 'sender@example.com',
+                ToAddress = 'recipient@example.com',
+                HtmlBody = '<p>Image <img src="cid:abc123"></p>',
+                Status = '3',
+                Incoming = false,
+                RelatedToId = acc.Id
+            );
+            insert em;
+
+            ContentVersion cv = new ContentVersion(
+                Title = 'Email Attachment',
+                PathOnClient = 'att.png',
+                VersionData = Blob.valueOf('PNG'),
+                IsMajorVersion = true
+            );
+            insert cv;
+            cv = [SELECT ContentDocumentId FROM ContentVersion WHERE Id = :cv.Id];
+            insert new ContentDocumentLink(
+                ContentDocumentId = cv.ContentDocumentId,
+                LinkedEntityId = em.Id,
+                ShareType = 'V',
+                Visibility = 'AllUsers'
+            );
+        }
+
+        Test.startTest();
+        UnifiedActivityController.ActivityPageResult result;
+        System.runAs(u) {
+            result = getActivities(acc.Id, 'DESC', 20, 0, 'EmailMessage', null);
+        }
+        Test.stopTest();
+
+        System.assertEquals(1, result.items.size(), 'Expected one email activity');
+        System.assert(result.items[0].description.contains('version/download/'), 'CID reference should be replaced');
+    }
 }
