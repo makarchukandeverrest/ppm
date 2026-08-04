@@ -330,7 +330,7 @@
         <recordTriggerType>Update</recordTriggerType>
         <triggerType>RecordAfterSave</triggerType>
     </start>
-    <status>Active</status>
+    <status>Draft</status>
     <textTemplates>
         <name>TaskSubject</name>
         <isViewedAsPlainText>true</isViewedAsPlainText>

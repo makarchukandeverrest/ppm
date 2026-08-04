@@ -176,7 +176,7 @@ $Record.Account.BillingPostalCode &amp; BR() &amp;
         <recordTriggerType>Update</recordTriggerType>
         <triggerType>RecordAfterSave</triggerType>
     </start>
-    <status>Active</status>
+    <status>Draft</status>
     <variables>
         <name>salesforceEmail</name>
         <dataType>String</dataType>
