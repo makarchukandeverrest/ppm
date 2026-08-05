@@ -3,6 +3,7 @@
     <fullName>Price_Match_Guaranted_Yes_No__c</fullName>
     <defaultValue>false</defaultValue>
     <label>Price Match Guaranted (Yes/No)</label>
+    <trackFeedHistory>false</trackFeedHistory>
     <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>
     <type>Checkbox</type>

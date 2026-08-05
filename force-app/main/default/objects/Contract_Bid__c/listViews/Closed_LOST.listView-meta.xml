@@ -9,8 +9,9 @@
     <columns>RFP__c</columns>
     <columns>Renewal_Client__c</columns>
     <columns>Management_Company__c</columns>
-    <columns>UPDATEDBY_USER.ALIAS</columns>
     <columns>Lead_Generator__c</columns>
+    <columns>Lead_Owner__c</columns>
+    <columns>UPDATEDBY_USER.ALIAS</columns>
     <filterScope>Everything</filterScope>
     <filters>
         <field>Stage__c</field>
