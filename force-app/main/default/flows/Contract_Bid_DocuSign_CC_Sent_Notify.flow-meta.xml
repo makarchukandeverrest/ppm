@@ -258,7 +258,7 @@
         <connector>
             <targetReference>Count_CC_Recipients</targetReference>
         </connector>
-        <filterLogic>and</filterLogic>
+        <filterLogic>1 AND (2 OR 3)</filterLogic>
         <filters>
             <field>dfsle__Envelope__c</field>
             <operator>EqualTo</operator>
@@ -270,7 +270,14 @@
             <field>dfsle__Role__c</field>
             <operator>Contains</operator>
             <value>
-                <stringValue>Carbon Copy</stringValue>
+                <stringValue>Carbon</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>dfsle__Type__c</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>CarbonCopy</stringValue>
             </value>
         </filters>
         <getFirstRecordOnly>false</getFirstRecordOnly>
@@ -354,7 +361,7 @@
         <recordTriggerType>CreateAndUpdate</recordTriggerType>
         <triggerType>RecordAfterSave</triggerType>
     </start>
-    <status>Draft</status>
+    <status>Active</status>
     <textTemplates>
         <name>EmailBody</name>
         <isViewedAsPlainText>true</isViewedAsPlainText>
@@ -362,10 +369,7 @@
 
 The contract for {!Get_Contract_Bid.Name} was sent via DocuSign.
 
-This is a Salesforce notification to DocuSign carbon copy recipients on the envelope.
-
-Thank you,
-Premier Aquatic Services</text>
+This is a Salesforce notification to DocuSign carbon copy recipients on the envelope.</text>
     </textTemplates>
     <textTemplates>
         <name>EmailSubject</name>
