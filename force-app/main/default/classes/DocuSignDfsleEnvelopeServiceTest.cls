@@ -183,10 +183,28 @@ private class DocuSignDfsleEnvelopeServiceTest {
 
         Test.startTest();
         DocuSignDfsleEnvelopeService.sendEnvelope(
-            cb.Id, mainCv.Id, 'customer@example.com', acc.Name, false, acc.Id, new List<User>(), null, null
+            cb.Id,
+            mainCv.Id,
+            'customer@example.com',
+            acc.Name,
+            false,
+            acc.Id,
+            null,
+            new List<DocuSignDfsleEnvelopeService.CcRecipient>(),
+            null,
+            null
         );
         DocuSignDfsleEnvelopeService.sendEnvelope(
-            cb.Id, secondCv.Id, 'customer@example.com', acc.Name, false, acc.Id, new List<User>(), null, null
+            cb.Id,
+            secondCv.Id,
+            'customer@example.com',
+            acc.Name,
+            false,
+            acc.Id,
+            null,
+            new List<DocuSignDfsleEnvelopeService.CcRecipient>(),
+            null,
+            null
         );
         Test.stopTest();
 
@@ -219,7 +237,8 @@ private class DocuSignDfsleEnvelopeServiceTest {
                 acc.Name,
                 false,
                 acc.Id,
-                new List<User>(),
+                null,
+                new List<DocuSignDfsleEnvelopeService.CcRecipient>(),
                 null,
                 null
             )
@@ -445,7 +464,8 @@ private class DocuSignDfsleEnvelopeServiceTest {
             'Customer Name',
             false,
             null,
-            new List<User>(),
+            null,
+            new List<DocuSignDfsleEnvelopeService.CcRecipient>(),
             null,
             null
         );
@@ -453,5 +473,66 @@ private class DocuSignDfsleEnvelopeServiceTest {
         DocuSignDfsleEnvelopeService.FORCE_RESOLVE_DOCUSIGN_ID_IN_TEST = false;
 
         System.assertEquals(expected, resolved, 'Expected dynamic DocuSignId resolver to return inserted id.');
+    }
+
+    @IsTest
+    static void testSendEnvelope_docxSchedulesSentPdfSaverJob() {
+        Account acc = [SELECT Id FROM Account LIMIT 1];
+        Contract_Bid__c cb = [SELECT Id FROM Contract_Bid__c LIMIT 1];
+
+        ContentVersion docxCv = new ContentVersion(
+            Title = 'Dfsle Docx Contract.docx',
+            PathOnClient = 'Dfsle Docx Contract.docx',
+            VersionData = Blob.valueOf('docx-content'),
+            IsMajorVersion = true,
+            To_Sent__c = true
+        );
+        insert docxCv;
+
+        Id contentDocumentId = [
+            SELECT ContentDocumentId
+            FROM ContentVersion
+            WHERE Id = :docxCv.Id
+            LIMIT 1
+        ].ContentDocumentId;
+
+        insert new ContentDocumentLink(
+            ContentDocumentId = contentDocumentId,
+            LinkedEntityId = acc.Id,
+            ShareType = 'V',
+            Visibility = 'AllUsers'
+        );
+
+        DocuSignSentPdfService.skipCalloutInTest = true;
+        DocuSignSentPdfService.testPdfBlob = Blob.valueOf('%PDF-1.4 sent via envelope');
+
+        Test.startTest();
+        DocuSignDfsleEnvelopeService.sendEnvelope(
+            cb.Id,
+            docxCv.Id,
+            'customer@example.com',
+            acc.Name,
+            false,
+            acc.Id,
+            null,
+            new List<DocuSignDfsleEnvelopeService.CcRecipient>(),
+            null,
+            null
+        );
+        Test.stopTest();
+
+        DocuSignSentPdfService.skipCalloutInTest = false;
+        DocuSignSentPdfService.testPdfBlob = null;
+
+        ContentVersion savedPdf = [
+            SELECT Id, Title, DocuSign_Envelope_Id__c
+            FROM ContentVersion
+            WHERE Title = 'Dfsle Docx Contract.pdf'
+            LIMIT 1
+        ];
+        System.assertEquals(
+            ('TEST-DFSLE-ENVELOPE-' + docxCv.Id).toUpperCase(),
+            savedPdf.DocuSign_Envelope_Id__c
+        );
     }
 }

@@ -264,6 +264,12 @@ public with sharing class DocuSignDfsleEnvelopeService {
                 DocuSign_Envelope_Id__c = envelopeId.toUpperCase(),
                 To_Sent__c = false
             );
+
+            if (accountId != null && DocuSignSentPdfService.requiresSentPdfCopy(mainCv)) {
+                System.enqueueJob(
+                    new DocuSignSentPdfSaverJob(accountId, mainContentVersionId, envelopeId)
+                );
+            }
         }
 
         return envelopeId;
@@ -274,7 +280,7 @@ public with sharing class DocuSignDfsleEnvelopeService {
 
     private static ContentVersion queryMainContentVersion(Id mainContentVersionId) {
         List<ContentVersion> contentVersions = [
-            SELECT Title
+            SELECT Title, FileExtension
             FROM ContentVersion
             WHERE Id = :mainContentVersionId
             LIMIT 1

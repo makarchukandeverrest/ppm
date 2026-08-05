@@ -20,6 +20,7 @@ public with sharing class BatchHttpSender implements Database.Batchable<DocuSign
                     req.signerName,
                     req.isNewCustomer,
                     req.accountId,
+                    req.secondaryContact,
                     req.ccUsers,
                     req.reminderValue,
                     req.daysBeforeExpires
