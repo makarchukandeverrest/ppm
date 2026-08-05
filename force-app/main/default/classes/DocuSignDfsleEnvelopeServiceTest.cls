@@ -392,6 +392,24 @@ private class DocuSignDfsleEnvelopeServiceTest {
     }
 
     @IsTest
+    static void testParsePositiveDays_parsesValidValuesAndDefaults() {
+        System.assertEquals(120, DocuSignDfsleEnvelopeService.parsePositiveDays(null, 120));
+        System.assertEquals(120, DocuSignDfsleEnvelopeService.parsePositiveDays('', 120));
+        System.assertEquals(45, DocuSignDfsleEnvelopeService.parsePositiveDays('45', 120));
+        System.assertEquals(120, DocuSignDfsleEnvelopeService.parsePositiveDays('0', 120));
+        System.assertEquals(120, DocuSignDfsleEnvelopeService.parsePositiveDays('abc', 120));
+    }
+
+    @IsTest
+    static void testBuildEnvelopeNotifications_usesUiExpirationAndReminderValues() {
+        dfsle.Notifications withReminder = DocuSignDfsleEnvelopeService.buildEnvelopeNotifications('3', '90');
+        System.assertNotEquals(null, withReminder, 'Expected notifications when reminder and expiration are set.');
+
+        dfsle.Notifications withoutReminder = DocuSignDfsleEnvelopeService.buildEnvelopeNotifications('', '120');
+        System.assertNotEquals(null, withoutReminder, 'Expected notifications when only expiration is set.');
+    }
+
+    @IsTest
     static void testDocuSignIdResolutionPath_inTest() {
         // This test exercises the dynamic query path (dfsle__EnvelopeStatus__c / dfsle__Envelope__c).
         Contract_Bid__c cb = [SELECT Id FROM Contract_Bid__c LIMIT 1];
