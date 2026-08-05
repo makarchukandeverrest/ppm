@@ -33,7 +33,7 @@ public with sharing class ContractMassSendController {
 
   /** Org-wide address used when the mass-send host is a Work Order record page. */
   private static final String WORK_ORDER_ORG_WIDE_EMAIL_ADDRESS =
-    'sf_workorders@premierswim.com';
+    'sfalert@sf.premierswim.com';
 
   /**
    * Work Order-driven send: any inputId is a Work Order, or any send row has workOrderId
