@@ -78,18 +78,6 @@ export default class UnifiedActivityFeed extends NavigationMixin(LightningElemen
         ];
     }
 
-    get hasActivities() {
-        return this.activities.length > 0;
-    }
-
-    get isEmpty() {
-        return !this.isLoading && !this.isLoadingMore && !this.hasActivities;
-    }
-
-    get showLoadMore() {
-        return this.hasMore && this.hasActivities && !this.isLoading;
-    }
-
     get countLabel() {
         if (this.totalCount === 0) {
             return '0';
@@ -100,8 +88,8 @@ export default class UnifiedActivityFeed extends NavigationMixin(LightningElemen
         return `${this.activities.length} of ${this.totalCount}`;
     }
 
-    get showSourceLabels() {
-        return !!this.relatedRecordConfig && this.relatedRecordConfig.trim().length > 0;
+    get showLoadMore() {
+        return this.hasMore && this.activities.length > 0 && !this.isLoading;
     }
 
     get emptyMessage() {
@@ -213,6 +201,10 @@ export default class UnifiedActivityFeed extends NavigationMixin(LightningElemen
         });
     }
 
+    get showSourceLabels() {
+        return !!this.relatedRecordConfig && this.relatedRecordConfig.trim().length > 0;
+    }
+
     formatDate(value) {
         if (!value) return '';
         const date = new Date(value);
@@ -236,7 +228,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(LightningElemen
     }
 
     handleSearchChange(event) {
-        this.searchTerm = event.target.value;
+        this.searchTerm = event.detail.value;
 
         if (this.searchTimeout) {
             clearTimeout(this.searchTimeout);
@@ -312,13 +304,12 @@ export default class UnifiedActivityFeed extends NavigationMixin(LightningElemen
     }
 
     handleItemClick(event) {
-        const recordId = event.currentTarget.dataset.id;
+        const recordId = event.detail.recordId;
         this.openRecordPage(recordId);
     }
 
     handleImageClick(event) {
-        event.stopPropagation();
-        const contentDocumentId = event.currentTarget.dataset.id;
+        const contentDocumentId = event.detail.contentDocumentId;
         if (!contentDocumentId) {
             return;
         }
@@ -331,13 +322,6 @@ export default class UnifiedActivityFeed extends NavigationMixin(LightningElemen
                 selectedRecordId: contentDocumentId
             }
         });
-    }
-
-    handleImageKeydown(event) {
-        if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            this.handleImageClick(event);
-        }
     }
 
     openRecordPage(recordId) {
