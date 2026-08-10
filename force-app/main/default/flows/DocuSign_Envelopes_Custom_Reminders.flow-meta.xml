@@ -806,7 +806,7 @@ $Record.Deal__r.Name &amp;
             </connector>
             <label>3 Days after Proposal</label>
             <offsetNumber>1</offsetNumber>
-            <offsetUnit>Minutes</offsetUnit>
+            <offsetUnit>Days</offsetUnit>
             <recordField>dfsle__Sent__c</recordField>
             <timeSource>RecordField</timeSource>
         </scheduledPaths>
@@ -817,7 +817,7 @@ $Record.Deal__r.Name &amp;
             </connector>
             <label>4 Days After Reminder 1</label>
             <offsetNumber>3</offsetNumber>
-            <offsetUnit>Minutes</offsetUnit>
+            <offsetUnit>Days</offsetUnit>
             <recordField>dfsle__Sent__c</recordField>
             <timeSource>RecordField</timeSource>
         </scheduledPaths>
@@ -828,7 +828,7 @@ $Record.Deal__r.Name &amp;
             </connector>
             <label>3 Days After Reminder 2</label>
             <offsetNumber>5</offsetNumber>
-            <offsetUnit>Minutes</offsetUnit>
+            <offsetUnit>Days</offsetUnit>
             <recordField>dfsle__Sent__c</recordField>
             <timeSource>RecordField</timeSource>
         </scheduledPaths>
@@ -839,7 +839,7 @@ $Record.Deal__r.Name &amp;
             </connector>
             <label>4 Days After All Reminders</label>
             <offsetNumber>7</offsetNumber>
-            <offsetUnit>Minutes</offsetUnit>
+            <offsetUnit>Days</offsetUnit>
             <recordField>dfsle__Sent__c</recordField>
             <timeSource>RecordField</timeSource>
         </scheduledPaths>
@@ -850,7 +850,7 @@ $Record.Deal__r.Name &amp;
             </connector>
             <label>1 Day After First Activty</label>
             <offsetNumber>10</offsetNumber>
-            <offsetUnit>Minutes</offsetUnit>
+            <offsetUnit>Days</offsetUnit>
             <recordField>dfsle__Sent__c</recordField>
             <timeSource>RecordField</timeSource>
         </scheduledPaths>
@@ -890,14 +890,7 @@ Thank you,
         <name>Reminder2Body</name>
         <isViewedAsPlainText>true</isViewedAsPlainText>
         <text>Hi {!Get_Recipients_2.Name},
-
-Hi [Name], 
-
 I wanted to follow up as we continue scheduling upcoming repair work and ordering materials. Approving the proposal allows us to secure your spot on the schedule and ensure supplies are allocated in time. 
-
-Whenever you have a moment, I’d appreciate knowing your anticipated timeline so we can plan accordingly. 
-
-Looking forward to supporting you. 
 
 Whenever you have a moment, I’d appreciate knowing your anticipated timeline so we can plan accordingly. 
 
@@ -915,10 +908,6 @@ Best,
         <text>Hi {!Get_Recipients_3.Name},
 
 Just following up on my previous email. If helpful, I’d be glad to schedule a quick call or site visit to walk through the {!$Record.Deal__r.Name} - {!$Record.Deal__r.Reference_Number__c}, answer any questions, and align on priorities. 
-
- 
-
-Please let me know what works best for you. 
 
  
 

@@ -6,6 +6,7 @@
     <customButtons>Generatea0JVv000006Zca1MAC</customButtons>
     <customButtons>Generatea0JVv000006ZcN7MAK</customButtons>
     <customButtons>SendWithDocuSign</customButtons>
+    <excludeButtons>SmartFillEnrich</excludeButtons>
     <excludeButtons>Submit</excludeButtons>
     <layoutSections>
         <customLabel>false</customLabel>
