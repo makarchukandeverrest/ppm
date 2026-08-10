@@ -11,6 +11,16 @@ private class MassCloneControllerTest {
         return source;
     }
 
+    private static MassCloneController.CreateRequest buildRequest(
+        String objectApiName,
+        String clonePayloadJson
+    ) {
+        MassCloneController.CreateRequest request = new MassCloneController.CreateRequest();
+        request.objectApiName = objectApiName;
+        request.clonePayloadJson = clonePayloadJson;
+        return request;
+    }
+
     @IsTest
     static void testCreateRecordsFromPayload() {
         Account acc = new Account(Name = 'Mass Clone Account');
@@ -25,13 +35,11 @@ private class MassCloneControllerTest {
             acc.Id +
             '","Stage__c":"Contact Verified and Updated","Contract_Year__c":"2025-2026","Due_Date__c":"2026-01-15"}}]';
 
-        MassCloneController.CreateRequest request = new MassCloneController.CreateRequest();
-        request.objectApiName = 'Contract_Bid__c';
-        request.clonePayloadJson = payloadJson;
-
         Test.startTest();
         List<MassCloneController.CreateResult> results = MassCloneController.createRecords(
-            new List<MassCloneController.CreateRequest>{ request }
+            new List<MassCloneController.CreateRequest>{
+                buildRequest('Contract_Bid__c', payloadJson)
+            }
         );
         Test.stopTest();
 
@@ -58,33 +66,23 @@ private class MassCloneControllerTest {
         List<MassCloneController.CreateResult> blankRequest = MassCloneController.createRecords(
             new List<MassCloneController.CreateRequest>{ new MassCloneController.CreateRequest() }
         );
-
-        MassCloneController.CreateRequest unknownObject = new MassCloneController.CreateRequest();
-        unknownObject.objectApiName = 'Not_A_Real_Object__c';
-        unknownObject.clonePayloadJson = '[{"fields":{"Name":"Test"}}]';
         List<MassCloneController.CreateResult> unknownObjectResult = MassCloneController.createRecords(
-            new List<MassCloneController.CreateRequest>{ unknownObject }
+            new List<MassCloneController.CreateRequest>{
+                buildRequest('Not_A_Real_Object__c', '[{"fields":{"Name":"Test"}}]')
+            }
         );
-
-        MassCloneController.CreateRequest invalidJson = new MassCloneController.CreateRequest();
-        invalidJson.objectApiName = 'Contract_Bid__c';
-        invalidJson.clonePayloadJson = '{not-json';
         List<MassCloneController.CreateResult> invalidJsonResult = MassCloneController.createRecords(
-            new List<MassCloneController.CreateRequest>{ invalidJson }
+            new List<MassCloneController.CreateRequest>{
+                buildRequest('Contract_Bid__c', '{not-json')
+            }
         );
-
-        MassCloneController.CreateRequest emptyPayload = new MassCloneController.CreateRequest();
-        emptyPayload.objectApiName = 'Contract_Bid__c';
-        emptyPayload.clonePayloadJson = '[]';
         List<MassCloneController.CreateResult> emptyPayloadResult = MassCloneController.createRecords(
-            new List<MassCloneController.CreateRequest>{ emptyPayload }
+            new List<MassCloneController.CreateRequest>{ buildRequest('Contract_Bid__c', '[]') }
         );
-
-        MassCloneController.CreateRequest emptyFields = new MassCloneController.CreateRequest();
-        emptyFields.objectApiName = 'Contract_Bid__c';
-        emptyFields.clonePayloadJson = '[{"sourceName":"Missing Fields","fields":{}}]';
         List<MassCloneController.CreateResult> emptyFieldsResult = MassCloneController.createRecords(
-            new List<MassCloneController.CreateRequest>{ emptyFields }
+            new List<MassCloneController.CreateRequest>{
+                buildRequest('Contract_Bid__c', '[{"sourceName":"Missing Fields","fields":{}}]')
+            }
         );
         Test.stopTest();
 
@@ -92,8 +90,112 @@ private class MassCloneControllerTest {
         System.assertNotEquals(null, blankRequest[0].errorMessage);
         System.assert(unknownObjectResult[0].errorMessage.contains('Unknown object'));
         System.assert(invalidJsonResult[0].errorMessage.contains('Invalid clone payload JSON'));
-        System.assertEquals('No records were found in the clone payload.', emptyPayloadResult[0].errorMessage);
+        System.assertEquals(
+            'No records were found in the clone payload.',
+            emptyPayloadResult[0].errorMessage
+        );
         System.assertEquals(1, emptyFieldsResult[0].failureCount);
+    }
+
+    @IsTest
+    static void testCreateRecordsProcessesEveryRequest() {
+        Account acc = new Account(Name = 'Bulk Invocable Account');
+        insert acc;
+
+        List<MassCloneController.CreateRequest> requests = new List<MassCloneController.CreateRequest>();
+        for (Integer index = 0; index < 3; index++) {
+            requests.add(
+                buildRequest(
+                    'Contract_Bid__c',
+                    '[{"sourceName":"Bulk Source ' +
+                        index +
+                        '","fields":{"Name":"Bulk Clone ' +
+                        index +
+                        '","Customer__c":"' +
+                        acc.Id +
+                        '","Stage__c":"Contact Verified and Updated"}}]'
+                )
+            );
+        }
+
+        Test.startTest();
+        List<MassCloneController.CreateResult> results = MassCloneController.createRecords(requests);
+        Test.stopTest();
+
+        System.assertEquals(3, results.size(), 'Flow requires one result per request');
+        for (MassCloneController.CreateResult result : results) {
+            System.assertEquals(1, result.successCount, 'Every request should be processed');
+        }
+        System.assertEquals(
+            3,
+            [SELECT COUNT() FROM Contract_Bid__c WHERE Name LIKE 'Bulk Clone%'],
+            'Every request should have inserted its record'
+        );
+    }
+
+    @IsTest
+    static void testCreateCloneRecordsHandlesManyRows() {
+        Account acc = new Account(Name = 'Volume Clone Account');
+        insert acc;
+
+        List<String> payloadItems = new List<String>();
+        for (Integer index = 0; index < 50; index++) {
+            payloadItems.add(
+                '{"sourceName":"Volume Source ' +
+                    index +
+                    '","fields":{"Name":"Volume Clone ' +
+                    index +
+                    '","Customer__c":"' +
+                    acc.Id +
+                    '","Stage__c":"Contact Verified and Updated"}}'
+            );
+        }
+
+        Test.startTest();
+        MassCloneController.CreateResult result = MassCloneController.createCloneRecords(
+            'Contract_Bid__c',
+            '[' + String.join(payloadItems, ',') + ']'
+        );
+        Test.stopTest();
+
+        System.assertEquals(50, result.successCount, 'All rows should be created in one insert');
+        System.assertEquals(0, result.failureCount, 'No failures expected');
+        System.assertEquals(50, result.rowResults.size(), 'Every row should be reported');
+    }
+
+    @IsTest
+    static void testRowResultsReportPerRecordOutcome() {
+        Account acc = new Account(Name = 'Row Result Account');
+        insert acc;
+
+        String payloadJson =
+            '[{"sourceName":"Good Row","fields":{"Name":"Good Clone","Customer__c":"' +
+            acc.Id +
+            '","Stage__c":"Contact Verified and Updated"}},' +
+            '{"sourceName":"Bad Row","fields":{"Name":"Bad Clone","Stage__c":"Contact Verified and Updated"}}]';
+
+        Test.startTest();
+        MassCloneController.CreateResult result = MassCloneController.createCloneRecords(
+            'Contract_Bid__c',
+            payloadJson
+        );
+        Test.stopTest();
+
+        System.assertEquals(1, result.successCount, 'The valid row should be created');
+        System.assertEquals(1, result.failureCount, 'The invalid row should be reported as failed');
+        System.assertEquals(2, result.rowResults.size(), 'Both rows should be reported');
+
+        System.assertEquals(0, result.rowResults[0].rowIndex, 'Rows keep their payload order');
+        System.assertEquals('Good Row', result.rowResults[0].sourceName);
+        System.assertEquals(true, result.rowResults[0].isSuccess);
+        System.assertNotEquals(null, result.rowResults[0].recordId, 'Created id should be reported');
+
+        System.assertEquals('Bad Row', result.rowResults[1].sourceName);
+        System.assertEquals(false, result.rowResults[1].isSuccess);
+        System.assert(
+            result.rowResults[1].errorMessage.contains('Customer'),
+            'The failing row should name the missing field'
+        );
     }
 
     @IsTest
@@ -133,18 +235,23 @@ private class MassCloneControllerTest {
 
     @IsTest
     static void testGetRecordFieldValuesJsonUnknownObject() {
-        Boolean threw = false;
+        Boolean threwAuraHandled = false;
+
         try {
             MassCloneController.getRecordFieldValuesJson(
                 'Not_A_Real_Object__c',
                 new List<Id>{ UserInfo.getUserId() },
                 new List<String>{ 'Name' }
             );
-        } catch (Exception ex) {
-            threw = true;
+        } catch (AuraHandledException ex) {
+            threwAuraHandled = true;
         }
 
-        System.assertEquals(true, threw, 'Unknown object should throw');
+        System.assertEquals(
+            true,
+            threwAuraHandled,
+            'Unknown object should surface as an AuraHandledException'
+        );
     }
 
     @IsTest
