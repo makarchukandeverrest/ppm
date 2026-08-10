@@ -40,139 +40,34 @@
             <template if:true={isEditStep}>
                 <div class="slds-grid slds-gutters">
                     <div class="slds-col slds-size_2-of-12">
-                        <div class="ids-panel">
-                            <p class="slds-text-title_caps slds-m-bottom_x-small">
-                                Records ({count})
-                            </p>
-
-                            <template if:true={hasRecords}>
-                                <ul class="slds-list_vertical">
-                                    <template for:each={rows} for:item="row">
-                                        <li
-                                            key={row.id}
-                                            class={row.itemClass}
-                                            data-id={row.id}
-                                            role="button"
-                                            tabindex="0"
-                                            title={row.title}
-                                            onclick={handleRecordSelect}
-                                            onkeydown={handleRecordKeydown}>
-                                            <span class="slds-text-color_weak">{row.rowNumber}.</span>
-                                            {row.name}
-                                            <template if:true={row.showOriginalName}>
-                                                <div class="id-item_original slds-text-color_weak">
-                                                    was: {row.originalName}
-                                                </div>
-                                            </template>
-                                        </li>
-                                    </template>
-                                </ul>
-                            </template>
-
-                            <template if:false={hasRecords}>
-                                <p class="slds-text-color_weak">No records selected.</p>
-                            </template>
-                        </div>
+                        <c-mass-clone-record-list
+                            record-ids={recordIds}
+                            record-names={recordNames}
+                            selected-record-id={selectedRecordId}
+                            draft-names={draftNames}
+                            onselect={handleRecordSelect}>
+                        </c-mass-clone-record-list>
                     </div>
 
                     <div class="slds-col slds-size_10-of-12">
                         <template if:true={showForm}>
-                            <div class="form-panel">
-                                <p class="slds-text-title_caps slds-m-bottom_x-small">
-                                    New {objectApiName}
-                                </p>
-                                <template if:true={isTemplateSelected}>
-                                    <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_small">
-                                        Set shared values here, then apply them to all selected records.
-                                    </p>
-                                </template>
-                                <template if:true={selectedRecordLabel}>
-                                    <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_x-small">
-                                        Clone source: {selectedRecordLabel}
-                                    </p>
-                                </template>
-                                <template if:true={showCloneNamePreview}>
-                                    <div class="clone-name-preview slds-m-bottom_small">
-                                        <p class="slds-text-title_caps slds-m-bottom_xx-small">
-                                            New name
-                                        </p>
-                                        <p class="clone-name-preview__value">{selectedRecordCloneLabel}</p>
-                                    </div>
-                                </template>
-
-                                <template if:true={layoutErrorMessage}>
-                                    <div class="slds-text-color_error slds-m-bottom_small">
-                                        {layoutErrorMessage}
-                                    </div>
-                                </template>
-
-                                <template if:true={recordLoadErrorMessage}>
-                                    <div class="slds-text-color_error slds-m-bottom_small">
-                                        {recordLoadErrorMessage}
-                                    </div>
-                                </template>
-
-                                <lightning-record-edit-form
-                                    object-api-name={objectApiName}
-                                    record-type-id={effectiveRecordTypeId}>
-                                    <lightning-messages></lightning-messages>
-
-                                    <template if:true={isLayoutLoading}>
-                                        <lightning-spinner
-                                            alternative-text="Loading page layout fields"
-                                            size="small">
-                                        </lightning-spinner>
-                                    </template>
-
-                                    <template if:true={isLayoutReady}>
-                                        <template for:each={formSectionsWithValues} for:item="section">
-                                            <div key={section.id} class="slds-m-bottom_medium">
-                                                <template if:true={section.heading}>
-                                                    <h3 class="slds-text-title_caps slds-m-bottom_x-small">
-                                                        {section.heading}
-                                                    </h3>
-                                                </template>
-
-                                                <template for:each={section.fields} for:item="field">
-                                                    <lightning-input-field
-                                                        key={field.key}
-                                                        field-name={field.name}
-                                                        value={field.value}
-                                                        onchange={handleFieldChange}>
-                                                    </lightning-input-field>
-                                                </template>
-                                            </div>
-                                        </template>
-                                    </template>
-
-                                    <template if:true={layoutFetchComplete}>
-                                        <template if:false={isLayoutReady}>
-                                            <p class="slds-text-color_weak">
-                                                No editable layout fields were found for this object.
-                                            </p>
-                                        </template>
-                                    </template>
-
-                                    <div class="slds-m-top_medium slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
-                                        <template if:true={isTemplateSelected}>
-                                            <lightning-button
-                                                variant="brand"
-                                                label="Apply to All"
-                                                title="Apply filled template values to every selected record"
-                                                onclick={handleApplyToAll}>
-                                            </lightning-button>
-                                        </template>
-                                        <lightning-button
-                                            class="review-button"
-                                            variant="brand"
-                                            label="Review"
-                                            title="Continue to review all records before creating them"
-                                            disabled={isPreparingReview}
-                                            onclick={handleReview}>
-                                        </lightning-button>
-                                    </div>
-                                </lightning-record-edit-form>
-                            </div>
+                            <c-mass-clone-form
+                                object-api-name={objectApiName}
+                                record-type-id={effectiveRecordTypeId}
+                                selected-record-id={selectedRecordId}
+                                selected-record-label={selectedRecordLabel}
+                                clone-name-preview={cloneNamePreview}
+                                form-sections={formSections}
+                                field-values={formFieldValues}
+                                is-ready={isLayoutReady}
+                                is-loading={isLayoutLoading}
+                                layout-error={layoutError}
+                                record-load-error={recordLoadError}
+                                is-reviewing={isPreparingReview}
+                                onfieldchange={handleFieldChange}
+                                onapplytoall={handleApplyToAll}
+                                onreview={handleReview}>
+                            </c-mass-clone-form>
                         </template>
 
                         <template if:false={showForm}>
@@ -185,46 +80,16 @@
             </template>
 
             <template if:true={isReviewStep}>
-                <div class="review-panel">
-                    <template if:true={isCreatingRecords}>
-                        <lightning-spinner alternative-text="Creating records" size="medium"></lightning-spinner>
-                    </template>
-                    <p class="slds-text-title_caps slds-m-bottom_x-small">{reviewCardTitle}</p>
+                <template if:true={isCreatingRecords}>
+                    <lightning-spinner alternative-text="Creating records" size="medium"></lightning-spinner>
+                </template>
 
-                    <template if:true={hasReviewRows}>
-                        <p class="slds-text-body_regular slds-m-bottom_medium">{reviewSummaryText}</p>
-
-                        <ul class="review-list">
-                            <template for:each={reviewRows} for:item="row">
-                                <li key={row.id} class="review-item">
-                                    <div class="review-item__header">
-                                        <span class="slds-text-color_weak">{row.rowNumber}.</span>
-                                        <span class="review-item__title">{row.newName}</span>
-                                    </div>
-                                    <div class="review-item__meta slds-text-color_weak">
-                                        Source: {row.sourceName} · {row.fieldCount} field(s)
-                                    </div>
-                                    <template if:true={row.hasPreviewValues}>
-                                        <dl class="review-item__fields">
-                                            <template for:each={row.previewValues} for:item="field">
-                                                <div key={field.key} class="review-item__field">
-                                                    <dt>{field.label}</dt>
-                                                    <dd>{field.value}</dd>
-                                                </div>
-                                            </template>
-                                        </dl>
-                                    </template>
-                                </li>
-                            </template>
-                        </ul>
-                    </template>
-
-                    <template if:false={hasReviewRows}>
-                        <p class="slds-text-color_weak">
-                            No records are ready for creation.
-                        </p>
-                    </template>
-                </div>
+                <c-mass-clone-review
+                    clone-payload-json={clonePayloadJson}
+                    object-api-name={objectApiName}
+                    card-title="Ready to Create"
+                    oncreate={handleCreateRecords}>
+                </c-mass-clone-review>
             </template>
         </div>
     </lightning-card>

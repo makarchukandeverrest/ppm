@@ -39,14 +39,14 @@
                 name="layoutType"
                 type="String"
                 label="Layout Type"
-                description="Full or Compact page layout"
+                description="Deprecated: no longer used, kept for Flow compatibility"
                 default="Full"
             />
             <property
                 name="layoutMode"
                 type="String"
                 label="Layout Mode"
-                description="Create, Edit, or View layout mode"
+                description="Deprecated: no longer used, kept for Flow compatibility"
                 default="Create"
             />
             <property

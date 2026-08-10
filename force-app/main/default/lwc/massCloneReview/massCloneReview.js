@@ -1,7 +1,9 @@
 import { LightningElement, api } from 'lwc';
 import { FlowNavigationNextEvent } from 'lightning/flowSupport';
-
-const PREVIEW_FIELDS = ['Name', 'Customer__c', 'Contract_Year__c', 'Stage__c', 'Due_Date__c'];
+import {
+    buildReviewRows,
+    buildReviewSummary
+} from 'c/massCloneUtils';
 
 export default class MassCloneReview extends LightningElement {
     _clonePayloadJson;
@@ -29,48 +31,12 @@ export default class MassCloneReview extends LightningElement {
         }
 
         try {
-            const payloads = JSON.parse(this._clonePayloadJson);
-            if (!Array.isArray(payloads)) {
-                throw new Error('Payload must be a JSON array.');
-            }
-
-            this.rows = payloads.map((payload, index) => {
-                const fields = payload.fields || {};
-                const previewValues = PREVIEW_FIELDS.filter((fieldName) =>
-                    Object.prototype.hasOwnProperty.call(fields, fieldName)
-                ).map((fieldName) => ({
-                    key: `${index}-${fieldName}`,
-                    label: fieldName,
-                    value: this.formatValue(fields[fieldName])
-                }));
-
-                return {
-                    id: payload.sourceId || `row-${index}`,
-                    rowNumber: index + 1,
-                    sourceName: payload.sourceName || payload.sourceId || `Record ${index + 1}`,
-                    newName: fields.Name || '—',
-                    fieldCount: Object.keys(fields).length,
-                    previewValues,
-                    hasPreviewValues: previewValues.length > 0
-                };
-            });
+            this.rows = buildReviewRows(this._clonePayloadJson, this.objectApiName);
             this.parseError = undefined;
         } catch (error) {
             this.rows = [];
             this.parseError = error.message || 'Unable to parse clone payload.';
         }
-    }
-
-    formatValue(value) {
-        if (value === null || value === undefined || value === '') {
-            return '—';
-        }
-
-        if (typeof value === 'object') {
-            return JSON.stringify(value);
-        }
-
-        return String(value);
     }
 
     get count() {
@@ -82,10 +48,10 @@ export default class MassCloneReview extends LightningElement {
     }
 
     get summaryText() {
-        return `${this.count} record(s) ready to create.`;
+        return buildReviewSummary(this.count);
     }
 
     handleCreateRecords() {
-        this.dispatchEvent(new FlowNavigationNextEvent());
+        this.dispatchEvent(new CustomEvent('create'));
     }
 }

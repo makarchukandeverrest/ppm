@@ -1,0 +1,88 @@
+<template>
+    <div class="form-panel">
+        <p class="slds-text-title_caps slds-m-bottom_x-small">
+            New {objectApiName}
+        </p>
+
+        <template if:true={isTemplateSelected}>
+            <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_small">
+                Set shared values here, then apply them to all selected records.
+            </p>
+        </template>
+
+        <template if:true={selectedRecordLabel}>
+            <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_x-small">
+                Clone source: {selectedRecordLabel}
+            </p>
+        </template>
+
+        <template if:true={showCloneNamePreview}>
+            <div class="clone-name-preview slds-m-bottom_small">
+                <p class="slds-text-title_caps slds-m-bottom_xx-small">New name</p>
+                <p class="clone-name-preview__value">{cloneNamePreview}</p>
+            </div>
+        </template>
+
+        <template if:true={layoutErrorMessage}>
+            <div class="slds-text-color_error slds-m-bottom_small">{layoutErrorMessage}</div>
+        </template>
+
+        <template if:true={recordLoadErrorMessage}>
+            <div class="slds-text-color_error slds-m-bottom_small">{recordLoadErrorMessage}</div>
+        </template>
+
+        <lightning-record-edit-form
+            object-api-name={objectApiName}
+            record-type-id={recordTypeId}>
+            <lightning-messages></lightning-messages>
+
+            <template if:true={isLoading}>
+                <lightning-spinner alternative-text="Loading form fields" size="small"></lightning-spinner>
+            </template>
+
+            <template if:true={isReady}>
+                <template for:each={formSectionsWithValues} for:item="section">
+                    <div key={section.id} class="slds-m-bottom_medium">
+                        <template if:true={section.heading}>
+                            <h3 class="slds-text-title_caps slds-m-bottom_x-small">{section.heading}</h3>
+                        </template>
+
+                        <template for:each={section.fields} for:item="field">
+                            <lightning-input-field
+                                key={field.key}
+                                field-name={field.name}
+                                value={field.value}
+                                onchange={handleFieldChange}>
+                            </lightning-input-field>
+                        </template>
+                    </div>
+                </template>
+            </template>
+
+            <template if:true={isCompleteButNotReady}>
+                <p class="slds-text-color_weak">
+                    No editable layout fields were found for this object.
+                </p>
+            </template>
+
+            <div class="slds-m-top_medium slds-grid slds-grid_align-spread slds-grid_vertical-align-center">
+                <template if:true={isTemplateSelected}>
+                    <lightning-button
+                        variant="brand"
+                        label="Apply to All"
+                        title="Apply filled template values to every selected record"
+                        onclick={handleApplyToAll}>
+                    </lightning-button>
+                </template>
+                <lightning-button
+                    class="review-button"
+                    variant="brand"
+                    label="Review"
+                    title="Continue to review all records before creating them"
+                    disabled={isReviewing}
+                    onclick={handleReview}>
+                </lightning-button>
+            </div>
+        </lightning-record-edit-form>
+    </div>
+</template>

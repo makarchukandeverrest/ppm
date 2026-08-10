@@ -1,39 +1,32 @@
-import { LightningElement, api, wire } from 'lwc';
-import { getLayout } from 'lightning/uiLayoutApi';
-import { getObjectInfo } from 'lightning/uiObjectInfoApi';
+import { LightningElement, api, wire, track } from 'lwc';
+import { getRecordCreateDefaults } from 'lightning/uiRecordApi';
 import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { FlowAttributeChangeEvent } from 'lightning/flowSupport';
 import getRecordFieldValuesJson from '@salesforce/apex/MassCloneController.getRecordFieldValuesJson';
 import createCloneRecords from '@salesforce/apex/MassCloneController.createCloneRecords';
 import {
-    CONTRACT_BID_OBJECT,
-    buildContractBidCloneName
-} from './contractBidCloneUtils';
-
-const SYSTEM_FIELDS = new Set([
-    'CreatedById',
-    'CreatedDate',
-    'LastModifiedById',
-    'LastModifiedDate',
-    'SystemModstamp',
-    'IsDeleted'
-]);
-
-const TEMPLATE_RECORD_ID = '__bulk_template__';
-const BULK_APPLY_EXCLUDED_FIELDS = new Set(['Name']);
-const PREVIEW_FIELDS = ['Name', 'Customer__c', 'Contract_Year__c', 'Stage__c', 'Due_Date__c'];
-const STEP_EDIT = 'edit';
-const STEP_REVIEW = 'review';
+    SYSTEM_FIELDS,
+    TEMPLATE_RECORD_ID,
+    BULK_APPLY_EXCLUDED_FIELDS,
+    MAX_FIELDS_PER_LOAD,
+    STEP_EDIT,
+    STEP_REVIEW,
+    buildReviewRows,
+    buildReviewSummary,
+    reduceErrors,
+    getCloneRule
+} from 'c/massCloneUtils';
 
 export default class MassCloneBase extends LightningElement {
     _recordIds = [];
     @api recordNames = [];
     @api objectApiName;
     _fieldNames = [];
+    @api recordTypeId;
+    // Deprecated: kept only for backward compatibility with existing Flow versions.
     @api layoutType = 'Full';
     @api layoutMode = 'Edit';
-    @api recordTypeId;
     @api cardTitle = 'Selected Records';
     @api iconName = 'standard:record';
     @api formFieldNames = [];
@@ -49,21 +42,22 @@ export default class MassCloneBase extends LightningElement {
     layoutError;
     layoutFetchComplete = false;
     defaultRecordTypeId;
-    selectedRecordId;
+    selectedRecordId = TEMPLATE_RECORD_ID;
     sourceRecord;
     recordLoadError;
     isRecordLoading = false;
-    formContractYear;
-    _fieldsAppliedKey;
-    recordDrafts = {};
-    sourceSnapshots = {};
-    pendingBulkValues;
     currentStep = STEP_EDIT;
     isPreparingReview = false;
     isCreatingRecords = false;
     createCompleted = false;
     panelStatusMessage = '';
     panelStatusVariant = '';
+
+    @track drafts = {};
+    @track lastBulkValues = null;
+    @track sourceSnapshots = {};
+    @track draftNames = {};
+    _reviewRows = [];
 
     @api
     get recordIds() {
@@ -72,7 +66,14 @@ export default class MassCloneBase extends LightningElement {
 
     set recordIds(value) {
         this._recordIds = Array.isArray(value) ? [...value] : [];
-        this.ensureSelectedRecord();
+        this.selectedRecordId = TEMPLATE_RECORD_ID;
+        this.sourceRecord = undefined;
+        this.recordLoadError = undefined;
+        this.loadAllSourceSnapshots();
+    }
+
+    connectedCallback() {
+        this.loadAllSourceSnapshots();
     }
 
     @api
@@ -85,121 +86,15 @@ export default class MassCloneBase extends LightningElement {
         this.applyExplicitFieldNames();
     }
 
-    connectedCallback() {
-        this.ensureSelectedRecord();
+    get cloneRule() {
+        return getCloneRule(this.objectApiName);
     }
 
-    ensureSelectedRecord() {
-        if (!this._recordIds.length) {
-            this.selectedRecordId = undefined;
-            this.sourceRecord = undefined;
-            return;
-        }
-
-        const isValidSelection =
-            this.selectedRecordId === TEMPLATE_RECORD_ID ||
-            this._recordIds.includes(this.selectedRecordId);
-
-        if (!this.selectedRecordId || !isValidSelection) {
-            this.selectedRecordId = TEMPLATE_RECORD_ID;
-            this.sourceRecord = undefined;
-            this.isRecordLoading = false;
-            this._fieldsAppliedKey = undefined;
-        }
-    }
-
-    get isTemplateSelected() {
-        return this.selectedRecordId === TEMPLATE_RECORD_ID;
-    }
-
-    get isRealRecordSelected() {
-        return Boolean(this.selectedRecordId) && !this.isTemplateSelected;
-    }
-
-    get recordFields() {
-        if (
-            this.isTemplateSelected ||
-            !this.selectedRecordId ||
-            !this.objectApiName ||
-            !this.resolvedFieldNames.length
-        ) {
-            return undefined;
-        }
-
-        return this.buildRecordFieldPaths(this.selectedRecordId);
-    }
-
-    buildRecordFieldPaths(recordId) {
-        if (!recordId || !this.objectApiName || !this.resolvedFieldNames.length) {
-            return undefined;
-        }
-
-        const fields = [...this.resolvedFieldNames];
-
-        if (this.isContractBid && !fields.includes('Contract_Year__c')) {
-            fields.push('Contract_Year__c');
-        }
-
-        return fields.map((fieldName) => `${this.objectApiName}.${fieldName}`);
-    }
-
-    get isContractBid() {
-        return this.objectApiName === CONTRACT_BID_OBJECT;
-    }
-
-    @wire(getRecord, { recordId: '$selectedRecordId', fields: '$recordFields' })
-    wiredSourceRecord({ data, error }) {
-        if (this.isTemplateSelected || !this.selectedRecordId || !this.recordFields) {
-            return;
-        }
-
-        this.isRecordLoading = false;
-
-        if (data) {
-            this.sourceRecord = data;
-            this.recordLoadError = undefined;
-            this.sourceSnapshots = {
-                ...this.sourceSnapshots,
-                [this.selectedRecordId]: this.buildSourceSnapshot(data)
-            };
-
-            const existingDraft = this.recordDrafts[this.selectedRecordId];
-            if (existingDraft?.Contract_Year__c !== undefined) {
-                this.formContractYear = existingDraft.Contract_Year__c;
-            } else {
-                this.formContractYear = getFieldValue(
-                    data,
-                    `${this.objectApiName}.Contract_Year__c`
-                );
-            }
-
-            this._fieldsAppliedKey = undefined;
-        } else if (error) {
-            this.sourceRecord = undefined;
-            this.formContractYear = undefined;
-            this.recordLoadError = error;
-            this._fieldsAppliedKey = undefined;
-        }
-    }
-
-    @wire(getObjectInfo, { objectApiName: '$objectApiName' })
-    wiredObjectInfo({ data, error }) {
-        if (data) {
-            this.objectInfo = data;
-            this.defaultRecordTypeId = data.defaultRecordTypeId;
-        } else if (error) {
-            this.objectInfo = undefined;
-            this.defaultRecordTypeId = undefined;
-        }
-    }
-
-    @wire(getLayout, {
+    @wire(getRecordCreateDefaults, {
         objectApiName: '$objectApiName',
-        layoutType: '$layoutType',
-        mode: '$layoutMode',
-        recordTypeId: '$effectiveRecordTypeId'
+        recordTypeId: '$recordTypeId'
     })
-    wiredLayout({ data, error }) {
+    wiredCreateDefaults({ data, error }) {
         if (this.hasExplicitFieldNames) {
             return;
         }
@@ -207,11 +102,15 @@ export default class MassCloneBase extends LightningElement {
         this.layoutFetchComplete = true;
 
         if (data) {
-            this.formSections = this.extractSectionsFromLayout(data);
+            this.objectInfo = data.objectInfos?.[this.objectApiName];
+            this.defaultRecordTypeId = data.recordTypeId;
+            this.formSections = this.extractSectionsFromLayout(data.layout);
             this.resolvedFieldNames = this.flattenSectionFields(this.formSections);
             this.layoutError = undefined;
             this.publishFormFieldNames();
         } else if (error) {
+            this.objectInfo = undefined;
+            this.defaultRecordTypeId = undefined;
             this.formSections = [];
             this.resolvedFieldNames = [];
             this.layoutError = error;
@@ -263,7 +162,6 @@ export default class MassCloneBase extends LightningElement {
                     if (seenFields.has(fieldName)) {
                         return false;
                     }
-
                     seenFields.add(fieldName);
                     return true;
                 })
@@ -310,138 +208,41 @@ export default class MassCloneBase extends LightningElement {
         );
     }
 
-    get isEditStep() {
-        return this.currentStep === STEP_EDIT;
-    }
-
-    get isReviewStep() {
-        return this.currentStep === STEP_REVIEW;
-    }
-
-    get reviewCardTitle() {
-        return 'Ready to Create';
-    }
-
-    get reviewRows() {
-        if (!this.clonePayloadJson) {
-            return [];
+    get recordFields() {
+        if (this.isTemplateSelected || !this.selectedRecordId || !this.objectApiName || !this.resolvedFieldNames.length) {
+            return undefined;
         }
 
-        try {
-            const payloads = JSON.parse(this.clonePayloadJson);
-            if (!Array.isArray(payloads)) {
-                return [];
+        const fields = [...this.resolvedFieldNames];
+        this.cloneRule.fieldsToLoad.forEach((fieldName) => {
+            if (!fields.includes(fieldName)) {
+                fields.push(fieldName);
             }
-
-            return payloads.map((payload, index) => {
-                const fields = payload.fields || {};
-                const previewValues = PREVIEW_FIELDS.filter((fieldName) =>
-                    Object.prototype.hasOwnProperty.call(fields, fieldName)
-                ).map((fieldName) => ({
-                    key: `${index}-${fieldName}`,
-                    label: fieldName,
-                    value: this.formatReviewValue(fields[fieldName])
-                }));
-
-                return {
-                    id: payload.sourceId || `row-${index}`,
-                    rowNumber: index + 1,
-                    sourceName: payload.sourceName || payload.sourceId || `Record ${index + 1}`,
-                    newName: fields.Name || '—',
-                    fieldCount: Object.keys(fields).length,
-                    previewValues,
-                    hasPreviewValues: previewValues.length > 0
-                };
-            });
-        } catch (error) {
-            return [];
-        }
-    }
-
-    get hasReviewRows() {
-        return this.reviewRows.length > 0;
-    }
-
-    get reviewSummaryText() {
-        return `${this.reviewRows.length} record(s) ready to create.`;
-    }
-
-    get showPanelStatus() {
-        return Boolean(this.panelStatusMessage);
-    }
-
-    get panelStatusClass() {
-        const base = 'panel-status';
-        if (this.panelStatusVariant === 'success') {
-            return `${base} panel-status_success`;
-        }
-        if (this.panelStatusVariant === 'warning') {
-            return `${base} panel-status_warning`;
-        }
-        if (this.panelStatusVariant === 'error') {
-            return `${base} panel-status_error`;
-        }
-        return base;
-    }
-
-    get isCreateDisabled() {
-        return this.isCreatingRecords || this.createCompleted;
-    }
-
-    formatReviewValue(value) {
-        if (value === null || value === undefined || value === '') {
-            return '—';
-        }
-
-        if (typeof value === 'object') {
-            return JSON.stringify(value);
-        }
-
-        return String(value);
-    }
-
-    get rows() {
-        if (!this._recordIds.length) {
-            return [];
-        }
-
-        const templateRow = {
-            id: TEMPLATE_RECORD_ID,
-            rowNumber: '★',
-            name: 'Common values',
-            title: 'Shared template for all records',
-            originalName: null,
-            showOriginalName: false,
-            isTemplate: true,
-            isSelected: this.isTemplateSelected,
-            itemClass: this.isTemplateSelected
-                ? 'id-item id-item_template id-item_selected'
-                : 'id-item id-item_template'
-        };
-
-        const recordRows = this._recordIds.map((id, index) => {
-            const originalName = this.getRecordLabel(index, id);
-            const isSelected = id === this.selectedRecordId;
-            const draftName = this.getDraftFieldValue(id, 'Name');
-            const displayName =
-                this.isContractBid && draftName ? draftName : originalName;
-
-            return {
-                id,
-                rowNumber: index + 1,
-                name: displayName,
-                title: 'Use this record as clone source',
-                originalName,
-                showOriginalName: Boolean(
-                    this.isContractBid && draftName && draftName !== originalName
-                ),
-                isTemplate: false,
-                isSelected,
-                itemClass: isSelected ? 'id-item id-item_selected' : 'id-item'
-            };
         });
 
-        return [templateRow, ...recordRows];
+        return fields.map((fieldName) => `${this.objectApiName}.${fieldName}`);
+    }
+
+    @wire(getRecord, { recordId: '$selectedRecordId', fields: '$recordFields' })
+    wiredSourceRecord({ data, error }) {
+        if (this.isTemplateSelected || !this.selectedRecordId || !this.recordFields) {
+            return;
+        }
+
+        this.isRecordLoading = false;
+
+        if (data) {
+            this.sourceRecord = data;
+            this.recordLoadError = undefined;
+            this.sourceSnapshots = {
+                ...this.sourceSnapshots,
+                [this.selectedRecordId]: this.buildSourceSnapshot(data)
+            };
+            this.ensureDraftFromSource(this.selectedRecordId, data);
+        } else if (error) {
+            this.sourceRecord = undefined;
+            this.recordLoadError = error;
+        }
     }
 
     buildSourceSnapshot(sourceRecord) {
@@ -450,461 +251,35 @@ export default class MassCloneBase extends LightningElement {
         }
 
         return {
-            Name: getFieldValue(sourceRecord, `${this.objectApiName}.Name`),
-            Contract_Year__c: getFieldValue(
-                sourceRecord,
-                `${this.objectApiName}.Contract_Year__c`
-            )
+            Name: getFieldValue(sourceRecord, `${this.objectApiName}.Name`)
         };
     }
 
-    ensureTemplateDraft() {
-        if (!this.recordDrafts[TEMPLATE_RECORD_ID]) {
-            this.recordDrafts = {
-                ...this.recordDrafts,
-                [TEMPLATE_RECORD_ID]: {}
-            };
-        }
-    }
-
-    extractNonEmptyDraftValues(draft) {
-        if (!draft) {
-            return {};
-        }
-
-        const values = {};
-        Object.entries(draft).forEach(([fieldName, value]) => {
-            if (
-                !BULK_APPLY_EXCLUDED_FIELDS.has(fieldName) &&
-                value !== undefined &&
-                value !== null &&
-                value !== ''
-            ) {
-                values[fieldName] = value;
-            }
-        });
-
-        return values;
-    }
-
-    applyBulkValuesToDraft(recordId, draft, sharedValues) {
-        Object.assign(draft, sharedValues);
-
-        if (sharedValues.Contract_Year__c !== undefined) {
-            this.syncCloneNameInDraft(recordId, draft, sharedValues.Contract_Year__c);
-        }
-    }
-
-    getRawSourceName(recordId) {
-        if (this.sourceSnapshots[recordId]?.Name) {
-            return this.sourceSnapshots[recordId].Name;
-        }
-
-        const index = this._recordIds.indexOf(recordId);
-        if (index !== -1 && Array.isArray(this.recordNames) && this.recordNames[index]) {
-            return this.recordNames[index];
-        }
-
-        if (recordId === this.selectedRecordId && this.sourceRecord) {
-            return getFieldValue(this.sourceRecord, `${this.objectApiName}.Name`);
-        }
-
-        return undefined;
-    }
-
-    syncCloneNameInDraft(recordId, draft, contractYear) {
-        if (!this.isContractBid) {
+    ensureDraftFromSource(recordId, sourceRecord) {
+        if (this.drafts[recordId]) {
             return;
         }
 
-        const rawName = this.getRawSourceName(recordId);
-        if (!rawName) {
-            return;
-        }
-
-        draft.Name = buildContractBidCloneName(rawName, contractYear);
-    }
-
-    getDraftForRecord(recordId) {
-        return this.recordDrafts[recordId] || null;
-    }
-
-    getDraftFieldValue(recordId, fieldName) {
-        const draft = this.getDraftForRecord(recordId);
-        if (!draft || !Object.prototype.hasOwnProperty.call(draft, fieldName)) {
-            return undefined;
-        }
-
-        return draft[fieldName];
-    }
-
-    getSourceFieldValue(fieldName, sourceRecord = this.sourceRecord) {
-        if (!sourceRecord || !this.objectApiName) {
-            return undefined;
-        }
-
-        const rawValue = getFieldValue(
-            sourceRecord,
-            `${this.objectApiName}.${fieldName}`
-        );
-
-        return this.transformSourceFieldValue(fieldName, rawValue, sourceRecord);
-    }
-
-    getSourceFieldValueFromMap(fieldName, fieldMap) {
-        if (!fieldMap) {
-            return undefined;
-        }
-
-        const rawValue = fieldMap[fieldName];
-        return this.transformSourceFieldValue(fieldName, rawValue, fieldMap);
-    }
-
-    transformSourceFieldValue(fieldName, rawValue, source) {
-        if (this.isContractBid && fieldName === 'Name') {
-            let contractYear;
-            if (
-                source &&
-                typeof source === 'object' &&
-                Object.prototype.hasOwnProperty.call(source, 'Contract_Year__c')
-            ) {
-                contractYear = source.Contract_Year__c;
-            } else if (source && this.objectApiName) {
-                contractYear = getFieldValue(
-                    source,
-                    `${this.objectApiName}.Contract_Year__c`
-                );
-            }
-            return buildContractBidCloneName(rawValue, contractYear);
-        }
-
-        return rawValue;
-    }
-
-    ensureDraftInitialized(recordId) {
-        if (recordId === TEMPLATE_RECORD_ID) {
-            this.ensureTemplateDraft();
-            return;
-        }
-
-        if (this.recordDrafts[recordId] || !this.sourceRecord || recordId !== this.selectedRecordId) {
-            return;
-        }
-
-        const draft = {};
+        const sourceValues = {};
         this.resolvedFieldNames.forEach((fieldName) => {
-            draft[fieldName] = this.getSourceFieldValue(fieldName);
+            sourceValues[fieldName] = getFieldValue(sourceRecord, `${this.objectApiName}.${fieldName}`);
+        });
+        this.cloneRule.fieldsToLoad.forEach((fieldName) => {
+            sourceValues[fieldName] = getFieldValue(sourceRecord, `${this.objectApiName}.${fieldName}`);
         });
 
-        if (this.pendingBulkValues) {
-            this.applyBulkValuesToDraft(recordId, draft, this.pendingBulkValues);
-        }
-
-        this.recordDrafts = {
-            ...this.recordDrafts,
-            [recordId]: draft
-        };
-
-        if (this.isContractBid && draft.Contract_Year__c !== undefined) {
-            this.formContractYear = draft.Contract_Year__c;
-        }
+        const draft = { ...sourceValues, __sourceName: sourceValues.Name };
+        const merged = this.applyBulkValuesToDraft(draft);
+        this.setDraft(recordId, merged);
+        this.refreshDraftNames();
     }
 
-    updateDraftField(fieldName, value) {
-        if (!this.selectedRecordId) {
-            return;
-        }
-
-        const existing = this.recordDrafts[this.selectedRecordId] || {};
-        this.recordDrafts = {
-            ...this.recordDrafts,
-            [this.selectedRecordId]: {
-                ...existing,
-                [fieldName]: value
-            }
-        };
+    get isTemplateSelected() {
+        return this.selectedRecordId === TEMPLATE_RECORD_ID;
     }
 
-    normalizeFieldValue(value) {
-        if (value === undefined || value === null || value === '') {
-            return undefined;
-        }
-
-        if (typeof value === 'object') {
-            return value.id || value.value || undefined;
-        }
-
-        return value;
-    }
-
-    isEmptyFieldValue(value) {
-        return this.normalizeFieldValue(value) === undefined;
-    }
-
-    saveCurrentDraftFromForm() {
-        if (!this.selectedRecordId) {
-            return;
-        }
-
-        const fields = this.template.querySelectorAll('lightning-input-field');
-        if (!fields.length) {
-            return;
-        }
-
-        const existing = { ...(this.recordDrafts[this.selectedRecordId] || {}) };
-        fields.forEach((field) => {
-            if (!field.fieldName) {
-                return;
-            }
-
-            const normalizedValue = this.normalizeFieldValue(field.value);
-            if (normalizedValue !== undefined) {
-                existing[field.fieldName] = normalizedValue;
-            }
-        });
-
-        this.recordDrafts = {
-            ...this.recordDrafts,
-            [this.selectedRecordId]: existing
-        };
-    }
-
-    get cloneNamePreview() {
-        if (!this.isContractBid || !this.isRealRecordSelected) {
-            return '';
-        }
-
-        const draftName = this.getDraftFieldValue(this.selectedRecordId, 'Name');
-        if (draftName) {
-            return draftName;
-        }
-
-        if (!this.sourceRecord) {
-            return '';
-        }
-
-        return this.getSourceFieldValue('Name');
-    }
-
-    get showCloneNamePreview() {
-        return this.isContractBid && Boolean(this.cloneNamePreview);
-    }
-
-    get formSectionsWithValues() {
-        return this.formSections.map((section) => ({
-            ...section,
-            fields: section.fields.map((fieldName) => ({
-                key:
-                    fieldName === 'Name'
-                        ? `${this.selectedRecordId}-Name-${this.formContractYear ?? ''}`
-                        : `${this.selectedRecordId}-${fieldName}`,
-                name: fieldName,
-                value: this.getFieldValueForForm(fieldName)
-            }))
-        }));
-    }
-
-    getFieldValueForForm(fieldName) {
-        const draftValue = this.getDraftFieldValue(this.selectedRecordId, fieldName);
-        if (draftValue !== undefined) {
-            return draftValue;
-        }
-
-        if (this.isTemplateSelected) {
-            return undefined;
-        }
-
-        return this.getSourceFieldValue(fieldName);
-    }
-
-    handleRecordSelect(event) {
-        const recordId = event.currentTarget.dataset.id;
-
-        if (!recordId || recordId === this.selectedRecordId) {
-            return;
-        }
-
-        this.saveCurrentDraftFromForm();
-
-        if (recordId === TEMPLATE_RECORD_ID) {
-            this.selectedRecordId = TEMPLATE_RECORD_ID;
-            this.sourceRecord = undefined;
-            this.formContractYear = this.getDraftFieldValue(
-                TEMPLATE_RECORD_ID,
-                'Contract_Year__c'
-            );
-            this.isRecordLoading = false;
-            this._fieldsAppliedKey = undefined;
-            return;
-        }
-
-        this.isRecordLoading = true;
-        this.selectedRecordId = recordId;
-
-        const draft = this.getDraftForRecord(recordId);
-        this.formContractYear =
-            draft?.Contract_Year__c !== undefined ? draft.Contract_Year__c : undefined;
-        this._fieldsAppliedKey = undefined;
-    }
-
-    handleApplyToAll() {
-        this.saveCurrentDraftFromForm();
-
-        const sharedValues = this.extractNonEmptyDraftValues(
-            this.recordDrafts[TEMPLATE_RECORD_ID]
-        );
-
-        if (!Object.keys(sharedValues).length) {
-            this.dispatchEvent(
-                new ShowToastEvent({
-                    title: 'Nothing to apply',
-                    message: 'Fill in at least one common field on the template first.',
-                    variant: 'warning'
-                })
-            );
-            return;
-        }
-
-        this.pendingBulkValues = { ...sharedValues };
-        const updatedDrafts = { ...this.recordDrafts };
-
-        this._recordIds.forEach((recordId) => {
-            const existingDraft = { ...(updatedDrafts[recordId] || {}) };
-            this.applyBulkValuesToDraft(recordId, existingDraft, sharedValues);
-            updatedDrafts[recordId] = existingDraft;
-        });
-
-        this.recordDrafts = updatedDrafts;
-
-        if (this.isRealRecordSelected) {
-            const activeDraft = updatedDrafts[this.selectedRecordId];
-            if (activeDraft?.Contract_Year__c !== undefined) {
-                this.formContractYear = activeDraft.Contract_Year__c;
-            }
-            this._fieldsAppliedKey = undefined;
-            Promise.resolve().then(() => this.applyFormFieldValues());
-        }
-
-        this.dispatchEvent(
-            new ShowToastEvent({
-                title: 'Applied to all',
-                message: `Shared values applied to ${this._recordIds.length} record(s).`,
-                variant: 'success'
-            })
-        );
-    }
-
-    handleFieldChange(event) {
-        const field = event.currentTarget;
-        const fieldName = field?.fieldName;
-        const value = event.detail?.value ?? field.value;
-
-        if (!fieldName || !this.selectedRecordId) {
-            return;
-        }
-
-        this.ensureDraftInitialized(this.selectedRecordId);
-        this.updateDraftField(fieldName, value);
-
-        if (this.isContractBid && fieldName === 'Contract_Year__c') {
-            this.formContractYear = value;
-
-            if (this.isRealRecordSelected) {
-                const draft = {
-                    ...(this.recordDrafts[this.selectedRecordId] || {}),
-                    Contract_Year__c: value
-                };
-                this.syncCloneNameInDraft(this.selectedRecordId, draft, value);
-                this.recordDrafts = {
-                    ...this.recordDrafts,
-                    [this.selectedRecordId]: draft
-                };
-                this.applyCloneNameField();
-            }
-        }
-    }
-
-    renderedCallback() {
-        this.applyFormFieldValues();
-    }
-
-    applyCloneNameField() {
-        const nameValue = this.getFieldValueForForm('Name');
-        if (nameValue === undefined) {
-            return;
-        }
-
-        this.template.querySelectorAll('lightning-input-field').forEach((field) => {
-            if (field.fieldName === 'Name') {
-                field.value = nameValue;
-            }
-        });
-    }
-
-    applyFormFieldValues() {
-        if (!this.isLayoutReady) {
-            return;
-        }
-
-        if (this.isTemplateSelected) {
-            this.ensureTemplateDraft();
-        } else if (!this.sourceRecord) {
-            return;
-        } else {
-            this.ensureDraftInitialized(this.selectedRecordId);
-        }
-
-        if (this._fieldsAppliedKey === this.selectedRecordId) {
-            return;
-        }
-
-        this.template.querySelectorAll('lightning-input-field').forEach((field) => {
-            const value = this.getFieldValueForForm(field.fieldName);
-            if (value !== undefined && value !== null) {
-                field.value = value;
-            } else if (this.isTemplateSelected) {
-                field.value = null;
-            }
-        });
-
-        this._fieldsAppliedKey = this.selectedRecordId;
-    }
-
-    handleRecordKeydown(event) {
-        if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            this.handleRecordSelect(event);
-        }
-    }
-
-    getRecordLabel(index, id) {
-        if (Array.isArray(this.recordNames) && this.recordNames[index]) {
-            return this.recordNames[index];
-        }
-
-        return id;
-    }
-
-    get selectedRecordLabel() {
-        if (this.isTemplateSelected) {
-            return '';
-        }
-
-        const index = this._recordIds.indexOf(this.selectedRecordId);
-
-        if (index === -1) {
-            return '';
-        }
-
-        return this.getRecordLabel(index, this.selectedRecordId);
-    }
-
-    get selectedRecordCloneLabel() {
-        if (!this.isContractBid) {
-            return this.selectedRecordLabel;
-        }
-
-        return this.cloneNamePreview || this.selectedRecordLabel;
+    get isRealRecordSelected() {
+        return Boolean(this.selectedRecordId) && !this.isTemplateSelected;
     }
 
     get count() {
@@ -936,42 +311,165 @@ export default class MassCloneBase extends LightningElement {
         );
     }
 
-    get recordLoadErrorMessage() {
-        if (!this.recordLoadError) {
-            return null;
+    get isEditStep() {
+        return this.currentStep === STEP_EDIT;
+    }
+
+    get isReviewStep() {
+        return this.currentStep === STEP_REVIEW;
+    }
+
+    get selectedRecordLabel() {
+        if (this.isTemplateSelected) {
+            return '';
+        }
+        const index = this._recordIds.indexOf(this.selectedRecordId);
+        if (index === -1) {
+            return '';
+        }
+        return this.recordNames[index] || this.selectedRecordId;
+    }
+
+    get cloneNamePreview() {
+        if (!this.isRealRecordSelected) {
+            return '';
         }
 
-        return (
-            this.recordLoadError.body?.message ||
-            this.recordLoadError.message ||
-            'Unable to load selected record values.'
-        );
+        const draft = this.drafts[this.selectedRecordId];
+        const sourceValues = this.sourceRecord
+            ? this.buildSourceValuesFromRecord(this.sourceRecord)
+            : {};
+
+        return this.cloneRule.deriveName(draft, sourceValues);
+    }
+
+    buildSourceValuesFromRecord(sourceRecord) {
+        if (!sourceRecord || !this.objectApiName) {
+            return {};
+        }
+
+        const values = { Name: getFieldValue(sourceRecord, `${this.objectApiName}.Name`) };
+        this.cloneRule.fieldsToLoad.forEach((fieldName) => {
+            values[fieldName] = getFieldValue(sourceRecord, `${this.objectApiName}.${fieldName}`);
+        });
+        return values;
+    }
+
+    get formFieldValues() {
+        const values = {};
+        this.resolvedFieldNames.forEach((fieldName) => {
+            values[fieldName] = this.getFieldValueForForm(fieldName);
+        });
+        return values;
+    }
+
+    getFieldValueForForm(fieldName) {
+        const draftValue = this.drafts[this.selectedRecordId]?.[fieldName];
+        if (draftValue !== undefined) {
+            return draftValue;
+        }
+
+        if (this.isTemplateSelected) {
+            return undefined;
+        }
+
+        return this.sourceRecord
+            ? getFieldValue(this.sourceRecord, `${this.objectApiName}.${fieldName}`)
+            : undefined;
+    }
+
+    async loadAllSourceSnapshots() {
+        if (!this.objectApiName || !this._recordIds.length) {
+            return;
+        }
+
+        const fieldNames = this.getSourceSnapshotFieldNames();
+        if (!fieldNames.length) {
+            return;
+        }
+
+        try {
+            const valuesJson = await getRecordFieldValuesJson({
+                objectApiName: this.objectApiName,
+                recordIds: [...this._recordIds],
+                fieldNames
+            });
+            const valuesByRecordId = JSON.parse(valuesJson || '{}');
+
+            const newSnapshots = { ...this.sourceSnapshots };
+            this._recordIds.forEach((recordId) => {
+                const sourceValues = valuesByRecordId[recordId] || {};
+                newSnapshots[recordId] = sourceValues;
+            });
+            this.sourceSnapshots = newSnapshots;
+            this.refreshDraftNames();
+        } catch (error) {
+            // Source snapshots are a best-effort optimization for name previews.
+            // Failure here should not block the user from continuing.
+        }
+    }
+
+    getSourceSnapshotFieldNames() {
+        return [...new Set(['Name', ...this.cloneRule.fieldsToLoad])];
+    }
+
+    refreshDraftNames() {
+        const names = {};
+        this._recordIds.forEach((recordId) => {
+            const draft = this.drafts[recordId];
+            const sourceValues = this.sourceSnapshots[recordId] || {};
+            const derivedName = this.cloneRule.deriveName(draft, sourceValues);
+            if (derivedName) {
+                names[recordId] = derivedName;
+            }
+        });
+        this.draftNames = names;
+    }
+
+    get recordLoadErrorMessage() {
+        return this.recordLoadError?.body?.message || this.recordLoadError?.message || null;
     }
 
     get layoutErrorMessage() {
-        if (!this.layoutError) {
-            return null;
-        }
-
-        return (
-            this.layoutError.body?.message ||
-            this.layoutError.message ||
-            'Unable to load page layout fields for this object.'
-        );
+        return this.layoutError?.body?.message || this.layoutError?.message || null;
     }
 
-    buildDraftFromFieldMap(recordId, fieldMap) {
-        const draft = {};
+    get reviewRows() {
+        return this._reviewRows;
+    }
 
-        this.resolvedFieldNames.forEach((fieldName) => {
-            draft[fieldName] = this.getSourceFieldValueFromMap(fieldName, fieldMap);
-        });
+    get hasReviewRows() {
+        return this._reviewRows.length > 0;
+    }
 
-        if (this.pendingBulkValues) {
-            this.applyBulkValuesToDraft(recordId, draft, this.pendingBulkValues);
+    get reviewSummaryText() {
+        return buildReviewSummary(this._reviewRows.length);
+    }
+
+    refreshReviewRows() {
+        this._reviewRows = buildReviewRows(this.clonePayloadJson, this.objectApiName);
+    }
+
+    get isCreateDisabled() {
+        return this.isCreatingRecords || this.createCompleted;
+    }
+
+    get showPanelStatus() {
+        return Boolean(this.panelStatusMessage);
+    }
+
+    get panelStatusClass() {
+        const base = 'panel-status';
+        if (this.panelStatusVariant === 'success') {
+            return `${base} panel-status_success`;
         }
-
-        return draft;
+        if (this.panelStatusVariant === 'warning') {
+            return `${base} panel-status_warning`;
+        }
+        if (this.panelStatusVariant === 'error') {
+            return `${base} panel-status_error`;
+        }
+        return base;
     }
 
     getDraftFieldNamesForLoad() {
@@ -982,122 +480,39 @@ export default class MassCloneBase extends LightningElement {
             if (!fieldName || seen.has(fieldName) || SYSTEM_FIELDS.has(fieldName)) {
                 return;
             }
-
             if (this.objectInfo) {
                 const fieldDef = this.objectInfo.fields[fieldName];
                 if (fieldDef && !fieldDef.createable && fieldName !== 'Name') {
                     return;
                 }
             }
-
             seen.add(fieldName);
             fieldNames.push(fieldName);
         };
 
-        PREVIEW_FIELDS.forEach(addField);
+        this.cloneRule.previewFields.forEach(addField);
+        this.cloneRule.fieldsToLoad.forEach(addField);
         this.resolvedFieldNames.forEach(addField);
 
-        if (this.isContractBid) {
-            addField('Contract_Year__c');
-        }
-
-        return fieldNames.slice(0, 60);
+        return fieldNames.slice(0, MAX_FIELDS_PER_LOAD);
     }
 
     getRequiredFieldNamesForCreate() {
-        const required = ['Name', 'Customer__c'];
-
-        if (this.isContractBid) {
-            required.push('Contract_Year__c', 'Stage__c');
-        }
-
-        if (this.objectInfo) {
-            this.resolvedFieldNames.forEach((fieldName) => {
-                const fieldDef = this.objectInfo.fields[fieldName];
-                if (fieldDef?.required && fieldDef?.createable && !required.includes(fieldName)) {
-                    required.push(fieldName);
-                }
-            });
-        }
-
-        return [...new Set(required)];
+        return [...new Set([...this.cloneRule.requiredFields])];
     }
 
-    async ensureRequiredSourceFields() {
-        const requiredFields = this.getRequiredFieldNamesForCreate();
-        const recordIdsNeedingLoad = this._recordIds.filter((recordId) => {
-            const draft = this.recordDrafts[recordId] || {};
-            return requiredFields.some((fieldName) =>
-                this.isEmptyFieldValue(draft[fieldName])
-            );
-        });
-
-        if (!recordIdsNeedingLoad.length) {
-            return;
+    normalizeFieldValue(value) {
+        if (value === undefined || value === null || value === '') {
+            return undefined;
         }
-
-        const valuesJson = await getRecordFieldValuesJson({
-            objectApiName: this.objectApiName,
-            recordIds: recordIdsNeedingLoad,
-            fieldNames: requiredFields
-        });
-        const valuesByRecordId = JSON.parse(valuesJson || '{}');
-        const updatedDrafts = { ...this.recordDrafts };
-
-        recordIdsNeedingLoad.forEach((recordId) => {
-            updatedDrafts[recordId] = this.mergeDraftWithSourceValues(
-                recordId,
-                updatedDrafts[recordId],
-                valuesByRecordId[recordId] || {}
-            );
-        });
-
-        this.recordDrafts = updatedDrafts;
-    }
-
-    mergeDraftWithSourceValues(recordId, draft, sourceValues) {
-        const merged = { ...(draft || {}) };
-
-        this.resolvedFieldNames.forEach((fieldName) => {
-            if (!this.isEmptyFieldValue(merged[fieldName])) {
-                return;
-            }
-
-            merged[fieldName] = this.getSourceFieldValueFromMap(fieldName, sourceValues);
-        });
-
-        if (this.pendingBulkValues) {
-            this.applyBulkValuesToDraft(recordId, merged, this.pendingBulkValues);
+        if (typeof value === 'object') {
+            return value.id || value.value || undefined;
         }
-
-        return merged;
-    }
-
-    async ensureAllDraftsReady() {
-        this.saveCurrentDraftFromForm();
-
-        const valuesJson = await getRecordFieldValuesJson({
-            objectApiName: this.objectApiName,
-            recordIds: [...this._recordIds],
-            fieldNames: this.getDraftFieldNamesForLoad()
-        });
-        const valuesByRecordId = JSON.parse(valuesJson || '{}');
-        const updatedDrafts = { ...this.recordDrafts };
-
-        this._recordIds.forEach((recordId) => {
-            updatedDrafts[recordId] = this.mergeDraftWithSourceValues(
-                recordId,
-                updatedDrafts[recordId],
-                valuesByRecordId[recordId] || {}
-            );
-        });
-
-        this.recordDrafts = updatedDrafts;
+        return value;
     }
 
     buildPayloadFields(draft) {
         const fields = {};
-
         if (!draft) {
             return fields;
         }
@@ -1106,12 +521,10 @@ export default class MassCloneBase extends LightningElement {
             if (SYSTEM_FIELDS.has(fieldName)) {
                 return;
             }
-
             const fieldDef = this.objectInfo?.fields?.[fieldName];
             if (fieldDef && !fieldDef.createable) {
                 return;
             }
-
             const value = this.normalizeFieldValue(draft[fieldName]);
             if (value !== undefined) {
                 fields[fieldName] = value;
@@ -1133,7 +546,6 @@ export default class MassCloneBase extends LightningElement {
             if (Object.prototype.hasOwnProperty.call(fields, fieldName)) {
                 return;
             }
-
             const value = this.normalizeFieldValue(draft[fieldName]);
             if (value !== undefined) {
                 fields[fieldName] = value;
@@ -1146,8 +558,8 @@ export default class MassCloneBase extends LightningElement {
     publishClonePayload() {
         const payloads = this._recordIds.map((sourceId, index) => ({
             sourceId,
-            sourceName: this.getRecordLabel(index, sourceId),
-            fields: this.buildPayloadFields(this.recordDrafts[sourceId])
+            sourceName: this.recordNames[index] || sourceId,
+            fields: this.buildPayloadFields(this.drafts[sourceId])
         }));
 
         this.clonePayloadJson = JSON.stringify(payloads);
@@ -1176,42 +588,152 @@ export default class MassCloneBase extends LightningElement {
         );
     }
 
-    @api
-    validate() {
-        if (!this.hasRecords) {
-            return {
-                isValid: false,
-                errorMessage: 'Select at least one record to clone.'
-            };
+    handleRecordSelect(event) {
+        const recordId = event.detail.recordId;
+        if (!recordId || recordId === this.selectedRecordId) {
+            return;
         }
 
-        if (this.currentStep === STEP_EDIT) {
-            return {
-                isValid: false,
-                errorMessage: 'Click Review to preview all records before creating them.'
-            };
+        this.saveCurrentDraftFromForm();
+        this.selectedRecordId = recordId;
+        this.sourceRecord = undefined;
+        this.recordLoadError = undefined;
+        this.isRecordLoading = !this.isTemplateSelected;
+    }
+
+    handleFieldChange(event) {
+        const { fieldName, value } = event.detail;
+        if (!fieldName || !this.selectedRecordId) {
+            return;
         }
 
-        if (this.createCompleted) {
-            return { isValid: true };
+        this.setDraftValue(this.selectedRecordId, fieldName, value);
+
+        if (this.cloneRule.specialFields.includes(fieldName)) {
+            this.deriveNameForRecord(this.selectedRecordId);
         }
 
-        return {
-            isValid: false,
-            errorMessage: 'Click Create Records in the panel header to create the records.'
+        this.refreshDraftNames();
+    }
+
+    deriveNameForRecord(recordId) {
+        const draft = this.drafts[recordId];
+        const sourceValues = this.sourceSnapshots[recordId] || {};
+        const derivedName = this.cloneRule.deriveName(draft, sourceValues);
+
+        if (derivedName) {
+            this.setDraftValue(recordId, 'Name', derivedName);
+        }
+    }
+
+    handleApplyToAll() {
+        this.saveCurrentDraftFromForm();
+        this.ensureTemplate();
+        const sharedValues = this.extractNonEmptyTemplateValues(
+            this.drafts[TEMPLATE_RECORD_ID]
+        );
+
+        if (!Object.keys(sharedValues).length) {
+            this.dispatchEvent(
+                new ShowToastEvent({
+                    title: 'Nothing to apply',
+                    message: 'Fill in at least one common field on the template first.',
+                    variant: 'warning'
+                })
+            );
+            return;
+        }
+
+        this.applyBulkValues(this._recordIds, sharedValues);
+
+        this._recordIds.forEach((recordId) => {
+            this.deriveNameForRecord(recordId);
+        });
+
+        this.refreshDraftNames();
+
+        this.dispatchEvent(
+            new ShowToastEvent({
+                title: 'Applied to all',
+                message: `Shared values applied to ${this._recordIds.length} record(s).`,
+                variant: 'success'
+            })
+        );
+    }
+
+    saveCurrentDraftFromForm() {
+        const form = this.template.querySelector('c-mass-clone-form');
+        if (!form) {
+            return;
+        }
+        const values = form.readFieldValues();
+        Object.entries(values).forEach(([fieldName, value]) => {
+            this.setDraftValue(this.selectedRecordId, fieldName, value);
+        });
+        this.refreshDraftNames();
+    }
+
+    setDraftValue(recordId, fieldName, value) {
+        this.drafts = {
+            ...this.drafts,
+            [recordId]: { ...(this.drafts[recordId] || {}), [fieldName]: value }
         };
     }
 
-    extractErrorMessage(error) {
-        if (!error) {
-            return 'Unknown error';
+    setDraft(recordId, draft) {
+        this.drafts = {
+            ...this.drafts,
+            [recordId]: { ...draft }
+        };
+    }
+
+    ensureTemplate() {
+        if (!this.drafts[TEMPLATE_RECORD_ID]) {
+            this.drafts = {
+                ...this.drafts,
+                [TEMPLATE_RECORD_ID]: {}
+            };
+        }
+    }
+
+    applyBulkValues(recordIds, sharedValues) {
+        this.lastBulkValues = { ...sharedValues };
+        const newDrafts = { ...this.drafts };
+        recordIds.forEach((recordId) => {
+            newDrafts[recordId] = { ...(newDrafts[recordId] || {}), ...sharedValues };
+        });
+        this.drafts = newDrafts;
+    }
+
+    applyBulkValuesToDraft(draft) {
+        if (!this.lastBulkValues) {
+            return draft;
         }
 
-        if (Array.isArray(error.body)) {
-            return error.body.map((entry) => entry.message).join(' ');
+        const merged = { ...draft };
+        Object.entries(this.lastBulkValues).forEach(([fieldName, value]) => {
+            const currentValue = merged[fieldName];
+            if (currentValue === undefined || currentValue === null || currentValue === '') {
+                merged[fieldName] = value;
+            }
+        });
+
+        return merged;
+    }
+
+    extractNonEmptyTemplateValues(templateDraft) {
+        if (!templateDraft) {
+            return {};
         }
 
-        return error.body?.message || error.message || 'Unexpected error.';
+        const values = {};
+        Object.entries(templateDraft).forEach(([fieldName, value]) => {
+            if (!BULK_APPLY_EXCLUDED_FIELDS.has(fieldName) && value !== undefined && value !== null && value !== '') {
+                values[fieldName] = value;
+            }
+        });
+
+        return values;
     }
 
     async handleReview() {
@@ -1222,17 +744,17 @@ export default class MassCloneBase extends LightningElement {
         try {
             await this.ensureAllDraftsReady();
             this.publishClonePayload();
+            this.refreshReviewRows();
 
-            if (!this.reviewRows.length) {
-                this.panelStatusMessage =
-                    'No clone field values were found for the selected records.';
+            if (!this.hasReviewRows) {
+                this.panelStatusMessage = 'No clone field values were found for the selected records.';
                 this.panelStatusVariant = 'warning';
                 return;
             }
 
             this.currentStep = STEP_REVIEW;
         } catch (error) {
-            this.panelStatusMessage = this.extractErrorMessage(error);
+            this.panelStatusMessage = reduceErrors(error);
             this.panelStatusVariant = 'error';
         } finally {
             this.isPreparingReview = false;
@@ -1262,10 +784,10 @@ export default class MassCloneBase extends LightningElement {
             this.saveCurrentDraftFromForm();
             await this.ensureRequiredSourceFields();
             this.publishClonePayload();
+            this.refreshReviewRows();
 
-            if (!this.reviewRows.length) {
-                this.panelStatusMessage =
-                    'No clone field values were found for the selected records.';
+            if (!this.hasReviewRows) {
+                this.panelStatusMessage = 'No clone field values were found for the selected records.';
                 this.panelStatusVariant = 'warning';
                 return;
             }
@@ -1276,32 +798,131 @@ export default class MassCloneBase extends LightningElement {
             });
 
             this.publishCreateResult(result);
-
-            const successCount = result?.successCount ?? 0;
-            const failureCount = result?.failureCount ?? 0;
-            const errorMessage = result?.errorMessage || '';
-
-            if (successCount > 0 && !failureCount) {
-                this.createCompleted = true;
-                this.panelStatusMessage = `Successfully created ${successCount} record(s). Click Close to exit.`;
-                this.panelStatusVariant = 'success';
-            } else if (successCount > 0) {
-                this.createCompleted = true;
-                this.panelStatusMessage =
-                    errorMessage ||
-                    `Created ${successCount} record(s), ${failureCount} failed. Click Close to exit.`;
-                this.panelStatusVariant = 'warning';
-            } else {
-                this.panelStatusMessage =
-                    errorMessage ||
-                    'Unable to create records. No response details were returned from the server.';
-                this.panelStatusVariant = 'error';
-            }
+            this.setPanelStatusFromResult(result);
         } catch (error) {
-            this.panelStatusMessage = this.extractErrorMessage(error);
+            this.panelStatusMessage = reduceErrors(error);
             this.panelStatusVariant = 'error';
         } finally {
             this.isCreatingRecords = false;
         }
+    }
+
+    setPanelStatusFromResult(result) {
+        const successCount = result?.successCount ?? 0;
+        const failureCount = result?.failureCount ?? 0;
+        const errorMessage = result?.errorMessage || '';
+
+        if (successCount > 0 && !failureCount) {
+            this.createCompleted = true;
+            this.panelStatusMessage = `Successfully created ${successCount} record(s). Click Close to exit.`;
+            this.panelStatusVariant = 'success';
+        } else if (successCount > 0) {
+            this.createCompleted = true;
+            this.panelStatusMessage = errorMessage || `Created ${successCount} record(s), ${failureCount} failed. Click Close to exit.`;
+            this.panelStatusVariant = 'warning';
+        } else {
+            this.panelStatusMessage = errorMessage || 'Unable to create records. No response details were returned from the server.';
+            this.panelStatusVariant = 'error';
+        }
+    }
+
+    async ensureRequiredSourceFields() {
+        const requiredFields = this.getRequiredFieldNamesForCreate();
+        const recordIdsNeedingLoad = this._recordIds.filter((recordId) => {
+            const draft = this.drafts[recordId] || {};
+            return requiredFields.some((fieldName) => {
+                const value = draft[fieldName];
+                return value === undefined || value === null || value === '';
+            });
+        });
+
+        if (!recordIdsNeedingLoad.length) {
+            return;
+        }
+
+        const valuesJson = await getRecordFieldValuesJson({
+            objectApiName: this.objectApiName,
+            recordIds: recordIdsNeedingLoad,
+            fieldNames: requiredFields
+        });
+        const valuesByRecordId = JSON.parse(valuesJson || '{}');
+
+            recordIdsNeedingLoad.forEach((recordId) => {
+            const sourceValues = valuesByRecordId[recordId] || {};
+            let draft = this.drafts[recordId];
+            if (!draft) {
+                draft = this.applyBulkValuesToDraft({ __sourceName: sourceValues.Name });
+            }
+            const merged = this.mergeDraftWithSourceValues(recordId, draft, sourceValues);
+            this.setDraft(recordId, merged);
+        });
+        this.refreshDraftNames();
+    }
+
+    async ensureAllDraftsReady() {
+        this.saveCurrentDraftFromForm();
+
+        const valuesJson = await getRecordFieldValuesJson({
+            objectApiName: this.objectApiName,
+            recordIds: [...this._recordIds],
+            fieldNames: this.getDraftFieldNamesForLoad()
+        });
+        const valuesByRecordId = JSON.parse(valuesJson || '{}');
+
+        this._recordIds.forEach((recordId) => {
+            const sourceValues = valuesByRecordId[recordId] || {};
+            let draft = this.drafts[recordId];
+            if (!draft) {
+                draft = this.applyBulkValuesToDraft({ __sourceName: sourceValues.Name });
+            }
+            const merged = this.mergeDraftWithSourceValues(recordId, draft, sourceValues);
+            this.setDraft(recordId, merged);
+        });
+        this.refreshDraftNames();
+    }
+
+    mergeDraftWithSourceValues(recordId, draft, sourceValues) {
+        const merged = { ...(draft || {}), __sourceName: sourceValues?.Name };
+
+        [...this.resolvedFieldNames, ...this.cloneRule.fieldsToLoad].forEach((fieldName) => {
+            const value = merged[fieldName];
+            if (value !== undefined && value !== null && value !== '') {
+                return;
+            }
+            merged[fieldName] = sourceValues?.[fieldName];
+        });
+
+        const finalName = this.cloneRule.deriveName(merged, sourceValues);
+        if (finalName) {
+            merged.Name = finalName;
+        }
+
+        return merged;
+    }
+
+    @api
+    validate() {
+        if (!this.hasRecords) {
+            return {
+                isValid: false,
+                errorMessage: 'Select at least one record to clone.'
+            };
+        }
+
+        if (this.currentStep === STEP_EDIT) {
+            return {
+                isValid: false,
+                errorMessage: 'Click Review to preview all records before creating them.'
+            };
+        }
+
+        if (this.createCompleted) {
+            return { isValid: true };
+        }
+
+        return {
+            isValid: false,
+            errorMessage: 'Click Create Records in the panel header to create the records.'
+        };
     }
 }
