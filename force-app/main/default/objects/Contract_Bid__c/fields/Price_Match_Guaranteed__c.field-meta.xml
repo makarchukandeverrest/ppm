@@ -3,6 +3,7 @@
     <fullName>Price_Match_Guaranteed__c</fullName>
     <label>Price Match Guaranted (Yes/No)</label>
     <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
     <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>
     <type>Picklist</type>
