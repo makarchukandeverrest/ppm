@@ -28,7 +28,7 @@ public class UnifiedActivityControllerTest {
         return acc;
     }
 
-    private static UnifiedActivityController.ActivityPageResult getActivities(
+    private static UnifiedActivityModels.ActivityPageResult getActivities(
         Id recordId,
         String sortDirection,
         Integer pageSize,
@@ -48,7 +48,7 @@ public class UnifiedActivityControllerTest {
         );
     }
 
-    private static UnifiedActivityController.ActivityPageResult getActivities(
+    private static UnifiedActivityModels.ActivityPageResult getActivities(
         Id recordId,
         String sortDirection,
         Integer pageSize,
@@ -94,7 +94,7 @@ public class UnifiedActivityControllerTest {
         }
 
         Test.startTest();
-        UnifiedActivityController.ActivityPageResult result;
+        UnifiedActivityModels.ActivityPageResult result;
         System.runAs(u) {
             result = getActivities(acc.Id, 'DESC', 20, 0, 'All', null);
         }
@@ -107,16 +107,16 @@ public class UnifiedActivityControllerTest {
         Boolean foundTask = false;
         Boolean foundEvent = false;
         Boolean foundFeed = false;
-        for (UnifiedActivityController.ActivityItem item : result.items) {
-            if (item.type == UnifiedActivityController.TYPE_TASK) {
+        for (UnifiedActivityModels.ActivityItem item : result.items) {
+            if (item.type == UnifiedActivityMapper.TYPE_TASK) {
                 foundTask = true;
                 System.assertEquals('Test Task', item.title);
             }
-            if (item.type == UnifiedActivityController.TYPE_EVENT) {
+            if (item.type == UnifiedActivityMapper.TYPE_EVENT) {
                 foundEvent = true;
                 System.assertEquals('Test Event', item.title);
             }
-            if (item.type == UnifiedActivityController.TYPE_FEED) {
+            if (item.type == UnifiedActivityMapper.TYPE_FEED) {
                 foundFeed = true;
                 System.assert(!item.contentParts.isEmpty(), 'Feed item should have content parts');
                 System.assertEquals('text', item.contentParts[0].partType);
@@ -144,8 +144,8 @@ public class UnifiedActivityControllerTest {
         }
 
         Test.startTest();
-        UnifiedActivityController.ActivityPageResult firstPage;
-        UnifiedActivityController.ActivityPageResult secondPage;
+        UnifiedActivityModels.ActivityPageResult firstPage;
+        UnifiedActivityModels.ActivityPageResult secondPage;
         System.runAs(u) {
             firstPage = getActivities(acc.Id, 'DESC', 2, 0, 'All', null);
             secondPage = getActivities(acc.Id, 'DESC', 2, firstPage.nextOffset, 'All', null);
@@ -158,7 +158,7 @@ public class UnifiedActivityControllerTest {
         System.assertEquals(2, secondPage.items.size());
         System.assertEquals(true, secondPage.hasMore);
 
-        UnifiedActivityController.ActivityPageResult thirdPage = getActivities(
+        UnifiedActivityModels.ActivityPageResult thirdPage = getActivities(
             acc.Id,
             'DESC',
             2,
@@ -181,14 +181,14 @@ public class UnifiedActivityControllerTest {
         }
 
         Test.startTest();
-        UnifiedActivityController.ActivityPageResult result;
+        UnifiedActivityModels.ActivityPageResult result;
         System.runAs(u) {
-            result = getActivities(acc.Id, 'DESC', 20, 0, UnifiedActivityController.TYPE_TASK, null);
+            result = getActivities(acc.Id, 'DESC', 20, 0, UnifiedActivityMapper.TYPE_TASK, null);
         }
         Test.stopTest();
 
         System.assertEquals(1, result.totalCount);
-        System.assertEquals(UnifiedActivityController.TYPE_TASK, result.items[0].type);
+        System.assertEquals(UnifiedActivityMapper.TYPE_TASK, result.items[0].type);
     }
 
     @IsTest
@@ -201,7 +201,7 @@ public class UnifiedActivityControllerTest {
         insert new Task(WhoId = con.Id, Subject = 'Contact Task', Status = 'Not Started');
 
         Test.startTest();
-        UnifiedActivityController.ActivityPageResult result = getActivities(
+        UnifiedActivityModels.ActivityPageResult result = getActivities(
             con.Id,
             'DESC',
             20,
@@ -229,7 +229,7 @@ public class UnifiedActivityControllerTest {
         }
 
         Test.startTest();
-        UnifiedActivityController.ActivityPageResult result;
+        UnifiedActivityModels.ActivityPageResult result;
         System.runAs(u) {
             result = getActivities(acc.Id, 'DESC', 20, 0, 'All', null);
         }
@@ -243,8 +243,8 @@ public class UnifiedActivityControllerTest {
         Test.startTest();
         try {
             getActivities(null, 'DESC', 20, 0, 'All', null);
-            System.assert(false, 'Expected IllegalArgumentException');
-        } catch (UnifiedActivityController.IllegalArgumentException ex) {
+            System.assert(false, 'Expected UnifiedActivityException');
+        } catch (UnifiedActivityException ex) {
             System.assertEquals('recordId is required', ex.getMessage());
         }
         Test.stopTest();
@@ -255,7 +255,7 @@ public class UnifiedActivityControllerTest {
         Account acc = createTestAccount();
 
         Test.startTest();
-        UnifiedActivityController.ActivityPageResult result = getActivities(acc.Id, 'DESC', 20, 0, 'All', null);
+        UnifiedActivityModels.ActivityPageResult result = getActivities(acc.Id, 'DESC', 20, 0, 'All', null);
         Test.stopTest();
 
         System.assertNotEquals(null, result);
@@ -271,15 +271,15 @@ public class UnifiedActivityControllerTest {
         Test.startTest();
         try {
             UnifiedActivityController.createChatterPost(null, 'Hello', null);
-            System.assert(false, 'Expected IllegalArgumentException for null recordId');
-        } catch (UnifiedActivityController.IllegalArgumentException ex) {
+            System.assert(false, 'Expected UnifiedActivityException for null recordId');
+        } catch (UnifiedActivityException ex) {
             System.assertEquals('recordId is required', ex.getMessage());
         }
 
         try {
             UnifiedActivityController.createChatterPost(acc.Id, null, null);
-            System.assert(false, 'Expected IllegalArgumentException for blank body');
-        } catch (UnifiedActivityController.IllegalArgumentException ex) {
+            System.assert(false, 'Expected UnifiedActivityException for blank body');
+        } catch (UnifiedActivityException ex) {
             System.assertEquals('body is required', ex.getMessage());
         }
         Test.stopTest();
@@ -374,15 +374,15 @@ public class UnifiedActivityControllerTest {
         }
 
         Test.startTest();
-        UnifiedActivityController.ActivityPageResult result;
+        UnifiedActivityModels.ActivityPageResult result;
         System.runAs(u) {
-            result = getActivities(acc.Id, 'DESC', 20, 0, 'EmailMessage', null);
+            result = getActivities(acc.Id, 'DESC', 20, 0, UnifiedActivityMapper.TYPE_EMAIL, null);
         }
         Test.stopTest();
 
         System.assertEquals(1, result.items.size(), 'Expected one email activity');
         System.assertEquals(
-            UnifiedActivityController.TYPE_EMAIL,
+            UnifiedActivityMapper.TYPE_EMAIL,
             result.items[0].type
         );
         System.assertEquals(1, result.items[0].attachmentCount, 'Email should report one attachment');
@@ -399,7 +399,7 @@ public class UnifiedActivityControllerTest {
         }
 
         Test.startTest();
-        UnifiedActivityController.ActivityPageResult result;
+        UnifiedActivityModels.ActivityPageResult result;
         System.runAs(u) {
             result = getActivities(acc.Id, 'ASC', 20, 0, 'All', null);
         }
@@ -419,7 +419,7 @@ public class UnifiedActivityControllerTest {
         }
 
         Test.startTest();
-        UnifiedActivityController.ActivityPageResult result;
+        UnifiedActivityModels.ActivityPageResult result;
         System.runAs(u) {
             result = getActivities(acc.Id, 'DESC', 20, 0, 'All', 'Match me');
         }
@@ -437,7 +437,7 @@ public class UnifiedActivityControllerTest {
         insert new Task(WhatId = acc.Id, Subject = 'Account Task', Status = 'Not Started');
 
         Test.startTest();
-        UnifiedActivityController.ActivityPageResult result = getActivities(
+        UnifiedActivityModels.ActivityPageResult result = getActivities(
             con.Id,
             'DESC',
             20,
@@ -458,7 +458,7 @@ public class UnifiedActivityControllerTest {
         insert new Task(WhatId = acc.Id, Subject = 'Only', Status = 'Not Started');
 
         Test.startTest();
-        UnifiedActivityController.ActivityPageResult result = getActivities(acc.Id, 'DESC', 20, 100, 'All', null);
+        UnifiedActivityModels.ActivityPageResult result = getActivities(acc.Id, 'DESC', 20, 100, 'All', null);
         Test.stopTest();
 
         System.assertEquals(1, result.totalCount);
@@ -483,7 +483,7 @@ public class UnifiedActivityControllerTest {
         }
 
         Test.startTest();
-        UnifiedActivityController.ActivityPageResult result;
+        UnifiedActivityModels.ActivityPageResult result;
         System.runAs(u) {
             result = getActivities(acc.Id, 'DESC', 20, 0, 'All', null);
         }
@@ -528,7 +528,7 @@ public class UnifiedActivityControllerTest {
         System.runAs(u) {
             ConnectApi.ChatterFeeds.postFeedElement(null, input);
         }
-        UnifiedActivityController.ActivityPageResult result;
+        UnifiedActivityModels.ActivityPageResult result;
         System.runAs(u) {
             result = getActivities(acc.Id, 'DESC', 20, 0, 'All', null);
         }
@@ -555,7 +555,7 @@ public class UnifiedActivityControllerTest {
         }
 
         Test.startTest();
-        UnifiedActivityController.ActivityPageResult result;
+        UnifiedActivityModels.ActivityPageResult result;
         System.runAs(u) {
             result = getActivities(acc.Id, 'DESC', 20, 0, 'All', null);
         }
@@ -630,9 +630,9 @@ public class UnifiedActivityControllerTest {
         }
 
         Test.startTest();
-        UnifiedActivityController.ActivityPageResult result;
+        UnifiedActivityModels.ActivityPageResult result;
         System.runAs(u) {
-            result = getActivities(acc.Id, 'DESC', 20, 0, 'EmailMessage', null);
+            result = getActivities(acc.Id, 'DESC', 20, 0, UnifiedActivityMapper.TYPE_EMAIL, null);
         }
         Test.stopTest();
 
