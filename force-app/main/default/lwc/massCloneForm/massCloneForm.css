@@ -1,0 +1,22 @@
+.form-panel {
+    max-height: 55vh;
+    overflow-y: auto;
+    padding-bottom: 1rem;
+}
+
+.clone-name-preview {
+    padding: 0.75rem;
+    border: 1px solid var(--slds-g-color-border-base-1, #e5e5e5);
+    border-radius: 0.25rem;
+    background-color: var(--slds-g-color-neutral-base-95, #f3f3f3);
+}
+
+.clone-name-preview__value {
+    font-size: 0.875rem;
+    font-weight: 600;
+    word-break: break-word;
+}
+
+.review-button {
+    margin-left: auto;
+}

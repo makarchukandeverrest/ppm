@@ -1,0 +1,24 @@
+<template>
+    <div class="slds-grid slds-wrap slds-gutters slds-m-top_small slds-m-bottom_small">
+        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+            <lightning-combobox
+                label="Filter by type"
+                variant="label-hidden"
+                value={selectedType}
+                options={typeOptions}
+                placeholder="All Types"
+                onchange={handleTypeChange}>
+            </lightning-combobox>
+        </div>
+        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+            <lightning-input
+                type="search"
+                label="Search"
+                variant="label-hidden"
+                placeholder="Search activities..."
+                value={searchTerm}
+                onchange={handleSearchChange}>
+            </lightning-input>
+        </div>
+    </div>
+</template>

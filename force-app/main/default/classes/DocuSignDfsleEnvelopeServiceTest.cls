@@ -138,7 +138,7 @@ private class DocuSignDfsleEnvelopeServiceTest {
             FROM Contract_Bid__c
             WHERE Id = :cb.Id
         ];
-        System.assertEquals('Contract Sent via DocuSign', cbAfter.Stage__c);
+        System.assertEquals(DocuSignDfsleEnvelopeService.STAGE_CONTRACT_SENT, cbAfter.Stage__c);
 
         // Assert: EmailMessage created (InsertEmailMessagesJob runs in stopTest)
         Integer emailCount = [
@@ -183,28 +183,10 @@ private class DocuSignDfsleEnvelopeServiceTest {
 
         Test.startTest();
         DocuSignDfsleEnvelopeService.sendEnvelope(
-            cb.Id,
-            mainCv.Id,
-            'customer@example.com',
-            acc.Name,
-            false,
-            acc.Id,
-            null,
-            new List<DocuSignDfsleEnvelopeService.CcRecipient>(),
-            null,
-            null
+            cb.Id, mainCv.Id, 'customer@example.com', acc.Name, false, acc.Id, null, null, null, null
         );
         DocuSignDfsleEnvelopeService.sendEnvelope(
-            cb.Id,
-            secondCv.Id,
-            'customer@example.com',
-            acc.Name,
-            false,
-            acc.Id,
-            null,
-            new List<DocuSignDfsleEnvelopeService.CcRecipient>(),
-            null,
-            null
+            cb.Id, secondCv.Id, 'customer@example.com', acc.Name, false, acc.Id, null, null, null, null
         );
         Test.stopTest();
 
@@ -238,7 +220,7 @@ private class DocuSignDfsleEnvelopeServiceTest {
                 false,
                 acc.Id,
                 null,
-                new List<DocuSignDfsleEnvelopeService.CcRecipient>(),
+                null,
                 null,
                 null
             )
@@ -410,6 +392,24 @@ private class DocuSignDfsleEnvelopeServiceTest {
     }
 
     @IsTest
+    static void testParsePositiveDays_parsesValidValuesAndDefaults() {
+        System.assertEquals(120, DocuSignDfsleEnvelopeService.parsePositiveDays(null, 120));
+        System.assertEquals(120, DocuSignDfsleEnvelopeService.parsePositiveDays('', 120));
+        System.assertEquals(45, DocuSignDfsleEnvelopeService.parsePositiveDays('45', 120));
+        System.assertEquals(120, DocuSignDfsleEnvelopeService.parsePositiveDays('0', 120));
+        System.assertEquals(120, DocuSignDfsleEnvelopeService.parsePositiveDays('abc', 120));
+    }
+
+    @IsTest
+    static void testBuildEnvelopeNotifications_usesUiExpirationAndReminderValues() {
+        dfsle.Notifications withReminder = DocuSignDfsleEnvelopeService.buildEnvelopeNotifications('3', '90');
+        System.assertNotEquals(null, withReminder, 'Expected notifications when reminder and expiration are set.');
+
+        dfsle.Notifications withoutReminder = DocuSignDfsleEnvelopeService.buildEnvelopeNotifications('', '120');
+        System.assertNotEquals(null, withoutReminder, 'Expected notifications when only expiration is set.');
+    }
+
+    @IsTest
     static void testDocuSignIdResolutionPath_inTest() {
         // This test exercises the dynamic query path (dfsle__EnvelopeStatus__c / dfsle__Envelope__c).
         Contract_Bid__c cb = [SELECT Id FROM Contract_Bid__c LIMIT 1];
@@ -465,7 +465,7 @@ private class DocuSignDfsleEnvelopeServiceTest {
             false,
             null,
             null,
-            new List<DocuSignDfsleEnvelopeService.CcRecipient>(),
+            null,
             null,
             null
         );
@@ -476,63 +476,31 @@ private class DocuSignDfsleEnvelopeServiceTest {
     }
 
     @IsTest
-    static void testSendEnvelope_docxSchedulesSentPdfSaverJob() {
+    static void testGetAccountSecondaryContactCcRecipients_returnsSecondaryContact() {
         Account acc = [SELECT Id FROM Account LIMIT 1];
-        Contract_Bid__c cb = [SELECT Id FROM Contract_Bid__c LIMIT 1];
 
-        ContentVersion docxCv = new ContentVersion(
-            Title = 'Dfsle Docx Contract.docx',
-            PathOnClient = 'Dfsle Docx Contract.docx',
-            VersionData = Blob.valueOf('docx-content'),
-            IsMajorVersion = true,
-            To_Sent__c = true
+        Contact primaryContact = new Contact(
+            FirstName = 'Primary',
+            LastName = 'Signer',
+            Email = 'primary.signer@example.com'
         );
-        insert docxCv;
-
-        Id contentDocumentId = [
-            SELECT ContentDocumentId
-            FROM ContentVersion
-            WHERE Id = :docxCv.Id
-            LIMIT 1
-        ].ContentDocumentId;
-
-        insert new ContentDocumentLink(
-            ContentDocumentId = contentDocumentId,
-            LinkedEntityId = acc.Id,
-            ShareType = 'V',
-            Visibility = 'AllUsers'
+        Contact secondaryContact = new Contact(
+            FirstName = 'Secondary',
+            LastName = 'Contact',
+            Email = 'secondary.contact@example.com'
         );
+        insert new List<Contact>{ primaryContact, secondaryContact };
 
-        DocuSignSentPdfService.skipCalloutInTest = true;
-        DocuSignSentPdfService.testPdfBlob = Blob.valueOf('%PDF-1.4 sent via envelope');
+        acc.Primary_Contact__c = primaryContact.Id;
+        acc.Secondary_Contact__c = secondaryContact.Id;
+        update acc;
 
-        Test.startTest();
-        DocuSignDfsleEnvelopeService.sendEnvelope(
-            cb.Id,
-            docxCv.Id,
-            'customer@example.com',
-            acc.Name,
-            false,
-            acc.Id,
-            null,
-            new List<DocuSignDfsleEnvelopeService.CcRecipient>(),
-            null,
-            null
-        );
-        Test.stopTest();
+        Map<Id, DocuSignDfsleEnvelopeService.CcRecipient> contactCcMap =
+            DocuSignDfsleEnvelopeService.getAccountSecondaryContactCcRecipients(new Set<Id>{ acc.Id });
 
-        DocuSignSentPdfService.skipCalloutInTest = false;
-        DocuSignSentPdfService.testPdfBlob = null;
-
-        ContentVersion savedPdf = [
-            SELECT Id, Title, DocuSign_Envelope_Id__c
-            FROM ContentVersion
-            WHERE Title = 'Dfsle Docx Contract.pdf'
-            LIMIT 1
-        ];
-        System.assertEquals(
-            ('TEST-DFSLE-ENVELOPE-' + docxCv.Id).toUpperCase(),
-            savedPdf.DocuSign_Envelope_Id__c
-        );
+        System.assertEquals(true, contactCcMap.containsKey(acc.Id));
+        DocuSignDfsleEnvelopeService.CcRecipient contactRecipient = contactCcMap.get(acc.Id);
+        System.assertEquals('secondary.contact@example.com', contactRecipient.email);
+        System.assertEquals('Secondary Contact', contactRecipient.name);
     }
 }

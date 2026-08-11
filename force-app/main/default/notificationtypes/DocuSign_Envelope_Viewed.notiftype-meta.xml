@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomNotificationType xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customNotifTypeName>DocuSign Envelope Viewed</customNotifTypeName>
+    <description>Internal Salesforce notification when a DocuSign recipient views an envelope.</description>
+    <desktop>true</desktop>
+    <masterLabel>DocuSign Envelope Viewed</masterLabel>
+    <mobile>true</mobile>
+    <slack>false</slack>
+</CustomNotificationType>
