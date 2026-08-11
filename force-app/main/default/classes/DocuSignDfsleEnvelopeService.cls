@@ -40,6 +40,8 @@ public with sharing class DocuSignDfsleEnvelopeService {
 
     @TestVisible
     private static final String STAGE_CONTRACT_SENT = 'Contract Sent via DocuSign';
+    private static final String STAGE_PROPOSAL_REVIEW = 'Proposal/Review';
+    private static final String STAGE_CLOSED_WON = 'Closed - WON';
     private static final String STAGE_REFERENCE_ACTIVE_STAGES = 'Active_Stages';
     private static final String STATUS_EMAIL_DRAFT = '0';
     private static final String EMAIL_SUBJECT_TEMPLATE = 'Sent Contracts for {0}';
@@ -264,6 +266,12 @@ public with sharing class DocuSignDfsleEnvelopeService {
                 DocuSign_Envelope_Id__c = envelopeId.toUpperCase(),
                 To_Sent__c = false
             );
+
+            if (accountId != null && DocuSignSentPdfService.requiresSentPdfCopy(mainCv)) {
+                System.enqueueJob(
+                    new DocuSignSentPdfSaverJob(accountId, mainContentVersionId, envelopeId)
+                );
+            }
         }
 
         return envelopeId;
@@ -274,7 +282,7 @@ public with sharing class DocuSignDfsleEnvelopeService {
 
     private static ContentVersion queryMainContentVersion(Id mainContentVersionId) {
         List<ContentVersion> contentVersions = [
-            SELECT Title
+            SELECT Title, FileExtension
             FROM ContentVersion
             WHERE Id = :mainContentVersionId
             LIMIT 1
@@ -664,8 +672,16 @@ public with sharing class DocuSignDfsleEnvelopeService {
                 true,
                 false
             ),
-            null,
-            null
+            new Map<String, Map<String, Object>>{
+                dfsle.Envelope.STATUS_COMPLETED => new Map<String, Object>{
+                    'Contract_Bid__c.Stage__c' => STAGE_CLOSED_WON
+                }
+            },
+            new Map<String, Map<String, Object>>{
+                dfsle.Recipient.STATUS_DELIVERED => new Map<String, Object>{
+                    'Contract_Bid__c.Stage__c' => STAGE_PROPOSAL_REVIEW
+                }
+            }
         );
     }
 
