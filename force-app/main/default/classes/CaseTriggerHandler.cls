@@ -9,11 +9,13 @@ public with sharing class CaseTriggerHandler extends TriggerHandler {
 
     protected override void beforeInsert() {
         List<Case> emptyContactCases = new List<Case>();
+
         for (Case c : newList) {
             if (c.ContactId == null) {
                 emptyContactCases.add(c);
             }
         }
+        
         if (!emptyContactCases.isEmpty()) {
             CaseEmptyContactFiller.fillEmptyContactByCustomer(emptyContactCases);
         }
