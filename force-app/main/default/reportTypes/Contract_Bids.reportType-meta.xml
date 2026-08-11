@@ -186,6 +186,11 @@
             <field>Contract_Year__c</field>
             <table>Contract_Bid__c</table>
         </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Sent_Contract_Date__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
         <masterLabel>Contract Bids</masterLabel>
     </sections>
 </ReportType>

@@ -35,8 +35,8 @@ IF(INCLUDES(Label__c, &quot;Warm Lead&quot;),
 IMAGE(&quot;/resource/Orange&quot;, &quot;Warm Lead&quot;, 30, 30) &amp; &quot; Warm Lead &quot;,
 &quot;&quot;) &amp;
 
-IF(INCLUDES(Label__c, &quot;Assumptive Lead&quot;),
-IMAGE(&quot;/resource/Grey&quot;, &quot;Assumptive Lead&quot;, 30, 30) &amp; &quot; Assumptive Lead &quot;,
+IF(INCLUDES(Label__c, &quot;Assumptive Bid&quot;),
+IMAGE(&quot;/resource/Grey&quot;, &quot;Assumptive Bid&quot;, 30, 30) &amp; &quot; Assumptive Bid&quot;,
 &quot;&quot;) &amp;
 
 IF(INCLUDES(Label__c, &quot;Sales Form Lead&quot;),

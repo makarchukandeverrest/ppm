@@ -1,0 +1,32 @@
+<template>
+    <div class="slds-form-element">
+        <c-unified-activity-composer-header></c-unified-activity-composer-header>
+        <div class="slds-form-element__control">
+            <lightning-input-rich-text
+                value={body}
+                share-with-entity-id={recordId}
+                formats={richTextFormats}
+                onchange={handleBodyChange}
+                onimageupload={handleImageUpload}
+                onimageuploaderror={handleImageUploadError}
+                disabled={isPosting}>
+            </lightning-input-rich-text>
+        </div>
+    </div>
+    <div class="slds-m-top_small slds-grid slds-grid_align-end">
+        <lightning-button
+            label="Cancel"
+            variant="neutral"
+            onclick={handleCancel}
+            disabled={isPosting}
+            class="slds-m-right_x-small">
+        </lightning-button>
+        <lightning-button
+            label="Post"
+            variant="brand"
+            onclick={handlePost}
+            disabled={isDisabled}
+            loading={isPosting}>
+        </lightning-button>
+    </div>
+</template>

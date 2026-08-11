@@ -21,9 +21,9 @@
         <label>Need More Info</label>
     </customValue>
     <customValue>
-        <fullName>Assumptive Lead</fullName>
+        <fullName>Assumptive Bid</fullName>
         <default>false</default>
-        <label>Assumptive Lead</label>
+        <label>Assumptive Bid</label>
     </customValue>
     <customValue>
         <fullName>On Hold</fullName>

@@ -1,7 +1,8 @@
 public with sharing class DocuSignDfsleEnvelopeService {
 
-    private static final String ANCHOR_MAIN =
-        'Please initial page(s) 2, 3, 4 and 5 of this contract where indicated. ';
+    private static final String ANCHOR_MAIN = 'SECTION V. ACCEPTANCE OF PROPOSAL';
+
+    private static final String ANCHOR_OWNERS_INITIALS = 'Owner\'s Initials:';
 
     private static final String ENVELOPE_EMAIL_SUBJECT_PROPOSAL_LABEL = 'Premier Pool Management Proposal';
 
@@ -36,6 +37,32 @@ public with sharing class DocuSignDfsleEnvelopeService {
         'A timely and thorough winterization of your facility with ALL winterization chemicals included'
     };
 
+    @TestVisible
+    private static final String STAGE_CONTRACT_SENT = 'Contract Sent via DocuSign';
+    private static final String STAGE_PROPOSAL_REVIEW = 'Proposal/Review';
+    private static final String STAGE_CLOSED_WON = 'Closed - WON';
+    private static final String STAGE_REFERENCE_ACTIVE_STAGES = 'Active_Stages';
+    private static final String STATUS_EMAIL_DRAFT = '0';
+    private static final String EMAIL_SUBJECT_TEMPLATE = 'Sent Contracts for {0}';
+    private static final String EMAIL_TO_IDS_KEY = 'ToIds';
+
+    public class CcRecipient {
+        public String name;
+        public String email;
+
+        public CcRecipient(String name, String email) {
+            this.name = name;
+            this.email = email;
+        }
+    }
+
+    private static CcRecipient ccRecipientFromUser(User userRecord) {
+        if (userRecord == null) {
+            return null;
+        }
+        return new CcRecipient(userRecord.Name, userRecord.Email);
+    }
+
     public class DfsleEnvelopeSendRequest {
         public Id contractBidId;
         public Id mainContentVersionId;
@@ -43,7 +70,8 @@ public with sharing class DocuSignDfsleEnvelopeService {
         public String signerName;
         public Boolean isNewCustomer;
         public Id accountId;
-        public List<User> ccUsers;
+        public CcRecipient secondaryContact;
+        public List<CcRecipient> ccUsers;
         public String reminderValue;
         public String daysBeforeExpires;
 
@@ -54,7 +82,8 @@ public with sharing class DocuSignDfsleEnvelopeService {
             String signerName,
             Boolean isNewCustomer,
             Id accountId,
-            List<User> ccUsers,
+            CcRecipient secondaryContact,
+            List<CcRecipient> ccUsers,
             String reminderValue,
             String daysBeforeExpires
         ) {
@@ -64,6 +93,7 @@ public with sharing class DocuSignDfsleEnvelopeService {
             this.signerName = signerName;
             this.isNewCustomer = isNewCustomer;
             this.accountId = accountId;
+            this.secondaryContact = secondaryContact;
             this.ccUsers = ccUsers;
             this.reminderValue = reminderValue;
             this.daysBeforeExpires = daysBeforeExpires;
@@ -84,94 +114,110 @@ public with sharing class DocuSignDfsleEnvelopeService {
             List<AccountWithFiles>.class
         );
 
-        Set<Id> accountIds = new Set<Id>();
-        Set<Id> mainContentVersionIds = new Set<Id>();
-        List<Contract_Bid__c> contractsToUpdate = new List<Contract_Bid__c>();
-        Set<Id> contractIds = new Set<Id>();
-        List<EmailMessage> emailMessages = new List<EmailMessage>();
-        List<DfsleEnvelopeSendRequest> sendRequests = new List<DfsleEnvelopeSendRequest>();
-
-        for (AccountWithFiles acc : accountWithFilesList) {
-            if (acc == null) continue;
-            if (acc.accountId != null) accountIds.add(acc.accountId);
-            if (acc.files == null) continue;
-            for (FileWrapper file : acc.files) {
-                if (file != null && file.ToSent == true && file.Id != null) {
-                    mainContentVersionIds.add(file.Id);
-                }
-            }
+        if (accountWithFilesList == null || accountWithFilesList.isEmpty()) {
+            return;
         }
 
-        Map<Id, List<User>> accountToUsersMap = getAccountToUsersMap(accountIds);
+        EnvelopeSendContext context = new EnvelopeSendContext(accountWithFilesList);
 
-        List<User> defaultCcUsers = getDefaultCcUsers();
-
-        Map<Id, ContentVersion> cvById = new Map<Id, ContentVersion>();
-        if (!mainContentVersionIds.isEmpty()) {
-            cvById = new Map<Id, ContentVersion>([
-                SELECT Id
-                FROM ContentVersion
-                WHERE Id IN :mainContentVersionIds
-            ]);
-        }
+        Map<Id, List<CcRecipient>> accountToUsersMap = getAccountToUsersMap(context.accountIds);
+        Map<Id, CcRecipient> accountSecondaryContactMap = getAccountSecondaryContactCcRecipients(context.accountIds);
+        List<CcRecipient> defaultCcRecipients = getDefaultCcRecipients();
 
         for (AccountWithFiles acc : accountWithFilesList) {
             if (acc == null || acc.files == null) continue;
             if (acc.contract == null || acc.contract.Id == null) continue;
             if (String.isBlank(acc.email) || String.isBlank(acc.accountName)) continue;
 
-            List<User> ccUsers = new List<User>();
+            List<CcRecipient> ccUsers = new List<CcRecipient>();
             if (accountToUsersMap.containsKey(acc.accountId)) {
                 ccUsers.addAll(accountToUsersMap.get(acc.accountId));
             }
-            ccUsers.addAll(defaultCcUsers);
+            ccUsers.addAll(defaultCcRecipients);
+
+            CcRecipient secondaryContact = accountSecondaryContactMap.get(acc.accountId);
 
             for (FileWrapper file : acc.files) {
                 if (file == null || file.ToSent != true || file.Id == null) continue;
-                if (!cvById.containsKey(file.Id)) continue;
+                if (!context.cvById.containsKey(file.Id)) continue;
 
-                sendRequests.add(new DfsleEnvelopeSendRequest(
+                context.sendRequests.add(new DfsleEnvelopeSendRequest(
                     acc.contract.Id,
                     file.Id,
                     acc.email,
                     acc.accountName,
                     acc.newClient == true,
                     acc.accountId,
+                    secondaryContact,
                     ccUsers,
                     acc.reminderValue,
                     acc.daysBeforeExpires
                 ));
 
-                acc.contract.Stage__c = 'Contract Sent via DocuSign';
-                if (!contractIds.contains(acc.contract.Id)) {
-                    contractIds.add(acc.contract.Id);
-                    contractsToUpdate.add(acc.contract);
+                acc.contract.Stage__c = STAGE_CONTRACT_SENT;
+                if (!context.contractIds.contains(acc.contract.Id)) {
+                    context.contractIds.add(acc.contract.Id);
+                    context.contractsToUpdate.add(acc.contract);
                 }
 
-                EmailMessage emailMessage = new EmailMessage();
-                emailMessage.Status      = '0'; // Draft
-                emailMessage.RelatedToId = acc.contract.Id;
-                emailMessage.FromAddress = UserInfo.getUserEmail();
-                emailMessage.FromName    = UserInfo.getName();
-                emailMessage.Subject     = 'Sent Contracts for ' + acc.accountName;
-                emailMessage.ToIds       = new String[]{ acc.accountId };
-                emailMessage.ToAddress   = acc.email;
-                emailMessage.TextBody    = String.valueOf(file.ContentDocumentId);
-                emailMessages.add(emailMessage);
+                context.emailMessages.add(buildEmailMessage(acc, file));
             }
         }
 
-        if (!sendRequests.isEmpty()) {
-            Database.executeBatch(new BatchHttpSender(sendRequests), 1);
+        if (!context.sendRequests.isEmpty()) {
+            Database.executeBatch(new BatchHttpSender(context.sendRequests), 1);
         }
-        if (!emailMessages.isEmpty()) {
-            System.enqueueJob(new InsertEmailMessagesJob(emailMessages));
+        if (!context.emailMessages.isEmpty()) {
+            System.enqueueJob(new InsertEmailMessagesJob(context.emailMessages));
         }
-        if (!contractsToUpdate.isEmpty()) {
-            update contractsToUpdate;
+        if (!context.contractsToUpdate.isEmpty()) {
+            update context.contractsToUpdate;
         }
     }
 
+    private class EnvelopeSendContext {
+        private Set<Id> accountIds = new Set<Id>();
+        private Set<Id> mainContentVersionIds = new Set<Id>();
+        private List<Contract_Bid__c> contractsToUpdate = new List<Contract_Bid__c>();
+        private Set<Id> contractIds = new Set<Id>();
+        private List<EmailMessage> emailMessages = new List<EmailMessage>();
+        private List<DfsleEnvelopeSendRequest> sendRequests = new List<DfsleEnvelopeSendRequest>();
+        private Map<Id, ContentVersion> cvById = new Map<Id, ContentVersion>();
+
+        private EnvelopeSendContext(List<AccountWithFiles> accountWithFilesList) {
+            for (AccountWithFiles acc : accountWithFilesList) {
+                if (acc == null) continue;
+                if (acc.accountId != null) accountIds.add(acc.accountId);
+                if (acc.files == null) continue;
+                for (FileWrapper file : acc.files) {
+                    if (file != null && file.ToSent == true && file.Id != null) {
+                        mainContentVersionIds.add(file.Id);
+                    }
+                }
+            }
+
+            if (!mainContentVersionIds.isEmpty()) {
+                cvById = new Map<Id, ContentVersion>([
+                    SELECT Id
+                    FROM ContentVersion
+                    WHERE Id IN :mainContentVersionIds
+                ]);
+            }
+        }
+    }
+
+    private static EmailMessage buildEmailMessage(AccountWithFiles acc, FileWrapper file) {
+        EmailMessage emailMessage = new EmailMessage();
+        emailMessage.Status = STATUS_EMAIL_DRAFT;
+        emailMessage.RelatedToId = acc.contract.Id;
+        emailMessage.FromAddress = UserInfo.getUserEmail();
+        emailMessage.FromName = UserInfo.getName();
+        emailMessage.Subject = String.format(EMAIL_SUBJECT_TEMPLATE, new List<String>{ acc.accountName });
+        emailMessage.ToIds = new List<String>{ acc.accountId };
+        emailMessage.ToAddress = acc.email;
+        emailMessage.TextBody = String.valueOf(file.ContentDocumentId);
+        return emailMessage;
+    }
 
     public static String sendEnvelope(
         Id contractBidId,
@@ -180,7 +226,8 @@ public with sharing class DocuSignDfsleEnvelopeService {
         String signerName,
         Boolean isNewCustomer,
         Id accountId,
-        List<User> ccUsers,
+        CcRecipient secondaryContact,
+        List<CcRecipient> ccRecipients,
         String reminderValue,
         String daysBeforeExpires
     ) {
@@ -190,12 +237,10 @@ public with sharing class DocuSignDfsleEnvelopeService {
             new dfsle.Entity(contractBidId)
         );
 
-        ContentVersion mainCv = [
-            SELECT Title
-            FROM ContentVersion
-            WHERE Id = :mainContentVersionId
-            LIMIT 1
-        ];
+        ContentVersion mainCv = queryMainContentVersion(mainContentVersionId);
+        if (mainCv == null) {
+            throw new DocuSignEnvelopeException('ContentVersion not found for Id: ' + mainContentVersionId);
+        }
 
         String envelopeEmailSubject = buildEnvelopeEmailSubject(signerName, mainCv.Title);
         String envelopeEmailBody = resolveEnvelopeEmailBody(isNewCustomer, accountId);
@@ -207,20 +252,12 @@ public with sharing class DocuSignDfsleEnvelopeService {
         );
         env = env.withDocuments(docs);
         env = env.withRecipients(
-            buildRecipients(contractBidId, signerEmail, signerName, ccUsers)
+            buildRecipients(contractBidId, signerEmail, signerName, secondaryContact, ccRecipients)
         );
         env = env.withOptions(buildEnvelopeOptions(contractBidId));
         env = env.withNotifications(buildEnvelopeNotifications(reminderValue, daysBeforeExpires));
 
-        String envelopeId;
-        if (Test.isRunningTest() && FORCE_RESOLVE_DOCUSIGN_ID_IN_TEST == true) {
-            envelopeId = resolveDocuSignEnvelopeId(null, contractBidId);
-        } else if (Test.isRunningTest()) {
-            envelopeId = 'TEST-DFSLE-ENVELOPE-' + mainContentVersionId;
-        } else {
-            dfsle.Envelope sent = dfsle.EnvelopeService.sendEnvelope(env, true);
-            envelopeId = resolveDocuSignEnvelopeId(sent, contractBidId);
-        }
+        String envelopeId = sendOrMockEnvelope(env, mainContentVersionId, contractBidId);
 
         if (String.isNotBlank(envelopeId)) {
             update new ContentVersion(
@@ -228,9 +265,39 @@ public with sharing class DocuSignDfsleEnvelopeService {
                 DocuSign_Envelope_Id__c = envelopeId.toUpperCase(),
                 To_Sent__c = false
             );
+
+            if (accountId != null && DocuSignSentPdfService.requiresSentPdfCopy(mainCv)) {
+                System.enqueueJob(
+                    new DocuSignSentPdfSaverJob(accountId, mainContentVersionId, envelopeId)
+                );
+            }
         }
 
         return envelopeId;
+    }
+
+    private class DocuSignEnvelopeException extends Exception {
+    }
+
+    private static ContentVersion queryMainContentVersion(Id mainContentVersionId) {
+        List<ContentVersion> contentVersions = [
+            SELECT Title, FileExtension
+            FROM ContentVersion
+            WHERE Id = :mainContentVersionId
+            LIMIT 1
+        ];
+        return contentVersions.isEmpty() ? null : contentVersions[0];
+    }
+
+    private static String sendOrMockEnvelope(dfsle.Envelope env, Id mainContentVersionId, Id contractBidId) {
+        if (Test.isRunningTest() && FORCE_RESOLVE_DOCUSIGN_ID_IN_TEST == true) {
+            return resolveDocuSignEnvelopeId(null, contractBidId);
+        }
+        if (Test.isRunningTest()) {
+            return 'TEST-DFSLE-ENVELOPE-' + mainContentVersionId;
+        }
+        dfsle.Envelope sent = dfsle.EnvelopeService.sendEnvelope(env, true);
+        return resolveDocuSignEnvelopeId(sent, contractBidId);
     }
 
     @TestVisible
@@ -438,40 +505,41 @@ public with sharing class DocuSignDfsleEnvelopeService {
 
     @TestVisible
     private static List<dfsle.Tab> buildSignerTabs() {
+        // OWNER column — offsets from SECTION V header (right and down)
         dfsle.Tab.Anchor mainAnchor = new dfsle.Tab.Anchor(
             ANCHOR_MAIN,
             false,
-            false,
+            true,
             null,
             true,
-            false,
+            true,
             'pixels',
-            0,
-            -10
+            350,
+            48
         );
 
         dfsle.Tab.Anchor mainAnchorFullName = new dfsle.Tab.Anchor(
             ANCHOR_MAIN,
             false,
-            false,
+            true,
             null,
             true,
-            false,
+            true,
             'pixels',
-            -40,
-            20
+            325,
+            72
         );
 
         dfsle.Tab.Anchor mainAnchorDateSigned = new dfsle.Tab.Anchor(
             ANCHOR_MAIN,
             false,
-            false,
+            true,
             null,
             true,
-            false,
+            true,
             'pixels',
-            120,
-            20
+            480,
+            72
         );
 
         dfsle.Tab.Anchor initialAnchor = new dfsle.Tab.Anchor(
@@ -486,6 +554,18 @@ public with sharing class DocuSignDfsleEnvelopeService {
             10
         );
 
+        dfsle.Tab.Anchor ownersInitialsAnchor = new dfsle.Tab.Anchor(
+            ANCHOR_OWNERS_INITIALS,
+            false,
+            false,
+            null,
+            true,
+            false,
+            'pixels',
+            75,
+            15
+        );
+
         return new List<dfsle.Tab>{
             new dfsle.SignHereTab()
                 .withRequired(true)
@@ -497,7 +577,11 @@ public with sharing class DocuSignDfsleEnvelopeService {
                 .withAnchor(mainAnchorDateSigned),
             new dfsle.InitialHereTab()
                 .withScale(0.6)
-                .withAnchor(initialAnchor)
+                .withAnchor(initialAnchor),
+            new dfsle.InitialHereTab()
+                .withScale(0.6)
+                .withRequired(false)
+                .withAnchor(ownersInitialsAnchor)
         };
     }
 
@@ -506,45 +590,75 @@ public with sharing class DocuSignDfsleEnvelopeService {
         Id contractBidId,
         String signerEmail,
         String signerName,
-        List<User> ccUsers
+        CcRecipient secondaryContact,
+        List<CcRecipient> ccRecipients
     ) {
-        dfsle.Recipient signer = dfsle.Recipient.fromSource(
-            signerName,
-            signerEmail,
-            null,
-            'Signer',
-            new dfsle.Entity(contractBidId)
-        ).withTabs(buildSignerTabs());
+        List<dfsle.Recipient> recipients = new List<dfsle.Recipient>();
+        Set<String> seenEmails = new Set<String>();
+        Integer routingOrder = 1;
 
-        List<dfsle.Recipient> recipients = new List<dfsle.Recipient>{ signer };
-
-        if (ccUsers == null) {
-            return recipients;
+        if (secondaryContact != null && String.isNotBlank(secondaryContact.email)) {
+            addCarbonCopyRecipient(recipients, secondaryContact, seenEmails, routingOrder);
+            routingOrder++;
         }
 
-        Set<String> seenEmails = new Set<String>{ signerEmail.toLowerCase() };
-        for (User ccUser : ccUsers) {
-            if (ccUser == null || String.isBlank(ccUser.Email)) {
-                continue;
+        if (String.isNotBlank(signerEmail)) {
+            String signerEmailKey = signerEmail.toLowerCase();
+            if (!seenEmails.contains(signerEmailKey)) {
+                seenEmails.add(signerEmailKey);
+                recipients.add(
+                    dfsle.Recipient.fromSource(
+                        signerName,
+                        signerEmail,
+                        null,
+                        'Signer',
+                        new dfsle.Entity(contractBidId)
+                    )
+                        .withTabs(buildSignerTabs())
+                        .withRoutingOrder(routingOrder)
+                );
+                routingOrder++;
             }
-            String emailKey = ccUser.Email.toLowerCase();
-            if (seenEmails.contains(emailKey)) {
-                continue;
-            }
-            seenEmails.add(emailKey);
+        }
 
-            recipients.add(
-                dfsle.Recipient.fromSource(
-                    ccUser.Name,
-                    ccUser.Email,
-                    null,
-                    'Carbon Copy',
-                    null
-                ).withType(dfsle.Recipient.TYPE_CARBON_COPY)
-            );
+        if (ccRecipients != null) {
+            for (CcRecipient ccRecipient : ccRecipients) {
+                if (addCarbonCopyRecipient(recipients, ccRecipient, seenEmails, routingOrder)) {
+                    routingOrder++;
+                }
+            }
         }
 
         return recipients;
+    }
+
+    private static Boolean addCarbonCopyRecipient(
+        List<dfsle.Recipient> recipients,
+        CcRecipient ccRecipient,
+        Set<String> seenEmails,
+        Integer routingOrder
+    ) {
+        if (ccRecipient == null || String.isBlank(ccRecipient.email)) {
+            return false;
+        }
+        String emailKey = ccRecipient.email.toLowerCase();
+        if (seenEmails.contains(emailKey)) {
+            return false;
+        }
+        seenEmails.add(emailKey);
+
+        recipients.add(
+            dfsle.Recipient.fromSource(
+                ccRecipient.name,
+                ccRecipient.email,
+                null,
+                'Carbon Copy',
+                null
+            )
+                .withType(dfsle.Recipient.TYPE_CARBON_COPY)
+                .withRoutingOrder(routingOrder)
+        );
+        return true;
     }
 
     @TestVisible
@@ -557,8 +671,16 @@ public with sharing class DocuSignDfsleEnvelopeService {
                 true,
                 false
             ),
-            null,
-            null
+            new Map<String, Map<String, Object>>{
+                dfsle.Envelope.STATUS_COMPLETED => new Map<String, Object>{
+                    'Contract_Bid__c.Stage__c' => STAGE_CLOSED_WON
+                }
+            },
+            new Map<String, Map<String, Object>>{
+                dfsle.Recipient.STATUS_DELIVERED => new Map<String, Object>{
+                    'Contract_Bid__c.Stage__c' => STAGE_PROPOSAL_REVIEW
+                }
+            }
         );
     }
 
@@ -655,43 +777,79 @@ public with sharing class DocuSignDfsleEnvelopeService {
         return null;
     }
 
-    private static List<User> getDefaultCcUsers() {
+    private static List<CcRecipient> getDefaultCcRecipients() {
         try {
-            return [
-                SELECT Id, Name, Email
+            List<CcRecipient> recipients = new List<CcRecipient>();
+            for (User userRecord : [
+                SELECT Name, Email
                 FROM User
                 WHERE Name IN :DEFAULT_CC_USER_NAMES
                 AND IsActive = true
-            ];
+            ]) {
+                if (String.isNotBlank(userRecord.Email)) {
+                    recipients.add(ccRecipientFromUser(userRecord));
+                }
+            }
+            return recipients;
         } catch (Exception ex) {
-            return new List<User>();
+            System.debug(LoggingLevel.ERROR, 'Failed to load default CC recipients: ' + ex.getMessage());
+            return new List<CcRecipient>();
         }
     }
 
-    private static Map<Id, List<User>> getAccountToUsersMap(Set<Id> accountIds) {
-        Map<Id, List<User>> accountToUsersMap = new Map<Id, List<User>>();
+    @TestVisible
+    private static Map<Id, CcRecipient> getAccountSecondaryContactCcRecipients(Set<Id> accountIds) {
+        Map<Id, CcRecipient> accountSecondaryContactMap = new Map<Id, CcRecipient>();
+        if (accountIds == null || accountIds.isEmpty()) {
+            return accountSecondaryContactMap;
+        }
+
+        for (Account acc : [
+            SELECT
+                Id,
+                Secondary_Contact__r.Name,
+                Secondary_Contact__r.Email,
+                Secondary_Contact__r.Email__c
+            FROM Account
+            WHERE Id IN :accountIds
+        ]) {
+            Contact secondaryContact = acc.Secondary_Contact__r;
+            String secondaryEmail = resolveContactEmail(secondaryContact);
+            if (String.isBlank(secondaryEmail)) {
+                continue;
+            }
+
+            accountSecondaryContactMap.put(
+                acc.Id,
+                new CcRecipient(secondaryContact.Name, secondaryEmail)
+            );
+        }
+
+        return accountSecondaryContactMap;
+    }
+
+    @TestVisible
+    private static String resolveContactEmail(Contact contactRecord) {
+        if (contactRecord == null) {
+            return null;
+        }
+        if (String.isNotBlank(contactRecord.Email)) {
+            return contactRecord.Email;
+        }
+        return contactRecord.Email__c;
+    }
+
+    private static Map<Id, List<CcRecipient>> getAccountToUsersMap(Set<Id> accountIds) {
+        Map<Id, List<CcRecipient>> accountToUsersMap = new Map<Id, List<CcRecipient>>();
         if (accountIds == null || accountIds.isEmpty()) {
             return accountToUsersMap;
         }
 
         for (Id accountId : accountIds) {
-            accountToUsersMap.put(accountId, new List<User>());
+            accountToUsersMap.put(accountId, new List<CcRecipient>());
         }
 
-        Set<String> activeStages = new Set<String>();
-
-        StageReferenceSettings__mdt settings = [
-            SELECT Stage_Names__c
-            FROM StageReferenceSettings__mdt
-            WHERE DeveloperName = 'Active_Stages'
-            LIMIT 1
-        ];
-
-        if (settings != null && String.isNotBlank(settings.Stage_Names__c)) {
-            for (String s : settings.Stage_Names__c.split(',')) {
-                activeStages.add(s.trim());
-            }
-        }
+        Set<String> activeStages = resolveActiveStages();
 
         if (activeStages.isEmpty()) {
             return accountToUsersMap;
@@ -714,36 +872,58 @@ public with sharing class DocuSignDfsleEnvelopeService {
         ];
 
         for (Contract_Bid__c contract : contracts) {
-            List<User> users = accountToUsersMap.get(contract.Customer__c);
-            if (users == null) {
-                users = new List<User>();
-                accountToUsersMap.put(contract.Customer__c, users);
+            List<CcRecipient> recipients = accountToUsersMap.get(contract.Customer__c);
+            if (recipients == null) {
+                recipients = new List<CcRecipient>();
+                accountToUsersMap.put(contract.Customer__c, recipients);
             }
 
             Set<String> existingEmails = new Set<String>();
-            for (User existingUser : users) {
-                if (existingUser != null && String.isNotBlank(existingUser.Email)) {
-                    existingEmails.add(existingUser.Email.toLowerCase());
+            for (CcRecipient existingRecipient : recipients) {
+                if (existingRecipient != null && String.isNotBlank(existingRecipient.email)) {
+                    existingEmails.add(existingRecipient.email.toLowerCase());
                 }
             }
 
-            if (contract.Lead_Generator__c != null &&
-                String.isNotBlank(contract.Lead_Generator__r.Email) &&
-                !existingEmails.contains(contract.Lead_Generator__r.Email.toLowerCase())
-            ) {
-                users.add(contract.Lead_Generator__r);
-                existingEmails.add(contract.Lead_Generator__r.Email.toLowerCase());
-            }
-
-            if (contract.Lead_Owner__c != null &&
-                String.isNotBlank(contract.Lead_Owner__r.Email) &&
-                !existingEmails.contains(contract.Lead_Owner__r.Email.toLowerCase())
-            ) {
-                users.add(contract.Lead_Owner__r);
-                existingEmails.add(contract.Lead_Owner__r.Email.toLowerCase());
-            }
+            addCcRecipientFromUser(recipients, contract.Lead_Generator__r, existingEmails);
+            addCcRecipientFromUser(recipients, contract.Lead_Owner__r, existingEmails);
         }
 
         return accountToUsersMap;
+    }
+
+    private static Set<String> resolveActiveStages() {
+        Set<String> activeStages = new Set<String>();
+
+        StageReferenceSettings__mdt settings = [
+            SELECT Stage_Names__c
+            FROM StageReferenceSettings__mdt
+            WHERE DeveloperName = :STAGE_REFERENCE_ACTIVE_STAGES
+            LIMIT 1
+        ];
+
+        if (settings != null && String.isNotBlank(settings.Stage_Names__c)) {
+            for (String s : settings.Stage_Names__c.split(',')) {
+                activeStages.add(s.trim());
+            }
+        }
+
+        return activeStages;
+    }
+
+    private static void addCcRecipientFromUser(
+        List<CcRecipient> recipients,
+        User userRecord,
+        Set<String> existingEmails
+    ) {
+        if (userRecord == null || String.isBlank(userRecord.Email)) {
+            return;
+        }
+        String emailKey = userRecord.Email.toLowerCase();
+        if (existingEmails.contains(emailKey)) {
+            return;
+        }
+        recipients.add(ccRecipientFromUser(userRecord));
+        existingEmails.add(emailKey);
     }
 }

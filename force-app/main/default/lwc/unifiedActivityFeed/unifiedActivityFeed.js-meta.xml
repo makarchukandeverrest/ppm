@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+  <apiVersion>60.0</apiVersion>
+  <isExposed>true</isExposed>
+  <masterLabel>Unified Activity Feed</masterLabel>
+  <description>Displays Tasks, Events, Email Messages and Chatter posts in a single timeline.</description>
+  <targets>
+    <target>lightning__RecordPage</target>
+    <target>lightning__AppPage</target>
+    <target>lightning__HomePage</target>
+  </targets>
+  <targetConfigs>
+    <targetConfig targets="lightning__RecordPage">
+      <property
+        name="sortDirection"
+        type="String"
+        label="Default Sort Direction"
+        description="ASC or DESC. Default is DESC (newest first)."
+        default="DESC" />
+      <property
+        name="maxItems"
+        type="Integer"
+        label="Page Size"
+        description="Number of activities loaded per page. Default is 20."
+        default="20" />
+      <property
+        name="relatedRecordConfig"
+        type="String"
+        label="Related Record Fields"
+        description="Comma-separated lookup fields to include. Format: FieldApiName:Label. Example: Customer__c:Customer or AccountId:Account,ContactId:Contact. Leave empty for current record only."
+        default="" />
+      <property
+        name="currentRecordLabel"
+        type="String"
+        label="Current Record Label"
+        description="Optional label for activities on the current record. Defaults to the object label."
+        default="" />
+      <objects>
+        <object>Account</object>
+        <object>Contact</object>
+        <object>Opportunity</object>
+        <object>Contract_Bid__c</object>
+        <object>WorkOrder</object>
+      </objects>
+    </targetConfig>
+  </targetConfigs>
+</LightningComponentBundle>
