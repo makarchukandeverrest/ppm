@@ -1,0 +1,96 @@
+<template>
+    <lightning-card title={cardTitle} icon-name={iconName}>
+        <template if:true={isEditStep}>
+            <lightning-button
+                slot="actions"
+                variant="brand"
+                label="Review"
+                title="Review all records before creating them"
+                disabled={isPreparingReview}
+                onclick={handleReview}>
+            </lightning-button>
+        </template>
+        <template if:true={isReviewStep}>
+            <lightning-button
+                slot="actions"
+                variant="neutral"
+                label="Back to Edit"
+                title="Return to editing clone values"
+                onclick={handleBackToEdit}>
+            </lightning-button>
+            <lightning-button
+                slot="actions"
+                variant="brand"
+                label="Create Records"
+                title="Create all reviewed records"
+                disabled={isCreateDisabled}
+                onclick={handleCreateRecords}>
+            </lightning-button>
+        </template>
+
+        <div class="slds-p-around_medium slds-is-relative">
+            <template if:true={showPanelStatus}>
+                <div class={panelStatusClass} role="status">{panelStatusMessage}</div>
+            </template>
+
+            <template if:true={isPreparingReview}>
+                <lightning-spinner alternative-text="Preparing review" size="medium"></lightning-spinner>
+            </template>
+
+            <template if:true={isEditStep}>
+                <div class="slds-grid slds-gutters">
+                    <div class="slds-col slds-size_2-of-12">
+                        <c-mass-clone-record-list
+                            record-ids={recordIds}
+                            record-names={recordNames}
+                            selected-record-id={selectedRecordId}
+                            draft-names={draftNames}
+                            onselect={handleRecordSelect}>
+                        </c-mass-clone-record-list>
+                    </div>
+
+                    <div class="slds-col slds-size_10-of-12">
+                        <template if:true={showForm}>
+                            <c-mass-clone-form
+                                object-api-name={objectApiName}
+                                record-type-id={effectiveRecordTypeId}
+                                selected-record-id={selectedRecordId}
+                                selected-record-label={selectedRecordLabel}
+                                clone-name-preview={cloneNamePreview}
+                                form-sections={formSections}
+                                field-values={formFieldValues}
+                                is-ready={isLayoutReady}
+                                is-loading={isLayoutLoading}
+                                layout-error={layoutError}
+                                record-load-error={recordLoadError}
+                                is-reviewing={isPreparingReview}
+                                onfieldchange={handleFieldChange}
+                                onapplytoall={handleApplyToAll}
+                                onreview={handleReview}>
+                            </c-mass-clone-form>
+                        </template>
+
+                        <template if:false={showForm}>
+                            <p class="slds-text-color_weak">
+                                Object API name is required to show the create form.
+                            </p>
+                        </template>
+                    </div>
+                </div>
+            </template>
+
+            <template if:true={isReviewStep}>
+                <template if:true={isCreatingRecords}>
+                    <lightning-spinner alternative-text="Creating records" size="medium"></lightning-spinner>
+                </template>
+
+                <c-mass-clone-review
+                    clone-payload-json={clonePayloadJson}
+                    object-api-name={objectApiName}
+                    card-title="Ready to Create"
+                    oncreate={handleCreateRecords}>
+                </c-mass-clone-review>
+            </template>
+        </div>
+    </lightning-card>
+</template>

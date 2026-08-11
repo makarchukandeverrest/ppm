@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>65.0</apiVersion>
+    <isExposed>true</isExposed>
+    <targets>
+        <target>lightning__FlowScreen</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__FlowScreen">
+            <property
+                name="clonePayloadJson"
+                type="String"
+                label="Clone Payload JSON"
+                description="JSON array of records prepared by massCloneBase"
+                role="inputOnly"
+            />
+            <property
+                name="objectApiName"
+                type="String"
+                label="Object API Name"
+                description="API name of the object being cloned"
+                role="inputOnly"
+            />
+            <property
+                name="cardTitle"
+                type="String"
+                label="Card Title"
+                default="Review Records to Create"
+            />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

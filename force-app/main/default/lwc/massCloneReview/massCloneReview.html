@@ -1,0 +1,57 @@
+<template>
+    <lightning-card title={cardTitle} icon-name="standard:record_create">
+        <lightning-button
+            slot="actions"
+            variant="brand"
+            label="Create Records"
+            title="Create all reviewed records"
+            disabled={parseError}
+            onclick={handleCreateRecords}>
+        </lightning-button>
+        <div class="slds-p-around_medium">
+            <template if:true={parseError}>
+                <div class="slds-text-color_error slds-m-bottom_small">{parseError}</div>
+            </template>
+
+            <template if:true={hasRows}>
+                <p class="slds-text-body_regular slds-m-bottom_medium">{summaryText}</p>
+
+                <ul class="review-list">
+                    <template for:each={rows} for:item="row">
+                        <li key={row.id} class="review-item">
+                            <div class="review-item__header">
+                                <span class="slds-text-color_weak">{row.rowNumber}.</span>
+                                <span class="review-item__title">{row.newName}</span>
+                            </div>
+                            <div class="review-item__meta slds-text-color_weak">
+                                Source: {row.sourceName} · {row.fieldCount} field(s)
+                            </div>
+                            <template if:true={row.hasPreviewValues}>
+                                <dl class="review-item__fields">
+                                    <template for:each={row.previewValues} for:item="field">
+                                        <div key={field.key} class="review-item__field">
+                                            <dt>{field.label}</dt>
+                                            <dd>{field.value}</dd>
+                                        </div>
+                                    </template>
+                                </dl>
+                            </template>
+                        </li>
+                    </template>
+                </ul>
+            </template>
+
+            <template if:false={hasRows}>
+                <p class="slds-text-color_weak">
+                    No records are ready for creation.
+                    <template if:true={clonePayloadJson}>
+                        The clone payload was received but contained no records.
+                    </template>
+                    <template if:false={clonePayloadJson}>
+                        Go back and click Review again after editing the clone values.
+                    </template>
+                </p>
+            </template>
+        </div>
+    </lightning-card>
+</template>
