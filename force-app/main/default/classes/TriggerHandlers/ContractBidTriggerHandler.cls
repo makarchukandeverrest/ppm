@@ -21,8 +21,9 @@ public with sharing class ContractBidTriggerHandler extends TriggerHandler {
     bid.Sent_Contract_Date__c = null;
     bid.Lost_Reason__c = null;
     bid.Additional_Comments__c = null;
+    bid.EBD_Due_Date__c = null;
+    bid.Due_Date__c = null;
   }
-
   protected override void afterInsert() {
     List<Contract_Bid__c> wonBids = new List<Contract_Bid__c>();
     for (Contract_Bid__c bid : this.newList) {

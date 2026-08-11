@@ -166,6 +166,8 @@
     <pluralLabel>Contract Bids</pluralLabel>
     <searchLayouts>
         <listViewButtons>Send_Contracts</listViewButtons>
+        <listViewButtons>Mass_Send</listViewButtons>
+        <listViewButtons>Mass_Clone</listViewButtons>
         <searchResultsAdditionalFields>Version__c</searchResultsAdditionalFields>
         <searchResultsAdditionalFields>Customer__c</searchResultsAdditionalFields>
         <searchResultsAdditionalFields>Management_Company__c</searchResultsAdditionalFields>
