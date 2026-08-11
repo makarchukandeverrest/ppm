@@ -1,0 +1,56 @@
+<template>
+    <div class="slds-box slds-theme_default">
+        <c-unified-activity-feed-header
+            count-label={countLabel}
+            sort-icon={sortIcon}
+            sort-label={sortLabel}
+            onnewtask={handleNewTask}
+            onnewevent={handleNewEvent}
+            onnewemail={handleNewEmail}
+            onnewpost={handleNewPost}
+            onrefresh={handleRefresh}
+            onsorttoggle={handleSortToggle}>
+        </c-unified-activity-feed-header>
+
+        <c-unified-activity-feed-filters
+            selected-type={selectedType}
+            type-options={typeOptions}
+            search-term={searchTerm}
+            ontypechange={handleTypeChange}
+            onsearchchange={handleSearchChange}>
+        </c-unified-activity-feed-filters>
+
+        <c-unified-activity-feed-activity-list
+            activities={activities}
+            is-loading={isLoading}
+            is-loading-more={isLoadingMore}
+            show-load-more={showLoadMore}
+            empty-message={emptyMessage}
+            onitemclick={handleItemClick}
+            onimageclick={handleImageClick}
+            onloadmore={handleLoadMore}>
+        </c-unified-activity-feed-activity-list>
+
+        <!-- Chatter composer placeholder -->
+        <template if:true={showComposer}>
+            <section role="dialog" class="slds-modal slds-fade-in-open">
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <h2 class="slds-text-heading_medium">New Chatter Post</h2>
+                        <button class="slds-button slds-button_icon slds-modal__close" title="Close" onclick={handleComposerCancel}>
+                            <lightning-icon icon-name="utility:close" alternative-text="close" size="small"></lightning-icon>
+                        </button>
+                    </header>
+                    <div class="slds-modal__content slds-p-around_medium">
+                        <c-unified-activity-composer
+                            record-id={recordId}
+                            onsuccess={handleComposerSuccess}
+                            oncancel={handleComposerCancel}>
+                        </c-unified-activity-composer>
+                    </div>
+                </div>
+            </section>
+            <div class="slds-backdrop slds-backdrop_open"></div>
+        </template>
+    </div>
+</template>

@@ -265,4 +265,142 @@ private class InvoiceTriggerHandlerTest {
         }
         Test.stopTest();
     }
+
+    @isTest
+    static void testLinkByLinkedTxnJsonArray() {
+        Opportunity opp = [SELECT Id FROM Opportunity WHERE QuickBooks_Id__c = 'QB-PROP-001' LIMIT 1];
+        WorkOrder wo = [SELECT Id FROM WorkOrder WHERE Quick_Books_Id__c = 'QB-WO-001' LIMIT 1];
+
+        Invoice__c invoice = new Invoice__c(
+            Name = 'Test Customer A: Invoice LinkedTxn',
+            Quickbooks_LinkedTxn_JSON__c = '[{"TxnType":"Estimate","TxnID":"QB-PROP-001"},{"TxnType":"SalesOrder","TxnId":"QB-WO-001"}]',
+            Amount__c = 100,
+            Due_Date__c = Date.today()
+        );
+
+        Test.startTest();
+        insert invoice;
+        Test.stopTest();
+
+        Invoice__c inserted = [SELECT Proposal__c, Work_Order__c FROM Invoice__c WHERE Id = :invoice.Id];
+        System.assertEquals(opp.Id, inserted.Proposal__c, 'Should link proposal from JSON array');
+        System.assertEquals(wo.Id, inserted.Work_Order__c, 'Should link work order from JSON array');
+    }
+
+    @isTest
+    static void testLinkByLinkedTxnMap() {
+        Opportunity opp = [SELECT Id FROM Opportunity WHERE QuickBooks_Id__c = 'QB-PROP-002' LIMIT 1];
+
+        Invoice__c invoice = new Invoice__c(
+            Name = 'Test Customer B: Invoice LinkedTxn Map',
+            Quickbooks_LinkedTxn_JSON__c = '{"LinkedTxn":[{"TxnType":"Estimate","TxnId":"QB-PROP-002"}]}',
+            Amount__c = 100,
+            Due_Date__c = Date.today()
+        );
+
+        Test.startTest();
+        insert invoice;
+        Test.stopTest();
+
+        Invoice__c inserted = [SELECT Proposal__c FROM Invoice__c WHERE Id = :invoice.Id];
+        System.assertEquals(opp.Id, inserted.Proposal__c, 'Should link proposal from JSON map');
+    }
+
+    @isTest
+    static void testLinkByCustomerQuickBooksId() {
+        Account acc = [SELECT Id FROM Account WHERE Name = 'Test Customer A' LIMIT 1];
+        acc.QuickBooks_Id__c = 'QB-CUST-001';
+        update acc;
+
+        Invoice__c invoice = new Invoice__c(
+            Name = 'Some Invoice',
+            Customer_Quickbooks_Id__c = 'Customer: QB-CUST-001',
+            Amount__c = 100,
+            Due_Date__c = Date.today()
+        );
+
+        Test.startTest();
+        insert invoice;
+        Test.stopTest();
+
+        Invoice__c inserted = [SELECT Customer__c FROM Invoice__c WHERE Id = :invoice.Id];
+        System.assertEquals(acc.Id, inserted.Customer__c, 'Should link customer by QuickBooks Id with colon');
+    }
+
+    @isTest
+    static void testLinkByCustomerQuickBooksIdWithoutColon() {
+        Account acc = [SELECT Id FROM Account WHERE Name = 'Test Customer B' LIMIT 1];
+        acc.QuickBooks_Id__c = 'QB-CUST-002';
+        update acc;
+
+        Invoice__c invoice = new Invoice__c(
+            Name = 'Another Invoice',
+            Customer_Quickbooks_Id__c = 'QB-CUST-002',
+            Amount__c = 100,
+            Due_Date__c = Date.today()
+        );
+
+        Test.startTest();
+        insert invoice;
+        Test.stopTest();
+
+        Invoice__c inserted = [SELECT Customer__c FROM Invoice__c WHERE Id = :invoice.Id];
+        System.assertEquals(acc.Id, inserted.Customer__c, 'Should link customer by QuickBooks Id without colon');
+    }
+
+    @isTest
+    static void testLinkBySinglePartialNameMatch() {
+        Account partial = new Account(Name = 'Acme Corporation');
+        insert partial;
+
+        Invoice__c invoice = new Invoice__c(
+            Name = 'Acme Corp: Invoice',
+            Amount__c = 100,
+            Due_Date__c = Date.today()
+        );
+
+        Test.startTest();
+        insert invoice;
+        Test.stopTest();
+
+        Invoice__c inserted = [SELECT Customer__c FROM Invoice__c WHERE Id = :invoice.Id];
+        System.assertEquals(partial.Id, inserted.Customer__c, 'Should link by single partial name match');
+    }
+
+    @isTest
+    static void testHandlesInvalidLinkedTxnJson() {
+        Invoice__c invoice = new Invoice__c(
+            Name = 'Test Customer A: Invoice Invalid JSON',
+            Quickbooks_LinkedTxn_JSON__c = 'not-json',
+            Amount__c = 100,
+            Due_Date__c = Date.today()
+        );
+
+        Test.startTest();
+        insert invoice;
+        Test.stopTest();
+
+        Invoice__c inserted = [SELECT Id, Proposal__c, Work_Order__c FROM Invoice__c WHERE Id = :invoice.Id];
+        System.assertEquals(null, inserted.Proposal__c);
+        System.assertEquals(null, inserted.Work_Order__c);
+    }
+
+    @isTest
+    static void testLinkByMemoReferenceNumberWithoutEstimatePrefix() {
+        Opportunity opp = [SELECT Id FROM Opportunity WHERE Reference_Number__c = '3333' LIMIT 1];
+
+        Invoice__c invoice = new Invoice__c(
+            Name = 'Contract Customer: Invoice',
+            Memo__c = 'Ref 3333',
+            Amount__c = 100,
+            Due_Date__c = Date.today()
+        );
+
+        Test.startTest();
+        insert invoice;
+        Test.stopTest();
+
+        Invoice__c inserted = [SELECT Proposal__c FROM Invoice__c WHERE Id = :invoice.Id];
+        System.assertEquals(opp.Id, inserted.Proposal__c, 'Should link by reference number without Estimate prefix');
+    }
 }

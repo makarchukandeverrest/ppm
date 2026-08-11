@@ -1,0 +1,136 @@
+<template>
+    <!-- Loading -->
+    <template if:true={isLoading}>
+        <div class="slds-align_absolute-center slds-p-around_medium">
+            <lightning-spinner alternative-text="Loading activities" size="small"></lightning-spinner>
+        </div>
+    </template>
+
+    <!-- Empty state -->
+    <template if:true={isEmpty}>
+        <div class="slds-illustration slds-illustration_small slds-text-align_center slds-p-around_medium">
+            <div class="slds-text-color_weak slds-text-heading_small">{emptyMessage}</div>
+        </div>
+    </template>
+
+    <!-- Activity list -->
+    <template if:true={hasActivities}>
+        <ul class="slds-timeline">
+            <template for:each={activities} for:item="item">
+                <li key={item.id} class="slds-timeline__item_expandable slds-timeline__item_call">
+                    <div class="slds-media">
+                        <div class="slds-media__figure">
+                            <lightning-icon
+                                icon-name={item.iconName}
+                                size="small"
+                                alternative-text={item.formattedType}>
+                            </lightning-icon>
+                        </div>
+                        <div class="slds-media__body">
+                            <div class="slds-grid slds-grid_align-spread">
+                                <div class="slds-timeline__actions slds-timeline__actions_inline">
+                                    <button
+                                        class="slds-button slds-button_reset slds-timeline__trigger"
+                                        data-id={item.id}
+                                        data-type={item.type}
+                                        onclick={handleItemClick}>
+                                        <span class="slds-assistive-text">{item.formattedType}</span>
+                                        <div class="slds-media slds-media_center">
+                                            <div class="slds-media__body">
+                                                <p class="slds-timeline__entity slds-truncate">
+                                                    <strong>{item.title}</strong>
+                                                </p>
+                                                <p class="slds-text-body_small slds-text-color_weak">
+                                                    {item.formattedType}
+                                                    <template if:true={item.showSourceLabel}>
+                                                        • {item.sourceLabel}
+                                                    </template>
+                                                    <template if:true={item.hasAttachments}>
+                                                        • {item.attachmentLabel}
+                                                    </template>
+                                                    • {item.createdByName} • {item.displayDate}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </button>
+                                    <div class="slds-timeline__date">
+                                        <p class="slds-text-body_small slds-text-color_weak">{item.displayDate}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <template if:true={item.hasDisplayBody}>
+                                <div class="slds-box slds-theme_shade slds-m-top_x-small slds-m-left_xx-large activity-description">
+                                    <template if:true={item.hasContentParts}>
+                                        <template for:each={item.contentParts} for:item="part">
+                                            <template if:true={part.isText}>
+                                                <p key={part.key} class="slds-text-body_small slds-text-color_default">
+                                                    <lightning-formatted-rich-text
+                                                        value={part.text}
+                                                        disable-linkify>
+                                                    </lightning-formatted-rich-text>
+                                                </p>
+                                            </template>
+                                            <template if:true={part.isImage}>
+                                                <template if:true={part.isClickable}>
+                                                    <img
+                                                        key={part.key}
+                                                        src={part.imageUrl}
+                                                        alt={part.altText}
+                                                        title="Open file preview"
+                                                        class="activity-image"
+                                                        data-id={part.contentDocumentId}
+                                                        onclick={handleImageClick}
+                                                        onkeydown={handleImageKeydown}
+                                                        role="button"
+                                                        tabindex="0">
+                                                </template>
+                                                <template if:false={part.isClickable}>
+                                                    <img
+                                                        key={part.key}
+                                                        src={part.imageUrl}
+                                                        alt={part.altText}
+                                                        class="activity-image">
+                                                </template>
+                                            </template>
+                                        </template>
+                                    </template>
+                                    <template if:false={item.hasContentParts}>
+                                        <p class="slds-text-body_small slds-text-color_default">
+                                            <lightning-formatted-rich-text
+                                                value={item.description}
+                                                disable-linkify>
+                                            </lightning-formatted-rich-text>
+                                        </p>
+                                    </template>
+                                    <template if:true={item.status}>
+                                        <p class="slds-m-top_x-small">
+                                            <span class="slds-badge slds-badge_lightest">{item.status}</span>
+                                        </p>
+                                    </template>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </li>
+            </template>
+        </ul>
+
+        <template if:true={showLoadMore}>
+            <div class="slds-align_absolute-center slds-m-top_medium load-more-container">
+                <lightning-button
+                    label="Show more activities"
+                    variant="base"
+                    onclick={handleLoadMore}
+                    disabled={isLoadingMore}>
+                </lightning-button>
+            </div>
+        </template>
+
+        <template if:true={isLoadingMore}>
+            <div class="slds-align_absolute-center slds-p-around_small">
+                <lightning-spinner alternative-text="Loading more activities" size="small"></lightning-spinner>
+            </div>
+        </template>
+    </template>
+</template>
