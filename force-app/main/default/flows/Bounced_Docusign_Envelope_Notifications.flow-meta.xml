@@ -11,7 +11,9 @@
         <inputParameters>
             <name>recipientAddresses</name>
             <value>
-                <elementReference>RecipientEmails</elementReference>
+                <collectionElements>
+                    <elementReference>RecipientEmails</elementReference>
+                </collectionElements>
             </value>
         </inputParameters>
         <inputParameters>
