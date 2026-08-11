@@ -229,16 +229,6 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.Sent_Contract_Date__c</fieldItem>
-                <identifier>RecordSent_Contract_Date_cField</identifier>
-            </fieldInstance>
-        </itemInstances>
-        <itemInstances>
-            <fieldInstance>
-                <fieldInstanceProperties>
-                    <name>uiBehavior</name>
-                    <value>none</value>
-                </fieldInstanceProperties>
                 <fieldItem>Record.Budget_Season__c</fieldItem>
                 <identifier>RecordBudget_Season_cField</identifier>
             </fieldInstance>
@@ -1673,28 +1663,6 @@
     <flexiPageRegions>
         <itemInstances>
             <componentInstance>
-                <componentInstanceProperties>
-                    <name>maxItems</name>
-                    <value>20</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>relatedRecordConfig</name>
-                    <value>Customer__c:Customer</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>currentRecordLabel</name>
-                    <value>Contract Bid</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>sortDirection</name>
-                    <value>DESC</value>
-                </componentInstanceProperties>
-                <componentName>unifiedActivityFeed</componentName>
-                <identifier>c_unifiedActivityFeed</identifier>
-            </componentInstance>
-        </itemInstances>
-        <itemInstances>
-            <componentInstance>
                 <componentName>dfsle:Status</componentName>
                 <identifier>dfsle_Status</identifier>
             </componentInstance>
@@ -1719,66 +1687,24 @@
     <flexiPageRegions>
         <itemInstances>
             <componentInstance>
-                <componentName>runtime_sales_activities:activityPanel</componentName>
-                <identifier>runtime_sales_activities_activityPanel</identifier>
-            </componentInstance>
-        </itemInstances>
-        <itemInstances>
-            <componentInstance>
-                <componentName>forceChatter:recordFeedContainer</componentName>
-                <identifier>forceChatter_recordFeedContainer</identifier>
-            </componentInstance>
-        </itemInstances>
-        <itemInstances>
-            <componentInstance>
                 <componentInstanceProperties>
-                    <name>parentFieldApiName</name>
-                    <value>Contract_Bid__c.Customer__c</value>
+                    <name>currentRecordLabel</name>
+                    <value>Contract Bid</value>
                 </componentInstanceProperties>
                 <componentInstanceProperties>
-                    <name>relatedListApiName</name>
-                    <value>OpenActivities</value>
+                    <name>maxItems</name>
+                    <value>20</value>
                 </componentInstanceProperties>
                 <componentInstanceProperties>
-                    <name>relatedListComponentOverride</name>
-                    <value>NONE</value>
+                    <name>relatedRecordConfig</name>
+                    <value>Customer__c:Customer</value>
                 </componentInstanceProperties>
                 <componentInstanceProperties>
-                    <name>rowsToDisplay</name>
-                    <value>10</value>
+                    <name>sortDirection</name>
+                    <value>DESC</value>
                 </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>showActionBar</name>
-                    <value>true</value>
-                </componentInstanceProperties>
-                <componentName>force:relatedListSingleContainer</componentName>
-                <identifier>force_relatedListSingleContainer5</identifier>
-            </componentInstance>
-        </itemInstances>
-        <itemInstances>
-            <componentInstance>
-                <componentInstanceProperties>
-                    <name>parentFieldApiName</name>
-                    <value>Contract_Bid__c.Customer__c</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>relatedListApiName</name>
-                    <value>ActivityHistories</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>relatedListComponentOverride</name>
-                    <value>ADVGRID</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>rowsToDisplay</name>
-                    <value>10</value>
-                </componentInstanceProperties>
-                <componentInstanceProperties>
-                    <name>showActionBar</name>
-                    <value>true</value>
-                </componentInstanceProperties>
-                <componentName>force:relatedListSingleContainer</componentName>
-                <identifier>force_relatedListSingleContainer</identifier>
+                <componentName>unifiedActivityFeed</componentName>
+                <identifier>c_unifiedActivityFeed</identifier>
             </componentInstance>
         </itemInstances>
         <name>activityTabContent</name>
