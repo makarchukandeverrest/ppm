@@ -11,12 +11,7 @@
         <inputParameters>
             <name>recipientAddresses</name>
             <value>
-                <collectionElements>
-                    <stringValue>artem@premierswim.com</stringValue>
-                </collectionElements>
-                <collectionElements>
-                    <stringValue>Rania@premierswim.com</stringValue>
-                </collectionElements>
+                <elementReference>RecipientEmails</elementReference>
             </value>
         </inputParameters>
         <inputParameters>
