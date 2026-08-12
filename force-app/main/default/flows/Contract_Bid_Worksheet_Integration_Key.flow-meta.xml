@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>67.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <description>Sets Worksheet Integration Key from Name and Contract Year on create, or when Name / Contract Year change.</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>Worksheet_Integration_Key_Formula</name>
+        <dataType>String</dataType>
+        <expression>IF(
+  ISBLANK(TEXT($Record.Contract_Year__c)),
+  $Record.Name,
+  TRIM(
+    IF(
+      REGEX(RIGHT($Record.Name, 9), &quot;[0-9]{4}-[0-9]{4}&quot;),
+      LEFT($Record.Name, LEN($Record.Name) - 9),
+      IF(
+        REGEX(RIGHT($Record.Name, 11), &quot;[0-9]{4} - [0-9]{4}&quot;),
+        LEFT($Record.Name, LEN($Record.Name) - 11),
+        $Record.Name
+      )
+    )
+  ) &amp; &quot; &quot; &amp; SUBSTITUTE(TEXT($Record.Contract_Year__c), &quot;-&quot;, &quot; - &quot;)
+)</expression>
+    </formulas>
+    <interviewLabel>Contract Bid Worksheet Integration Key {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Contract Bid Worksheet Integration Key</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <recordUpdates>
+        <name>Fill_Worksheet_Integration_Key</name>
+        <label>Fill Worksheet Integration Key</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <inputAssignments>
+            <field>Worksheet_Integration_Key__c</field>
+            <value>
+                <elementReference>Worksheet_Integration_Key_Formula</elementReference>
+            </value>
+        </inputAssignments>
+        <inputReference>$Record</inputReference>
+    </recordUpdates>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Fill_Worksheet_Integration_Key</targetReference>
+        </connector>
+        <filterFormula>OR(ISNEW(), ISCHANGED({!$Record.Name}), ISCHANGED({!$Record.Contract_Year__c}))</filterFormula>
+        <object>Contract_Bid__c</object>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <triggerType>RecordBeforeSave</triggerType>
+    </start>
+    <status>Active</status>
+</Flow>
