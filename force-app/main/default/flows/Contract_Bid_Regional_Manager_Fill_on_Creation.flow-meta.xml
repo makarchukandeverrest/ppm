@@ -31,7 +31,74 @@
             <label>Yes</label>
         </rules>
     </decisions>
+    <decisions>
+        <name>Is_New_Record</name>
+        <label>Is New Record?</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>No (Update)</defaultConnectorLabel>
+        <rules>
+            <name>Yes_New</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Is_New_Record_Formula</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Customer_RM_Active</targetReference>
+            </connector>
+            <label>Yes (Create)</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Should_Update_Worksheet_Key</name>
+        <label>Update Worksheet Integration Key?</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnector>
+            <targetReference>Is_New_Record</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>No</defaultConnectorLabel>
+        <rules>
+            <name>Yes_Update_Key</name>
+            <conditionLogic>or</conditionLogic>
+            <conditions>
+                <leftValueReference>Is_New_Record_Formula</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Name</leftValueReference>
+                <operator>IsChanged</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Contract_Year__c</leftValueReference>
+                <operator>IsChanged</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Fill_Worksheet_Integration_Key</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <description>On create: set Worksheet Integration Key and Regional Manager from Customer. On update: recalculate Worksheet Integration Key when Name or Contract Year changes.</description>
     <environments>Default</environments>
+    <formulas>
+        <name>Is_New_Record_Formula</name>
+        <dataType>Boolean</dataType>
+        <expression>ISNEW()</expression>
+    </formulas>
     <formulas>
         <name>Worksheet_Integration_Key_Formula</name>
         <dataType>String</dataType>
@@ -91,7 +158,7 @@
         <locationX>0</locationX>
         <locationY>0</locationY>
         <connector>
-            <targetReference>Customer_RM_Active</targetReference>
+            <targetReference>Is_New_Record</targetReference>
         </connector>
         <inputAssignments>
             <field>Worksheet_Integration_Key__c</field>
@@ -105,10 +172,10 @@
         <locationX>0</locationX>
         <locationY>0</locationY>
         <connector>
-            <targetReference>Fill_Worksheet_Integration_Key</targetReference>
+            <targetReference>Should_Update_Worksheet_Key</targetReference>
         </connector>
         <object>Contract_Bid__c</object>
-        <recordTriggerType>Create</recordTriggerType>
+        <recordTriggerType>CreateAndUpdate</recordTriggerType>
         <triggerType>RecordBeforeSave</triggerType>
     </start>
     <status>Active</status>
