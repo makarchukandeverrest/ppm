@@ -10,8 +10,6 @@ public with sharing class DocuSignDfsleEnvelopeService {
     private static final String ENVELOPE_EMAIL_SIGNATURE_TEAM = 'Premier Pool Management Team';
 
     private static final List<String> NEW_CUSTOMER_RESOURCE_LABELS = new List<String>{
-        'Recommendation Letter',
-        'General References',
         'COI'
     };
 
@@ -44,6 +42,10 @@ public with sharing class DocuSignDfsleEnvelopeService {
     private static final String STATUS_EMAIL_DRAFT = '0';
     private static final String EMAIL_SUBJECT_TEMPLATE = 'Sent Contracts for {0}';
     private static final String EMAIL_TO_IDS_KEY = 'ToIds';
+    @TestVisible
+    private static final String ROLE_CARBON_COPY = 'Carbon Copy';
+    @TestVisible
+    private static final String ROLE_SECONDARY_CONTACT = 'Secondary Contact';
 
     public class CcRecipient {
         public String name;
@@ -597,7 +599,13 @@ public with sharing class DocuSignDfsleEnvelopeService {
         Integer routingOrder = 1;
 
         if (secondaryContact != null && String.isNotBlank(secondaryContact.email)) {
-            addCarbonCopyRecipient(recipients, secondaryContact, seenEmails, routingOrder);
+            addCarbonCopyRecipient(
+                recipients,
+                secondaryContact,
+                ROLE_SECONDARY_CONTACT,
+                seenEmails,
+                routingOrder
+            );
             routingOrder++;
         }
 
@@ -622,7 +630,13 @@ public with sharing class DocuSignDfsleEnvelopeService {
 
         if (ccRecipients != null) {
             for (CcRecipient ccRecipient : ccRecipients) {
-                if (addCarbonCopyRecipient(recipients, ccRecipient, seenEmails, routingOrder)) {
+                if (addCarbonCopyRecipient(
+                    recipients,
+                    ccRecipient,
+                    ROLE_CARBON_COPY,
+                    seenEmails,
+                    routingOrder
+                )) {
                     routingOrder++;
                 }
             }
@@ -634,6 +648,7 @@ public with sharing class DocuSignDfsleEnvelopeService {
     private static Boolean addCarbonCopyRecipient(
         List<dfsle.Recipient> recipients,
         CcRecipient ccRecipient,
+        String roleName,
         Set<String> seenEmails,
         Integer routingOrder
     ) {
@@ -651,7 +666,7 @@ public with sharing class DocuSignDfsleEnvelopeService {
                 ccRecipient.name,
                 ccRecipient.email,
                 null,
-                'Carbon Copy',
+                roleName,
                 null
             )
                 .withType(dfsle.Recipient.TYPE_CARBON_COPY)

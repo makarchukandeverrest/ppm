@@ -207,7 +207,7 @@
             <label>Ready To Send</label>
         </rules>
     </decisions>
-    <description>Sends an additional Salesforce email to DocuSign Carbon Copy recipients when a Contract Bid envelope is sent (dfsle__SourceId__c = Contract Bid Id, dfsle__Sent__c populated). Sandbox checks before activate: (1) confirm dfsle__SourceId__c holds Contract Bid Id after send; (2) confirm dfsle__Recipient__c Role contains Carbon Copy with emails when Sent is set; (3) if recipients lag behind Sent, add a 1-2 min scheduled path on dfsle__Sent__c; (4) send one Contract Bid envelope and confirm CCs get both DocuSign and Salesforce notices.</description>
+    <description>Sends an additional Salesforce email to DocuSign CarbonCopy recipients when a Contract Bid envelope is sent. Excludes Role Secondary Contact (customer secondary). Note: many internal CCs have blank Role and Type=CarbonCopy.</description>
     <environments>Default</environments>
     <formulas>
         <name>Now_Date_TIME</name>
@@ -258,7 +258,7 @@
         <connector>
             <targetReference>Count_CC_Recipients</targetReference>
         </connector>
-        <filterLogic>and</filterLogic>
+        <filterLogic>1 AND 2 AND (3 OR 4)</filterLogic>
         <filters>
             <field>dfsle__Envelope__c</field>
             <operator>EqualTo</operator>
@@ -267,10 +267,24 @@
             </value>
         </filters>
         <filters>
-            <field>dfsle__Role__c</field>
-            <operator>Contains</operator>
+            <field>dfsle__Type__c</field>
+            <operator>EqualTo</operator>
             <value>
-                <stringValue>Carbon Copy</stringValue>
+                <stringValue>CarbonCopy</stringValue>
+            </value>
+        </filters>
+        <filters>
+            <field>dfsle__Role__c</field>
+            <operator>IsNull</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <filters>
+            <field>dfsle__Role__c</field>
+            <operator>NotEqualTo</operator>
+            <value>
+                <stringValue>Secondary Contact</stringValue>
             </value>
         </filters>
         <getFirstRecordOnly>false</getFirstRecordOnly>
