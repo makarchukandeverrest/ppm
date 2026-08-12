@@ -15,6 +15,42 @@ private class ContractBidTriggerHandlerTest {
     }
 
     @IsTest
+    static void testBeforeInsert_ClearsRestrictedFieldsOnCreateAndClone() {
+        Contract_Bid__c bid = createBid('Contact Verified and Updated');
+        bid.Bid_Number__c = 'BID-123';
+        bid.Version__c = 'A';
+        bid.Contract_Start_Date__c = Date.today();
+        bid.Contract_End_Date__c = Date.today().addYears(1);
+        bid.Lost_Reason__c = 'Price';
+        bid.Additional_Comments__c = 'Should be cleared';
+
+        Test.startTest();
+        insert bid;
+        Test.stopTest();
+
+        bid = [
+            SELECT
+                Bid_Number__c,
+                Version__c,
+                Contract_Start_Date__c,
+                Contract_End_Date__c,
+                Sent_Contract_Date__c,
+                Lost_Reason__c,
+                Additional_Comments__c
+            FROM Contract_Bid__c
+            WHERE Id = :bid.Id
+        ];
+
+        System.assertEquals(null, bid.Bid_Number__c);
+        System.assertEquals(null, bid.Version__c);
+        System.assertEquals(null, bid.Contract_Start_Date__c);
+        System.assertEquals(null, bid.Contract_End_Date__c);
+        System.assertEquals(null, bid.Sent_Contract_Date__c);
+        System.assertEquals(null, bid.Lost_Reason__c);
+        System.assertEquals(null, bid.Additional_Comments__c);
+    }
+
+    @IsTest
     static void testAfterInsert_ClosedWon() {
         Contract_Bid__c bid = createBid('Closed - WON');
 

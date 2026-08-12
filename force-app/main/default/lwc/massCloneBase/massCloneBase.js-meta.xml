@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>65.0</apiVersion>
+    <isExposed>true</isExposed>
+    <targets>
+        <target>lightning__FlowScreen</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__FlowScreen">
+            <property
+                name="recordIds"
+                type="String[]"
+                label="Record Ids"
+                description="Ids of selected records from a mass action"
+                role="inputOnly"
+            />
+            <property
+                name="recordNames"
+                type="String[]"
+                label="Record Names"
+                description="Display labels for selected records, in the same order as Record Ids"
+                role="inputOnly"
+            />
+            <property
+                name="objectApiName"
+                type="String"
+                label="Object API Name"
+                description="API name of the SObject to create (e.g. Contract_Bid__c)"
+                role="inputOnly"
+            />
+            <property
+                name="fieldNames"
+                type="String[]"
+                label="Field Names Override"
+                description="Optional explicit list of field API names. Use this when Dynamic Forms fields must match a FlexiPage."
+                role="inputOnly"
+            />
+            <property
+                name="layoutType"
+                type="String"
+                label="Layout Type"
+                description="Deprecated: no longer used, kept for Flow compatibility"
+                default="Full"
+            />
+            <property
+                name="layoutMode"
+                type="String"
+                label="Layout Mode"
+                description="Deprecated: no longer used, kept for Flow compatibility"
+                default="Create"
+            />
+            <property
+                name="recordTypeId"
+                type="String"
+                label="Record Type Id"
+                description="Optional record type for layout and create form"
+                role="inputOnly"
+            />
+            <property
+                name="formFieldNames"
+                type="String[]"
+                label="Resolved Form Field Names"
+                description="All field API names rendered in the form"
+                role="outputOnly"
+            />
+            <property
+                name="clonePayloadJson"
+                type="String"
+                label="Clone Payload JSON"
+                description="JSON payloads for all records, prepared when the user clicks Review"
+                role="outputOnly"
+            />
+            <property
+                name="createSuccessCount"
+                type="Integer"
+                label="Create Success Count"
+                role="outputOnly"
+            />
+            <property
+                name="createFailureCount"
+                type="Integer"
+                label="Create Failure Count"
+                role="outputOnly"
+            />
+            <property
+                name="createErrorMessage"
+                type="String"
+                label="Create Error Message"
+                role="outputOnly"
+            />
+            <property
+                name="createdRecordIds"
+                type="String[]"
+                label="Created Record Ids"
+                role="outputOnly"
+            />
+            <property
+                name="cardTitle"
+                type="String"
+                label="Card Title"
+                description="Title shown on the selected records card"
+                default="Selected Records"
+            />
+            <property
+                name="iconName"
+                type="String"
+                label="Icon Name"
+                description="SLDS icon for the selected records card"
+                default="standard:record"
+            />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

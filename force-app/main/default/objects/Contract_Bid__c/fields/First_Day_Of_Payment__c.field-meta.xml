@@ -3,6 +3,7 @@
     <fullName>First_Day_Of_Payment__c</fullName>
     <label>First Day Of Payment</label>
     <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
     <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>
     <type>Date</type>

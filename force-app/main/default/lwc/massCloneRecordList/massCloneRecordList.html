@@ -1,0 +1,34 @@
+<template>
+    <div class="ids-panel">
+        <p class="slds-text-title_caps slds-m-bottom_x-small">
+            Records ({count})
+        </p>
+
+        <template if:true={hasRecords}>
+            <ul class="slds-list_vertical">
+                <template for:each={rows} for:item="row">
+                    <li key={row.id}>
+                        <button
+                            class={row.itemClass}
+                            data-id={row.id}
+                            title={row.title}
+                            aria-pressed={row.isSelected}
+                            onclick={handleSelect}>
+                            <span class="slds-text-color_weak">{row.rowNumber}.</span>
+                            {row.name}
+                            <template if:true={row.showOriginalName}>
+                                <span class="id-item_original slds-text-color_weak">
+                                    was: {row.originalName}
+                                </span>
+                            </template>
+                        </button>
+                    </li>
+                </template>
+            </ul>
+        </template>
+
+        <template if:false={hasRecords}>
+            <p class="slds-text-color_weak">No records selected.</p>
+        </template>
+    </div>
+</template>

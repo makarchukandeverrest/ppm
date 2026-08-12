@@ -3,6 +3,7 @@
     <fullName>SchoolOff_Season_Saturday_Close_Time__c</fullName>
     <label>School/Off Season Saturday End</label>
     <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
     <trackHistory>false</trackHistory>
     <trackTrending>false</trackTrending>
     <type>Time</type>

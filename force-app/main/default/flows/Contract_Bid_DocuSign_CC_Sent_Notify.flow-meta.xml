@@ -368,7 +368,7 @@
         <recordTriggerType>CreateAndUpdate</recordTriggerType>
         <triggerType>RecordAfterSave</triggerType>
     </start>
-    <status>Draft</status>
+    <status>Active</status>
     <textTemplates>
         <name>EmailBody</name>
         <isViewedAsPlainText>true</isViewedAsPlainText>
@@ -376,10 +376,7 @@
 
 The contract for {!Get_Contract_Bid.Name} was sent via DocuSign.
 
-This is a Salesforce notification to DocuSign carbon copy recipients on the envelope.
-
-Thank you,
-Premier Aquatic Services</text>
+This is a Salesforce notification to DocuSign carbon copy recipients on the envelope.</text>
     </textTemplates>
     <textTemplates>
         <name>EmailSubject</name>
