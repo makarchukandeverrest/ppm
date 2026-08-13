@@ -381,8 +381,14 @@ private class DocuSignDfsleEnvelopeServiceTest {
             'Expected reference documents section in envelope email body.'
         );
         System.assert(body.contains('>COI</a>'), 'Expected human-readable COI link label.');
-        System.assert(body.contains('>Recommendation Letter</a>'), 'Expected Recommendation Letter link.');
-        System.assert(body.contains('>General References</a>'), 'Expected General References link.');
+        System.assert(
+            !body.contains('>Recommendation Letter</a>'),
+            'Recommendation Letter link should not be included.'
+        );
+        System.assert(
+            !body.contains('>General References</a>'),
+            'General References link should not be included.'
+        );
         System.assert(body.contains('Best Regards,'), 'Expected email signature greeting.');
         System.assert(body.contains('Premier Pool Management Team'), 'Expected email signature team name.');
         System.assert(
