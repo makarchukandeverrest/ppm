@@ -27,8 +27,8 @@
   &quot;Proposal/Review&quot;, 
     IMAGE(&quot;/resource/Dark_Purple&quot;, &quot;Contract Under Review&quot;, 30, 30) &amp; &quot; Contract Under Review&quot;,
   
-  &quot;First Follow Up&quot;, 
-    IMAGE(&quot;/resource/Light_Grey&quot;, &quot;First Follow Up&quot;, 30, 30) &amp; &quot; First Follow Up&quot;,
+  &quot;First Follow Up (Follow up sent in PD)&quot;, 
+    IMAGE(&quot;/resource/Light_Grey&quot;, &quot;First Follow Up (Follow up sent in PD)&quot;, 30, 30) &amp; &quot; First Follow Up (Follow up sent in PD)&quot;,
   
   &quot;Second Follow Up&quot;, 
     IMAGE(&quot;/resource/Blue&quot;, &quot;Second Follow Up&quot;, 30, 30) &amp; &quot; Second Follow Up&quot;,

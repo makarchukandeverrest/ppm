@@ -99,18 +99,6 @@
             </value>
         </inputAssignments>
         <inputAssignments>
-            <field>Label__c</field>
-            <value>
-                <elementReference>$Record.Label__c</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Lead_Generator__c</field>
-            <value>
-                <elementReference>$Record.Lead_Generator__c</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
             <field>Contract_End_Date__c</field>
             <value>
                 <elementReference>$Record.Contract_End_Date__c</elementReference>
@@ -120,6 +108,18 @@
             <field>Contract_Start_Date__c</field>
             <value>
                 <elementReference>$Record.Contract_Start_Date__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Label__c</field>
+            <value>
+                <elementReference>$Record.Label__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Lead_Generator__c</field>
+            <value>
+                <elementReference>$Record.Lead_Generator__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
@@ -645,5 +645,5 @@
         <recordTriggerType>Update</recordTriggerType>
         <triggerType>RecordAfterSave</triggerType>
     </start>
-    <status>Active</status>
+    <status>Draft</status>
 </Flow>

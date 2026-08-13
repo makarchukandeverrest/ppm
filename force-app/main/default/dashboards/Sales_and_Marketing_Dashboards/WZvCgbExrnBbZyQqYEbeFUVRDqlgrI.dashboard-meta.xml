@@ -7,6 +7,13 @@
     <colorPalette>unity</colorPalette>
     <dashboardChartTheme>light</dashboardChartTheme>
     <dashboardColorPalette>unity</dashboardColorPalette>
+    <dashboardFilters>
+        <dashboardFilterOptions>
+            <operator>contains</operator>
+            <values>2027</values>
+        </dashboardFilterOptions>
+        <name>Contract Bid Name</name>
+    </dashboardFilters>
     <dashboardGridLayout>
         <dashboardGridComponents>
             <colSpan>4</colSpan>
@@ -14,6 +21,9 @@
             <dashboardComponent>
                 <autoselectColumnsFromReport>false</autoselectColumnsFromReport>
                 <componentType>FlexTable</componentType>
+                <dashboardFilterColumns>
+                    <column>Contract_Bid__c$Name</column>
+                </dashboardFilterColumns>
                 <flexComponentProperties>
                     <decimalPrecision>-1</decimalPrecision>
                     <flexTableColumn>
@@ -60,6 +70,9 @@
             <dashboardComponent>
                 <autoselectColumnsFromReport>false</autoselectColumnsFromReport>
                 <componentType>FlexTable</componentType>
+                <dashboardFilterColumns>
+                    <column>Contract_Bid__c$Name</column>
+                </dashboardFilterColumns>
                 <flexComponentProperties>
                     <decimalPrecision>-1</decimalPrecision>
                     <flexTableColumn>
@@ -106,6 +119,9 @@
             <dashboardComponent>
                 <autoselectColumnsFromReport>false</autoselectColumnsFromReport>
                 <componentType>FlexTable</componentType>
+                <dashboardFilterColumns>
+                    <column>Contract_Bid__c$Name</column>
+                </dashboardFilterColumns>
                 <flexComponentProperties>
                     <decimalPrecision>-1</decimalPrecision>
                     <flexTableColumn>
@@ -152,6 +168,9 @@
             <dashboardComponent>
                 <autoselectColumnsFromReport>false</autoselectColumnsFromReport>
                 <componentType>FlexTable</componentType>
+                <dashboardFilterColumns>
+                    <column>Contract_Bid__c$Name</column>
+                </dashboardFilterColumns>
                 <flexComponentProperties>
                     <decimalPrecision>-1</decimalPrecision>
                     <flexTableColumn>
@@ -198,6 +217,9 @@
             <dashboardComponent>
                 <autoselectColumnsFromReport>false</autoselectColumnsFromReport>
                 <componentType>FlexTable</componentType>
+                <dashboardFilterColumns>
+                    <column>Contract_Bid__c$Name</column>
+                </dashboardFilterColumns>
                 <flexComponentProperties>
                     <decimalPrecision>-1</decimalPrecision>
                     <flexTableColumn>
@@ -244,6 +266,9 @@
             <dashboardComponent>
                 <autoselectColumnsFromReport>false</autoselectColumnsFromReport>
                 <componentType>FlexTable</componentType>
+                <dashboardFilterColumns>
+                    <column>Contract_Bid__c$Name</column>
+                </dashboardFilterColumns>
                 <flexComponentProperties>
                     <decimalPrecision>-1</decimalPrecision>
                     <flexTableColumn>
@@ -290,6 +315,9 @@
             <dashboardComponent>
                 <autoselectColumnsFromReport>false</autoselectColumnsFromReport>
                 <componentType>FlexTable</componentType>
+                <dashboardFilterColumns>
+                    <column>Contract_Bid__c$Name</column>
+                </dashboardFilterColumns>
                 <flexComponentProperties>
                     <decimalPrecision>-1</decimalPrecision>
                     <flexTableColumn>
@@ -336,6 +364,9 @@
             <dashboardComponent>
                 <autoselectColumnsFromReport>false</autoselectColumnsFromReport>
                 <componentType>FlexTable</componentType>
+                <dashboardFilterColumns>
+                    <column>Contract_Bid__c$Name</column>
+                </dashboardFilterColumns>
                 <flexComponentProperties>
                     <decimalPrecision>-1</decimalPrecision>
                     <flexTableColumn>
@@ -382,6 +413,9 @@
             <dashboardComponent>
                 <autoselectColumnsFromReport>false</autoselectColumnsFromReport>
                 <componentType>FlexTable</componentType>
+                <dashboardFilterColumns>
+                    <column>Contract_Bid__c$Name</column>
+                </dashboardFilterColumns>
                 <flexComponentProperties>
                     <decimalPrecision>-1</decimalPrecision>
                     <flexTableColumn>
@@ -428,6 +462,9 @@
             <dashboardComponent>
                 <autoselectColumnsFromReport>false</autoselectColumnsFromReport>
                 <componentType>FlexTable</componentType>
+                <dashboardFilterColumns>
+                    <column>Contract_Bid__c$Name</column>
+                </dashboardFilterColumns>
                 <flexComponentProperties>
                     <decimalPrecision>-1</decimalPrecision>
                     <flexTableColumn>
@@ -455,7 +492,7 @@
                         <type>detail</type>
                     </flexTableColumn>
                     <flexTableSortInfo>
-                        <sortColumn>Contract_Bid__c.Name</sortColumn>
+                        <sortColumn>Contract_Bid__c.Label__c</sortColumn>
                         <sortOrder>1</sortOrder>
                     </flexTableSortInfo>
                     <hideChatterPhotos>true</hideChatterPhotos>
