@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<StandardValueSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <sorted>false</sorted>
+    <standardValue>
+        <fullName>Call</fullName>
+        <default>false</default>
+        <label>Call</label>
+    </standardValue>
+    <standardValue>
+        <fullName>Send Letter</fullName>
+        <default>false</default>
+        <label>Send Letter</label>
+    </standardValue>
+    <standardValue>
+        <fullName>Send Quote</fullName>
+        <default>false</default>
+        <label>Send Quote</label>
+    </standardValue>
+    <standardValue>
+        <fullName>Other</fullName>
+        <default>false</default>
+        <label>Other</label>
+    </standardValue>
+    <standardValue>
+        <fullName>Request a Proposal</fullName>
+        <default>false</default>
+        <label>Request a Proposal</label>
+    </standardValue>
+    <standardValue>
+        <fullName>Request a Work Order</fullName>
+        <default>false</default>
+        <label>Request a Work Order</label>
+    </standardValue>
+    <standardValue>
+        <fullName>Request an Invoice</fullName>
+        <default>false</default>
+        <label>Request an Invoice</label>
+    </standardValue>
+    <standardValue>
+        <fullName>Request a Contract Bid</fullName>
+        <default>false</default>
+        <label>Request a Contract Bid</label>
+    </standardValue>
+</StandardValueSet>
