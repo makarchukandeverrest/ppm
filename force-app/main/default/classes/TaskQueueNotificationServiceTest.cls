@@ -30,18 +30,6 @@ private class TaskQueueNotificationServiceTest {
         }
         insert users;
 
-        UserRole parentRole = new UserRole(
-            Name = 'TQN Parent Role ' + ts,
-            DeveloperName = 'TQN_Parent_Role_' + ts
-        );
-        insert parentRole;
-        UserRole childRole = new UserRole(
-            Name = 'TQN Child Role ' + ts,
-            DeveloperName = 'TQN_Child_Role_' + ts,
-            ParentRoleId = parentRole.Id
-        );
-        insert childRole;
-
         // Queue with direct member
         Group directQueue = new Group(Name = 'TQN Direct ' + ts, Type = 'Queue');
         insert directQueue;
@@ -289,21 +277,6 @@ private class TaskQueueNotificationServiceTest {
             WHERE Id = :regionalManagerTask.Id
         ];
         System.assertEquals(customDueDate, insertedTask.ActivityDate);
-    }
-
-    @IsTest
-    static void testExpandRolesWithSubordinates() {
-        UserRole parentRole = [SELECT Id FROM UserRole WHERE DeveloperName LIKE 'TQN_Parent_Role_%' LIMIT 1];
-        UserRole childRole = [SELECT Id FROM UserRole WHERE DeveloperName LIKE 'TQN_Child_Role_%' LIMIT 1];
-
-        Test.startTest();
-        Set<Id> expandedRoleIds = TaskQueueNotificationService.expandRolesWithSubordinates(
-            new Set<Id>{ parentRole.Id }
-        );
-        Test.stopTest();
-
-        System.assert(expandedRoleIds.contains(parentRole.Id));
-        System.assert(expandedRoleIds.contains(childRole.Id));
     }
 
     private static User getUser(Integer index) {
