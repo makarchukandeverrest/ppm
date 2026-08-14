@@ -111,6 +111,16 @@
                 <identifier>RecordRegional_Manager__cField</identifier>
             </fieldInstance>
         </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Stop_Sending_Reminders__c</fieldItem>
+                <identifier>RecordStop_Sending_Reminders_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
         <name>Facet-83c55986-3f3a-430d-8503-240010f88374</name>
         <type>Facet</type>
     </flexiPageRegions>

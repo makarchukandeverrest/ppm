@@ -7,6 +7,10 @@
         <label>Information</label>
         <layoutColumns>
             <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Bid_Number__c</field>
+            </layoutItems>
+            <layoutItems>
                 <behavior>Required</behavior>
                 <field>Name</field>
             </layoutItems>
@@ -20,7 +24,15 @@
             </layoutItems>
             <layoutItems>
                 <behavior>Edit</behavior>
+                <field>EBD_Due_Date__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
                 <field>Stage__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Version__c</field>
             </layoutItems>
             <layoutItems>
                 <behavior>Edit</behavior>
@@ -29,6 +41,14 @@
             <layoutItems>
                 <behavior>Edit</behavior>
                 <field>Label__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Lost_Reason__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Additional_Comments__c</field>
             </layoutItems>
             <layoutItems>
                 <behavior>Edit</behavior>
@@ -44,6 +64,18 @@
             </layoutItems>
         </layoutColumns>
         <layoutColumns>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Contract_Start_Date__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Contract_End_Date__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Sent_Contract_Date__c</field>
+            </layoutItems>
             <layoutItems>
                 <behavior>Edit</behavior>
                 <field>Lead_Owner__c</field>
@@ -71,6 +103,10 @@
             <layoutItems>
                 <behavior>Edit</behavior>
                 <field>Connexus__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Stop_Sending_Reminders__c</field>
             </layoutItems>
         </layoutColumns>
         <style>TwoColumnsTopToBottom</style>

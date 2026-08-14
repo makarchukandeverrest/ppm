@@ -83,7 +83,7 @@
             <fieldInstance>
                 <fieldInstanceProperties>
                     <name>uiBehavior</name>
-                    <value>readonly</value>
+                    <value>none</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.Bid_Number__c</fieldItem>
                 <identifier>RecordBid_Number_cField</identifier>
@@ -149,7 +149,7 @@
             <fieldInstance>
                 <fieldInstanceProperties>
                     <name>uiBehavior</name>
-                    <value>readonly</value>
+                    <value>none</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.Version__c</fieldItem>
                 <identifier>RecordVersion_cField</identifier>
@@ -179,7 +179,7 @@
             <fieldInstance>
                 <fieldInstanceProperties>
                     <name>uiBehavior</name>
-                    <value>readonly</value>
+                    <value>none</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.Contract_Start_Date__c</fieldItem>
                 <identifier>RecordContract_Start_Date_cField</identifier>
@@ -195,7 +195,7 @@
             <fieldInstance>
                 <fieldInstanceProperties>
                     <name>uiBehavior</name>
-                    <value>readonly</value>
+                    <value>none</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.Contract_End_Date__c</fieldItem>
                 <identifier>RecordContract_End_Date_cField</identifier>
@@ -211,7 +211,7 @@
             <fieldInstance>
                 <fieldInstanceProperties>
                     <name>uiBehavior</name>
-                    <value>readonly</value>
+                    <value>none</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.Sent_Contract_Date__c</fieldItem>
                 <identifier>RecordSent_Contract_Date_cField</identifier>
@@ -247,7 +247,7 @@
             <fieldInstance>
                 <fieldInstanceProperties>
                     <name>uiBehavior</name>
-                    <value>readonly</value>
+                    <value>none</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.Lost_Reason__c</fieldItem>
                 <identifier>RecordLost_Reason_cField</identifier>
@@ -263,7 +263,7 @@
             <fieldInstance>
                 <fieldInstanceProperties>
                     <name>uiBehavior</name>
-                    <value>readonly</value>
+                    <value>none</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.Additional_Comments__c</fieldItem>
                 <identifier>RecordAdditional_Comments_cField</identifier>
@@ -403,6 +403,16 @@
                 </fieldInstanceProperties>
                 <fieldItem>Record.Go_through_Corporate__c</fieldItem>
                 <identifier>RecordGo_through_Corporate_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Stop_Sending_Reminders__c</fieldItem>
+                <identifier>RecordStop_Sending_Reminders_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <name>overviewOptionsLeft</name>

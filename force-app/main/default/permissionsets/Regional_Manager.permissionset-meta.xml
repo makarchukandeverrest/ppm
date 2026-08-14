@@ -125,6 +125,38 @@
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
+        <apexClass>UnifiedActivityChatterService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>UnifiedActivityController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>UnifiedActivityException</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>UnifiedActivityMapper</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>UnifiedActivityModels</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>UnifiedActivitySelector</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>UnifiedActivityService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>UnifiedActivityUtils</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
         <apexClass>WorkOrderCustomerAssigner</apexClass>
         <enabled>true</enabled>
     </classAccesses>
@@ -563,6 +595,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
+        <field>Account.Stop_Sending_Reminders__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
         <field>Account.Supervisor_Lookup__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -597,7 +634,7 @@
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
-        <editable>false</editable>
+        <editable>true</editable>
         <field>Contract_Bid__c.Additional_Comments__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -607,7 +644,7 @@
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
-        <editable>false</editable>
+        <editable>true</editable>
         <field>Contract_Bid__c.Bid_Number__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -642,13 +679,18 @@
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
-        <editable>false</editable>
+        <editable>true</editable>
         <field>Contract_Bid__c.Contract_End_Date__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
-        <editable>false</editable>
+        <editable>true</editable>
         <field>Contract_Bid__c.Contract_Start_Date__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Contract_Bid__c.Sent_Contract_Date__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -1227,6 +1269,11 @@
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
+        <editable>true</editable>
+        <field>Contract_Bid__c.Stop_Sending_Reminders__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
         <editable>false</editable>
         <field>Contract_Bid__c.Taxes__c</field>
         <readable>true</readable>
@@ -1449,6 +1496,11 @@
     <fieldPermissions>
         <editable>true</editable>
         <field>Opportunity.PDF_Requested_At__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Opportunity.Stop_Sending_Reminders__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
