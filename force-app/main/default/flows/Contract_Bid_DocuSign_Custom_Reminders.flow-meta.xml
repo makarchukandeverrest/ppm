@@ -568,6 +568,20 @@
                     <stringValue>Sent</stringValue>
                 </rightValue>
             </conditions>
+            <conditions>
+                <leftValueReference>Get_Contract_Bid_3.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Customer_3.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
             <connector>
                 <targetReference>Get_Recipients_3</targetReference>
             </connector>
@@ -588,6 +602,20 @@
                 <operator>EqualTo</operator>
                 <rightValue>
                     <stringValue>Sent</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Contract_Bid_2.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Customer_2.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
                 </rightValue>
             </conditions>
             <connector>
@@ -612,10 +640,111 @@
                     <stringValue>Sent</stringValue>
                 </rightValue>
             </conditions>
+            <conditions>
+                <leftValueReference>Get_Contract_Bid.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Customer_1.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
             <connector>
                 <targetReference>Get_Recipients</targetReference>
             </connector>
             <label>Still active</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Reminders_Allowed_Sent</name>
+        <label>Reminders Allowed Sent</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Stop Sending Reminders</defaultConnectorLabel>
+        <rules>
+            <name>Reminders_Allowed_Sent_Continue</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Contract_Bid_Sent.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Customer_Sent.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Primary_Contact_Sent</targetReference>
+            </connector>
+            <label>Continue</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Reminders_Allowed_4</name>
+        <label>Reminders Allowed 4</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Stop Sending Reminders</defaultConnectorLabel>
+        <rules>
+            <name>Reminders_Allowed_4_Continue</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Contract_Bid_4.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Customer_4.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Phone_Call_Task</targetReference>
+            </connector>
+            <label>Continue</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Reminders_Allowed_5</name>
+        <label>Reminders Allowed 5</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Stop Sending Reminders</defaultConnectorLabel>
+        <rules>
+            <name>Reminders_Allowed_5_Continue</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Contract_Bid_5.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>Get_Customer_5.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Copy_1_of_Get_Custom_Notification</targetReference>
+            </connector>
+            <label>Continue</label>
         </rules>
     </decisions>
     <description>Contract Bid version of custom DocuSign reminders. Triggers on envelopes where dfsle__SourceId__c is a Contract Bid (a0b prefix).</description>
@@ -1134,7 +1263,7 @@
         <locationY>0</locationY>
         <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
         <connector>
-            <targetReference>Phone_Call_Task</targetReference>
+            <targetReference>Get_Customer_4</targetReference>
         </connector>
         <filterLogic>and</filterLogic>
         <filters>
@@ -1149,13 +1278,34 @@
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordLookups>
     <recordLookups>
+        <name>Get_Customer_4</name>
+        <label>Get Customer 4</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Reminders_Allowed_4</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Get_Contract_Bid_4.Customer__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Account</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
         <name>Get_Contract_Bid_5</name>
         <label>Get Contract Bid 5</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
         <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
         <connector>
-            <targetReference>Copy_1_of_Get_Custom_Notification</targetReference>
+            <targetReference>Get_Customer_5</targetReference>
         </connector>
         <filterLogic>and</filterLogic>
         <filters>
@@ -1167,6 +1317,27 @@
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
         <object>Contract_Bid__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Customer_5</name>
+        <label>Get Customer 5</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Reminders_Allowed_5</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Get_Contract_Bid_5.Customer__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Account</object>
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordLookups>
     <recordLookups>
@@ -1197,7 +1368,7 @@
         <locationY>0</locationY>
         <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
         <connector>
-            <targetReference>Get_Primary_Contact_Sent</targetReference>
+            <targetReference>Reminders_Allowed_Sent</targetReference>
         </connector>
         <filterLogic>and</filterLogic>
         <filters>

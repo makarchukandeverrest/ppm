@@ -503,6 +503,20 @@
                     <stringValue>Sent</stringValue>
                 </rightValue>
             </conditions>
+            <conditions>
+                <leftValueReference>$Record.Deal__r.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Account__r.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
             <connector>
                 <targetReference>Regional_Manager_3</targetReference>
             </connector>
@@ -523,6 +537,20 @@
                 <operator>EqualTo</operator>
                 <rightValue>
                     <stringValue>Sent</stringValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Deal__r.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Account__r.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
                 </rightValue>
             </conditions>
             <connector>
@@ -547,10 +575,82 @@
                     <stringValue>Sent</stringValue>
                 </rightValue>
             </conditions>
+            <conditions>
+                <leftValueReference>$Record.Deal__r.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Account__r.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
             <connector>
                 <targetReference>Get_Regional_Manager</targetReference>
             </connector>
             <label>Still active</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Reminders_Allowed_Phone</name>
+        <label>Reminders Allowed Phone</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Stop Sending Reminders</defaultConnectorLabel>
+        <rules>
+            <name>Reminders_Allowed_Phone_Continue</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Deal__r.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Account__r.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Phone_Call_Task</targetReference>
+            </connector>
+            <label>Continue</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Reminders_Allowed_Visit</name>
+        <label>Reminders Allowed Visit</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Stop Sending Reminders</defaultConnectorLabel>
+        <rules>
+            <name>Reminders_Allowed_Visit_Continue</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Deal__r.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Account__r.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Copy_1_of_Get_Custom_Notification</targetReference>
+            </connector>
+            <label>Continue</label>
         </rules>
     </decisions>
     <description>TEST Version of FLOW</description>
@@ -835,7 +935,7 @@ $Record.Deal__r.Name &amp;
         <scheduledPaths>
             <name>X4_Days_After_All_Reminders</name>
             <connector>
-                <targetReference>Phone_Call_Task</targetReference>
+                <targetReference>Reminders_Allowed_Phone</targetReference>
             </connector>
             <label>4 Days After All Reminders</label>
             <offsetNumber>7</offsetNumber>
@@ -846,7 +946,7 @@ $Record.Deal__r.Name &amp;
         <scheduledPaths>
             <name>X1_Day_After_First_Activty</name>
             <connector>
-                <targetReference>Copy_1_of_Get_Custom_Notification</targetReference>
+                <targetReference>Reminders_Allowed_Visit</targetReference>
             </connector>
             <label>1 Day After First Activty</label>
             <offsetNumber>10</offsetNumber>
