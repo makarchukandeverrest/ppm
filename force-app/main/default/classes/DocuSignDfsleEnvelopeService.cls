@@ -22,8 +22,7 @@ public with sharing class DocuSignDfsleEnvelopeService {
     private static final Set<String> DEFAULT_CC_USER_NAMES = new Set<String>{
         'Roman Shestakov',
         'Stephanie Pratt',
-        'Jessica Floyd',
-        'Adrian Voicu'
+        'Jessica Floyd'
     };
 
     private static final List<String> ENVELOPE_EMAIL_BODY_BULLETS = new List<String>{
@@ -599,35 +598,43 @@ public with sharing class DocuSignDfsleEnvelopeService {
         List<dfsle.Recipient> recipients = new List<dfsle.Recipient>();
         Set<String> seenEmails = new Set<String>();
         Integer routingOrder = 1;
+        Boolean secondarySameAsSigner =
+            secondaryContact != null
+            && String.isNotBlank(secondaryContact.email)
+            && String.isNotBlank(signerEmail)
+            && secondaryContact.email.equalsIgnoreCase(signerEmail);
 
-        if (secondaryContact != null && String.isNotBlank(secondaryContact.email)) {
-            addCarbonCopyRecipient(
+        // Secondary CC stays before the signer only when it is a different person.
+        // If Primary == Secondary, keep the signer and skip the duplicate CC.
+        if (
+            secondaryContact != null
+            && String.isNotBlank(secondaryContact.email)
+            && !secondarySameAsSigner
+            && addCarbonCopyRecipient(
                 recipients,
                 secondaryContact,
                 ROLE_SECONDARY_CONTACT,
                 seenEmails,
                 routingOrder
-            );
+            )
+        ) {
             routingOrder++;
         }
 
         if (String.isNotBlank(signerEmail)) {
-            String signerEmailKey = signerEmail.toLowerCase();
-            if (!seenEmails.contains(signerEmailKey)) {
-                seenEmails.add(signerEmailKey);
-                recipients.add(
-                    dfsle.Recipient.fromSource(
-                        signerName,
-                        signerEmail,
-                        null,
-                        'Signer',
-                        new dfsle.Entity(contractBidId)
-                    )
-                        .withTabs(buildSignerTabs())
-                        .withRoutingOrder(routingOrder)
-                );
-                routingOrder++;
-            }
+            seenEmails.add(signerEmail.toLowerCase());
+            recipients.add(
+                dfsle.Recipient.fromSource(
+                    signerName,
+                    signerEmail,
+                    null,
+                    'Signer',
+                    new dfsle.Entity(contractBidId)
+                )
+                    .withTabs(buildSignerTabs())
+                    .withRoutingOrder(routingOrder)
+            );
+            routingOrder++;
         }
 
         if (ccRecipients != null) {

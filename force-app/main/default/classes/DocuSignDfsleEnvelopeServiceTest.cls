@@ -509,4 +509,41 @@ private class DocuSignDfsleEnvelopeServiceTest {
         System.assertEquals('secondary.contact@example.com', contactRecipient.email);
         System.assertEquals('Secondary Contact', contactRecipient.name);
     }
+
+    @IsTest
+    static void testBuildRecipients_samePrimaryAndSecondary_keepsSigner() {
+        Contract_Bid__c cb = [SELECT Id FROM Contract_Bid__c LIMIT 1];
+        String sharedEmail = 'same.person@example.com';
+
+        List<dfsle.Recipient> recipients = DocuSignDfsleEnvelopeService.buildRecipients(
+            cb.Id,
+            sharedEmail,
+            'Same Person',
+            new DocuSignDfsleEnvelopeService.CcRecipient('Same Person', sharedEmail),
+            new List<DocuSignDfsleEnvelopeService.CcRecipient>{
+                new DocuSignDfsleEnvelopeService.CcRecipient('Office CC', 'office.cc@example.com')
+            }
+        );
+
+        System.assertEquals(
+            2,
+            recipients.size(),
+            'Same Primary/Secondary must keep the signer and skip the duplicate Secondary CC.'
+        );
+    }
+
+    @IsTest
+    static void testBuildRecipients_differentSecondary_staysBeforeSigner() {
+        Contract_Bid__c cb = [SELECT Id FROM Contract_Bid__c LIMIT 1];
+
+        List<dfsle.Recipient> recipients = DocuSignDfsleEnvelopeService.buildRecipients(
+            cb.Id,
+            'primary.signer@example.com',
+            'Primary Signer',
+            new DocuSignDfsleEnvelopeService.CcRecipient('Secondary Contact', 'secondary.contact@example.com'),
+            new List<DocuSignDfsleEnvelopeService.CcRecipient>()
+        );
+
+        System.assertEquals(2, recipients.size(), 'Different Secondary stays on the envelope before the signer.');
+    }
 }
