@@ -14,6 +14,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler{
     protected override void afterUpdate(){
         List<Account> accountsWithChangedRegionalManager = new List<Account>();
         List<Account> accountsWithChangedContacts = new List<Account>();
+        Set<Id> stopReminderAccountIds = new Set<Id>();
 
         for (Account acc : newList) {
             Account oldAcc = oldMap.get(acc.Id);
@@ -33,6 +34,13 @@ public with sharing class AccountTriggerHandler extends TriggerHandler{
             ) {
                 accountsWithChangedContacts.add(acc);
             }
+
+            if (
+                acc.Stop_Sending_Reminders__c == true &&
+                oldAcc.Stop_Sending_Reminders__c != true
+            ) {
+                stopReminderAccountIds.add(acc.Id);
+            }
         }
         System.debug('accountsWithChangedRegionalManager '+accountsWithChangedRegionalManager);
         if(!accountsWithChangedRegionalManager.isEmpty()) {
@@ -42,5 +50,7 @@ public with sharing class AccountTriggerHandler extends TriggerHandler{
         if(!accountsWithChangedContacts.isEmpty()) {
             OpportunityContactSyncService.assignContacts(accountsWithChangedContacts);
         }
+
+        StopSendingRemindersService.disableForAccounts(stopReminderAccountIds);
     }
 }

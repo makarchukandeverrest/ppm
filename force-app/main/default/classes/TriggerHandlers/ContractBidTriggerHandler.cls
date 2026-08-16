@@ -38,16 +38,25 @@ public with sharing class ContractBidTriggerHandler extends TriggerHandler {
 
   protected override void afterUpdate() {
     List<Contract_Bid__c> wonBids = new List<Contract_Bid__c>();
+    Set<Id> stopReminderBidIds = new Set<Id>();
     for (Contract_Bid__c bid : this.newList) {
+      Contract_Bid__c oldBid = oldMap.get(bid.Id);
       if (
         bid.Stage__c == 'Closed - WON' &&
-        oldMap.get(bid.Id).Stage__c != 'Closed - WON'
+        oldBid.Stage__c != 'Closed - WON'
       ) {
         wonBids.add(bid);
+      }
+      if (
+        bid.Stop_Sending_Reminders__c == true &&
+        oldBid.Stop_Sending_Reminders__c != true
+      ) {
+        stopReminderBidIds.add(bid.Id);
       }
     }
     if (!wonBids.isEmpty()) {
       AccountCurrentCustomerUpdater.updateCustomers(wonBids);
     }
+    StopSendingRemindersService.disableForContractBids(stopReminderBidIds);
   }
 }

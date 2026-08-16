@@ -49,4 +49,21 @@ public without sharing class ProposalTriggerHandler extends TriggerHandler {
         CustomerRegionalManagerService.preventProposalRMOverride(this.newList, this.oldMap);
         ProposalStatusDefiner.handleStatusChange(this.newList, this.oldMap);
     }
+
+    protected override void afterUpdate() {
+        Set<Id> stopReminderProposalIds = new Set<Id>();
+        for (Opportunity opp : newList) {
+            Opportunity oldOpp = oldMap.get(opp.Id);
+            if (oldOpp == null) {
+                continue;
+            }
+            if (
+                opp.Stop_Sending_Reminders__c == true &&
+                oldOpp.Stop_Sending_Reminders__c != true
+            ) {
+                stopReminderProposalIds.add(opp.Id);
+            }
+        }
+        StopSendingRemindersService.disableForProposals(stopReminderProposalIds);
+    }
 }
