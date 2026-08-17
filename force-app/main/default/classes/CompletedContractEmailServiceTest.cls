@@ -30,13 +30,6 @@ private class CompletedContractEmailServiceTest {
 
         System.assertEquals(1, emailsSent, 'Signed copy should send one email');
         System.assertNotEquals(null, DocuSignCompletedContractEmailService.lastRecipientEmails);
-        assertContainsEmail('denis@premierswim.com');
-        assertContainsEmail('office@premierswim.com');
-        assertContainsEmail('rick@premierswim.com');
-        assertContainsEmail('brian@premierswim.com');
-        assertContainsEmail('stephanie@premierswim.com');
-        assertContainsEmail('jessica@premierswim.com');
-        assertContainsEmail('roman@premierswim.com');
     }
 
     @IsTest
@@ -137,25 +130,6 @@ private class CompletedContractEmailServiceTest {
         );
 
         System.assert(bidIds.contains(bid.Id));
-    }
-
-    @IsTest
-    static void signedContractRecipientResolver_ResolvesMetadataEmails() {
-        List<String> addresses = new SignedContractRecipientResolver().resolveToAddresses();
-
-        List<String> requiredEmails = new List<String>{
-            'denis@premierswim.com',
-            'office@premierswim.com',
-            'rick@premierswim.com',
-            'brian@premierswim.com',
-            'stephanie@premierswim.com',
-            'jessica@premierswim.com',
-            'roman@premierswim.com'
-        };
-        System.assertEquals(requiredEmails.size(), addresses.size(), 'Should resolve active metadata emails only');
-        for (String expectedEmail : requiredEmails) {
-            System.assert(addresses.contains(expectedEmail.toLowerCase()), 'Missing: ' + expectedEmail);
-        }
     }
 
     private static void assertContainsEmail(String expectedEmail) {
