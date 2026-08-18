@@ -131,6 +131,25 @@ public class AccountFilesControllerTest {
         String title,
         String fileExtension
     ) {
+        return createTestFile(acc.Id, title, fileExtension);
+    }
+
+    /**
+     * Creates a test file (ContentVersion) linked to a Contract Bid
+     */
+    private static ContentDocument createTestFile(
+        Contract_Bid__c contract,
+        String title,
+        String fileExtension
+    ) {
+        return createTestFile(contract.Id, title, fileExtension);
+    }
+
+    private static ContentDocument createTestFile(
+        Id linkedEntityId,
+        String title,
+        String fileExtension
+    ) {
         String fileTitle = buildContractFileTitle(title);
         ContentVersion cv = new ContentVersion(
             Title           = fileTitle,
@@ -148,10 +167,9 @@ public class AccountFilesControllerTest {
             LIMIT 1
         ];
 
-        // Link to Account
         ContentDocumentLink cdl = new ContentDocumentLink(
             ContentDocumentId = insertedCV.ContentDocumentId,
-            LinkedEntityId    = acc.Id,
+            LinkedEntityId    = linkedEntityId,
             ShareType         = 'V',
             Visibility        = 'AllUsers'
         );
@@ -339,5 +357,51 @@ public class AccountFilesControllerTest {
 
         System.assertEquals(1, results.size(), 'Only accounts matching name filter should be returned');
         System.assertEquals(acc1.Id, results[0].accountId, 'Account name filter should match Acme Ukraine');
+    }
+
+    @IsTest
+    static void testGetAccountsWithFiles_filesFromContractBid() {
+        StageReferenceSettings__mdt stageRef = StageReferenceSettings__mdt.getInstance('Active_Stages');
+        String firstActiveStage = stageRef.Stage_Names__c.split(',')[0].trim();
+        String testCounty = getValidCountyValue();
+
+        Account acc = createTestAccount('Contract Bid File Acc', null, null, testCounty);
+        Contract_Bid__c contract = createTestContract(acc, firstActiveStage, false);
+        createTestFile(contract, 'ProposalFromBid', 'pdf');
+
+        Test.startTest();
+        List<AccountWithFiles> results = AccountFilesController.getAccountsWithFiles(
+            null, null, null, 'Contract Bid File Acc', null, null
+        );
+        Test.stopTest();
+
+        System.assertEquals(1, results.size(), 'Account should be returned when files are on Contract Bid');
+        System.assertEquals(acc.Id, results[0].accountId, 'Files from Contract Bid should map to Customer Account');
+        System.assertEquals(1, results[0].files.size(), 'Contract Bid file should be included');
+        System.assert(
+            results[0].files[0].Title.contains('ProposalFromBid'),
+            'Returned file should be the one linked to Contract Bid'
+        );
+    }
+
+    @IsTest
+    static void testGetAccountsWithFiles_combinesAccountAndContractBidFiles() {
+        StageReferenceSettings__mdt stageRef = StageReferenceSettings__mdt.getInstance('Active_Stages');
+        String firstActiveStage = stageRef.Stage_Names__c.split(',')[0].trim();
+        String testCounty = getValidCountyValue();
+
+        Account acc = createTestAccount('Combined Files Acc', null, null, testCounty);
+        Contract_Bid__c contract = createTestContract(acc, firstActiveStage, false);
+        createTestFile(acc, 'FromAccount', 'pdf');
+        createTestFile(contract, 'FromBid', 'pdf');
+
+        Test.startTest();
+        List<AccountWithFiles> results = AccountFilesController.getAccountsWithFiles(
+            null, null, null, 'Combined Files Acc', null, null
+        );
+        Test.stopTest();
+
+        System.assertEquals(1, results.size(), 'One account should be returned');
+        System.assertEquals(2, results[0].files.size(), 'Files from Account and Contract Bid should be combined');
     }
 }

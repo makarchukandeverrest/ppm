@@ -141,8 +141,10 @@ public with sharing class AccountFilesController {
             (List<Contract_Bid__c>)Database.query(soqlQuery)
         );
 
-        // 3. Map AccountId -> Contract_Bid__c and filter by Account-level fields
+        // 3. Map AccountId -> Contract_Bid__c and filter by Account-level fields.
+        // Also map both Account and Contract Bid Ids so files can be loaded from either record.
         Map<Id, Contract_Bid__c> contractsByAccount = new Map<Id, Contract_Bid__c>();
+        Map<Id, Id> linkedEntityToAccountId = new Map<Id, Id>();
         for (Contract_Bid__c contract : contractMap.values()) {
             // Apply Regional Manager filter (from Account)
             if (String.isNotBlank(regionalManagerId)) {
@@ -166,19 +168,21 @@ public with sharing class AccountFilesController {
             }
             
             contractsByAccount.put(contract.Customer__c, contract);
+            linkedEntityToAccountId.put(contract.Customer__c, contract.Customer__c);
+            linkedEntityToAccountId.put(contract.Id, contract.Customer__c);
         }
 
         // 4. Check if there are accounts to process
-        if (contractsByAccount.isEmpty()) {
+        if (linkedEntityToAccountId.isEmpty()) {
             // Return empty list instead of throwing an error
             return new List<AccountWithFiles>();
         }
 
-        // 5. Get document links for the contracts' Accounts
+        // 5. Get document links for Accounts and related Contract Bids
         List<ContentDocumentLink> links = [
             SELECT ContentDocumentId, LinkedEntityId
             FROM ContentDocumentLink
-            WHERE LinkedEntityId IN :contractsByAccount.keySet()
+            WHERE LinkedEntityId IN :linkedEntityToAccountId.keySet()
         ];
 
         Set<Id> docIds = new Set<Id>();
@@ -193,12 +197,13 @@ public with sharing class AccountFilesController {
             WHERE Id IN :docIds
         ]);
 
-        // 7. Map DocumentId -> AccountId
+        // 7. Map DocumentId -> AccountId (Contract Bid files resolve to Customer__c)
         Map<Id, Id> docIdToAccountIdMap = new Map<Id, Id>();
         for (ContentDocumentLink link : links) {
-            Id accountId = link.LinkedEntityId;
-            Id docId = link.ContentDocumentId;
-            docIdToAccountIdMap.put(docId, accountId);
+            Id accountId = linkedEntityToAccountId.get(link.LinkedEntityId);
+            if (accountId != null) {
+                docIdToAccountIdMap.put(link.ContentDocumentId, accountId);
+            }
         }
 
         // 8. Get ContentVersions for the documents
@@ -256,7 +261,7 @@ public with sharing class AccountFilesController {
         for (Id docId : docIdToVersion.keySet()) {
             Id accountId = docIdToAccountIdMap.get(docId);
             
-            if (accountId != null && contractsByAccount.containsKey(accountId)) {
+            if (accountId != null) {
                 if (!accountIdToFiles.containsKey(accountId)) {
                     accountIdToFiles.put(accountId, new List<ContentVersion>());
                 }
