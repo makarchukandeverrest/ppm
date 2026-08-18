@@ -1,6 +1,18 @@
 <template>
     <template if:true={recordId}></template>
     <lightning-card>
+        <template if:true={statusMessage}>
+            <div class={statusClass} role="alert">
+                <span class="slds-assistive-text">{statusVariant}</span>
+                <h2>{statusMessage}</h2>
+            </div>
+        </template>
+
+        <template if:true={isSending}>
+            <div class="slds-is-relative sending-overlay">
+                <lightning-spinner alternative-text="Sending envelopes" size="medium"></lightning-spinner>
+            </div>
+        </template>
         <!-- Filter Section -->
         <div class="slds-m-around_medium filter-section">
             <h3 class="slds-text-heading_small slds-m-bottom_small">
@@ -283,7 +295,7 @@
                     </lightning-button>
                 </div>
             </div>
-        </div>R
+        </div>
     </lightning-card>
 
     <!-- Confirmation Modal -->

@@ -2,6 +2,7 @@ import { LightningElement, wire, track, api } from 'lwc';
 import getAccountsWithFiles from '@salesforce/apex/AccountFilesController.getAccountsWithFiles';
 import getFilterOptions from '@salesforce/apex/AccountFilesController.getFilterOptions';
 import sendEnvelopeWithSignature from '@salesforce/apex/DocuSignDfsleEnvelopeService.sendEnvelopeWithSignature';
+import { CloseActionScreenEvent } from 'lightning/actions';
 
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { NavigationMixin } from 'lightning/navigation';
@@ -11,8 +12,12 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     @track allAccountsWithFiles; // Store original data for reference
     error;
     @track isUpdating = false;
+    @track isSending = false;
+    @track statusMessage = '';
+    @track statusVariant = 'info';
     @track showConfirmationModal = false;
     @api recordId;
+    @api availableActions;
     _recordIds;
     _hasBooted = false;
     _urlRecordId;
@@ -209,6 +214,26 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
 
     get showCustomReminderInput() {
         return this.automaticReminderValue === 'custom';
+    }
+
+    get statusClass() {
+        const theme = this.statusVariant === 'success'
+            ? 'slds-theme_success'
+            : this.statusVariant === 'error'
+                ? 'slds-theme_error'
+                : 'slds-theme_info';
+        return `slds-notify slds-notify_alert ${theme} slds-m-around_medium`;
+    }
+
+    get isInFlow() {
+        const actions = this.availableActions || [];
+        return actions.includes('FINISH')
+            || actions.includes('NEXT')
+            || (this.recordIds && this.recordIds.length > 0);
+    }
+
+    delay(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
     _enrichAccountsWithReminders(accounts) {
@@ -503,37 +528,67 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     }
 
     async handleSubmit() {
+        this.closeConfirmationModal();
+        this.isSending = true;
+        this.statusMessage = 'Sending envelopes...';
+        this.statusVariant = 'info';
         try {
-            this.dispatchEvent(new ShowToastEvent({
-                title: 'Processing',
-                message: 'Sending envelopes...',
-                variant: 'info'
-            }));
-
             const payload = this.accountsWithFiles.map(acc => ({
                 ...acc,
                 reminderValue: acc.reminderValue === 'custom' ? (acc.reminderCustomDays || '') : (acc.reminderValue || '')
             }));
             console.log(JSON.stringify(payload));
-            
+
             await sendEnvelopeWithSignature({
                 accountsWithFilesJSON: JSON.stringify(payload)
             });
 
-            await this[NavigationMixin.Navigate]({
-                type: 'standard__objectPage',
-                attributes: {
-                    objectApiName: 'Contract_Bid__c',
-                    actionName: 'list'
-                }
-            });
+            const sentCount = this.selectedFilesForModal.length;
+            this.statusMessage = sentCount === 1
+                ? 'Contract envelope sent.'
+                : sentCount + ' contract envelopes sent.';
+            this.statusVariant = 'success';
+            this.isSending = false;
+
+            this.dispatchEvent(new ShowToastEvent({
+                title: 'Success',
+                message: this.statusMessage,
+                variant: 'success',
+                mode: 'sticky'
+            }));
+
+            if (this.isInFlow) {
+                await this.delay(2000);
+            }
+            this.closeAfterSuccess();
         } catch (error) {
             console.error(error);
+            this.isSending = false;
+            this.statusMessage = error?.body?.message || error.message || 'Failed to send contracts.';
+            this.statusVariant = 'error';
             this.dispatchEvent(new ShowToastEvent({
                 title: 'Error',
-                message: error?.body?.message || error.message,
-                variant: 'error'
+                message: this.statusMessage,
+                variant: 'error',
+                mode: 'sticky'
             }));
         }
+    }
+
+    closeAfterSuccess() {
+        if (this.isInFlow) {
+            const listUrl = '/lightning/o/Contract_Bid__c/list';
+            (window.top || window).location.assign(listUrl);
+            return;
+        }
+
+        this.dispatchEvent(new CloseActionScreenEvent());
+        this[NavigationMixin.Navigate]({
+            type: 'standard__objectPage',
+            attributes: {
+                objectApiName: 'Contract_Bid__c',
+                actionName: 'list'
+            }
+        });
     }
 }
