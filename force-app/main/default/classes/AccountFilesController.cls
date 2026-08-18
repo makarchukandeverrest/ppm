@@ -96,8 +96,9 @@ public with sharing class AccountFilesController {
         return options;
     }
     
-    @AuraEnabled(cacheable=true)
+    @AuraEnabled
     public static List<AccountWithFiles> getAccountsWithFiles(
+        String recordId,
         List<Id> recordIds,
         String regionalManagerId,
         String county,
@@ -113,17 +114,6 @@ public with sharing class AccountFilesController {
         StageReferenceSettings__mdt stageReference = StageReferenceSettings__mdt.getInstance('Active_Stages');
         List<String> activeStages = stageReference.Stage_Names__c.split(',');
 
-        // 2. Build dynamic SOQL query - include all Account filter fields and EBD due date
-        String soqlQuery = 'SELECT Id, Name, Customer__c, Stage__c, ' +
-                           'Customer__r.Name, Customer__r.Email__c, ' +
-                           'Customer__r.BillingCountry, ' +
-                           'Customer__r.Supervisor_Lookup__c, Customer__r.Supervisor_Lookup__r.Name, ' +
-                           'Customer__r.Regional_Manager__c, Customer__r.Regional_Manager__r.Name, ' +
-                           'Customer__r.County__c, EBD_Due_Date__c, ' +
-                           'Renewal_Client__c ' +
-                           'FROM Contract_Bid__c ' +
-                           'WHERE Stage__c IN :activeStages';
-        
         Set<Id> selectedBidIds = new Set<Id>();
         if (recordIds != null) {
             for (Id bidId : recordIds) {
@@ -133,8 +123,28 @@ public with sharing class AccountFilesController {
             }
         }
 
+        Boolean hasExplicitSelection = !selectedBidIds.isEmpty() || String.isNotBlank(recordId);
+
+        // 2. Build dynamic SOQL query - include all Account filter fields and EBD due date.
+        // Explicit list/record selection must not be re-filtered by active stages.
+        String soqlQuery = 'SELECT Id, Name, Customer__c, Stage__c, ' +
+                           'Customer__r.Name, Customer__r.Email__c, ' +
+                           'Customer__r.BillingCountry, ' +
+                           'Customer__r.Supervisor_Lookup__c, Customer__r.Supervisor_Lookup__r.Name, ' +
+                           'Customer__r.Regional_Manager__c, Customer__r.Regional_Manager__r.Name, ' +
+                           'Customer__r.County__c, EBD_Due_Date__c, ' +
+                           'Renewal_Client__c ' +
+                           'FROM Contract_Bid__c ' +
+                           'WHERE Customer__c != null';
+
+        if (!hasExplicitSelection) {
+            soqlQuery += ' AND Stage__c IN :activeStages';
+        }
+
         if (!selectedBidIds.isEmpty()) {
             soqlQuery += ' AND Id IN :selectedBidIds';
+        } else if (String.isNotBlank(recordId)) {
+            soqlQuery += ' AND Id = :recordId';
         }
         
         // Customer Name filter (partial match on Account Name)
@@ -153,6 +163,7 @@ public with sharing class AccountFilesController {
         // Also map both Account and Contract Bid Ids so files can be loaded from either record.
         Map<Id, Contract_Bid__c> contractsByAccount = new Map<Id, Contract_Bid__c>();
         Map<Id, Id> linkedEntityToAccountId = new Map<Id, Id>();
+        Set<Id> contractBidIds = new Set<Id>();
         for (Contract_Bid__c contract : contractMap.values()) {
             // Apply Regional Manager filter (from Account)
             if (String.isNotBlank(regionalManagerId)) {
@@ -178,11 +189,7 @@ public with sharing class AccountFilesController {
             contractsByAccount.put(contract.Customer__c, contract);
             linkedEntityToAccountId.put(contract.Customer__c, contract.Customer__c);
             linkedEntityToAccountId.put(contract.Id, contract.Customer__c);
-        }
-
-        Set<Id> contractBidIds = new Set<Id>();
-        for (Contract_Bid__c contract : contractsByAccount.values()) {
-            if (contract != null && contract.Id != null) {
+            if (contract.Id != null) {
                 contractBidIds.add(contract.Id);
             }
         }
@@ -238,7 +245,7 @@ public with sharing class AccountFilesController {
 
         String contractYearFilter = String.isNotBlank(contractYear)
             ? contractYear.trim()
-            : String.valueOf(Date.today().year());
+            : null;
 
         List<ContentVersion> versions = latestVersionIds.isEmpty()
             ? new List<ContentVersion>()
@@ -268,7 +275,11 @@ public with sharing class AccountFilesController {
             }
 
             Boolean fromContractBid = bidDocIds.contains(cv.ContentDocumentId);
-            if (!fromContractBid && !cv.Title.contains(contractYearFilter)) {
+            if (
+                !fromContractBid
+                && String.isNotBlank(contractYearFilter)
+                && !cv.Title.contains(contractYearFilter)
+            ) {
                 continue;
             }
 

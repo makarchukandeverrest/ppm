@@ -12,18 +12,11 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     error;
     @track isUpdating = false;
     @track showConfirmationModal = false;
-    @track queryRecordIds;
-    _recordId;
+    @api recordId;
     _recordIds;
-
-    @api
-    get recordId() {
-        return this._recordId;
-    }
-    set recordId(value) {
-        this._recordId = value;
-        this.syncQueryRecordIds();
-    }
+    _hasBooted = false;
+    _urlRecordId;
+    _userSetYear = false;
 
     @api
     get recordIds() {
@@ -31,18 +24,12 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     }
     set recordIds(value) {
         this._recordIds = value;
-        this.syncQueryRecordIds();
-    }
-
-    syncQueryRecordIds() {
-        if (this._recordIds && this._recordIds.length) {
-            this.queryRecordIds = [...this._recordIds];
-        } else if (this._recordId) {
-            this.queryRecordIds = [this._recordId];
-        } else {
-            this.queryRecordIds = undefined;
+        if (this._hasBooted) {
+            if (this._recordIds && this._recordIds.length && !this._userSetYear) {
+                this.contractYearFilter = '';
+            }
+            this.loadAccounts();
         }
-        this.loadAccounts();
     }
 
     // Filter state
@@ -78,15 +65,28 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     @track filtersLoaded = false;
 
     connectedCallback() {
-        console.log('[SendContracts] boot', this.recordId, JSON.stringify(this.queryRecordIds || null));
+        this._hasBooted = true;
+        if (!this.recordId) {
+            const urlParams = new URLSearchParams(window.location.search);
+            this._urlRecordId = urlParams.get('recordId') || urlParams.get('c__recordId');
+        }
+        console.log('[SendContracts] boot', this.effectiveRecordId, JSON.stringify(this.recordIds || null));
         // Default envelope expires = today + default days (120), not before min date
         const days = parseInt(this.daysBeforeExpires, 10) || 120;
         const computed = this._datePlusDays(new Date(), days);
         this.envelopeExpiresDate = computed >= this.envelopeExpiresMinDate
             ? computed
             : this.envelopeExpiresMinDate;
-        this.contractYearFilter = String(new Date().getFullYear());
+        const hasSelection = this.effectiveRecordId
+            || (this.recordIds && this.recordIds.length);
+        if (!hasSelection) {
+            this.contractYearFilter = String(new Date().getFullYear());
+        }
         this.loadAccounts();
+    }
+
+    get effectiveRecordId() {
+        return this.recordId || this._urlRecordId;
     }
 
     _datePlusDays(date, days) {
@@ -139,7 +139,8 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
         this.isUpdating = true;
         try {
             const data = await getAccountsWithFiles({
-                recordIds: this.queryRecordIds,
+                recordId: this.effectiveRecordId,
+                recordIds: this.recordIds,
                 regionalManagerId: this.selectedRegionalManager,
                 county: this.selectedCounty,
                 customerName: this.customerNameFilter,
@@ -149,8 +150,8 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
             console.log(
                 '[SendContracts] loaded',
                 JSON.stringify({
-                    recordId: this.recordId,
-                    queryRecordIds: this.queryRecordIds,
+                    recordId: this.effectiveRecordId,
+                    recordIds: this.recordIds,
                     rows: Array.isArray(data) ? data.length : 0
                 })
             );
@@ -382,6 +383,7 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     }
 
     handleContractYearChange(event) {
+        this._userSetYear = true;
         const val = (event.detail.value || '').replace(/\D/g, '');
         if (!val) {
             this.contractYearFilter = '';
@@ -496,7 +498,7 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     }
 
     async handleUpdate() {
-        console.log('[SendContracts] update', this.recordId, JSON.stringify(this.queryRecordIds || null));
+        console.log('[SendContracts] update', this.effectiveRecordId, JSON.stringify(this.recordIds || null));
         await this.loadAccounts();
     }
 
