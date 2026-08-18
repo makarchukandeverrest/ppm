@@ -78,7 +78,7 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     @track filtersLoaded = false;
 
     connectedCallback() {
-        console.log('[SendContracts] boot 20260818c', this.recordId, JSON.stringify(this.queryRecordIds || null));
+        console.log('[SendContracts] boot', this.recordId, JSON.stringify(this.queryRecordIds || null));
         // Default envelope expires = today + default days (120), not before min date
         const days = parseInt(this.daysBeforeExpires, 10) || 120;
         const computed = this._datePlusDays(new Date(), days);
