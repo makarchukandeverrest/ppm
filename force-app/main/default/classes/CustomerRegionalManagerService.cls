@@ -214,7 +214,7 @@ public without sharing class CustomerRegionalManagerService {
             return;
         }
 
-        // ── Cases stay aligned with Account RM, including when RM is cleared ──
+        
         List<Case> casesToUpdate = new List<Case>();
         List<WorkOrder> workOrdersToUpdate = new List<WorkOrder>();
         List<Invoice__c> invoicesToUpdate = new List<Invoice__c>();
