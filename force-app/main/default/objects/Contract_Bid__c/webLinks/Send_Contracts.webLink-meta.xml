@@ -10,5 +10,5 @@
     <openType>sidebar</openType>
     <protected>false</protected>
     <requireRowSelection>true</requireRowSelection>
-    <url>/lightning/n/Contracts_Sender</url>
+    <url>/flow/Contract_Bid_Send_Contracts</url>
 </WebLink>
