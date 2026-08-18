@@ -63,12 +63,34 @@
                 </rightValue>
             </conditions>
             <connector>
-                <targetReference>Create_Task_for_Regional_Manager</targetReference>
+                <targetReference>Get_Existing_Case_Task</targetReference>
             </connector>
             <label>Regional Manager Present</label>
         </rules>
     </decisions>
-    <description>Creates a Task for the Customer (Account) Regional Manager 7 days after a Case DocuSign envelope is sent, if the envelope is still Sent. Follows Salesforce record-triggered flow guidance: filter at entry, scheduled path from dfsle__Sent__c, Create Records for the Task, and Assigned To = Account.Regional_Manager__c.</description>
+    <decisions>
+        <name>Task_Already_Exists</name>
+        <label>Open Task Already Exists?</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Task Already Exists</defaultConnectorLabel>
+        <rules>
+            <name>No_Existing_Task</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>Get_Existing_Case_Task.Id</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Create_Task_for_Regional_Manager</targetReference>
+            </connector>
+            <label>No Existing Task</label>
+        </rules>
+    </decisions>
+    <description>Creates one Task per Case for the Customer Regional Manager 7 days after a Case DocuSign envelope is sent, if the envelope is still Sent. Skips create when an open follow-up Task already exists on the Case.</description>
     <environments>Default</environments>
     <formulas>
         <name>TaskDueDate</name>
@@ -78,7 +100,7 @@
     <formulas>
         <name>TaskSubject</name>
         <dataType>String</dataType>
-        <expression>&quot;Follow up: Case envelope not completed - &quot; &amp; $Record.Name</expression>
+        <expression>&quot;Follow up: Case envelope not completed&quot;</expression>
     </formulas>
     <formulas>
         <name>TaskDescription</name>
@@ -156,6 +178,41 @@
         <object>Task</object>
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordCreates>
+    <recordLookups>
+        <name>Get_Existing_Case_Task</name>
+        <label>Get Existing Case Task</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>true</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Task_Already_Exists</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>WhatId</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Get_Case.Id</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>Subject</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>TaskSubject</elementReference>
+            </value>
+        </filters>
+        <filters>
+            <field>Status</field>
+            <operator>NotEqualTo</operator>
+            <value>
+                <stringValue>Completed</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Task</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
     <recordLookups>
         <name>Get_Account</name>
         <label>Get Account</label>
