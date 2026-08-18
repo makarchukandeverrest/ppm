@@ -172,6 +172,13 @@ public with sharing class AccountFilesController {
             linkedEntityToAccountId.put(contract.Id, contract.Customer__c);
         }
 
+        Set<Id> contractBidIds = new Set<Id>();
+        for (Contract_Bid__c contract : contractsByAccount.values()) {
+            if (contract != null && contract.Id != null) {
+                contractBidIds.add(contract.Id);
+            }
+        }
+
         // 4. Check if there are accounts to process
         if (linkedEntityToAccountId.isEmpty()) {
             // Return empty list instead of throwing an error
@@ -214,10 +221,16 @@ public with sharing class AccountFilesController {
             }
         }
 
+        Set<Id> bidDocIds = new Set<Id>();
+        for (ContentDocumentLink link : links) {
+            if (contractBidIds.contains(link.LinkedEntityId)) {
+                bidDocIds.add(link.ContentDocumentId);
+            }
+        }
+
         String contractYearFilter = String.isNotBlank(contractYear)
             ? contractYear.trim()
             : String.valueOf(Date.today().year());
-        String contractYearLike = '%' + String.escapeSingleQuotes(contractYearFilter) + '%';
 
         List<ContentVersion> versions = latestVersionIds.isEmpty()
             ? new List<ContentVersion>()
@@ -227,7 +240,6 @@ public with sharing class AccountFilesController {
                 WHERE Id IN :latestVersionIds
                     AND FileExtension IN ('pdf', 'doc', 'docx')
                     AND Title LIKE '%Contract%'
-                    AND Title LIKE :contractYearLike
                     AND (NOT Title LIKE '%Signed Contract%')
                     AND (NOT Title LIKE '%Completed%')
               ];
@@ -235,16 +247,24 @@ public with sharing class AccountFilesController {
         List<ContentVersion> filteredVersions = new List<ContentVersion>();
 
         for (ContentVersion cv : versions) {
-            if (
-                cv.Title != null &&
-                cv.Title.contains(contractYearFilter) &&
-                !cv.Title.contains('Welcome Letter') 
-                && !cv.Title.contains('Bid Worksheet') 
-                && !cv.Title.contains('Signed Contract') 
-                && !cv.Title.contains('Completed')
-            ) {
-                filteredVersions.add(cv);
+            if (cv.Title == null) {
+                continue;
             }
+            if (
+                cv.Title.contains('Welcome Letter')
+                || cv.Title.contains('Bid Worksheet')
+                || cv.Title.contains('Signed Contract')
+                || cv.Title.contains('Completed')
+            ) {
+                continue;
+            }
+
+            Boolean fromContractBid = bidDocIds.contains(cv.ContentDocumentId);
+            if (!fromContractBid && !cv.Title.contains(contractYearFilter)) {
+                continue;
+            }
+
+            filteredVersions.add(cv);
         }
         
 

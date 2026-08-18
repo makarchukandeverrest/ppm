@@ -150,7 +150,16 @@ public class AccountFilesControllerTest {
         String title,
         String fileExtension
     ) {
-        String fileTitle = buildContractFileTitle(title);
+        return createTestFile(linkedEntityId, title, fileExtension, true);
+    }
+
+    private static ContentDocument createTestFile(
+        Id linkedEntityId,
+        String title,
+        String fileExtension,
+        Boolean includeYearInTitle
+    ) {
+        String fileTitle = includeYearInTitle ? buildContractFileTitle(title) : title;
         ContentVersion cv = new ContentVersion(
             Title           = fileTitle,
             PathOnClient    = fileTitle + '.' + fileExtension,
@@ -403,5 +412,53 @@ public class AccountFilesControllerTest {
 
         System.assertEquals(1, results.size(), 'One account should be returned');
         System.assertEquals(2, results[0].files.size(), 'Files from Account and Contract Bid should be combined');
+    }
+
+    @IsTest
+    static void testGetAccountsWithFiles_contractBidFileDoesNotRequireYear() {
+        StageReferenceSettings__mdt stageRef = StageReferenceSettings__mdt.getInstance('Active_Stages');
+        String firstActiveStage = stageRef.Stage_Names__c.split(',')[0].trim();
+        String county = getValidCountyValue();
+
+        Account acc = createTestAccount('Bid No Year Acc', null, null, county);
+        Contract_Bid__c contract = createTestContract(acc, firstActiveStage, false);
+        createTestFile(contract.Id, 'Contract Without Year From Bid', 'pdf', false);
+
+        Test.startTest();
+        List<AccountWithFiles> results = AccountFilesController.getAccountsWithFiles(
+            null, null, null, 'Bid No Year Acc', null, null
+        );
+        Test.stopTest();
+
+        System.assertEquals(1, results.size(), 'Contract Bid file without year should still be returned');
+        System.assertEquals(1, results[0].files.size(), 'Yearless Contract Bid file should be included');
+        System.assertEquals(
+            'Contract Without Year From Bid',
+            results[0].files[0].Title,
+            'Returned file should keep the Contract Bid title without a year'
+        );
+    }
+
+    @IsTest
+    static void testGetAccountsWithFiles_accountFileStillRequiresYear() {
+        StageReferenceSettings__mdt stageRef = StageReferenceSettings__mdt.getInstance('Active_Stages');
+        String firstActiveStage = stageRef.Stage_Names__c.split(',')[0].trim();
+        String county = getValidCountyValue();
+
+        Account acc = createTestAccount('Account No Year Acc', null, null, county);
+        createTestContract(acc, firstActiveStage, false);
+        createTestFile(acc.Id, 'Contract Without Year From Account', 'pdf', false);
+
+        Test.startTest();
+        List<AccountWithFiles> results = AccountFilesController.getAccountsWithFiles(
+            null, null, null, 'Account No Year Acc', null, null
+        );
+        Test.stopTest();
+
+        System.assertEquals(
+            0,
+            results.size(),
+            'Account files without the contract year in the title should still be excluded'
+        );
     }
 }
