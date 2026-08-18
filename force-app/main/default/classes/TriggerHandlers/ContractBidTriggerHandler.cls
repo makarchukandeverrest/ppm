@@ -1,53 +1,63 @@
 public with sharing class ContractBidTriggerHandler extends TriggerHandler {
-  List<Contract_Bid__c> newList;
-  Map<Id, Contract_Bid__c> oldMap;
+    private static final String STAGE_CLOSED_WON = 'Closed - WON';
+    private static final String STAGE_CLOSED_LOST = 'Closed - LOST';
 
-  public ContractBidTriggerHandler() {
-    this.newList = (List<Contract_Bid__c>) Trigger.new;
-    this.oldMap = (Map<Id, Contract_Bid__c>) Trigger.oldMap;
-  }
+    List<Contract_Bid__c> newList;
+    Map<Id, Contract_Bid__c> oldMap;
 
-  protected override void beforeInsert() {
-    for (Contract_Bid__c bid : this.newList) {
-      clearRestrictedFieldsOnCreate(bid);
+    public ContractBidTriggerHandler() {
+        this.newList = (List<Contract_Bid__c>) Trigger.new;
+        this.oldMap = (Map<Id, Contract_Bid__c>) Trigger.oldMap;
     }
-  }
 
-  private static void clearRestrictedFieldsOnCreate(Contract_Bid__c bid) {
-    bid.Bid_Number__c = null;
-    bid.Version__c = null;
-    bid.Contract_Start_Date__c = null;
-    bid.Contract_End_Date__c = null;
-    bid.Sent_Contract_Date__c = null;
-    bid.Lost_Reason__c = null;
-    bid.Additional_Comments__c = null;
-    bid.EBD_Due_Date__c = null;
-    bid.Due_Date__c = null;
-  }
-  protected override void afterInsert() {
-    List<Contract_Bid__c> wonBids = new List<Contract_Bid__c>();
-    for (Contract_Bid__c bid : this.newList) {
-      if (bid.Stage__c == 'Closed - WON') {
-        wonBids.add(bid);
-      }
+    protected override void beforeInsert() {
+        for (Contract_Bid__c bid : this.newList) {
+            clearRestrictedFieldsOnCreate(bid);
+        }
     }
-    if (!wonBids.isEmpty()) {
-      AccountCurrentCustomerUpdater.updateCustomers(wonBids);
-    }
-  }
 
-  protected override void afterUpdate() {
-    List<Contract_Bid__c> wonBids = new List<Contract_Bid__c>();
-    for (Contract_Bid__c bid : this.newList) {
-      if (
-        bid.Stage__c == 'Closed - WON' &&
-        oldMap.get(bid.Id).Stage__c != 'Closed - WON'
-      ) {
-        wonBids.add(bid);
-      }
+    protected override void afterInsert() {
+        updateCurrentCustomerAccounts();
     }
-    if (!wonBids.isEmpty()) {
-      AccountCurrentCustomerUpdater.updateCustomers(wonBids);
+
+    protected override void afterUpdate() {
+        updateCurrentCustomerAccounts();
     }
-  }
+
+    private static void clearRestrictedFieldsOnCreate(Contract_Bid__c bid) {
+        bid.Bid_Number__c = null;
+        bid.Version__c = null;
+        bid.Contract_Start_Date__c = null;
+        bid.Contract_End_Date__c = null;
+        bid.Sent_Contract_Date__c = null;
+        bid.Lost_Reason__c = null;
+        bid.Additional_Comments__c = null;
+        bid.EBD_Due_Date__c = null;
+        bid.Due_Date__c = null;
+    }
+
+    private void updateCurrentCustomerAccounts() {
+        List<Contract_Bid__c> wonBids = new List<Contract_Bid__c>();
+        List<Contract_Bid__c> lostBids = new List<Contract_Bid__c>();
+
+        for (Contract_Bid__c bid : this.newList) {
+            if (stageChangedTo(bid, STAGE_CLOSED_WON)) {
+                wonBids.add(bid);
+            } else if (stageChangedTo(bid, STAGE_CLOSED_LOST)) {
+                lostBids.add(bid);
+            }
+        }
+
+        if (!lostBids.isEmpty()) {
+            AccountCurrentCustomerUpdater.clearCurrentCustomer(lostBids);
+        }
+        if (!wonBids.isEmpty()) {
+            AccountCurrentCustomerUpdater.updateCustomers(wonBids);
+        }
+    }
+
+    private Boolean stageChangedTo(Contract_Bid__c bid, String targetStage) {
+        String previousStage = this.oldMap != null ? this.oldMap.get(bid.Id)?.Stage__c : null;
+        return bid.Stage__c == targetStage && previousStage != targetStage;
+    }
 }
