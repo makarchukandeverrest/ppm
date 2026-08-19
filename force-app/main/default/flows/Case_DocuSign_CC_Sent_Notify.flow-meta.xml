@@ -207,7 +207,7 @@
             <label>Ready To Send</label>
         </rules>
     </decisions>
-    <description>Sends a Salesforce email to all DocuSign Carbon Copy recipients when a Winterization Letters envelope is sent. Matches Envelope Configuration Winterization Letters (a0DVv000012UXI3MAO). Recipients are selected by Type=CarbonCopy, not Role name: roles on this template are Carbon Copy, Carbon Copy 2, and Regional Manager. Signer 1 is excluded.</description>
+    <description>Sends a Salesforce email to all DocuSign Carbon Copy recipients when a Winterization Letters envelope is sent. Runs 1 minute after dfsle__Sent__c so dfsle__Recipient__c rows exist (DocuSign inserts the envelope as Sent first, then recipients). Matches Envelope Configuration Winterization Letters (a0DVv000012UXI3MAO). Recipients are selected by Type=CarbonCopy. Roles on this template: Carbon Copy, Carbon Copy 2, Regional Manager. Signer 1 is excluded.</description>
     <environments>Default</environments>
     <interviewLabel>Winterization DocuSign CC Sent Notify {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Winterization DocuSign CC Sent Notify</label>
@@ -327,9 +327,6 @@
     <start>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <connector>
-            <targetReference>Get_Case</targetReference>
-        </connector>
         <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
         <filterLogic>and</filterLogic>
         <filters>
@@ -355,6 +352,17 @@
         </filters>
         <object>dfsle__Envelope__c</object>
         <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <scheduledPaths>
+            <name>After_Recipients_Exist</name>
+            <connector>
+                <targetReference>Get_Case</targetReference>
+            </connector>
+            <label>After Recipients Exist</label>
+            <offsetNumber>1</offsetNumber>
+            <offsetUnit>Minutes</offsetUnit>
+            <recordField>dfsle__Sent__c</recordField>
+            <timeSource>RecordField</timeSource>
+        </scheduledPaths>
         <triggerType>RecordAfterSave</triggerType>
     </start>
     <status>Draft</status>
