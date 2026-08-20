@@ -11,6 +11,7 @@ public with sharing class ContractBidTriggerHandler extends TriggerHandler {
     for (Contract_Bid__c bid : this.newList) {
       clearRestrictedFieldsOnCreate(bid);
     }
+    ContractBidLabelsFiller.fillLabels(this.newList);
   }
 
   private static void clearRestrictedFieldsOnCreate(Contract_Bid__c bid) {

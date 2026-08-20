@@ -36,7 +36,8 @@ private class ContractBidTriggerHandlerTest {
                 Contract_End_Date__c,
                 Sent_Contract_Date__c,
                 Lost_Reason__c,
-                Additional_Comments__c
+                Additional_Comments__c,
+                Label__c
             FROM Contract_Bid__c
             WHERE Id = :bid.Id
         ];
@@ -48,6 +49,24 @@ private class ContractBidTriggerHandlerTest {
         System.assertEquals(null, bid.Sent_Contract_Date__c);
         System.assertEquals(null, bid.Lost_Reason__c);
         System.assertEquals(null, bid.Additional_Comments__c);
+        System.assert(bid.Label__c != null && bid.Label__c.contains('Assumptive Bid'));
+        System.assert(bid.Label__c.contains('Contract Created'));
+    }
+
+    @IsTest
+    static void testBeforeInsert_AddsDefaultLabelsAndKeepsExisting() {
+        Contract_Bid__c bid = createBid('Contact Verified and Updated');
+        bid.Label__c = 'Hot Lead';
+
+        Test.startTest();
+        insert bid;
+        Test.stopTest();
+
+        bid = [SELECT Label__c FROM Contract_Bid__c WHERE Id = :bid.Id];
+
+        System.assert(bid.Label__c.contains('Hot Lead'));
+        System.assert(bid.Label__c.contains('Assumptive Bid'));
+        System.assert(bid.Label__c.contains('Contract Created'));
     }
 
     @IsTest
