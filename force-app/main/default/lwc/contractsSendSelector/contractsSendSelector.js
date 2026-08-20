@@ -61,7 +61,8 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
         this.envelopeExpiresDate = computed >= this.envelopeExpiresMinDate
             ? computed
             : this.envelopeExpiresMinDate;
-        this.contractYearFilter = String(new Date().getFullYear());
+        this.contractYearFilter = String(new Date().getFullYear() + 1); //need to not show files for previous years
+;
     }
 
     _datePlusDays(date, days) {
@@ -155,7 +156,7 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     // Check if any filters are active
     get hasActiveFilters() {
         const yearIsCustom = this.contractYearFilter
-            && this.contractYearFilter !== String(new Date().getFullYear());
+            && this.contractYearFilter !== this._getCurrentContractYear();
 
         return this.selectedRegionalManager || 
                this.selectedCounty || 
