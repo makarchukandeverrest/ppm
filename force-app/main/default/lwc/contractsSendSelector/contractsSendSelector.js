@@ -3,6 +3,7 @@ import getAccountsWithFiles from '@salesforce/apex/AccountFilesController.getAcc
 import getFilterOptions from '@salesforce/apex/AccountFilesController.getFilterOptions';
 import sendEnvelopeWithSignature from '@salesforce/apex/DocuSignDfsleEnvelopeService.sendEnvelopeWithSignature';
 import { CloseActionScreenEvent } from 'lightning/actions';
+import { refreshApex } from '@salesforce/apex';
 
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { NavigationMixin } from 'lightning/navigation';
@@ -11,6 +12,7 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     @track accountsWithFiles;
     @track allAccountsWithFiles; // Store original data for reference
     error;
+    wiredAccountsResult;
     @track isUpdating = false;
     @track isSending = false;
     @track statusMessage = '';
@@ -33,7 +35,6 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
             if (this._recordIds && this._recordIds.length && !this._userSetYear) {
                 this.contractYearFilter = '';
             }
-            this.loadAccounts();
         }
     }
 
@@ -73,7 +74,7 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
         this._hasBooted = true;
         if (!this.recordId) {
             const urlParams = new URLSearchParams(window.location.search);
-            this._urlRecordId = urlParams.get('recordId') || urlParams.get('c__recordId');
+            this.recordId = urlParams.get('recordId') || urlParams.get('c__recordId');
         }
         console.log('[SendContracts] boot', this.effectiveRecordId, JSON.stringify(this.recordIds || null));
         // Default envelope expires = today + default days (120), not before min date
@@ -87,7 +88,6 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
         if (!hasSelection) {
             this.contractYearFilter = String(new Date().getFullYear());
         }
-        this.loadAccounts();
     }
 
     get effectiveRecordId() {
@@ -140,26 +140,28 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
         }
     }
 
-    async loadAccounts() {
-        this.isUpdating = true;
-        try {
-            const data = await getAccountsWithFiles({
+    @wire(getAccountsWithFiles, {
+        recordId: '$recordId',
+        recordIds: '$recordIds',
+        regionalManagerId: '$selectedRegionalManager',
+        county: '$selectedCounty',
+        customerName: '$customerNameFilter',
+        supervisorId: '$selectedSupervisor',
+        contractYear: '$contractYearFilter'
+    })
+    wiredAccounts(result) {
+        this.wiredAccountsResult = result;
+        const { error, data } = result;
+        console.log(
+            '[SendContracts] loaded',
+            JSON.stringify({
                 recordId: this.effectiveRecordId,
                 recordIds: this.recordIds,
-                regionalManagerId: this.selectedRegionalManager,
-                county: this.selectedCounty,
-                customerName: this.customerNameFilter,
-                supervisorId: this.selectedSupervisor,
-                contractYear: this.contractYearFilter
-            });
-            console.log(
-                '[SendContracts] loaded',
-                JSON.stringify({
-                    recordId: this.effectiveRecordId,
-                    recordIds: this.recordIds,
-                    rows: Array.isArray(data) ? data.length : 0
-                })
-            );
+                rows: Array.isArray(data) ? data.length : 0
+            })
+        );
+
+        if (data) {
             this.accountsWithFiles = this._enrichAccountsWithReminders(Array.isArray(data) ? data : []);
             this.allAccountsWithFiles = this.accountsWithFiles;
 
@@ -173,7 +175,7 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
                     })
                 );
             }
-        } catch (error) {
+        } else if (error) {
             console.error('[SendContracts] load error', error);
             this.dispatchEvent(
                 new ShowToastEvent({
@@ -183,8 +185,6 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
                     mode: 'dismissable'
                 })
             );
-        } finally {
-            this.isUpdating = false;
         }
     }
 
@@ -389,22 +389,18 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     }
     handleRegionalManagerChange(event) {
         this.selectedRegionalManager = event.detail.value;
-        this.loadAccounts();
     }
 
     handleCountyChange(event) {
         this.selectedCounty = event.detail.value;
-        this.loadAccounts();
     }
 
     handleCustomerNameChange(event) {
         this.customerNameFilter = event.detail.value;
-        this.loadAccounts();
     }
 
     handleSupervisorChange(event) {
         this.selectedSupervisor = event.detail.value;
-        this.loadAccounts();
     }
 
     handleContractYearChange(event) {
@@ -412,11 +408,9 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
         const val = (event.detail.value || '').replace(/\D/g, '');
         if (!val) {
             this.contractYearFilter = '';
-            this.loadAccounts();
             return;
         }
         this.contractYearFilter = val.slice(0, 4);
-        this.loadAccounts();
     }
 
     // Clear all filters
@@ -426,7 +420,6 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
         this.customerNameFilter = '';
         this.selectedSupervisor = '';
         this.contractYearFilter = String(new Date().getFullYear());
-        this.loadAccounts();
     }
 
     // Getter: returns only accounts that have selected files
@@ -524,7 +517,24 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
 
     async handleUpdate() {
         console.log('[SendContracts] update', this.effectiveRecordId, JSON.stringify(this.recordIds || null));
-        await this.loadAccounts();
+        if (!this.wiredAccountsResult) {
+            return;
+        }
+        this.isUpdating = true;
+        try {
+            await refreshApex(this.wiredAccountsResult);
+        } catch (error) {
+            console.error('[SendContracts] refresh error', error);
+            this.dispatchEvent(
+                new ShowToastEvent({
+                    title: 'Error',
+                    message: error?.body?.message || 'Failed to refresh contracts',
+                    variant: 'error'
+                })
+            );
+        } finally {
+            this.isUpdating = false;
+        }
     }
 
     async handleSubmit() {
