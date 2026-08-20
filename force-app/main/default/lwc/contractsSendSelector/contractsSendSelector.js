@@ -86,7 +86,7 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
         const hasSelection = this.effectiveRecordId
             || (this.recordIds && this.recordIds.length);
         if (!hasSelection) {
-            this.contractYearFilter = String(new Date().getFullYear());
+            this.contractYearFilter = String(new Date().getFullYear() + 1);
         }
     }
 
@@ -191,7 +191,7 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     // Check if any filters are active
     get hasActiveFilters() {
         const yearIsCustom = this.contractYearFilter
-            && this.contractYearFilter !== String(new Date().getFullYear());
+            && this.contractYearFilter !== String(new Date().getFullYear() + 1);
 
         return this.selectedRegionalManager || 
                this.selectedCounty || 
@@ -419,7 +419,7 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
         this.selectedCounty = '';
         this.customerNameFilter = '';
         this.selectedSupervisor = '';
-        this.contractYearFilter = String(new Date().getFullYear());
+        this.contractYearFilter = String(new Date().getFullYear() + 1);
     }
 
     // Getter: returns only accounts that have selected files
