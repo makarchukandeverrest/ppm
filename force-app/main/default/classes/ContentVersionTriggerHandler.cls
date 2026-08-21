@@ -22,14 +22,19 @@ public class ContentVersionTriggerHandler extends TriggerHandler {
                 completedVersions.add(version);
             }
         }
-        if (completedVersions.isEmpty()) {
-            return;
+        if (!completedVersions.isEmpty()) {
+            try {
+                DocuSignCompletedContractEmailService.handleCompletedContractFiles(completedVersions);
+            } catch (Exception e) {
+                System.debug('✗ ERROR in DocuSignCompletedContractEmailService: ' + e.getMessage());
+                System.debug(e.getStackTraceString());
+            }
         }
 
         try {
-            DocuSignCompletedContractEmailService.handleCompletedContractFiles(completedVersions);
+            SharePointContentVersionAccountLinker.linkToAccounts(newList);
         } catch (Exception e) {
-            System.debug('✗ ERROR in DocuSignCompletedContractEmailService: ' + e.getMessage());
+            System.debug('✗ ERROR in SharePointContentVersionAccountLinker: ' + e.getMessage());
             System.debug(e.getStackTraceString());
         }
     }
