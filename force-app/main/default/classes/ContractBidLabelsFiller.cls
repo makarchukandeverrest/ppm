@@ -1,7 +1,7 @@
 public with sharing class ContractBidLabelsFiller {
     private static final String NEW_RECORD_CREATED = 'New record created';
     private static final List<String> DEFAULT_LABELS = new List<String>{
-        'Assumptive Lead',
+        'Assumptive Bid',
         'Contract Created'
     };
 
