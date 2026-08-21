@@ -39,9 +39,8 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
 
     // Filter state
     @track selectedRegionalManager = '';
-    @track selectedCounty = '';
+    @track selectedManagementCompany = '';
     @track customerNameFilter = '';
-    @track selectedSupervisor = '';
     @track contractYearFilter = '';
 
     // Automatic Reminders
@@ -65,8 +64,7 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
 
     // Filter options
     @track regionalManagerOptions = [];
-    @track countyOptions = [];
-    @track supervisorOptions = [];
+    @track managementCompanyOptions = [];
     @track filtersLoaded = false;
 
     connectedCallback() {
@@ -126,13 +124,9 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
                 { label: '-- All --', value: '' },
                 ...data.regionalManagers.map(opt => ({ label: opt.label, value: opt.value }))
             ];
-            this.countyOptions = [
+            this.managementCompanyOptions = [
                 { label: '-- All --', value: '' },
-                ...data.counties.map(opt => ({ label: opt.label, value: opt.value }))
-            ];
-            this.supervisorOptions = [
-                { label: '-- All --', value: '' },
-                ...data.supervisors.map(opt => ({ label: opt.label, value: opt.value }))
+                ...(data.managementCompanies || []).map(opt => ({ label: opt.label, value: opt.value }))
             ];
             this.filtersLoaded = true;
         } else if (error) {
@@ -147,9 +141,8 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
                 recordId: this.effectiveRecordId,
                 recordIds: this.recordIds,
                 regionalManagerId: this.selectedRegionalManager,
-                county: this.selectedCounty,
+                managementCompanyId: this.selectedManagementCompany,
                 customerName: this.customerNameFilter,
-                supervisorId: this.selectedSupervisor,
                 contractYear: this.contractYearFilter
             });
             console.log(
@@ -193,10 +186,9 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
         const yearIsCustom = this.contractYearFilter
             && this.contractYearFilter !== String(new Date().getFullYear());
 
-        return this.selectedRegionalManager || 
-               this.selectedCounty || 
-               this.customerNameFilter || 
-               this.selectedSupervisor ||
+        return this.selectedRegionalManager ||
+               this.selectedManagementCompany ||
+               this.customerNameFilter ||
                yearIsCustom;
     }
 
@@ -392,18 +384,13 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
         this.loadAccounts();
     }
 
-    handleCountyChange(event) {
-        this.selectedCounty = event.detail.value;
+    handleManagementCompanyChange(event) {
+        this.selectedManagementCompany = event.detail.value;
         this.loadAccounts();
     }
 
     handleCustomerNameChange(event) {
         this.customerNameFilter = event.detail.value;
-        this.loadAccounts();
-    }
-
-    handleSupervisorChange(event) {
-        this.selectedSupervisor = event.detail.value;
         this.loadAccounts();
     }
 
@@ -422,9 +409,8 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     // Clear all filters
     clearFilters() {
         this.selectedRegionalManager = '';
-        this.selectedCounty = '';
+        this.selectedManagementCompany = '';
         this.customerNameFilter = '';
-        this.selectedSupervisor = '';
         this.contractYearFilter = String(new Date().getFullYear());
         this.loadAccounts();
     }
