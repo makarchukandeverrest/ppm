@@ -35,6 +35,7 @@ public with sharing class ContractBidTriggerHandler extends TriggerHandler {
     if (!wonBids.isEmpty()) {
       AccountCurrentCustomerUpdater.updateCustomers(wonBids);
     }
+    ContractBidLabelsFiller.replacePreviousYearLabels(this.newList);
   }
 
   protected override void afterUpdate() {
