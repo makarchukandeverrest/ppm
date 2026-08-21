@@ -81,6 +81,16 @@
         <label>New record created</label>
     </customValue>
     <customValue>
+        <fullName>Mass Created</fullName>
+        <default>false</default>
+        <label>Mass Created</label>
+    </customValue>
+    <customValue>
+        <fullName>MISSING FILE/CONTACT INFO</fullName>
+        <default>false</default>
+        <label>MISSING FILE/CONTACT INFO</label>
+    </customValue>
+    <customValue>
         <fullName>Goran to do</fullName>
         <default>false</default>
         <isActive>false</isActive>

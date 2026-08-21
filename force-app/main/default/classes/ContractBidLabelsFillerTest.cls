@@ -61,7 +61,7 @@ private class ContractBidLabelsFillerTest {
         Test.stopTest();
 
         bid = [SELECT Label__c FROM Contract_Bid__c WHERE Id = :bid.Id];
-        System.assert(bid.Label__c.contains('Assumptive Lead'));
+        System.assert(bid.Label__c.contains('Assumptive Bid'));
         System.assert(bid.Label__c.contains('Contract Created'));
     }
 
@@ -82,7 +82,7 @@ private class ContractBidLabelsFillerTest {
 
         bid = [SELECT Label__c FROM Contract_Bid__c WHERE Id = :bid.Id];
         System.assert(bid.Label__c.contains('Hot Lead'));
-        System.assert(bid.Label__c.contains('Assumptive Lead'));
+        System.assert(bid.Label__c.contains('Assumptive Bid'));
         System.assert(bid.Label__c.contains('Contract Created'));
     }
 
