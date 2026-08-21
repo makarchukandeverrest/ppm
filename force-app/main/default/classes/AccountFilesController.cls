@@ -96,8 +96,9 @@ public with sharing class AccountFilesController {
         return options;
     }
     
-    @AuraEnabled(cacheable=true)
+    @AuraEnabled
     public static List<AccountWithFiles> getAccountsWithFiles(
+        String recordId,
         List<Id> recordIds,
         String regionalManagerId,
         String county,
@@ -122,7 +123,10 @@ public with sharing class AccountFilesController {
             }
         }
 
-        // 2. Build dynamic SOQL query - include all Account filter fields and EBD due date
+        Boolean hasExplicitSelection = !selectedBidIds.isEmpty() || String.isNotBlank(recordId);
+
+        // 2. Build dynamic SOQL query - include all Account filter fields and EBD due date.
+        // Explicit list/record selection must not be re-filtered by active stages.
         String soqlQuery = 'SELECT Id, Name, Customer__c, Stage__c, ' +
                            'Customer__r.Name, Customer__r.Email__c, ' +
                            'Customer__r.BillingCountry, ' +
@@ -131,11 +135,16 @@ public with sharing class AccountFilesController {
                            'Customer__r.County__c, EBD_Due_Date__c, ' +
                            'Renewal_Client__c ' +
                            'FROM Contract_Bid__c ' +
-                           'WHERE Stage__c IN :activeStages';
-        
-        // Limit to list-view / record-page selection when provided
+                           'WHERE Customer__c != null';
+
+        if (!hasExplicitSelection) {
+            soqlQuery += ' AND Stage__c IN :activeStages';
+        }
+
         if (!selectedBidIds.isEmpty()) {
             soqlQuery += ' AND Id IN :selectedBidIds';
+        } else if (String.isNotBlank(recordId)) {
+            soqlQuery += ' AND Id = :recordId';
         }
         
         // Customer Name filter (partial match on Account Name)
@@ -150,8 +159,11 @@ public with sharing class AccountFilesController {
             (List<Contract_Bid__c>)Database.query(soqlQuery)
         );
 
-        // 3. Map AccountId -> Contract_Bid__c and filter by Account-level fields
+        // 3. Map AccountId -> Contract_Bid__c and filter by Account-level fields.
+        // Also map both Account and Contract Bid Ids so files can be loaded from either record.
         Map<Id, Contract_Bid__c> contractsByAccount = new Map<Id, Contract_Bid__c>();
+        Map<Id, Id> linkedEntityToAccountId = new Map<Id, Id>();
+        Set<Id> contractBidIds = new Set<Id>();
         for (Contract_Bid__c contract : contractMap.values()) {
             // Apply Regional Manager filter (from Account)
             if (String.isNotBlank(regionalManagerId)) {
@@ -175,19 +187,24 @@ public with sharing class AccountFilesController {
             }
             
             contractsByAccount.put(contract.Customer__c, contract);
+            linkedEntityToAccountId.put(contract.Customer__c, contract.Customer__c);
+            linkedEntityToAccountId.put(contract.Id, contract.Customer__c);
+            if (contract.Id != null) {
+                contractBidIds.add(contract.Id);
+            }
         }
 
         // 4. Check if there are accounts to process
-        if (contractsByAccount.isEmpty()) {
+        if (linkedEntityToAccountId.isEmpty()) {
             // Return empty list instead of throwing an error
             return new List<AccountWithFiles>();
         }
 
-        // 5. Get document links for the contracts' Accounts
+        // 5. Get document links for Accounts and related Contract Bids
         List<ContentDocumentLink> links = [
             SELECT ContentDocumentId, LinkedEntityId
             FROM ContentDocumentLink
-            WHERE LinkedEntityId IN :contractsByAccount.keySet()
+            WHERE LinkedEntityId IN :linkedEntityToAccountId.keySet()
         ];
 
         Set<Id> docIds = new Set<Id>();
@@ -202,12 +219,13 @@ public with sharing class AccountFilesController {
             WHERE Id IN :docIds
         ]);
 
-        // 7. Map DocumentId -> AccountId
+        // 7. Map DocumentId -> AccountId (Contract Bid files resolve to Customer__c)
         Map<Id, Id> docIdToAccountIdMap = new Map<Id, Id>();
         for (ContentDocumentLink link : links) {
-            Id accountId = link.LinkedEntityId;
-            Id docId = link.ContentDocumentId;
-            docIdToAccountIdMap.put(docId, accountId);
+            Id accountId = linkedEntityToAccountId.get(link.LinkedEntityId);
+            if (accountId != null) {
+                docIdToAccountIdMap.put(link.ContentDocumentId, accountId);
+            }
         }
 
         // 8. Get ContentVersions for the documents
@@ -218,10 +236,16 @@ public with sharing class AccountFilesController {
             }
         }
 
+        Set<Id> bidDocIds = new Set<Id>();
+        for (ContentDocumentLink link : links) {
+            if (contractBidIds.contains(link.LinkedEntityId)) {
+                bidDocIds.add(link.ContentDocumentId);
+            }
+        }
+
         String contractYearFilter = String.isNotBlank(contractYear)
             ? contractYear.trim()
-            : String.valueOf(Date.today().year());
-        String contractYearLike = '%' + String.escapeSingleQuotes(contractYearFilter) + '%';
+            : null;
 
         List<ContentVersion> versions = latestVersionIds.isEmpty()
             ? new List<ContentVersion>()
@@ -231,7 +255,6 @@ public with sharing class AccountFilesController {
                 WHERE Id IN :latestVersionIds
                     AND FileExtension IN ('pdf', 'doc', 'docx')
                     AND Title LIKE '%Contract%'
-                    AND Title LIKE :contractYearLike
                     AND (NOT Title LIKE '%Signed Contract%')
                     AND (NOT Title LIKE '%Completed%')
               ];
@@ -239,16 +262,28 @@ public with sharing class AccountFilesController {
         List<ContentVersion> filteredVersions = new List<ContentVersion>();
 
         for (ContentVersion cv : versions) {
-            if (
-                cv.Title != null &&
-                cv.Title.contains(contractYearFilter) &&
-                !cv.Title.contains('Welcome Letter') 
-                && !cv.Title.contains('Bid Worksheet') 
-                && !cv.Title.contains('Signed Contract') 
-                && !cv.Title.contains('Completed')
-            ) {
-                filteredVersions.add(cv);
+            if (cv.Title == null) {
+                continue;
             }
+            if (
+                cv.Title.contains('Welcome Letter')
+                || cv.Title.contains('Bid Worksheet')
+                || cv.Title.contains('Signed Contract')
+                || cv.Title.contains('Completed')
+            ) {
+                continue;
+            }
+
+            Boolean fromContractBid = bidDocIds.contains(cv.ContentDocumentId);
+            if (
+                !fromContractBid
+                && String.isNotBlank(contractYearFilter)
+                && !cv.Title.contains(contractYearFilter)
+            ) {
+                continue;
+            }
+
+            filteredVersions.add(cv);
         }
         
 
@@ -265,7 +300,7 @@ public with sharing class AccountFilesController {
         for (Id docId : docIdToVersion.keySet()) {
             Id accountId = docIdToAccountIdMap.get(docId);
             
-            if (accountId != null && contractsByAccount.containsKey(accountId)) {
+            if (accountId != null) {
                 if (!accountIdToFiles.containsKey(accountId)) {
                     accountIdToFiles.put(accountId, new List<ContentVersion>());
                 }
