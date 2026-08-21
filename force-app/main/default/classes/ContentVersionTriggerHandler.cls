@@ -13,6 +13,16 @@ public class ContentVersionTriggerHandler extends TriggerHandler {
         oldMap = (Map<Id, ContentVersion>) Trigger.oldMap;
     }
 
+    protected override void afterInsert() {
+        List<ContentVersion> filesToLink = new List<ContentVersion>();
+        for(ContentVersion cv : newList){
+            if(cv.Title.contains('Contract') || cv.Title.contains('Bid') || cv.Title.contains('Winterization')){
+                filesToLink.add(cv);
+            }
+        }
+        SharePointContentVersionAccountLinker.linkToAccounts(filesToLink);
+    }
+
     protected override void afterUpdate(){
 
         System.debug('=== ContentVersion Trigger Handler Started ===');
