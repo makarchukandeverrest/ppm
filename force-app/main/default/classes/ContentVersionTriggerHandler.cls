@@ -3,6 +3,8 @@ public class ContentVersionTriggerHandler extends TriggerHandler {
     private List<ContentVersion> newList;
     private Map<Id, ContentVersion> oldMap;
 
+    private static final String DOCUSIGN_COMPLETED_TOKEN = '_completed';
+
     // DocuSign statuses that should trigger task creation
     private static final Set<String> TASK_TRIGGER_STATUSES = new Set<String>{
         'Sent', 'Delivered', 'Completed'
@@ -11,6 +13,32 @@ public class ContentVersionTriggerHandler extends TriggerHandler {
     public ContentVersionTriggerHandler(){
         newList = (List<ContentVersion>) Trigger.new;
         oldMap = (Map<Id, ContentVersion>) Trigger.oldMap;
+    }
+
+    protected override void afterInsert() {
+        try {
+            SharePointContentVersionAccountLinker.linkToAccounts(newList);
+        } catch (Exception e) {
+            System.debug('ERROR in SharePointContentVersionAccountLinker: ' + e.getMessage());
+            System.debug(e.getStackTraceString());
+        }
+
+        List<ContentVersion> completedVersions = new List<ContentVersion>();
+        for (ContentVersion version : newList) {
+            if (version.Title != null && version.Title.contains(DOCUSIGN_COMPLETED_TOKEN)) {
+                completedVersions.add(version);
+            }
+        }
+        if (completedVersions.isEmpty()) {
+            return;
+        }
+
+        try {
+            DocuSignCompletedContractEmailService.handleCompletedContractFiles(completedVersions);
+        } catch (Exception e) {
+            System.debug('ERROR in DocuSignCompletedContractEmailService: ' + e.getMessage());
+            System.debug(e.getStackTraceString());
+        }
     }
 
     protected override void afterUpdate(){
