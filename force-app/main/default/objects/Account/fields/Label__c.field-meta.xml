@@ -35,6 +35,11 @@
                 <label>Assumptive Lead</label>
             </value>
             <value>
+                <fullName>Assumptive Bid</fullName>
+                <default>false</default>
+                <label>Assumptive Bid</label>
+            </value>
+            <value>
                 <fullName>On Hold</fullName>
                 <default>false</default>
                 <label>On Hold</label>

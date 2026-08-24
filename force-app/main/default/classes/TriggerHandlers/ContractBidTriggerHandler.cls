@@ -14,10 +14,12 @@ public with sharing class ContractBidTriggerHandler extends TriggerHandler {
         for (Contract_Bid__c bid : this.newList) {
             clearRestrictedFieldsOnCreate(bid);
         }
+        ContractBidLabelsFiller.fillLabels(this.newList);
     }
 
     protected override void afterInsert() {
         updateCurrentCustomerAccounts();
+        ContractBidLabelsFiller.replacePreviousYearLabels(this.newList);
     }
 
     protected override void afterUpdate() {
