@@ -167,6 +167,7 @@
     <searchLayouts>
         <listViewButtons>Send_Contracts</listViewButtons>
         <listViewButtons>Mass_Send</listViewButtons>
+        <listViewButtons>Send_Emails</listViewButtons>
         <listViewButtons>Mass_Clone</listViewButtons>
         <searchResultsAdditionalFields>Version__c</searchResultsAdditionalFields>
         <searchResultsAdditionalFields>Customer__c</searchResultsAdditionalFields>
