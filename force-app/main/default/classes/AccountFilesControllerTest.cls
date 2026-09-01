@@ -451,7 +451,7 @@ public class AccountFilesControllerTest {
 
         Test.startTest();
         List<AccountWithFiles> results = AccountFilesController.getAccountsWithFiles(
-            null, null, null, 'Account No Year Acc', null, null
+            null, null, null, 'Account No Year Acc', null, String.valueOf(Date.today().year() + 1)
         );
         Test.stopTest();
 

@@ -230,7 +230,7 @@ public with sharing class AccountFilesController {
 
         String contractYearFilter = String.isNotBlank(contractYear)
             ? contractYear.trim()
-            : String.valueOf(Date.today().year());
+            : null;
 
         List<ContentVersion> versions = latestVersionIds.isEmpty()
             ? new List<ContentVersion>()
@@ -260,7 +260,11 @@ public with sharing class AccountFilesController {
             }
 
             Boolean fromContractBid = bidDocIds.contains(cv.ContentDocumentId);
-            if (!fromContractBid && !cv.Title.contains(contractYearFilter)) {
+            if (
+                !fromContractBid
+                && String.isNotBlank(contractYearFilter)
+                && !cv.Title.contains(contractYearFilter)
+            ) {
                 continue;
             }
 
