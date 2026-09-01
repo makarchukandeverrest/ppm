@@ -341,6 +341,7 @@ public class UnifiedActivityControllerTest {
 
             EmailMessage emailMessage = new EmailMessage(
                 Subject = 'Email with attachment',
+                FromName = 'Stephanie Pratt',
                 FromAddress = 'sender@example.com',
                 ToAddress = 'recipient@example.com',
                 TextBody = 'Body',
@@ -386,6 +387,43 @@ public class UnifiedActivityControllerTest {
             result.items[0].type
         );
         System.assertEquals(1, result.items[0].attachmentCount, 'Email should report one attachment');
+        System.assertEquals(
+            'Stephanie Pratt',
+            result.items[0].createdByName,
+            'Email activity should show FromName, not CreatedBy'
+        );
+    }
+
+    @IsTest
+    static void testGetUnifiedActivities_emailFallsBackToFromAddress() {
+        User u = createTestUser();
+        Account acc;
+        System.runAs(u) {
+            acc = createTestAccount();
+            insert new EmailMessage(
+                Subject = 'Email without from name',
+                FromAddress = 'sender@example.com',
+                ToAddress = 'recipient@example.com',
+                TextBody = 'Body',
+                Status = '3',
+                Incoming = false,
+                RelatedToId = acc.Id
+            );
+        }
+
+        Test.startTest();
+        UnifiedActivityModels.ActivityPageResult result;
+        System.runAs(u) {
+            result = getActivities(acc.Id, 'DESC', 20, 0, UnifiedActivityMapper.TYPE_EMAIL, null);
+        }
+        Test.stopTest();
+
+        System.assertEquals(1, result.items.size(), 'Expected one email activity');
+        System.assertEquals(
+            'sender@example.com',
+            result.items[0].createdByName,
+            'Email activity should fall back to FromAddress when FromName is blank'
+        );
     }
 
     @IsTest
@@ -638,5 +676,120 @@ public class UnifiedActivityControllerTest {
 
         System.assertEquals(1, result.items.size(), 'Expected one email activity');
         System.assert(result.items[0].description.contains('version/download/'), 'CID reference should be replaced');
+    }
+
+    @IsTest
+    static void testGetUnifiedActivities_includesEmailsRelatedViaAccountContacts() {
+        User u = createTestUser();
+        Account customer;
+        Contact customerContact;
+        EmailMessage platformEmail;
+        System.runAs(u) {
+            customer = createTestAccount();
+            customerContact = new Contact(
+                LastName = 'Customer Contact',
+                Email = 'customer.contact.' + String.valueOf(Crypto.getRandomInteger()) + '@example.com',
+                AccountId = customer.Id
+            );
+            insert customerContact;
+
+            Account unrelatedAccount = new Account(Name = 'Unrelated Email Parent');
+            insert unrelatedAccount;
+
+            platformEmail = new EmailMessage(
+                Subject = 'Platform thread reply',
+                FromAddress = 'sender@example.com',
+                ToAddress = customerContact.Email,
+                TextBody = 'Filed on an email thread, not the customer record',
+                Status = '3',
+                Incoming = false,
+                RelatedToId = unrelatedAccount.Id
+            );
+            insert platformEmail;
+            ensureEmailMessageRelation(platformEmail.Id, customerContact.Id);
+        }
+
+        Test.startTest();
+        UnifiedActivityModels.ActivityPageResult result;
+        System.runAs(u) {
+            result = getActivities(customer.Id, 'DESC', 20, 0, UnifiedActivityMapper.TYPE_EMAIL, null);
+        }
+        Test.stopTest();
+
+        System.assertEquals(1, result.totalCount, 'Account feed should include emails related via customer contacts');
+        System.assertEquals(platformEmail.Id, result.items[0].id);
+        System.assertEquals('Platform thread reply', result.items[0].title);
+    }
+
+    @IsTest
+    static void testGetUnifiedActivities_includesContactEmailsOnContractBid() {
+        Account customer = createTestAccount();
+        Contact customerContact = new Contact(
+            LastName = 'Bid Contact',
+            Email = 'bid.contact.' + String.valueOf(Crypto.getRandomInteger()) + '@example.com',
+            AccountId = customer.Id
+        );
+        insert customerContact;
+
+        Contract_Bid__c bid = new Contract_Bid__c(
+            Name = 'Unified Bid Email Test',
+            Customer__c = customer.Id,
+            Stage__c = 'Information Verified'
+        );
+        insert bid;
+
+        Email_Platform__Email_Thread__c thread = new Email_Platform__Email_Thread__c(
+            Email_Platform__Thread_Identifier__c = 'unified-activity-' + String.valueOf(Crypto.getRandomInteger()),
+            Email_Platform__Subject__c = 'Premier Pool Management',
+            Email_Platform__From_Address__c = 'sender@example.com',
+            Email_Platform__Recipient__c = customerContact.Id
+        );
+        insert thread;
+
+        EmailMessage platformEmail = new EmailMessage(
+            Subject = 'Re: Premier Pool Management',
+            FromAddress = 'sender@example.com',
+            ToAddress = customerContact.Email,
+            TextBody = 'Reply filed on email thread',
+            Status = '1',
+            Incoming = false,
+            RelatedToId = thread.Id
+        );
+        insert platformEmail;
+        ensureEmailMessageRelation(platformEmail.Id, customerContact.Id);
+
+        Test.startTest();
+        UnifiedActivityModels.ActivityPageResult result = getActivities(
+            bid.Id,
+            'DESC',
+            20,
+            0,
+            UnifiedActivityMapper.TYPE_EMAIL,
+            null,
+            'Customer__c:Customer',
+            'Contract Bid'
+        );
+        Test.stopTest();
+
+        System.assertEquals(1, result.totalCount, 'Contract Bid feed should include Email Platform replies for customer contacts');
+        System.assertEquals(platformEmail.Id, result.items[0].id);
+        System.assertEquals('Re: Premier Pool Management', result.items[0].title);
+    }
+
+    private static void ensureEmailMessageRelation(Id emailMessageId, Id relationId) {
+        List<EmailMessageRelation> existing = [
+            SELECT Id
+            FROM EmailMessageRelation
+            WHERE EmailMessageId = :emailMessageId AND RelationId = :relationId
+            LIMIT 1
+        ];
+        if (!existing.isEmpty()) {
+            return;
+        }
+        insert new EmailMessageRelation(
+            EmailMessageId = emailMessageId,
+            RelationId = relationId,
+            RelationType = 'ToAddress'
+        );
     }
 }
