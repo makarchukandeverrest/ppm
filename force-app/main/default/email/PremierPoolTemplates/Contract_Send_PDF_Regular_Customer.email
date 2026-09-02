@@ -1,0 +1,16 @@
+<html>
+<head>
+	<title></title>
+</head>
+<body style="height: auto; min-height: auto;">Hi {{{Account.Primary_Contact__c}}},<br />
+<br />
+Please review the attached pool management proposal and let us know if you have any questions or would like to discuss any aspect of the agreement.<br />
+<br />
+Thank you for your time and consideration. We appreciate the opportunity and look forward to the possibility of working with you.<br />
+<br />
+Best regards,<br />
+<br />
+Premier Pool Management Team<br />
+<br />
+Check out our website: <a href="https://www.premierswim.com/">https://www.premierswim.com/</a></body>
+</html>

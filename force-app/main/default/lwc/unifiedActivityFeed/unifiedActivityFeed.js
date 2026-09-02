@@ -179,26 +179,56 @@ export default class UnifiedActivityFeed extends NavigationMixin(LightningElemen
                 isImage: part.partType === 'image',
                 isClickable: part.partType === 'image' && !!part.contentDocumentId
             }));
+            const hasDescription = !!(item.description && String(item.description).trim());
+            const hasDisplayBody = contentParts.length > 0 || hasDescription;
+            const isEmail = item.type === 'EmailMessage';
 
             return {
                 ...item,
                 contentParts,
                 hasContentParts: contentParts.length > 0,
-                hasDescription: !!(item.description && String(item.description).trim()),
-                hasDisplayBody: contentParts.length > 0 || !!(item.description && String(item.description).trim()),
+                hasDescription,
+                hasDisplayBody,
                 showSourceLabel: this.showSourceLabels && !!item.sourceLabel,
                 displayDate: this.formatDate(item.createdDate),
                 isTask: item.type === 'Task',
                 isEvent: item.type === 'Event',
-                isEmail: item.type === 'EmailMessage',
+                isEmail,
                 isFeed: item.type === 'FeedItem',
+                isCollapsibleBody: isEmail && hasDisplayBody,
+                bodyPreview: isEmail ? this.buildPlainTextPreview(item.description) : '',
                 attachmentCount: item.attachmentCount || 0,
-                hasAttachments: item.type === 'EmailMessage' && (item.attachmentCount || 0) > 0,
-                attachmentLabel: item.type === 'EmailMessage' && (item.attachmentCount || 0) > 0
+                hasAttachments: isEmail && (item.attachmentCount || 0) > 0,
+                attachmentLabel: isEmail && (item.attachmentCount || 0) > 0
                     ? ((item.attachmentCount === 1) ? '1 attachment' : `${item.attachmentCount} attachments`)
                     : ''
             };
         });
+    }
+
+    buildPlainTextPreview(value) {
+        if (!value) {
+            return '';
+        }
+        const text = String(value)
+            .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+            .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+            .replace(/<br\s*\/?>/gi, ' ')
+            .replace(/<\/p>/gi, ' ')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/&nbsp;/gi, ' ')
+            .replace(/&amp;/gi, '&')
+            .replace(/&lt;/gi, '<')
+            .replace(/&gt;/gi, '>')
+            .replace(/&quot;/gi, '"')
+            .replace(/&#39;/gi, "'")
+            .replace(/\s+/g, ' ')
+            .trim();
+        const maxLength = 160;
+        if (text.length <= maxLength) {
+            return text;
+        }
+        return `${text.slice(0, maxLength).trim()}…`;
     }
 
     get showSourceLabels() {
