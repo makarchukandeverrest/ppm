@@ -32,7 +32,7 @@ public with sharing class DocuSignCompletedContractEmailService {
         List<Messaging.SingleEmailMessage> emailsToSend = new List<Messaging.SingleEmailMessage>();
 
         for (ContentVersion version : candidateVersions) {
-            Id bidId = resolveBidIdForVersion(version, contentDocumentToBidId);
+            Id bidId = CompletedContractBidResolver.resolveBidIdForVersion(version, contentDocumentToBidId);
             Contract_Bid__c bid = bidsById.get(bidId);
             if (bid == null) {
                 continue;
@@ -69,17 +69,6 @@ public with sharing class DocuSignCompletedContractEmailService {
             FROM Contract_Bid__c
             WHERE Id IN :bidIds
         ]);
-    }
-
-    private static Id resolveBidIdForVersion(ContentVersion version, Map<Id, Id> contentDocumentToBidId) {
-        if (version.FirstPublishLocationId != null &&
-            version.FirstPublishLocationId.getSObjectType() == Contract_Bid__c.SObjectType) {
-            return version.FirstPublishLocationId;
-        }
-        if (version.ContentDocumentId != null) {
-            return contentDocumentToBidId.get(version.ContentDocumentId);
-        }
-        return null;
     }
 
     private static void trackRecipients(List<String> toAddresses) {

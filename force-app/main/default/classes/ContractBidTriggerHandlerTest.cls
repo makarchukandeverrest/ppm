@@ -58,7 +58,11 @@ private class ContractBidTriggerHandlerTest {
         insert bid;
         Test.stopTest();
 
-        System.assert(true, 'afterInsert with Closed - WON executed');
+        System.assertEquals(
+            true,
+            getCurrentCustomer(bid.Customer__c),
+            'Closed - WON insert should mark Current Customer'
+        );
     }
 
     @IsTest
@@ -69,7 +73,11 @@ private class ContractBidTriggerHandlerTest {
         insert bid;
         Test.stopTest();
 
-        System.assert(true, 'afterInsert with Closed - LOST executed');
+        System.assertEquals(
+            false,
+            getCurrentCustomer(bid.Customer__c),
+            'Closed - LOST insert should leave Current Customer unchecked'
+        );
     }
 
     @IsTest
@@ -80,7 +88,11 @@ private class ContractBidTriggerHandlerTest {
         insert bid;
         Test.stopTest();
 
-        System.assert(true, 'afterInsert with non-Closed - WON executed');
+        System.assertEquals(
+            false,
+            getCurrentCustomer(bid.Customer__c),
+            'Non-closed insert should not mark Current Customer'
+        );
     }
 
     @IsTest
@@ -94,7 +106,11 @@ private class ContractBidTriggerHandlerTest {
         update bid;
         Test.stopTest();
 
-        System.assert(true, 'afterUpdate with stage change to Closed - WON executed');
+        System.assertEquals(
+            true,
+            getCurrentCustomer(bid.Customer__c),
+            'Stage change to Closed - WON should mark Current Customer'
+        );
     }
 
     @IsTest
@@ -102,13 +118,21 @@ private class ContractBidTriggerHandlerTest {
         Contract_Bid__c bid = createBid('Contact Verified and Updated');
         insert bid;
 
+        bid.Stage__c = 'Closed - WON';
+        update bid;
+        System.assertEquals(true, getCurrentCustomer(bid.Customer__c));
+
         bid.Stage__c = 'Closed - LOST';
 
         Test.startTest();
         update bid;
         Test.stopTest();
 
-        System.assert(true, 'afterUpdate with stage change to Closed - LOST executed');
+        System.assertEquals(
+            false,
+            getCurrentCustomer(bid.Customer__c),
+            'Stage change to Closed - LOST should uncheck Current Customer'
+        );
     }
 
     @IsTest
@@ -122,6 +146,19 @@ private class ContractBidTriggerHandlerTest {
         update bid;
         Test.stopTest();
 
-        System.assert(true, 'afterUpdate with unchanged Closed - WON executed');
+        System.assertEquals(
+            true,
+            getCurrentCustomer(bid.Customer__c),
+            'Unchanged Closed - WON should keep Current Customer checked'
+        );
+    }
+
+    private static Boolean getCurrentCustomer(Id accountId) {
+        return [
+            SELECT Current_Customer__c
+            FROM Account
+            WHERE Id = :accountId
+        ]
+        .Current_Customer__c;
     }
 }
