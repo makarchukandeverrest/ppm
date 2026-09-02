@@ -1204,4 +1204,71 @@ static void testSendContracts_CoversCustomBodyBranch() {
         System.assertEquals(0, noSupervisor.customers.size(),
             'Supervisor filter should exclude account without that supervisor');
     }
+
+    @isTest
+    static void testBuildContractSendPdfCcAddresses_includesRmAndNamedUsers() {
+        List<String> cc = ContractMassSendController.buildContractSendPdfCcAddresses(
+            'customer@example.com',
+            'rm@example.com',
+            new List<String>{
+                'roman@example.com',
+                'stephanie@example.com',
+                'jessica@example.com'
+            }
+        );
+
+        System.assertEquals(4, cc.size(), 'Expected RM plus three named CC users.');
+        System.assertEquals('rm@example.com', cc[0], 'Regional Manager should be first CC.');
+        System.assert(cc.contains('roman@example.com'));
+        System.assert(cc.contains('stephanie@example.com'));
+        System.assert(cc.contains('jessica@example.com'));
+    }
+
+    @isTest
+    static void testBuildContractSendPdfCcAddresses_skipsToAddressDuplicatesAndBlanks() {
+        List<String> cc = ContractMassSendController.buildContractSendPdfCcAddresses(
+            'jessica@example.com',
+            '  JESSICA@example.com  ',
+            new List<String>{
+                'roman@example.com',
+                '',
+                'roman@example.com',
+                null,
+                'stephanie@example.com'
+            }
+        );
+
+        System.assertEquals(2, cc.size(), 'To-address and duplicates should be skipped.');
+        System.assertEquals('roman@example.com', cc[0]);
+        System.assertEquals('stephanie@example.com', cc[1]);
+        System.assert(!cc.contains('jessica@example.com'));
+    }
+
+    @isTest
+    static void testResolveRegionalManagerEmailsByAccount_usesContractBidLeadOwner() {
+        Account acc = [SELECT Id FROM Account LIMIT 1];
+        User rmUser = [
+            SELECT Id, Email
+            FROM User
+            WHERE IsActive = true AND Email != null
+            LIMIT 1
+        ];
+
+        Contract_Bid__c bid = [SELECT Id FROM Contract_Bid__c LIMIT 1];
+        bid.Lead_Owner__c = rmUser.Id;
+        update bid;
+
+        Test.startTest();
+        Map<Id, String> rmByAccount =
+            ContractMassSendController.resolveRegionalManagerEmailsByAccount(
+                new Set<Id>{ acc.Id }
+            );
+        Test.stopTest();
+
+        System.assertEquals(
+            rmUser.Email,
+            rmByAccount.get(acc.Id),
+            'Expected Regional Manager email from Contract Bid Lead Owner.'
+        );
+    }
 }

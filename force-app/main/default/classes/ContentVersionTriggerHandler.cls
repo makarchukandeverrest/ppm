@@ -16,12 +16,13 @@ public class ContentVersionTriggerHandler extends TriggerHandler {
     }
 
     protected override void afterInsert() {
-        try {
-            SharePointContentVersionAccountLinker.linkToAccounts(newList);
-        } catch (Exception e) {
-            System.debug('ERROR in SharePointContentVersionAccountLinker: ' + e.getMessage());
-            System.debug(e.getStackTraceString());
+        List<ContentVersion> filesToLink = new List<ContentVersion>();
+        for(ContentVersion cv : newList){
+            if(cv.Title.contains('Contract') || cv.Title.contains('Bid') || cv.Title.contains('Winterization')){
+                filesToLink.add(cv);
+            }
         }
+        SharePointContentVersionAccountLinker.linkToAccounts(filesToLink);
 
         List<ContentVersion> completedVersions = new List<ContentVersion>();
         for (ContentVersion version : newList) {

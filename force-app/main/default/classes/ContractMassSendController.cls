@@ -13,6 +13,17 @@ public with sharing class ContractMassSendController {
    */
   private static final String ACCOUNT_ADDRESS_PLACEHOLDER = '[ACCOUNT_ADDRESS]';
 
+  private static final Set<String> CONTRACT_SEND_PDF_TEMPLATE_DEVELOPER_NAMES = new Set<String>{
+    'Contract_Send_PDF_Regular_Customer',
+    'Contract_Send_PDF_New_Customer'
+  };
+
+  private static final List<String> CONTRACT_SEND_PDF_CC_USER_NAMES = new List<String>{
+    'Roman Shestakov',
+    'Stephanie Pratt',
+    'Jessica Floyd'
+  };
+
   @TestVisible
   private static Boolean testBypassPermissions = false;
 
@@ -1085,6 +1096,14 @@ public with sharing class ContractMassSendController {
 
     Boolean useWorkOrderMailbox = isWorkOrderPageContext(inputIds, rows);
 
+    String templateDeveloperName = resolveEmailTemplateDeveloperName(emailTemplateId);
+    List<String> namedCcEmails = new List<String>();
+    Map<Id, String> accountToRmEmail = new Map<Id, String>();
+    if (CONTRACT_SEND_PDF_TEMPLATE_DEVELOPER_NAMES.contains(templateDeveloperName)) {
+      namedCcEmails = loadNamedContractSendPdfCcEmails();
+      accountToRmEmail = resolveRegionalManagerEmailsByAccount(accountIds);
+    }
+
     for (SendReqRow r : rows) {
       String rowSubject = r.subject != null ? r.subject : subject;
       String rowBody = r.body != null ? r.body : body;
@@ -1310,6 +1329,14 @@ public with sharing class ContractMassSendController {
       } else {
         throw new AuraHandledException('Email template is required.');
       }
+
+      applyContractSendPdfCcAddresses(
+        mail,
+        templateDeveloperName,
+        acc.Primary_Contact__r.Email,
+        accountToRmEmail.get(acc.Id),
+        namedCcEmails
+      );
 
       emails.add(mail);
 
@@ -1613,5 +1640,122 @@ public with sharing class ContractMassSendController {
       'body' => finalBody,
       'mergeFieldError' => mergeFieldError
     };
+  }
+
+  /* ---------- Contract Send PDF CC (template-specific) ---------- */
+
+  private static String resolveEmailTemplateDeveloperName(Id emailTemplateId) {
+    if (emailTemplateId == null) {
+      return null;
+    }
+    List<EmailTemplate> templates = [
+      SELECT DeveloperName
+      FROM EmailTemplate
+      WHERE Id = :emailTemplateId
+      LIMIT 1
+    ];
+    return templates.isEmpty() ? null : templates[0].DeveloperName;
+  }
+
+  private static List<String> loadNamedContractSendPdfCcEmails() {
+    Map<String, String> emailByName = new Map<String, String>();
+    for (User userRecord : [
+      SELECT Name, Email
+      FROM User
+      WHERE Name IN :CONTRACT_SEND_PDF_CC_USER_NAMES
+      AND IsActive = true
+    ]) {
+      if (String.isNotBlank(userRecord.Email)) {
+        emailByName.put(userRecord.Name, userRecord.Email);
+      }
+    }
+
+    List<String> emails = new List<String>();
+    for (String userName : CONTRACT_SEND_PDF_CC_USER_NAMES) {
+      if (emailByName.containsKey(userName)) {
+        emails.add(emailByName.get(userName));
+      }
+    }
+    return emails;
+  }
+
+  @TestVisible
+  private static Map<Id, String> resolveRegionalManagerEmailsByAccount(Set<Id> accountIds) {
+    Map<Id, String> accountToRmEmail = new Map<Id, String>();
+    if (accountIds == null || accountIds.isEmpty()) {
+      return accountToRmEmail;
+    }
+
+    for (Contract_Bid__c bid : [
+      SELECT Customer__c, Lead_Owner__r.Email, CreatedDate
+      FROM Contract_Bid__c
+      WHERE Customer__c IN :accountIds
+      AND Lead_Owner__c != NULL
+      AND Lead_Owner__r.IsActive = true
+      AND Lead_Owner__r.Email != NULL
+      ORDER BY CreatedDate DESC
+    ]) {
+      if (!accountToRmEmail.containsKey(bid.Customer__c)) {
+        accountToRmEmail.put(bid.Customer__c, bid.Lead_Owner__r.Email);
+      }
+    }
+    return accountToRmEmail;
+  }
+
+  private static void applyContractSendPdfCcAddresses(
+    Messaging.SingleEmailMessage mail,
+    String templateDeveloperName,
+    String toEmail,
+    String regionalManagerEmail,
+    List<String> namedCcEmails
+  ) {
+    if (mail == null || !CONTRACT_SEND_PDF_TEMPLATE_DEVELOPER_NAMES.contains(templateDeveloperName)) {
+      return;
+    }
+    List<String> ccEmails = buildContractSendPdfCcAddresses(
+      toEmail,
+      regionalManagerEmail,
+      namedCcEmails
+    );
+    if (!ccEmails.isEmpty()) {
+      mail.setCcAddresses(ccEmails);
+    }
+  }
+
+  @TestVisible
+  private static List<String> buildContractSendPdfCcAddresses(
+    String toEmail,
+    String regionalManagerEmail,
+    List<String> namedCcEmails
+  ) {
+    Set<String> seen = new Set<String>();
+    List<String> ccEmails = new List<String>();
+    String toEmailKey = String.isBlank(toEmail) ? null : toEmail.trim().toLowerCase();
+
+    addCcEmail(ccEmails, seen, toEmailKey, regionalManagerEmail);
+    if (namedCcEmails != null) {
+      for (String namedEmail : namedCcEmails) {
+        addCcEmail(ccEmails, seen, toEmailKey, namedEmail);
+      }
+    }
+    return ccEmails;
+  }
+
+  private static void addCcEmail(
+    List<String> ccEmails,
+    Set<String> seen,
+    String toEmailKey,
+    String emailValue
+  ) {
+    if (String.isBlank(emailValue)) {
+      return;
+    }
+    String trimmed = emailValue.trim();
+    String key = trimmed.toLowerCase();
+    if (key == toEmailKey || seen.contains(key)) {
+      return;
+    }
+    seen.add(key);
+    ccEmails.add(trimmed);
   }
 }
