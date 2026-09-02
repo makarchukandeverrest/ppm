@@ -2,7 +2,6 @@ import { LightningElement, wire, track, api } from 'lwc';
 import getAccountsWithFiles from '@salesforce/apex/AccountFilesController.getAccountsWithFiles';
 import getFilterOptions from '@salesforce/apex/AccountFilesController.getFilterOptions';
 import sendEnvelopeWithSignature from '@salesforce/apex/DocuSignDfsleEnvelopeService.sendEnvelopeWithSignature';
-import { refreshApex } from '@salesforce/apex';
 
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { NavigationMixin } from 'lightning/navigation';
@@ -11,10 +10,40 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     @track accountsWithFiles;
     @track allAccountsWithFiles; // Store original data for reference
     error;
-    wiredAccountsResult;
     @track isUpdating = false;
     @track showConfirmationModal = false;
-    @api recordId;
+    @track queryRecordIds;
+    _recordId;
+    _recordIds;
+
+    @api
+    get recordId() {
+        return this._recordId;
+    }
+    set recordId(value) {
+        this._recordId = value;
+        this.syncQueryRecordIds();
+    }
+
+    @api
+    get recordIds() {
+        return this._recordIds;
+    }
+    set recordIds(value) {
+        this._recordIds = value;
+        this.syncQueryRecordIds();
+    }
+
+    syncQueryRecordIds() {
+        if (this._recordIds && this._recordIds.length) {
+            this.queryRecordIds = [...this._recordIds];
+        } else if (this._recordId) {
+            this.queryRecordIds = [this._recordId];
+        } else {
+            this.queryRecordIds = undefined;
+        }
+        this.loadAccounts();
+    }
 
     // Filter state
     @track selectedRegionalManager = '';
@@ -49,12 +78,7 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     @track filtersLoaded = false;
 
     connectedCallback() {
-        // If recordId is not set via @api, try to get it from URL
-        if (!this.recordId) {
-            const urlParams = new URLSearchParams(window.location.search);
-            this.recordId = urlParams.get('recordId') || urlParams.get('c__recordId');
-            console.log('recordId from URL:', this.recordId);
-        }
+        console.log('[SendContracts] boot 20260818c', this.recordId, JSON.stringify(this.queryRecordIds || null));
         // Default envelope expires = today + default days (120), not before min date
         const days = parseInt(this.daysBeforeExpires, 10) || 120;
         const computed = this._datePlusDays(new Date(), days);
@@ -62,6 +86,7 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
             ? computed
             : this.envelopeExpiresMinDate;
         this.contractYearFilter = String(new Date().getFullYear());
+        this.loadAccounts();
     }
 
     _datePlusDays(date, days) {
@@ -110,21 +135,25 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
         }
     }
 
-    @wire(getAccountsWithFiles, { 
-        recordId: '$recordId',
-        regionalManagerId: '$selectedRegionalManager',
-        county: '$selectedCounty',
-        customerName: '$customerNameFilter',
-        supervisorId: '$selectedSupervisor',
-        contractYear: '$contractYearFilter'
-    })
-    wiredAccounts(result) {
-        this.wiredAccountsResult = result;
-
-        const { error, data } = result;
-        console.log('getAccountsWithFiles result:', data, 'recordId:', this.recordId);
-
-        if (data) {
+    async loadAccounts() {
+        this.isUpdating = true;
+        try {
+            const data = await getAccountsWithFiles({
+                recordIds: this.queryRecordIds,
+                regionalManagerId: this.selectedRegionalManager,
+                county: this.selectedCounty,
+                customerName: this.customerNameFilter,
+                supervisorId: this.selectedSupervisor,
+                contractYear: this.contractYearFilter
+            });
+            console.log(
+                '[SendContracts] loaded',
+                JSON.stringify({
+                    recordId: this.recordId,
+                    queryRecordIds: this.queryRecordIds,
+                    rows: Array.isArray(data) ? data.length : 0
+                })
+            );
             this.accountsWithFiles = this._enrichAccountsWithReminders(Array.isArray(data) ? data : []);
             this.allAccountsWithFiles = this.accountsWithFiles;
 
@@ -138,9 +167,8 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
                     })
                 );
             }
-        } else if (error) {
-            console.error('Error loading accounts with files:', error);
-
+        } catch (error) {
+            console.error('[SendContracts] load error', error);
             this.dispatchEvent(
                 new ShowToastEvent({
                     title: 'Error',
@@ -149,6 +177,8 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
                     mode: 'dismissable'
                 })
             );
+        } finally {
+            this.isUpdating = false;
         }
     }
 
@@ -333,27 +363,33 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     }
     handleRegionalManagerChange(event) {
         this.selectedRegionalManager = event.detail.value;
+        this.loadAccounts();
     }
 
     handleCountyChange(event) {
         this.selectedCounty = event.detail.value;
+        this.loadAccounts();
     }
 
     handleCustomerNameChange(event) {
         this.customerNameFilter = event.detail.value;
+        this.loadAccounts();
     }
 
     handleSupervisorChange(event) {
         this.selectedSupervisor = event.detail.value;
+        this.loadAccounts();
     }
 
     handleContractYearChange(event) {
         const val = (event.detail.value || '').replace(/\D/g, '');
         if (!val) {
             this.contractYearFilter = '';
+            this.loadAccounts();
             return;
         }
         this.contractYearFilter = val.slice(0, 4);
+        this.loadAccounts();
     }
 
     // Clear all filters
@@ -362,7 +398,8 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
         this.selectedCounty = '';
         this.customerNameFilter = '';
         this.selectedSupervisor = '';
-        this.contractYearFilter = this._getCurrentContractYear();
+        this.contractYearFilter = String(new Date().getFullYear());
+        this.loadAccounts();
     }
 
     // Getter: returns only accounts that have selected files
@@ -459,17 +496,8 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     }
 
     async handleUpdate() {
-        console.log('handleUpdate', this.recordId);
-        
-        try {
-            this.isUpdating = true;
-            await refreshApex(this.wiredAccountsResult);
-        } catch (error) {
-            this.error = error;
-            console.error('Error refreshing data:', error);
-        } finally {
-            this.isUpdating = false;
-        }
+        console.log('[SendContracts] update', this.recordId, JSON.stringify(this.queryRecordIds || null));
+        await this.loadAccounts();
     }
 
     async handleSubmit() {

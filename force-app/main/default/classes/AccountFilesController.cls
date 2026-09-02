@@ -98,7 +98,7 @@ public with sharing class AccountFilesController {
     
     @AuraEnabled(cacheable=true)
     public static List<AccountWithFiles> getAccountsWithFiles(
-        String recordId,
+        List<Id> recordIds,
         String regionalManagerId,
         String county,
         String customerName,
@@ -113,6 +113,15 @@ public with sharing class AccountFilesController {
         StageReferenceSettings__mdt stageReference = StageReferenceSettings__mdt.getInstance('Active_Stages');
         List<String> activeStages = stageReference.Stage_Names__c.split(',');
 
+        Set<Id> selectedBidIds = new Set<Id>();
+        if (recordIds != null) {
+            for (Id bidId : recordIds) {
+                if (bidId != null) {
+                    selectedBidIds.add(bidId);
+                }
+            }
+        }
+
         // 2. Build dynamic SOQL query - include all Account filter fields and EBD due date
         String soqlQuery = 'SELECT Id, Name, Customer__c, Stage__c, ' +
                            'Customer__r.Name, Customer__r.Email__c, ' +
@@ -124,9 +133,9 @@ public with sharing class AccountFilesController {
                            'FROM Contract_Bid__c ' +
                            'WHERE Stage__c IN :activeStages';
         
-        // Add filter if recordId is provided
-        if (String.isNotBlank(recordId)) {
-            soqlQuery += ' AND Id = :recordId';
+        // Limit to list-view / record-page selection when provided
+        if (!selectedBidIds.isEmpty()) {
+            soqlQuery += ' AND Id IN :selectedBidIds';
         }
         
         // Customer Name filter (partial match on Account Name)
