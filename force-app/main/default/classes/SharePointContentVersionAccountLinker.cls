@@ -1,51 +1,29 @@
 /**
  * Links SharePoint-sourced ContentVersions to matching Accounts.
  * Used when Power Automate creates ContentVersion without ContentDocumentLink.
- * Runs async because ContentDocumentLink cannot be inserted in the same
- * ContentVersion after-insert transaction.
  */
-public with sharing class SharePointContentVersionAccountLinker implements Queueable {
+public with sharing class SharePointContentVersionAccountLinker {
 
     private static final Pattern FOLDER_FROM_TITLE = Pattern.compile(
         '^(.+?)-\\d{4}-\\d{4} Bids-'
     );
-
-    private Set<Id> versionIds;
-
-    public SharePointContentVersionAccountLinker(Set<Id> versionIds) {
-        this.versionIds = versionIds;
-    }
 
     public static void linkToAccounts(List<ContentVersion> versions) {
         if (versions == null || versions.isEmpty()) {
             return;
         }
 
-        Set<Id> idsToLink = new Set<Id>();
+        Set<Id> versionIds = new Set<Id>();
         for (ContentVersion cv : versions) {
             if (cv != null && cv.Id != null && String.isNotBlank(cv.SharePoint_External_Id__c)) {
-                idsToLink.add(cv.Id);
+                versionIds.add(cv.Id);
             }
         }
-        if (idsToLink.isEmpty()) {
+        if (versionIds.isEmpty()) {
             return;
         }
 
-        if (System.isQueueable() || System.isFuture() || System.isBatch()) {
-            linkVersions(idsToLink);
-            return;
-        }
-        System.enqueueJob(new SharePointContentVersionAccountLinker(idsToLink));
-    }
-
-    public void execute(QueueableContext ctx) {
-        if (versionIds == null || versionIds.isEmpty()) {
-            return;
-        }
-        linkVersions(versionIds);
-    }
-
-    private static void linkVersions(Set<Id> versionIds) {
+        // ContentDocumentId is often blank on Trigger.new after insert — requery.
         List<ContentVersion> reloaded = [
             SELECT Id, Title, ContentDocumentId, SharePoint_External_Id__c
             FROM ContentVersion
@@ -102,7 +80,8 @@ public with sharing class SharePointContentVersionAccountLinker implements Queue
                     linksToInsert.add(new ContentDocumentLink(
                         ContentDocumentId = docId,
                         LinkedEntityId = acc.Id,
-                        ShareType = 'V'
+                        ShareType = 'V',
+                        Visibility = 'AllUsers'
                     ));
                 }
             }
