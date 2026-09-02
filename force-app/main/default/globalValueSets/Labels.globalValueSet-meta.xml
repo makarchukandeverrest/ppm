@@ -96,12 +96,6 @@
         <label>MISSING FILE/CONTACT INFO</label>
     </customValue>
     <customValue>
-        <fullName>New Lead</fullName>
-        <default>false</default>
-        <isActive>false</isActive>
-        <label>New Lead</label>
-    </customValue>
-    <customValue>
         <fullName>Goran to do</fullName>
         <default>false</default>
         <isActive>false</isActive>
