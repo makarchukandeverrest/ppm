@@ -340,4 +340,49 @@ public class AccountFilesControllerTest {
         System.assertEquals(1, results.size(), 'Only accounts matching name filter should be returned');
         System.assertEquals(acc1.Id, results[0].accountId, 'Account name filter should match Acme Ukraine');
     }
+
+    @IsTest
+    static void testGetAccountsWithFiles_filtersBySelectedRecordIds() {
+        StageReferenceSettings__mdt stageRef = StageReferenceSettings__mdt.getInstance('Active_Stages');
+        String firstActiveStage = stageRef.Stage_Names__c.split(',')[0].trim();
+        String county = getValidCountyValue();
+
+        Account acc1 = createTestAccount('Selected Bid Acc 1', null, null, county);
+        Account acc2 = createTestAccount('Selected Bid Acc 2', null, null, county);
+
+        Contract_Bid__c selectedBid = createTestContract(acc1, firstActiveStage, false);
+        createTestContract(acc2, firstActiveStage, false);
+
+        createTestFile(acc1, 'Proposal1', 'pdf');
+        createTestFile(acc2, 'Proposal2', 'pdf');
+
+        Test.startTest();
+        List<AccountWithFiles> selectedOnly = AccountFilesController.getAccountsWithFiles(
+            new List<Id>{ selectedBid.Id },
+            null,
+            null,
+            null,
+            null,
+            null
+        );
+        List<AccountWithFiles> allActive = AccountFilesController.getAccountsWithFiles(
+            new List<Id>(),
+            null,
+            null,
+            null,
+            null,
+            null
+        );
+        Test.stopTest();
+
+        System.assertEquals(1, selectedOnly.size(), 'Only the selected Contract Bid should be returned');
+        System.assertEquals(acc1.Id, selectedOnly[0].accountId, 'Selected bid should map to acc1');
+
+        Set<Id> allAccountIds = new Set<Id>();
+        for (AccountWithFiles row : allActive) {
+            allAccountIds.add(row.accountId);
+        }
+        System.assert(allAccountIds.contains(acc1.Id), 'Empty selection should still include acc1');
+        System.assert(allAccountIds.contains(acc2.Id), 'Empty selection should still include acc2');
+    }
 }
