@@ -6,9 +6,9 @@
     <encodingKey>UTF-8</encodingKey>
     <height>600</height>
     <linkType>url</linkType>
-    <masterLabel>Mass Send</masterLabel>
+    <masterLabel>Send PDF Contract</masterLabel>
     <openType>sidebar</openType>
     <protected>false</protected>
     <requireRowSelection>true</requireRowSelection>
-    <url>/flow/Contract_Mass_Send</url>
+    <url>/flow/Contract_Mass_Send?Mode=contracts</url>
 </WebLink>
