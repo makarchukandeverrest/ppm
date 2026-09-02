@@ -15,10 +15,17 @@ public class ContentVersionTriggerHandler extends TriggerHandler {
         oldMap = (Map<Id, ContentVersion>) Trigger.oldMap;
     }
 
-    protected override void afterInsert(){
+    protected override void afterInsert() {
+        try {
+            SharePointContentVersionAccountLinker.linkToAccounts(newList);
+        } catch (Exception e) {
+            System.debug('ERROR in SharePointContentVersionAccountLinker: ' + e.getMessage());
+            System.debug(e.getStackTraceString());
+        }
+
         List<ContentVersion> completedVersions = new List<ContentVersion>();
         for (ContentVersion version : newList) {
-            if (version.Title.contains(DOCUSIGN_COMPLETED_TOKEN)) {
+            if (version.Title != null && version.Title.contains(DOCUSIGN_COMPLETED_TOKEN)) {
                 completedVersions.add(version);
             }
         }
@@ -29,7 +36,7 @@ public class ContentVersionTriggerHandler extends TriggerHandler {
         try {
             DocuSignCompletedContractEmailService.handleCompletedContractFiles(completedVersions);
         } catch (Exception e) {
-            System.debug('✗ ERROR in DocuSignCompletedContractEmailService: ' + e.getMessage());
+            System.debug('ERROR in DocuSignCompletedContractEmailService: ' + e.getMessage());
             System.debug(e.getStackTraceString());
         }
     }
