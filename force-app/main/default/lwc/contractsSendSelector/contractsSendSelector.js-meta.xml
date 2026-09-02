@@ -7,5 +7,17 @@
         <target>lightning__AppPage</target>
         <target>lightning__HomePage</target>
         <target>lightning__RecordAction</target>
+        <target>lightning__FlowScreen</target>
     </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__FlowScreen">
+            <property
+                name="recordIds"
+                type="String[]"
+                label="Record Ids"
+                description="Ids of selected Contract Bids from a list view mass action"
+                role="inputOnly"
+            />
+        </targetConfig>
+    </targetConfigs>
 </LightningComponentBundle>
