@@ -6,7 +6,7 @@
     <encodingKey>UTF-8</encodingKey>
     <height>600</height>
     <linkType>url</linkType>
-    <masterLabel>Mass Send PDF Contracts</masterLabel>
+    <masterLabel>Send PDF Contract</masterLabel>
     <openType>sidebar</openType>
     <protected>false</protected>
     <requireRowSelection>true</requireRowSelection>
