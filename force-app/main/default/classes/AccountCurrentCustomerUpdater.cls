@@ -18,6 +18,23 @@ public with sharing class AccountCurrentCustomerUpdater {
         );
       }
     }
+    updateAccounts(accountsById);
+  }
+
+  public static void clearCurrentCustomer(List<Contract_Bid__c> lostBids) {
+    Map<Id, Account> accountsById = new Map<Id, Account>();
+    for (Contract_Bid__c bid : lostBids) {
+      if (bid.Customer__c != null) {
+        accountsById.put(
+          bid.Customer__c,
+          new Account(Id = bid.Customer__c, Current_Customer__c = false)
+        );
+      }
+    }
+    updateAccounts(accountsById);
+  }
+
+  private static void updateAccounts(Map<Id, Account> accountsById) {
     if (!accountsById.isEmpty()) {
       update accountsById.values();
     }
