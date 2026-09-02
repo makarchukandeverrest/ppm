@@ -6,7 +6,7 @@
     <encodingKey>UTF-8</encodingKey>
     <height>600</height>
     <linkType>url</linkType>
-    <masterLabel>Send Contracts</masterLabel>
+    <masterLabel>Send via DocuSign</masterLabel>
     <openType>sidebar</openType>
     <protected>false</protected>
     <requireRowSelection>true</requireRowSelection>

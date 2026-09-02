@@ -165,8 +165,17 @@
     </nameField>
     <pluralLabel>Contract Bids</pluralLabel>
     <searchLayouts>
+        <excludedStandardButtons>OpenListInQuip</excludedStandardButtons>
+        <excludedStandardButtons>NewFromDocument</excludedStandardButtons>
+        <excludedStandardButtons>Accept</excludedStandardButtons>
+        <excludedStandardButtons>ChangeOwner</excludedStandardButtons>
+        <excludedStandardButtons>MassChangeOwner</excludedStandardButtons>
+        <excludedStandardButtons>PrintableListView</excludedStandardButtons>
+        <excludedStandardButtons>MassAssignRecordLabel</excludedStandardButtons>
+        <excludedStandardButtons>OmniChannelMassRouteWork</excludedStandardButtons>
         <listViewButtons>Send_Contracts</listViewButtons>
         <listViewButtons>Mass_Send</listViewButtons>
+        <listViewButtons>Send_Emails</listViewButtons>
         <listViewButtons>Mass_Clone</listViewButtons>
         <searchResultsAdditionalFields>Version__c</searchResultsAdditionalFields>
         <searchResultsAdditionalFields>Customer__c</searchResultsAdditionalFields>
