@@ -33,15 +33,20 @@ public with sharing class CompletedContractBidResolver {
     public static Set<Id> collectBidIds(List<ContentVersion> versions, Map<Id, Id> contentDocumentToBidId) {
         Set<Id> bidIds = new Set<Id>();
         for (ContentVersion version : versions) {
-            Id bidId = bidIdFromPublishLocation(version);
-            if (bidId == null && version.ContentDocumentId != null) {
-                bidId = contentDocumentToBidId.get(version.ContentDocumentId);
-            }
+            Id bidId = resolveBidIdForVersion(version, contentDocumentToBidId);
             if (bidId != null) {
                 bidIds.add(bidId);
             }
         }
         return bidIds;
+    }
+
+    public static Id resolveBidIdForVersion(ContentVersion version, Map<Id, Id> contentDocumentToBidId) {
+        Id bidId = bidIdFromPublishLocation(version);
+        if (bidId == null && version.ContentDocumentId != null) {
+            bidId = contentDocumentToBidId.get(version.ContentDocumentId);
+        }
+        return bidId;
     }
 
     private static Id bidIdFromPublishLocation(ContentVersion version) {
