@@ -1,18 +1,46 @@
 public with sharing class CompletedContractBidResolver {
+    private static final Schema.SObjectType BID_SOBJECT_TYPE = Contract_Bid__c.SObjectType;
+    private static final Schema.SObjectType PROPOSAL_SOBJECT_TYPE = Opportunity.SObjectType;
+
     public static Map<Id, Id> resolveBidIdsByContentDocument(List<ContentVersion> versions) {
-        Map<Id, Id> contentDocumentToBidId = new Map<Id, Id>();
+        return resolveLinkedRecordIdsByContentDocument(versions, BID_SOBJECT_TYPE);
+    }
+
+    public static Set<Id> collectBidIds(List<ContentVersion> versions, Map<Id, Id> contentDocumentToBidId) {
+        return collectLinkedRecordIds(versions, contentDocumentToBidId, BID_SOBJECT_TYPE);
+    }
+
+    public static Id resolveBidIdForVersion(ContentVersion version, Map<Id, Id> contentDocumentToBidId) {
+        return resolveLinkedRecordIdForVersion(version, contentDocumentToBidId, BID_SOBJECT_TYPE);
+    }
+
+    public static Map<Id, Id> resolveProposalIdsByContentDocument(List<ContentVersion> versions) {
+        return resolveLinkedRecordIdsByContentDocument(versions, PROPOSAL_SOBJECT_TYPE);
+    }
+
+    public static Set<Id> collectProposalIds(List<ContentVersion> versions, Map<Id, Id> contentDocumentToProposalId) {
+        return collectLinkedRecordIds(versions, contentDocumentToProposalId, PROPOSAL_SOBJECT_TYPE);
+    }
+
+    public static Id resolveProposalIdForVersion(ContentVersion version, Map<Id, Id> contentDocumentToProposalId) {
+        return resolveLinkedRecordIdForVersion(version, contentDocumentToProposalId, PROPOSAL_SOBJECT_TYPE);
+    }
+
+    private static Map<Id, Id> resolveLinkedRecordIdsByContentDocument(
+        List<ContentVersion> versions,
+        Schema.SObjectType targetType
+    ) {
+        Map<Id, Id> contentDocumentToRecordId = new Map<Id, Id>();
         Set<Id> contentDocumentIds = new Set<Id>();
-        Boolean needsLinkLookup = false;
 
         for (ContentVersion version : versions) {
-            if (bidIdFromPublishLocation(version) == null && version.ContentDocumentId != null) {
-                needsLinkLookup = true;
+            if (recordIdFromPublishLocation(version, targetType) == null && version.ContentDocumentId != null) {
                 contentDocumentIds.add(version.ContentDocumentId);
             }
         }
 
-        if (!needsLinkLookup || contentDocumentIds.isEmpty()) {
-            return contentDocumentToBidId;
+        if (contentDocumentIds.isEmpty()) {
+            return contentDocumentToRecordId;
         }
 
         for (ContentDocumentLink link : [
@@ -22,38 +50,46 @@ public with sharing class CompletedContractBidResolver {
         ]) {
             if (
                 link.LinkedEntityId != null &&
-                link.LinkedEntityId.getSObjectType() == Contract_Bid__c.SObjectType
+                link.LinkedEntityId.getSObjectType() == targetType
             ) {
-                contentDocumentToBidId.put(link.ContentDocumentId, link.LinkedEntityId);
+                contentDocumentToRecordId.put(link.ContentDocumentId, link.LinkedEntityId);
             }
         }
-        return contentDocumentToBidId;
+        return contentDocumentToRecordId;
     }
 
-    public static Set<Id> collectBidIds(List<ContentVersion> versions, Map<Id, Id> contentDocumentToBidId) {
-        Set<Id> bidIds = new Set<Id>();
+    private static Set<Id> collectLinkedRecordIds(
+        List<ContentVersion> versions,
+        Map<Id, Id> contentDocumentToRecordId,
+        Schema.SObjectType targetType
+    ) {
+        Set<Id> recordIds = new Set<Id>();
         for (ContentVersion version : versions) {
-            Id bidId = resolveBidIdForVersion(version, contentDocumentToBidId);
-            if (bidId != null) {
-                bidIds.add(bidId);
+            Id recordId = resolveLinkedRecordIdForVersion(version, contentDocumentToRecordId, targetType);
+            if (recordId != null) {
+                recordIds.add(recordId);
             }
         }
-        return bidIds;
+        return recordIds;
     }
 
-    public static Id resolveBidIdForVersion(ContentVersion version, Map<Id, Id> contentDocumentToBidId) {
-        Id bidId = bidIdFromPublishLocation(version);
-        if (bidId == null && version.ContentDocumentId != null) {
-            bidId = contentDocumentToBidId.get(version.ContentDocumentId);
+    private static Id resolveLinkedRecordIdForVersion(
+        ContentVersion version,
+        Map<Id, Id> contentDocumentToRecordId,
+        Schema.SObjectType targetType
+    ) {
+        Id recordId = recordIdFromPublishLocation(version, targetType);
+        if (recordId == null && version.ContentDocumentId != null) {
+            recordId = contentDocumentToRecordId.get(version.ContentDocumentId);
         }
-        return bidId;
+        return recordId;
     }
 
-    private static Id bidIdFromPublishLocation(ContentVersion version) {
+    private static Id recordIdFromPublishLocation(ContentVersion version, Schema.SObjectType targetType) {
         if (version.FirstPublishLocationId == null) {
             return null;
         }
-        if (version.FirstPublishLocationId.getSObjectType() != Contract_Bid__c.SObjectType) {
+        if (version.FirstPublishLocationId.getSObjectType() != targetType) {
             return null;
         }
         return version.FirstPublishLocationId;
