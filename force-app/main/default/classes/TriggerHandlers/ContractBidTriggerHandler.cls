@@ -11,23 +11,9 @@ public with sharing class ContractBidTriggerHandler extends TriggerHandler {
   }
 
   protected override void beforeInsert() {
-    for (Contract_Bid__c bid : this.newList) {
-      clearRestrictedFieldsOnCreate(bid);
-    }
     ContractBidLabelsFiller.fillLabels(this.newList);
   }
 
-  private static void clearRestrictedFieldsOnCreate(Contract_Bid__c bid) {
-    bid.Bid_Number__c = null;
-    bid.Version__c = null;
-    bid.Contract_Start_Date__c = null;
-    bid.Contract_End_Date__c = null;
-    bid.Sent_Contract_Date__c = null;
-    bid.Lost_Reason__c = null;
-    bid.Additional_Comments__c = null;
-    bid.EBD_Due_Date__c = null;
-    bid.Due_Date__c = null;
-  }
 
   protected override void afterInsert() {
     updateCurrentCustomerAccounts();
