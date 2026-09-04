@@ -35,7 +35,7 @@ public class ContentVersionTriggerHandler extends TriggerHandler {
         }
 
         try {
-            DocuSignCompletedContractEmailService.handleCompletedContractFiles(completedVersions);
+            DocuSignCompletedContractEmailService.handleCompletedFiles(completedVersions);
         } catch (Exception e) {
             System.debug('ERROR in DocuSignCompletedContractEmailService: ' + e.getMessage());
             System.debug(e.getStackTraceString());
