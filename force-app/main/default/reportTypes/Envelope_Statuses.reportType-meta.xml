@@ -250,6 +250,21 @@
         </columns>
         <columns>
             <checkedByDefault>false</checkedByDefault>
+            <field>Email_Bounced__c</field>
+            <table>dfsle__EnvelopeStatus__c.dfsle__Recipients__r</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Bounce_Reason__c</field>
+            <table>dfsle__EnvelopeStatus__c.dfsle__Recipients__r</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Bounced_Detected_At__c</field>
+            <table>dfsle__EnvelopeStatus__c.dfsle__Recipients__r</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
             <field>dfsle__Type__c</field>
             <table>dfsle__EnvelopeStatus__c.dfsle__Recipients__r</table>
         </columns>

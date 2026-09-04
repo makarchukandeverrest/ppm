@@ -77,6 +77,22 @@
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
+        <apexClass>DocuSignBouncePollService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>DocuSignBouncePollBatch</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>DocuSignBouncePollScheduler</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>DocuSignBouncePollServiceTest</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
         <apexClass>EmailMessageBounceJob</apexClass>
         <enabled>true</enabled>
     </classAccesses>
