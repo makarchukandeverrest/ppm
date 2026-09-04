@@ -1,0 +1,18 @@
+<html>
+<head>
+	<title></title>
+</head>
+<body style="height: auto; min-height: auto;">Hello {{{Recipient.FirstName}}},<br />
+<br />
+Thank you for the update, I appreciate you letting me know.<br />
+<br />
+If you ever decide to explore options in the future or need assistance with any pool-related services, I'd be happy to help and provide updated proposals.<br />
+<br />
+If possible, could you please share which company you decided to move forward with and the reasons behind the decision? This will help us improve and better serve you in the future.<br />
+<br />
+I wish you a great 2026 season.<br />
+<br />
+Best regards,<br />
+{{{Sender.Name}}}<br />
+{{{Organization.Name}}}</body>
+</html>

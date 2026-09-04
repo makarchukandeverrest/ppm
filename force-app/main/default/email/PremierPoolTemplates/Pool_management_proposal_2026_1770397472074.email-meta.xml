@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<EmailTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <available>true</available>
+    <encodingKey>UTF-8</encodingKey>
+    <name>Pool management proposal 2026</name>
+    <relatedEntityType>Account</relatedEntityType>
+    <style>none</style>
+    <subject>2026 Premier Pool Management Proposal—{{{Account.Name}}}</subject>
+    <type>custom</type>
+    <uiType>SFX</uiType>
+</EmailTemplate>
