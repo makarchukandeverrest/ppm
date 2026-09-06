@@ -54,17 +54,39 @@ private class AccountTriggerHandlerTest {
         Test.startTest();
         AccountCurrentCustomerUpdater.updateCustomers(
             new List<Contract_Bid__c>{
-                new Contract_Bid__c(Customer__c = acc.Id)
+                new Contract_Bid__c(Customer__c = acc.Id, Contract_Year__c = '2025-2026')
             }
         );
         Test.stopTest();
 
         acc = [
-            SELECT Current_Customer__c
+            SELECT Current_Customer__c, Contract_Periods__c
             FROM Account
             WHERE Id = :acc.Id
         ];
         System.assertEquals(true, acc.Current_Customer__c);
+        System.assertEquals('2025-2026', acc.Contract_Periods__c);
+    }
+
+    @IsTest
+    static void testClosedWonBid_AppendsPeriod() {
+        Account acc = new Account(
+            Name = 'Existing Period Client',
+            Current_Customer__c = false,
+            Contract_Periods__c = '2024-2025'
+        );
+        insert acc;
+
+        Test.startTest();
+        AccountCurrentCustomerUpdater.updateCustomers(
+            new List<Contract_Bid__c>{
+                new Contract_Bid__c(Customer__c = acc.Id, Contract_Year__c = '2025-2026')
+            }
+        );
+        Test.stopTest();
+
+        acc = [SELECT Contract_Periods__c FROM Account WHERE Id = :acc.Id];
+        System.assertEquals('2024-2025;2025-2026', acc.Contract_Periods__c);
     }
 
     @IsTest

@@ -3,9 +3,26 @@ public with sharing class AccountCurrentCustomerUpdater {
   private static final String STAGE_CLOSED_LOST = 'Closed - LOST';
 
   public static void updateCustomers(List<Contract_Bid__c> wonBids) {
+    Set<Id> customerIds = new Set<Id>();
+    for (Contract_Bid__c bid : wonBids) {
+      if (bid.Customer__c != null) {
+        customerIds.add(bid.Customer__c);
+      }
+    }
+    if (customerIds.isEmpty()) {
+      return;
+    }
+
+    Map<Id, Account> existingById = new Map<Id, Account>(
+      [SELECT Id, Contract_Periods__c FROM Account WHERE Id IN :customerIds]
+    );
+
     Map<Id, Account> accountsById = new Map<Id, Account>();
     for (Contract_Bid__c bid : wonBids) {
       if (bid.Customer__c != null) {
+        String existingPeriods = accountsById.containsKey(bid.Customer__c)
+          ? accountsById.get(bid.Customer__c).Contract_Periods__c
+          : existingById.get(bid.Customer__c)?.Contract_Periods__c;
         accountsById.put(
           bid.Customer__c,
           new Account(
@@ -13,7 +30,10 @@ public with sharing class AccountCurrentCustomerUpdater {
             Current_Customer__c = true,
             Recent_Contract_Bid__c = bid.Id,
             Contract_Start_Date__c = bid.Contract_Start_Date__c,
-            Contract_End_Date__c = bid.Contract_End_Date__c
+            Contract_End_Date__c = bid.Contract_End_Date__c,
+            Contract_Periods__c = String.isBlank(existingPeriods)
+              ? bid.Contract_Year__c
+              : existingPeriods + ';' + bid.Contract_Year__c
           )
         );
       }
