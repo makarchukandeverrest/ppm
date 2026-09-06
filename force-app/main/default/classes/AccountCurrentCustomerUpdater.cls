@@ -31,9 +31,11 @@ public with sharing class AccountCurrentCustomerUpdater {
             Recent_Contract_Bid__c = bid.Id,
             Contract_Start_Date__c = bid.Contract_Start_Date__c,
             Contract_End_Date__c = bid.Contract_End_Date__c,
-            Contract_Periods__c = String.isBlank(existingPeriods)
-              ? bid.Contract_Year__c
-              : existingPeriods + ';' + bid.Contract_Year__c
+            Contract_Periods__c = String.isBlank(bid.Contract_Year__c)
+              ? existingPeriods
+              : String.isBlank(existingPeriods)
+                ? bid.Contract_Year__c
+                : existingPeriods + ';' + bid.Contract_Year__c
           )
         );
       }

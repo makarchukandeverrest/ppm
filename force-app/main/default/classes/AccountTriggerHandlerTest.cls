@@ -90,6 +90,52 @@ private class AccountTriggerHandlerTest {
     }
 
     @IsTest
+    static void testClosedWonBid_DuplicatePeriodStaysValid() {
+        Account acc = new Account(
+            Name = 'Duplicate Period Client',
+            Current_Customer__c = false,
+            Contract_Periods__c = '2025-2026'
+        );
+        insert acc;
+
+        Test.startTest();
+        AccountCurrentCustomerUpdater.updateCustomers(
+            new List<Contract_Bid__c>{
+                new Contract_Bid__c(Customer__c = acc.Id, Contract_Year__c = '2025-2026')
+            }
+        );
+        Test.stopTest();
+
+        acc = [SELECT Contract_Periods__c FROM Account WHERE Id = :acc.Id];
+        System.assert(
+            acc.Contract_Periods__c == '2025-2026' ||
+            acc.Contract_Periods__c == '2025-2026;2025-2026',
+            'Duplicate year should stay a valid picklist value'
+        );
+    }
+
+    @IsTest
+    static void testClosedWonBid_BlankYearKeepsExistingPeriods() {
+        Account acc = new Account(
+            Name = 'Blank Year Client',
+            Current_Customer__c = false,
+            Contract_Periods__c = '2024-2025'
+        );
+        insert acc;
+
+        Test.startTest();
+        AccountCurrentCustomerUpdater.updateCustomers(
+            new List<Contract_Bid__c>{
+                new Contract_Bid__c(Customer__c = acc.Id, Contract_Year__c = null)
+            }
+        );
+        Test.stopTest();
+
+        acc = [SELECT Contract_Periods__c FROM Account WHERE Id = :acc.Id];
+        System.assertEquals('2024-2025', acc.Contract_Periods__c);
+    }
+
+    @IsTest
     static void testUpdateCustomers_SkipsBidsWithoutCustomer() {
         AccountCurrentCustomerUpdater.updateCustomers(new List<Contract_Bid__c>());
         AccountCurrentCustomerUpdater.updateCustomers(
