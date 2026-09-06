@@ -2,7 +2,7 @@ import { LightningElement, wire, track, api } from 'lwc';
 import getAccountsWithFiles from '@salesforce/apex/AccountFilesController.getAccountsWithFiles';
 import getFilterOptions from '@salesforce/apex/AccountFilesController.getFilterOptions';
 import sendEnvelopeWithSignature from '@salesforce/apex/DocuSignDfsleEnvelopeService.sendEnvelopeWithSignature';
-import { refreshApex } from '@salesforce/apex';
+import { CloseActionScreenEvent } from 'lightning/actions';
 
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { NavigationMixin } from 'lightning/navigation';
@@ -11,17 +11,39 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     @track accountsWithFiles;
     @track allAccountsWithFiles; // Store original data for reference
     error;
-    wiredAccountsResult;
     @track isUpdating = false;
+    @track isSending = false;
+    @track statusMessage = '';
+    @track statusVariant = 'info';
     @track showConfirmationModal = false;
     @api recordId;
+    @api availableActions;
+    // Must not stay undefined — LWC @wire skips Apex if any reactive param is undefined
+    // (breaks Record Action / single Contract Bid detail page where only recordId is set).
+    _recordIds = null;
+    _hasBooted = false;
+    _urlRecordId;
+    _userSetYear = false;
+
+    @api
+    get recordIds() {
+        return this._recordIds;
+    }
+    set recordIds(value) {
+        this._recordIds = value == null ? null : value;
+        if (!this._userSetYear) {
+            this.contractYearFilter = this._getCurrentContractYear();
+        }
+        if (this._hasBooted) {
+            this.loadAccounts();
+        }
+    }
 
     // Filter state
     @track selectedRegionalManager = '';
-    @track selectedCounty = '';
+    @track selectedManagementCompany = '';
     @track customerNameFilter = '';
-    @track selectedSupervisor = '';
-    @track contractYearFilter = '';
+    @track contractYearFilter = String(new Date().getFullYear() + 1);
 
     // Automatic Reminders
     @track automaticReminderValue = '';
@@ -44,24 +66,34 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
 
     // Filter options
     @track regionalManagerOptions = [];
-    @track countyOptions = [];
-    @track supervisorOptions = [];
+    @track managementCompanyOptions = [];
     @track filtersLoaded = false;
 
     connectedCallback() {
-        // If recordId is not set via @api, try to get it from URL
+        this._hasBooted = true;
         if (!this.recordId) {
             const urlParams = new URLSearchParams(window.location.search);
             this.recordId = urlParams.get('recordId') || urlParams.get('c__recordId');
-            console.log('recordId from URL:', this.recordId);
         }
+        console.log('[SendContracts] boot', this.effectiveRecordId, JSON.stringify(this.recordIds || null));
         // Default envelope expires = today + default days (120), not before min date
         const days = parseInt(this.daysBeforeExpires, 10) || 120;
         const computed = this._datePlusDays(new Date(), days);
         this.envelopeExpiresDate = computed >= this.envelopeExpiresMinDate
             ? computed
             : this.envelopeExpiresMinDate;
-        this.contractYearFilter = String(new Date().getFullYear());
+        if (!this._userSetYear) {
+            this.contractYearFilter = this._getCurrentContractYear();
+        }
+        this.loadAccounts();
+    }
+
+    get effectiveRecordId() {
+        return this.recordId || this._urlRecordId;
+    }
+
+    _getCurrentContractYear() {
+        return String(new Date().getFullYear() + 1);
     }
 
     _datePlusDays(date, days) {
@@ -96,13 +128,9 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
                 { label: '-- All --', value: '' },
                 ...data.regionalManagers.map(opt => ({ label: opt.label, value: opt.value }))
             ];
-            this.countyOptions = [
+            this.managementCompanyOptions = [
                 { label: '-- All --', value: '' },
-                ...data.counties.map(opt => ({ label: opt.label, value: opt.value }))
-            ];
-            this.supervisorOptions = [
-                { label: '-- All --', value: '' },
-                ...data.supervisors.map(opt => ({ label: opt.label, value: opt.value }))
+                ...(data.managementCompanies || []).map(opt => ({ label: opt.label, value: opt.value }))
             ];
             this.filtersLoaded = true;
         } else if (error) {
@@ -110,21 +138,25 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
         }
     }
 
-    @wire(getAccountsWithFiles, { 
-        recordId: '$recordId',
-        regionalManagerId: '$selectedRegionalManager',
-        county: '$selectedCounty',
-        customerName: '$customerNameFilter',
-        supervisorId: '$selectedSupervisor',
-        contractYear: '$contractYearFilter'
-    })
-    wiredAccounts(result) {
-        this.wiredAccountsResult = result;
-
-        const { error, data } = result;
-        console.log('getAccountsWithFiles result:', data, 'recordId:', this.recordId);
-
-        if (data) {
+    async loadAccounts() {
+        this.isUpdating = true;
+        try {
+            const data = await getAccountsWithFiles({
+                recordId: this.effectiveRecordId,
+                recordIds: this.recordIds,
+                regionalManagerId: this.selectedRegionalManager,
+                managementCompanyId: this.selectedManagementCompany,
+                customerName: this.customerNameFilter,
+                contractYear: this.contractYearFilter
+            });
+            console.log(
+                '[SendContracts] loaded',
+                JSON.stringify({
+                    recordId: this.effectiveRecordId,
+                    recordIds: this.recordIds,
+                    rows: Array.isArray(data) ? data.length : 0
+                })
+            );
             this.accountsWithFiles = this._enrichAccountsWithReminders(Array.isArray(data) ? data : []);
             this.allAccountsWithFiles = this.accountsWithFiles;
 
@@ -138,9 +170,8 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
                     })
                 );
             }
-        } else if (error) {
-            console.error('Error loading accounts with files:', error);
-
+        } catch (error) {
+            console.error('[SendContracts] load error', error);
             this.dispatchEvent(
                 new ShowToastEvent({
                     title: 'Error',
@@ -149,18 +180,19 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
                     mode: 'dismissable'
                 })
             );
+        } finally {
+            this.isUpdating = false;
         }
     }
 
     // Check if any filters are active
     get hasActiveFilters() {
         const yearIsCustom = this.contractYearFilter
-            && this.contractYearFilter !== String(new Date().getFullYear());
+            && this.contractYearFilter !== this._getCurrentContractYear();
 
-        return this.selectedRegionalManager || 
-               this.selectedCounty || 
-               this.customerNameFilter || 
-               this.selectedSupervisor ||
+        return this.selectedRegionalManager ||
+               this.selectedManagementCompany ||
+               this.customerNameFilter ||
                yearIsCustom;
     }
 
@@ -178,6 +210,26 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
 
     get showCustomReminderInput() {
         return this.automaticReminderValue === 'custom';
+    }
+
+    get statusClass() {
+        const theme = this.statusVariant === 'success'
+            ? 'slds-theme_success'
+            : this.statusVariant === 'error'
+                ? 'slds-theme_error'
+                : 'slds-theme_info';
+        return `slds-notify slds-notify_alert ${theme} slds-m-around_medium`;
+    }
+
+    get isInFlow() {
+        const actions = this.availableActions || [];
+        return actions.includes('FINISH')
+            || actions.includes('NEXT')
+            || (this.recordIds && this.recordIds.length > 0);
+    }
+
+    delay(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
     _enrichAccountsWithReminders(accounts) {
@@ -333,36 +385,40 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     }
     handleRegionalManagerChange(event) {
         this.selectedRegionalManager = event.detail.value;
+        this.loadAccounts();
     }
 
-    handleCountyChange(event) {
-        this.selectedCounty = event.detail.value;
+    handleManagementCompanyChange(event) {
+        this.selectedManagementCompany = event.detail.value;
+        this.loadAccounts();
     }
 
     handleCustomerNameChange(event) {
         this.customerNameFilter = event.detail.value;
-    }
-
-    handleSupervisorChange(event) {
-        this.selectedSupervisor = event.detail.value;
+        this.loadAccounts();
     }
 
     handleContractYearChange(event) {
         const val = (event.detail.value || '').replace(/\D/g, '');
         if (!val) {
-            this.contractYearFilter = '';
+            this._userSetYear = false;
+            this.contractYearFilter = this._getCurrentContractYear();
+            this.loadAccounts();
             return;
         }
+        this._userSetYear = true;
         this.contractYearFilter = val.slice(0, 4);
+        this.loadAccounts();
     }
 
     // Clear all filters
     clearFilters() {
         this.selectedRegionalManager = '';
-        this.selectedCounty = '';
+        this.selectedManagementCompany = '';
         this.customerNameFilter = '';
-        this.selectedSupervisor = '';
+        this._userSetYear = false;
         this.contractYearFilter = this._getCurrentContractYear();
+        this.loadAccounts();
     }
 
     // Getter: returns only accounts that have selected files
@@ -459,51 +515,72 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     }
 
     async handleUpdate() {
-        console.log('handleUpdate', this.recordId);
-        
-        try {
-            this.isUpdating = true;
-            await refreshApex(this.wiredAccountsResult);
-        } catch (error) {
-            this.error = error;
-            console.error('Error refreshing data:', error);
-        } finally {
-            this.isUpdating = false;
-        }
+        console.log('[SendContracts] update', this.effectiveRecordId, JSON.stringify(this.recordIds || null));
+        await this.loadAccounts();
     }
 
     async handleSubmit() {
+        this.closeConfirmationModal();
+        this.isSending = true;
+        this.statusMessage = 'Sending envelopes...';
+        this.statusVariant = 'info';
         try {
-            this.dispatchEvent(new ShowToastEvent({
-                title: 'Processing',
-                message: 'Sending envelopes...',
-                variant: 'info'
-            }));
-
             const payload = this.accountsWithFiles.map(acc => ({
                 ...acc,
                 reminderValue: acc.reminderValue === 'custom' ? (acc.reminderCustomDays || '') : (acc.reminderValue || '')
             }));
             console.log(JSON.stringify(payload));
-            
+
             await sendEnvelopeWithSignature({
                 accountsWithFilesJSON: JSON.stringify(payload)
             });
 
-            await this[NavigationMixin.Navigate]({
-                type: 'standard__objectPage',
-                attributes: {
-                    objectApiName: 'Contract_Bid__c',
-                    actionName: 'list'
-                }
-            });
+            const sentCount = this.selectedFilesForModal.length;
+            this.statusMessage = sentCount === 1
+                ? 'Contract envelope sent.'
+                : sentCount + ' contract envelopes sent.';
+            this.statusVariant = 'success';
+            this.isSending = false;
+
+            this.dispatchEvent(new ShowToastEvent({
+                title: 'Success',
+                message: this.statusMessage,
+                variant: 'success',
+                mode: 'sticky'
+            }));
+
+            if (this.isInFlow) {
+                await this.delay(2000);
+            }
+            this.closeAfterSuccess();
         } catch (error) {
             console.error(error);
+            this.isSending = false;
+            this.statusMessage = error?.body?.message || error.message || 'Failed to send contracts.';
+            this.statusVariant = 'error';
             this.dispatchEvent(new ShowToastEvent({
                 title: 'Error',
-                message: error?.body?.message || error.message,
-                variant: 'error'
+                message: this.statusMessage,
+                variant: 'error',
+                mode: 'sticky'
             }));
         }
+    }
+
+    closeAfterSuccess() {
+        if (this.isInFlow) {
+            const listUrl = '/lightning/o/Contract_Bid__c/list';
+            (window.top || window).location.assign(listUrl);
+            return;
+        }
+
+        this.dispatchEvent(new CloseActionScreenEvent());
+        this[NavigationMixin.Navigate]({
+            type: 'standard__objectPage',
+            attributes: {
+                objectApiName: 'Contract_Bid__c',
+                actionName: 'list'
+            }
+        });
     }
 }

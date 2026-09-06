@@ -34,14 +34,13 @@ public class AccountFilesControllerTest {
         return u;
     }
 
-    private static Supervisor__c createSupervisor(String nameSuffix) {
+    private static Management_Company__c createManagementCompany(String nameSuffix) {
         String uniqueId = String.valueOf(Datetime.now().getTime()) + Crypto.getRandomInteger();
-        Supervisor__c sup = new Supervisor__c(
-            Name = 'Sup ' + nameSuffix + ' ' + uniqueId.left(6),
-            Last_Name__c = 'Ln' + uniqueId.left(6)
+        Management_Company__c mc = new Management_Company__c(
+            Name = 'MC ' + nameSuffix + ' ' + uniqueId.left(6)
         );
-        insert sup;
-        return sup;
+        insert mc;
+        return mc;
     }
 
     /**
@@ -107,10 +106,20 @@ public class AccountFilesControllerTest {
         String stage,
         Boolean renewalClient
     ) {
+        return createTestContract(acc, stage, renewalClient, null);
+    }
+
+    private static Contract_Bid__c createTestContract(
+        Account acc,
+        String stage,
+        Boolean renewalClient,
+        Id managementCompanyId
+    ) {
         Contract_Bid__c contract = new Contract_Bid__c(
             Customer__c      = acc.Id,
             Stage__c         = stage,
-            Renewal_Client__c = renewalClient
+            Renewal_Client__c = renewalClient,
+            Management_Company__c = managementCompanyId
         );
         insert contract;
         return contract;
@@ -131,7 +140,35 @@ public class AccountFilesControllerTest {
         String title,
         String fileExtension
     ) {
-        String fileTitle = buildContractFileTitle(title);
+        return createTestFile(acc.Id, title, fileExtension);
+    }
+
+    /**
+     * Creates a test file (ContentVersion) linked to a Contract Bid
+     */
+    private static ContentDocument createTestFile(
+        Contract_Bid__c contract,
+        String title,
+        String fileExtension
+    ) {
+        return createTestFile(contract.Id, title, fileExtension);
+    }
+
+    private static ContentDocument createTestFile(
+        Id linkedEntityId,
+        String title,
+        String fileExtension
+    ) {
+        return createTestFile(linkedEntityId, title, fileExtension, true);
+    }
+
+    private static ContentDocument createTestFile(
+        Id linkedEntityId,
+        String title,
+        String fileExtension,
+        Boolean includeYearInTitle
+    ) {
+        String fileTitle = includeYearInTitle ? buildContractFileTitle(title) : title;
         ContentVersion cv = new ContentVersion(
             Title           = fileTitle,
             PathOnClient    = fileTitle + '.' + fileExtension,
@@ -148,10 +185,9 @@ public class AccountFilesControllerTest {
             LIMIT 1
         ];
 
-        // Link to Account
         ContentDocumentLink cdl = new ContentDocumentLink(
             ContentDocumentId = insertedCV.ContentDocumentId,
-            LinkedEntityId    = acc.Id,
+            LinkedEntityId    = linkedEntityId,
             ShareType         = 'V',
             Visibility        = 'AllUsers'
         );
@@ -172,7 +208,7 @@ public class AccountFilesControllerTest {
     static void testGetFilterOptions_basic() {
         // Setup
         User rm = createUser('RM');
-        Supervisor__c sup = createSupervisor('SUP');
+        Management_Company__c mc = createManagementCompany('MC');
 
         // Get active stages from metadata
         StageReferenceSettings__mdt stageRef = StageReferenceSettings__mdt.getInstance('Active_Stages');
@@ -181,12 +217,11 @@ public class AccountFilesControllerTest {
         
         String firstActiveStage = stageRef.Stage_Names__c.split(',')[0].trim();
 
-        // Get a valid county value from picklist
         String testCounty = getValidCountyValue();
         System.assertNotEquals(null, testCounty, 'At least one valid county picklist value should exist');
 
-        Account acc = createTestAccount('Filter Acc', rm.Id, sup.Id, testCounty);
-        createTestContract(acc, firstActiveStage, false);
+        Account acc = createTestAccount('Filter Acc', rm.Id, null, testCounty);
+        createTestContract(acc, firstActiveStage, false, mc.Id);
 
         Test.startTest();
         AccountFilesController.FilterOptions options = AccountFilesController.getFilterOptions();
@@ -195,42 +230,40 @@ public class AccountFilesControllerTest {
         // Assertions
         System.assertNotEquals(null, options, 'FilterOptions should not be null');
         System.assertNotEquals(null, options.regionalManagers, 'Regional managers list should not be null');
-        System.assertNotEquals(null, options.counties, 'Counties list should not be null');
-        System.assertNotEquals(null, options.supervisors, 'Supervisors list should not be null');
+        System.assertNotEquals(null, options.managementCompanies, 'Management companies list should not be null');
 
-        // Verify county is present
-        Boolean foundCounty = false;
-        for (AccountFilesController.PicklistOption opt : options.counties) {
-            if (opt.value == testCounty) {
-                foundCounty = true;
+        Boolean foundManagementCompany = false;
+        for (AccountFilesController.PicklistOption opt : options.managementCompanies) {
+            if (opt.value == mc.Id) {
+                foundManagementCompany = true;
                 break;
             }
         }
-        System.assert(foundCounty, 'County from account should be present in filter options');
+        System.assert(foundManagementCompany, 'Management Company from contract bid should be present in filter options');
     }
 
     @IsTest
-    static void testGetAccountsWithFiles_filtersByRegionalManagerCountySupervisor() {
+    static void testGetAccountsWithFiles_filtersByRegionalManagerAndManagementCompany() {
         // Setup
         User rm1 = createUser('RM1');
         User rm2 = createUser('RM2');
-        Supervisor__c sup1 = createSupervisor('SUP1');
+        Management_Company__c mc1 = createManagementCompany('MC1');
+        Management_Company__c mc2 = createManagementCompany('MC2');
 
         // Get active stages
         StageReferenceSettings__mdt stageRef = StageReferenceSettings__mdt.getInstance('Active_Stages');
         String firstActiveStage = stageRef.Stage_Names__c.split(',')[0].trim();
 
-        // Get valid counties
         List<String> validCounties = getValidCountyValues(2);
         System.assert(validCounties.size() >= 2, 'At least two valid county picklist values should exist');
         String county1 = validCounties[0];
         String county2 = validCounties.size() > 1 ? validCounties[1] : validCounties[0];
 
-        Account acc1 = createTestAccount('Acc 1', rm1.Id, sup1.Id, county1);
-        Account acc2 = createTestAccount('Acc 2', rm2.Id, sup1.Id, county2);
+        Account acc1 = createTestAccount('Acc 1', rm1.Id, null, county1);
+        Account acc2 = createTestAccount('Acc 2', rm2.Id, null, county2);
 
-        Contract_Bid__c c1 = createTestContract(acc1, firstActiveStage, false);
-        Contract_Bid__c c2 = createTestContract(acc2, firstActiveStage, false);
+        createTestContract(acc1, firstActiveStage, false, mc1.Id);
+        createTestContract(acc2, firstActiveStage, false, mc2.Id);
 
         createTestFile(acc1, 'Proposal1', 'pdf');
         createTestFile(acc2, 'Proposal2', 'pdf');
@@ -238,16 +271,17 @@ public class AccountFilesControllerTest {
         Test.startTest();
         List<AccountWithFiles> results = AccountFilesController.getAccountsWithFiles(
             null,          // recordId
+            null,          // recordIds
             rm1.Id,        // regionalManagerId
-            county1,       // county
+            mc1.Id,        // managementCompanyId
             null,          // customerName
-            sup1.Id,       // supervisorId
             null           // contractYear
         );
         Test.stopTest();
 
         System.assertEquals(1, results.size(), 'Only one account should match all filters');
         System.assertEquals(acc1.Id, results[0].accountId, 'Filtered account should be acc1');
+        System.assertEquals(mc1.Name, results[0].managementCompanyName, 'Management company name should be populated');
     }
 
     @IsTest
@@ -278,15 +312,29 @@ public class AccountFilesControllerTest {
 
         String testCounty = getValidCountyValue();
         Account acc = createTestAccount('Test Filter', null, null, testCounty);
-        createTestContract(acc, excludedStage, false);
+        Contract_Bid__c excludedBid = createTestContract(acc, excludedStage, false);
+        createTestFile(acc, 'ProposalExcluded', 'pdf');
 
         Test.startTest();
         List<AccountWithFiles> results = AccountFilesController.getAccountsWithFiles(
             null, null, null, null, null, null
         );
+        List<AccountWithFiles> selectedExcluded = AccountFilesController.getAccountsWithFiles(
+            null,
+            new List<Id>{ excludedBid.Id },
+            null,
+            null,
+            null,
+            null
+        );
         Test.stopTest();
 
         System.assertEquals(0, results.size(), 'No results expected for excluded stages');
+        System.assertEquals(
+            1,
+            selectedExcluded.size(),
+            'Explicitly selected bids should be returned even if the stage is not active'
+        );
     }
 
     @IsTest
@@ -331,13 +379,171 @@ public class AccountFilesControllerTest {
             null,
             null,
             null,
-            'Acme',  // partial name
             null,
+            'Acme',  // partial name
             null
         );
         Test.stopTest();
 
         System.assertEquals(1, results.size(), 'Only accounts matching name filter should be returned');
         System.assertEquals(acc1.Id, results[0].accountId, 'Account name filter should match Acme Ukraine');
+    }
+
+    @IsTest
+    static void testGetAccountsWithFiles_filesFromContractBid() {
+        StageReferenceSettings__mdt stageRef = StageReferenceSettings__mdt.getInstance('Active_Stages');
+        String firstActiveStage = stageRef.Stage_Names__c.split(',')[0].trim();
+        String testCounty = getValidCountyValue();
+
+        Account acc = createTestAccount('Contract Bid File Acc', null, null, testCounty);
+        Contract_Bid__c contract = createTestContract(acc, firstActiveStage, false);
+        createTestFile(contract, 'ProposalFromBid', 'pdf');
+
+        Test.startTest();
+        List<AccountWithFiles> results = AccountFilesController.getAccountsWithFiles(
+            null, null, null, null, 'Contract Bid File Acc', null
+        );
+        Test.stopTest();
+
+        System.assertEquals(1, results.size(), 'Account should be returned when files are on Contract Bid');
+        System.assertEquals(acc.Id, results[0].accountId, 'Files from Contract Bid should map to Customer Account');
+        System.assertEquals(1, results[0].files.size(), 'Contract Bid file should be included');
+        System.assert(
+            results[0].files[0].Title.contains('ProposalFromBid'),
+            'Returned file should be the one linked to Contract Bid'
+        );
+    }
+
+    @IsTest
+    static void testGetAccountsWithFiles_combinesAccountAndContractBidFiles() {
+        StageReferenceSettings__mdt stageRef = StageReferenceSettings__mdt.getInstance('Active_Stages');
+        String firstActiveStage = stageRef.Stage_Names__c.split(',')[0].trim();
+        String testCounty = getValidCountyValue();
+
+        Account acc = createTestAccount('Combined Files Acc', null, null, testCounty);
+        Contract_Bid__c contract = createTestContract(acc, firstActiveStage, false);
+        createTestFile(acc, 'FromAccount', 'pdf');
+        createTestFile(contract, 'FromBid', 'pdf');
+
+        Test.startTest();
+        List<AccountWithFiles> results = AccountFilesController.getAccountsWithFiles(
+            null, null, null, null, 'Combined Files Acc', null
+        );
+        Test.stopTest();
+
+        System.assertEquals(1, results.size(), 'One account should be returned');
+        System.assertEquals(2, results[0].files.size(), 'Files from Account and Contract Bid should be combined');
+    }
+
+    @IsTest
+    static void testGetAccountsWithFiles_contractBidFileDoesNotRequireYear() {
+        StageReferenceSettings__mdt stageRef = StageReferenceSettings__mdt.getInstance('Active_Stages');
+        String firstActiveStage = stageRef.Stage_Names__c.split(',')[0].trim();
+        String county = getValidCountyValue();
+
+        Account acc = createTestAccount('Bid No Year Acc', null, null, county);
+        Contract_Bid__c contract = createTestContract(acc, firstActiveStage, false);
+        createTestFile(contract.Id, 'Contract Without Year From Bid', 'pdf', false);
+
+        Test.startTest();
+        List<AccountWithFiles> results = AccountFilesController.getAccountsWithFiles(
+            null, null, null, null, 'Bid No Year Acc', null
+        );
+        Test.stopTest();
+
+        System.assertEquals(1, results.size(), 'Contract Bid file without year should still be returned');
+        System.assertEquals(1, results[0].files.size(), 'Yearless Contract Bid file should be included');
+        System.assertEquals(
+            'Contract Without Year From Bid',
+            results[0].files[0].Title,
+            'Returned file should keep the Contract Bid title without a year'
+        );
+    }
+
+    @IsTest
+    static void testGetAccountsWithFiles_accountFileStillRequiresYear() {
+        StageReferenceSettings__mdt stageRef = StageReferenceSettings__mdt.getInstance('Active_Stages');
+        String firstActiveStage = stageRef.Stage_Names__c.split(',')[0].trim();
+        String county = getValidCountyValue();
+
+        Account acc = createTestAccount('Account No Year Acc', null, null, county);
+        createTestContract(acc, firstActiveStage, false);
+        createTestFile(acc.Id, 'Contract Without Year From Account', 'pdf', false);
+
+        Test.startTest();
+        List<AccountWithFiles> results = AccountFilesController.getAccountsWithFiles(
+            null, null, null, null, 'Account No Year Acc', String.valueOf(Date.today().year())
+        );
+        Test.stopTest();
+
+        System.assertEquals(
+            0,
+            results.size(),
+            'Account files without the contract year in the title should still be excluded'
+        );
+    }
+
+    @IsTest
+    static void testGetAccountsWithFiles_filtersBySelectedRecordIds() {
+        StageReferenceSettings__mdt stageRef = StageReferenceSettings__mdt.getInstance('Active_Stages');
+        String firstActiveStage = stageRef.Stage_Names__c.split(',')[0].trim();
+        String county = getValidCountyValue();
+
+        Account acc1 = createTestAccount('Selected Bid Acc 1', null, null, county);
+        Account acc2 = createTestAccount('Selected Bid Acc 2', null, null, county);
+
+        Contract_Bid__c selectedBid = createTestContract(acc1, firstActiveStage, false);
+        Contract_Bid__c secondSelectedBid = createTestContract(acc2, firstActiveStage, false);
+
+        createTestFile(acc1, 'Proposal1', 'pdf');
+        createTestFile(acc2, 'Proposal2', 'pdf');
+
+        Test.startTest();
+        List<AccountWithFiles> selectedOnly = AccountFilesController.getAccountsWithFiles(
+            null,
+            new List<Id>{ selectedBid.Id },
+            null,
+            null,
+            null,
+            null
+        );
+        List<AccountWithFiles> selectedMultiple = AccountFilesController.getAccountsWithFiles(
+            null,
+            new List<Id>{ selectedBid.Id, secondSelectedBid.Id },
+            null,
+            null,
+            null,
+            null
+        );
+        List<AccountWithFiles> singleRecord = AccountFilesController.getAccountsWithFiles(
+            selectedBid.Id,
+            null,
+            null,
+            null,
+            null,
+            null
+        );
+        List<AccountWithFiles> allActive = AccountFilesController.getAccountsWithFiles(
+            null,
+            new List<Id>(),
+            null,
+            null,
+            null,
+            null
+        );
+        Test.stopTest();
+
+        System.assertEquals(1, selectedOnly.size(), 'Only the selected Contract Bid should be returned');
+        System.assertEquals(acc1.Id, selectedOnly[0].accountId, 'Selected bid should map to acc1');
+        System.assertEquals(2, selectedMultiple.size(), 'All explicitly selected Contract Bids should be returned');
+        System.assertEquals(1, singleRecord.size(), 'Single recordId should return only that Contract Bid');
+        System.assertEquals(acc1.Id, singleRecord[0].accountId, 'Single recordId should map to acc1');
+
+        Set<Id> allAccountIds = new Set<Id>();
+        for (AccountWithFiles row : allActive) {
+            allAccountIds.add(row.accountId);
+        }
+        System.assert(allAccountIds.contains(acc1.Id), 'Empty selection should still include acc1');
+        System.assert(allAccountIds.contains(acc2.Id), 'Empty selection should still include acc2');
     }
 }
