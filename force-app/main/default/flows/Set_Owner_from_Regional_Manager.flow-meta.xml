@@ -3,14 +3,43 @@
     <apiVersion>65.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
     <decisions>
+        <name>RM_Is_Active</name>
+        <label>RM is active?</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Inactive or blank — skip</defaultConnectorLabel>
+        <rules>
+            <name>Yes_Active</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.Regional_Manager__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.Regional_Manager__r.IsActive</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Decision_1</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <decisions>
         <name>Decision_1</name>
-        <label>Decision 1</label>
+        <label>Owner is not manager?</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
         <defaultConnectorLabel>Default Outcome</defaultConnectorLabel>
         <rules>
             <name>Owner_Is_not_manager</name>
-            <conditionLogic>or</conditionLogic>
+            <conditionLogic>and</conditionLogic>
             <conditions>
                 <leftValueReference>$Record.Regional_Manager__c</leftValueReference>
                 <operator>NotEqualTo</operator>
@@ -24,7 +53,7 @@
             <label>Owner Is not manager</label>
         </rules>
     </decisions>
-    <description>Assign owner from Regional Manager field</description>
+    <description>Assign Account Owner from Regional Manager when RM is assigned or changed. Skips inactive RM so unrelated Account updates do not fail.</description>
     <environments>Default</environments>
     <interviewLabel>Set Owner from Regional Manager {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Set Owner from Regional Manager</label>
@@ -64,23 +93,12 @@
         <locationX>0</locationX>
         <locationY>0</locationY>
         <connector>
-            <targetReference>Decision_1</targetReference>
+            <targetReference>RM_Is_Active</targetReference>
         </connector>
-        <filterLogic>or</filterLogic>
-        <filters>
-            <field>Regional_Manager__c</field>
-            <operator>IsNull</operator>
-            <value>
-                <booleanValue>false</booleanValue>
-            </value>
-        </filters>
-        <filters>
-            <field>Regional_Manager__c</field>
-            <operator>IsChanged</operator>
-            <value>
-                <booleanValue>true</booleanValue>
-            </value>
-        </filters>
+        <filterFormula>OR(
+  AND(ISNEW(), NOT(ISBLANK({!$Record.Regional_Manager__c}))),
+  AND(ISCHANGED({!$Record.Regional_Manager__c}), NOT(ISBLANK({!$Record.Regional_Manager__c})))
+)</filterFormula>
         <object>Account</object>
         <recordTriggerType>CreateAndUpdate</recordTriggerType>
         <triggerType>RecordAfterSave</triggerType>
