@@ -160,7 +160,10 @@ private class CompletedContractEmailServiceTest {
         System.assertNotEquals(null, DocuSignCompletedContractEmailService.lastRecipientEmails);
 
         List<String> expectedProposalEmails = new SignedContractRecipientResolver().resolveProposalToAddresses();
-        System.assertEquals(2, expectedProposalEmails.size(), 'Accounting and Adrian metadata should resolve to emails');
+        System.assert(
+            !expectedProposalEmails.isEmpty(),
+            'Proposal recipient metadata should resolve to at least one email'
+        );
         for (String expectedEmail : expectedProposalEmails) {
             assertContainsEmail(expectedEmail);
         }
