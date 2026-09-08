@@ -1,6 +1,4 @@
 public with sharing class DocuSignCompletedContractEmailService {
-    private static final String ORG_WIDE_FROM_ADDRESS = 'office@premierswim.com';
-
     private static Set<Id> processedContentVersionIds = new Set<Id>();
 
     @TestVisible
@@ -219,7 +217,7 @@ public with sharing class DocuSignCompletedContractEmailService {
         List<OrgWideEmailAddress> orgWideEmails = [
             SELECT Id
             FROM OrgWideEmailAddress
-            WHERE Address = :ORG_WIDE_FROM_ADDRESS AND IsVerified = true
+            WHERE IsVerified = true AND IsAllowAllProfiles = true
             LIMIT 1
         ];
         return orgWideEmails.isEmpty() ? null : orgWideEmails[0].Id;
