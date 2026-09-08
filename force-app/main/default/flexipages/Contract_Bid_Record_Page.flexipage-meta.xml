@@ -247,7 +247,7 @@
             <fieldInstance>
                 <fieldInstanceProperties>
                     <name>uiBehavior</name>
-                    <value>readonly</value>
+                    <value>none</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.Lost_Reason__c</fieldItem>
                 <identifier>RecordLost_Reason_cField</identifier>
