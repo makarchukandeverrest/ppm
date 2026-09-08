@@ -1123,6 +1123,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>Contract_Bid__c.Primary_Contact_Info__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>Contract_Bid__c.Profit_5__c</field>
         <readable>true</readable>
     </fieldPermissions>
