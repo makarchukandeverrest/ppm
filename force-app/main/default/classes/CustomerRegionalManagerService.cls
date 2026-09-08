@@ -41,6 +41,39 @@ public without sharing class CustomerRegionalManagerService {
         }
     }
 
+    // ─── Case — before insert / before update ─────────────────────────────
+    // Keeps Case.Regional_Manager__c in sync with the related Account.
+    public static void syncCaseRMFromCustomer(List<Case> cases) {
+        if (cases == null || cases.isEmpty()) {
+            return;
+        }
+
+        Set<Id> accountIds = new Set<Id>();
+        for (Case c : cases) {
+            if (c.AccountId != null) {
+                accountIds.add(c.AccountId);
+            }
+        }
+
+        Map<Id, Account> accById = accountIds.isEmpty()
+            ? new Map<Id, Account>()
+            : new Map<Id, Account>([
+                SELECT Id, Regional_Manager__c
+                FROM Account
+                WHERE Id IN :accountIds
+            ]);
+
+        for (Case c : cases) {
+            if (c.AccountId == null) {
+                c.Regional_Manager__c = null;
+                continue;
+            }
+
+            Account acc = accById.get(c.AccountId);
+            c.Regional_Manager__c = (acc == null) ? null : acc.Regional_Manager__c;
+        }
+    }
+
     // ─── Proposal (Opportunity) — before update ───────────────────────────
     // AC 4: Prevents manual override of Regional_Manager__c.
     // If the value differs from the Customer's RM, the save is blocked
@@ -170,35 +203,58 @@ public without sharing class CustomerRegionalManagerService {
     // AC 3: Closed Proposals → OwnerId updated only; Regional_Manager__c frozen
     public static void assignOwnerByCustomer(List<Account> newAccounts) {
         Map<Id, Id> accIdToRegionalMgrId = new Map<Id, Id>();
+        Set<Id> accountsWithRm = new Set<Id>();
         for (Account a : newAccounts) {
+            accIdToRegionalMgrId.put(a.Id, a.Regional_Manager__c);
             if (a.Regional_Manager__c != null) {
-                accIdToRegionalMgrId.put(a.Id, a.Regional_Manager__c);
+                accountsWithRm.add(a.Id);
             }
         }
         if (accIdToRegionalMgrId.isEmpty()) {
             return;
         }
 
-        // ── WorkOrders ──
-        List<WorkOrder> workOrdersToUpdate = [
-            SELECT Id, OwnerId, AccountId
-            FROM WorkOrder
-            WHERE AccountId IN :accIdToRegionalMgrId.keySet()
-        ];
+        
+        List<Case> casesToUpdate = new List<Case>();
+        List<WorkOrder> workOrdersToUpdate = new List<WorkOrder>();
+        List<Invoice__c> invoicesToUpdate = new List<Invoice__c>();
+        List<Opportunity> proposalsToUpdate = new List<Opportunity>();
 
-        // ── Invoices ──
-        List<Invoice__c> invoicesToUpdate = [
-            SELECT Id, OwnerId, Customer__c
-            FROM Invoice__c
-            WHERE Customer__c IN :accIdToRegionalMgrId.keySet()
-        ];
+        if (!accountsWithRm.isEmpty()) {
 
-        // ── Proposals (Opportunities) ──
-        List<Opportunity> proposalsToUpdate = [
-    SELECT Id, OwnerId, AccountId, Regional_Manager__c, StageName, IsClosed
-    FROM Opportunity
-    WHERE AccountId IN :accIdToRegionalMgrId.keySet()
-];
+            casesToUpdate = [
+                SELECT Id, AccountId, Regional_Manager__c
+                FROM Case
+                WHERE AccountId IN :accIdToRegionalMgrId.keySet()
+            ];
+
+            workOrdersToUpdate = [
+                SELECT Id, OwnerId, AccountId
+                FROM WorkOrder
+                WHERE AccountId IN :accountsWithRm
+            ];
+
+            invoicesToUpdate = [
+                SELECT Id, OwnerId, Customer__c
+                FROM Invoice__c
+                WHERE Customer__c IN :accountsWithRm
+            ];
+
+            proposalsToUpdate = [
+                SELECT Id, OwnerId, AccountId, Regional_Manager__c, StageName, IsClosed
+                FROM Opportunity
+                WHERE AccountId IN :accountsWithRm
+            ];
+        }
+
+        List<Case> casesNeedingUpdate = new List<Case>();
+        for (Case c : casesToUpdate) {
+            Id regMgrId = accIdToRegionalMgrId.get(c.AccountId);
+            if (c.Regional_Manager__c != regMgrId) {
+                c.Regional_Manager__c = regMgrId;
+                casesNeedingUpdate.add(c);
+            }
+        }
 
         for (WorkOrder wo : workOrdersToUpdate) {
             Id regMgrId = accIdToRegionalMgrId.get(wo.AccountId);
@@ -225,6 +281,9 @@ public without sharing class CustomerRegionalManagerService {
             }
         }
 
+        if (!casesNeedingUpdate.isEmpty()) {
+            update casesNeedingUpdate;
+        }
         if (!workOrdersToUpdate.isEmpty()) {
             update workOrdersToUpdate;
         }

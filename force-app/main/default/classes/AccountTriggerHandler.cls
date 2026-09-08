@@ -11,6 +11,10 @@ public with sharing class AccountTriggerHandler extends TriggerHandler{
         QuickBooksAccountChecker.filterAccounts(newList);
 	}
 
+    protected override void beforeUpdate(){
+        AccountCurrentCustomerUpdater.clearCurrentCustomerOnLost(newList, oldMap);
+    }
+
     protected override void afterUpdate(){
         List<Account> accountsWithChangedRegionalManager = new List<Account>();
         List<Account> accountsWithChangedContacts = new List<Account>();

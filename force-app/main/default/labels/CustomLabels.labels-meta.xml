@@ -7,4 +7,25 @@
         <shortDescription>Docusign Automation Template Name</shortDescription>
         <value>Estimate Template</value>
     </labels>
+    <labels>
+        <fullName>Signed_Contract_Email_Subject</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Subject for signed contract copy email</shortDescription>
+        <value>Signed Contract: {0}</value>
+    </labels>
+    <labels>
+        <fullName>Signed_Contract_Email_Body</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Body for signed contract copy email</shortDescription>
+        <value>Hello,
+
+The signed DocuSign contract for "{0}" is attached.
+
+Customer: {1}
+Document: {2}
+
+This email was sent automatically when the completed contract was received from DocuSign.</value>
+    </labels>
 </CustomLabels>

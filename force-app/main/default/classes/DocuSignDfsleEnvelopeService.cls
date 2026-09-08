@@ -40,6 +40,7 @@ public with sharing class DocuSignDfsleEnvelopeService {
     private static final String STAGE_CONTRACT_SENT = 'Contract Sent via DocuSign';
     private static final String STAGE_PROPOSAL_REVIEW = 'Proposal/Review';
     private static final String STAGE_CLOSED_WON = 'Closed - WON';
+    private static final String STAGE_CLOSED_LOST = 'Closed - LOST';
     private static final String STAGE_REFERENCE_ACTIVE_STAGES = 'Active_Stages';
     private static final String STATUS_EMAIL_DRAFT = '0';
     private static final String EMAIL_SUBJECT_TEMPLATE = 'Sent Contracts for {0}';
@@ -690,6 +691,9 @@ public with sharing class DocuSignDfsleEnvelopeService {
             new Map<String, Map<String, Object>>{
                 dfsle.Envelope.STATUS_COMPLETED => new Map<String, Object>{
                     'Contract_Bid__c.Stage__c' => STAGE_CLOSED_WON
+                },
+                dfsle.Envelope.STATUS_DECLINED => new Map<String, Object>{
+                    'Contract_Bid__c.Stage__c' => STAGE_CLOSED_LOST
                 }
             },
             new Map<String, Map<String, Object>>{
