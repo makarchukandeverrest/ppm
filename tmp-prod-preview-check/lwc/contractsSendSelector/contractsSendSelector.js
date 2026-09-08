@@ -461,51 +461,26 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
         this.showConfirmationModal = false;
     }
 
+    // Handle file preview - opens file in new browser tab
     handlePreviewFile(event) {
-        const fileId =
-            event.currentTarget?.dataset?.fileId || event.target?.dataset?.fileId;
-
+        const fileId = event.target.dataset.fileId || event.currentTarget.dataset.fileId;
+        
         if (!fileId) {
-            this.dispatchEvent(
-                new ShowToastEvent({
-                    title: 'Preview unavailable',
-                    message: 'This file has no Salesforce document ID.',
-                    variant: 'error'
-                })
-            );
+            console.error('No file ID found for preview');
             return;
         }
 
-        this.openFilePreview(fileId);
-    }
-
-    openFilePreview(contentDocumentId) {
-        if (this.isInFlow) {
-            const opened = (window.top || window).open(
-                `/lightning/page/filePreview?selectedRecordId=${contentDocumentId}`,
-                '_blank'
-            );
-            if (!opened) {
-                this.dispatchEvent(
-                    new ShowToastEvent({
-                        title: 'Preview blocked',
-                        message: 'Allow pop-ups for Salesforce to preview the contract.',
-                        variant: 'warning'
-                    })
-                );
-            }
-            return;
-        }
-
-        this[NavigationMixin.Navigate]({
+        // Open Salesforce file preview in new tab
+        this[NavigationMixin.GenerateUrl]({
             type: 'standard__namedPage',
             attributes: {
                 pageName: 'filePreview'
             },
             state: {
-                recordIds: contentDocumentId,
-                selectedRecordId: contentDocumentId
+                selectedRecordId: fileId
             }
+        }).then(url => {
+            window.open(url, '_blank');
         });
     }
 

@@ -451,55 +451,19 @@ export default class EmailMassSendBase extends NavigationMixin(
     this.selectedContractVersionIdsByCustomer.set(customerId, setIds);
   }
 
+  // Handle file preview - opens file in new browser tab (contracts mode)
   handlePreviewFile(event) {
     const fileId =
-      event.currentTarget?.dataset?.fileId || event.target?.dataset?.fileId;
+      event.target.dataset.fileId || event.currentTarget.dataset.fileId;
 
     if (!fileId) {
-      this.toast(
-        "Preview unavailable",
-        "This file has no Salesforce document ID.",
-        "error"
-      );
+      console.error("No file ID found for preview");
       return;
     }
 
-    this.openFilePreview(fileId);
-  }
-
-  get isInFlow() {
-    return !!(
-      this.customersData ||
-      (this.flowRecords && this.flowRecords.length)
-    );
-  }
-
-  openFilePreview(contentDocumentId) {
-    if (this.isInFlow) {
-      const opened = (window.top || window).open(
-        `/lightning/page/filePreview?selectedRecordId=${contentDocumentId}`,
-        "_blank"
-      );
-      if (!opened) {
-        this.toast(
-          "Preview blocked",
-          "Allow pop-ups for Salesforce to preview the contract.",
-          "warning"
-        );
-      }
-      return;
-    }
-
-    this[NavigationMixin.Navigate]({
-      type: "standard__namedPage",
-      attributes: {
-        pageName: "filePreview"
-      },
-      state: {
-        recordIds: contentDocumentId,
-        selectedRecordId: contentDocumentId
-      }
-    });
+    const baseUrl = window.location.origin;
+    const previewUrl = `${baseUrl}/lightning/page/filePreview?selectedRecordId=${fileId}`;
+    window.open(previewUrl, "_blank");
   }
 
   /* =====================================================

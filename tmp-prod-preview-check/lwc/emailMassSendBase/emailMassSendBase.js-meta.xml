@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>65.0</apiVersion>
+    <isExposed>true</isExposed>
+    <targets>
+        <target>lightning__RecordPage</target>
+        <target>lightning__RecordAction</target>
+        <target>lightning__Tab</target>
+        <target>lightning__FlowScreen</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__FlowScreen">
+            <property
+        name="customersData"
+        type="String"
+        label="Customers Data"
+        description="Concatenated JSON objects"
+        role="inputOnly"
+      />
+            <property
+        name="mode"
+        type="String"
+        label="Mode"
+        description="Controls behavior of the Email Mass Send component (e.g. simple, contracts)."
+        default="simple"
+      />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>
