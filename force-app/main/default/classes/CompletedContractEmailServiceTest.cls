@@ -201,6 +201,26 @@ private class CompletedContractEmailServiceTest {
         System.assertEquals(0, emailsSent, 'Unsigned proposal files should not send an email');
     }
 
+    @IsTest
+    static void docuSignCompletedEmailJob_SendsForContentVersionIds() {
+        Contract_Bid__c bid = [SELECT Id FROM Contract_Bid__c WHERE Name = 'Signed Copy Bid' LIMIT 1];
+
+        ContentVersion completedFile = new ContentVersion(
+            Title = 'Job_completed',
+            PathOnClient = 'Job_completed.pdf',
+            VersionData = Blob.valueOf('signed pdf'),
+            IsMajorVersion = true,
+            FirstPublishLocationId = bid.Id
+        );
+        insert completedFile;
+
+        Test.startTest();
+        new DocuSignCompletedEmailJob(new List<Id>{ completedFile.Id }).execute(null);
+        Test.stopTest();
+
+        System.assertEquals(1, Limits.getEmailInvocations(), 'Queueable job should send the signed copy');
+    }
+
     private static void assertContainsEmail(String expectedEmail) {
         Boolean found = false;
         for (String actualEmail : DocuSignCompletedContractEmailService.lastRecipientEmails) {
