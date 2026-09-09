@@ -27,7 +27,7 @@
             <name>senderAddress</name>
             <value>
                 <inputConfiguratorMode>Custom</inputConfiguratorMode>
-                <stringValue>office@premierswim.com</stringValue>
+                <stringValue>sfalert@ppsfalerts.com</stringValue>
             </value>
         </inputParameters>
         <inputParameters>
@@ -52,7 +52,7 @@
         <inputParameters>
             <name>relatedRecordId</name>
             <value>
-                <elementReference>Get_original_Envelope.Id</elementReference>
+                <elementReference>$Record.dfsle__EnvelopeStatus__r.dfsle__SourceId__c</elementReference>
             </value>
         </inputParameters>
         <nameSegment>emailSimple</nameSegment>
