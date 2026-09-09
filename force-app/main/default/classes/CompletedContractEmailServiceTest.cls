@@ -25,10 +25,9 @@ private class CompletedContractEmailServiceTest {
 
         Test.startTest();
         insert completedFile;
-        Integer emailsSent = Limits.getEmailInvocations();
         Test.stopTest();
 
-        System.assertEquals(1, emailsSent, 'Signed copy should send one email');
+        System.assertEquals(1, Limits.getEmailInvocations(), 'Signed copy should send one email after the delayed job');
         System.assertNotEquals(null, DocuSignCompletedContractEmailService.lastRecipientEmails);
     }
 
@@ -86,7 +85,8 @@ private class CompletedContractEmailServiceTest {
 
         Test.startTest();
         insert completedFile;
-        Integer afterInsert = Limits.getEmailInvocations();
+        Test.stopTest();
+        Integer afterJob = Limits.getEmailInvocations();
 
         completedFile = [
             SELECT Id, Title, PathOnClient, FileExtension, ContentDocumentId, FirstPublishLocationId
@@ -96,14 +96,12 @@ private class CompletedContractEmailServiceTest {
         DocuSignCompletedContractEmailService.handleCompletedFiles(
             new List<ContentVersion>{ completedFile }
         );
-        Integer afterSecondCall = Limits.getEmailInvocations();
-        Test.stopTest();
 
-        System.assertEquals(1, afterInsert, 'Insert of the completed PDF should send the signed copy');
+        System.assertEquals(1, afterJob, 'Delayed job should send the signed copy once');
         System.assertEquals(
-            afterInsert,
-            afterSecondCall,
-            'The same ContentVersion should not be emailed twice in one transaction'
+            afterJob,
+            Limits.getEmailInvocations(),
+            'The same ContentVersion should not be emailed twice'
         );
     }
 
@@ -153,10 +151,9 @@ private class CompletedContractEmailServiceTest {
 
         Test.startTest();
         insert completedFile;
-        Integer emailsSent = Limits.getEmailInvocations();
         Test.stopTest();
 
-        System.assertEquals(1, emailsSent, 'Signed proposal copy should send one email');
+        System.assertEquals(1, Limits.getEmailInvocations(), 'Signed proposal copy should send one email after the delayed job');
         System.assertNotEquals(null, DocuSignCompletedContractEmailService.lastRecipientEmails);
 
         List<String> expectedProposalEmails = new SignedContractRecipientResolver().resolveProposalToAddresses();
