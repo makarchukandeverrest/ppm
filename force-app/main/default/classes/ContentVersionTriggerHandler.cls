@@ -41,8 +41,12 @@ public class ContentVersionTriggerHandler extends TriggerHandler {
 
         try {
             // Wait 1 minute so DocuSign can link the file to Bid/Proposal before we send.
-            Integer delayMinutes = Test.isRunningTest() ? 0 : 1;
-            System.enqueueJob(new DocuSignCompletedEmailJob(completedIds), delayMinutes);
+            // Tests send inline: queueable Limits/statics are not visible in the test method.
+            if (Test.isRunningTest()) {
+                DocuSignCompletedContractEmailService.sendForContentVersionIds(completedIds);
+            } else {
+                System.enqueueJob(new DocuSignCompletedEmailJob(completedIds), 1);
+            }
         } catch (Exception e) {
             System.debug('ERROR in DocuSignCompletedEmailJob: ' + e.getMessage());
             System.debug(e.getStackTraceString());
