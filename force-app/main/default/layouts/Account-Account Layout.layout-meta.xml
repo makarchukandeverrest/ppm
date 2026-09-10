@@ -76,6 +76,10 @@
             </layoutItems>
             <layoutItems>
                 <behavior>Edit</behavior>
+                <field>Stop_Sending_Reminders__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
                 <field>Contract_Start_Date__c</field>
             </layoutItems>
             <layoutItems>

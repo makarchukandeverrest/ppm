@@ -36,6 +36,7 @@ public with sharing class ContractBidTriggerHandler extends TriggerHandler {
 
   protected override void afterUpdate() {
     updateCurrentCustomerAccounts();
+    disableRemindersWhenChecked();
   }
 
   private void updateCurrentCustomerAccounts() {
@@ -56,6 +57,20 @@ public with sharing class ContractBidTriggerHandler extends TriggerHandler {
     if (!wonBids.isEmpty()) {
       AccountCurrentCustomerUpdater.updateCustomers(wonBids);
     }
+  }
+
+  private void disableRemindersWhenChecked() {
+    Set<Id> stopReminderBidIds = new Set<Id>();
+    for (Contract_Bid__c bid : this.newList) {
+      Contract_Bid__c oldBid = this.oldMap != null ? this.oldMap.get(bid.Id) : null;
+      if (
+        bid.Stop_Sending_Reminders__c == true &&
+        (oldBid == null || oldBid.Stop_Sending_Reminders__c != true)
+      ) {
+        stopReminderBidIds.add(bid.Id);
+      }
+    }
+    StopSendingRemindersService.disableForContractBids(stopReminderBidIds);
   }
 
   private Boolean stageChangedTo(Contract_Bid__c bid, String targetStage) {
