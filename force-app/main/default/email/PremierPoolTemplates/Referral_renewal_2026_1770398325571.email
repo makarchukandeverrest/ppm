@@ -1,0 +1,20 @@
+<html>
+<head>
+	<title></title>
+</head>
+<body style="height: auto; min-height: auto;">Good morning {{{Recipient.FirstName}}},<br />
+<br />
+I hope you've enjoyed the 2025 pool season with us. As the season winds down, we wanted to share a couple of reminders before October 1st:<br />
+<br />
+Early Bird Renewal: You can secure your 2026 pool service at 2025 year's rates if we receive your renewal by October 1, 2025. This helps ensure your preferred schedule and keeps costs locked in.<br />
+<br />
+Referral Program: If you know another community that could benefit from our services, we're offering a thank-you gift when they sign up—either a $250 Visa gift card or a $500 credit toward your 2026 service.<br />
+<br />
+If you'd like to move forward or have any questions, feel free to reach out.<br />
+<br />
+Thank you again for trusting {{{Organization.Name}}} this past season. We look forward to making 2026 even better!<br />
+<br />
+Best regards,<br />
+{{{Sender.Name}}}<br />
+{{{Organization.Name}}}</body>
+</html>

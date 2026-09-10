@@ -1,0 +1,20 @@
+<html>
+<head>
+	<title></title>
+</head>
+<body style="height: auto; min-height: auto;">Hi {{{Recipient.FirstName}}},<br />
+<br />
+I hope this message finds you well. I wanted to follow up on two important items we recently sent:<br />
+<br />
+2026 Renewal Contracts – As a reminder, the Early Bird Discount is available until October 1st. Confirming your renewal before this date will secure the discounted rate and ensure staffing and scheduling are finalized well in advance for next season.<br />
+<br />
+Recommended Repairs – Following our inspections, I provided a list of recommended repairs. Please confirm you have received our recommended repairs, and let me know if you have any questions.<br />
+<br />
+We kindly ask for your confirmation by October 1st to take advantage of the discount and to finalize preparations for the upcoming season.<br />
+<br />
+Thank you for your continued partnership. I look forward to your feedback.<br />
+<br />
+Best regards,<br />
+{{{Sender.Name}}}<br />
+{{{Organization.Name}}}</body>
+</html>

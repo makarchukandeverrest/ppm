@@ -2,7 +2,7 @@
 <head>
 	<title></title>
 </head>
-<body style="height: auto; min-height: auto;">Hello {{{Account.Primary_Contact__c}}},<br />
+<body style="height: auto; min-height: auto;">Hello {{{Recipient.FirstName}}},<br />
 <br />
 Thank you for considering our pool management proposal. I'm attaching the contract, along with our welcome letter, general references, recommendation letters and a copy of our certificate of insurance. Please review everything and see how we compare to the competition and let me know if we can schedule a time to discuss how we can be of service to you in the future.<br />
 <br />

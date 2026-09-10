@@ -1,0 +1,14 @@
+<html>
+<head>
+	<title></title>
+</head>
+<body style="height: auto; min-height: auto;">Hi {{{Recipient.FirstName}}},<br />
+<br />
+Please review the attached pool management proposal at your convenience.<br />
+We wanted to make sure you are aware that the EBD date has been extended to January 31, 2026, giving you additional time to review and consider the proposal. We are excited about the possibility of working with you and are available to answer any questions or provide additional details as needed. Your feedback is important to us, and we are happy to discuss any aspect of the proposal to ensure it meets your needs.<br />
+Thank you for your time and consideration, and we look forward to your response.<br />
+<br />
+Best,<br />
+{{{Sender.Name}}}<br />
+{{{Organization.Name}}}</body>
+</html>
