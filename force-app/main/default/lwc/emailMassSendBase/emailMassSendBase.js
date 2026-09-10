@@ -4,9 +4,11 @@ import { CurrentPageReference, NavigationMixin } from "lightning/navigation";
 import { CloseActionScreenEvent } from "lightning/actions";
 
 import getInitData from "@salesforce/apex/ContractMassSendController.getInitData";
+import getInitDataFiltered from "@salesforce/apex/ContractMassSendController.getInitDataFiltered";
 import sendContracts from "@salesforce/apex/ContractMassSendController.sendContracts";
 import getTemplateDetails from "@salesforce/apex/ContractMassSendController.getTemplateDetails";
 import previewEmail from "@salesforce/apex/ContractMassSendController.previewEmail";
+import getFilterOptions from "@salesforce/apex/AccountFilesController.getFilterOptions";
 
 export default class EmailMassSendBase extends NavigationMixin(
   LightningElement
@@ -49,7 +51,19 @@ export default class EmailMassSendBase extends NavigationMixin(
   body = "";
 
   isLoading = false;
+  isUpdating = false;
   accessError;
+
+  // Contract file filters (contracts mode — same as contractsSendSelector)
+  @track selectedRegionalManager = "";
+  @track selectedCounty = "";
+  @track customerNameFilter = "";
+  @track selectedSupervisor = "";
+  @track contractYearFilter = String(new Date().getFullYear());
+  @track regionalManagerOptions = [];
+  @track countyOptions = [];
+  @track supervisorOptions = [];
+  filtersLoaded = false;
 
   // 🔑 Source of truth for Apex
   inputIds = [];
@@ -115,6 +129,40 @@ export default class EmailMassSendBase extends NavigationMixin(
     }
 
     this.tryInitFromComponentInputs();
+    this.loadFilterOptions();
+  }
+
+  async loadFilterOptions() {
+    if (!this.isContractsMode || this.filtersLoaded) {
+      return;
+    }
+    try {
+      const data = await getFilterOptions();
+      this.regionalManagerOptions = [
+        { label: "-- All --", value: "" },
+        ...(data?.regionalManagers || []).map((opt) => ({
+          label: opt.label,
+          value: opt.value
+        }))
+      ];
+      this.countyOptions = [
+        { label: "-- All --", value: "" },
+        ...(data?.counties || []).map((opt) => ({
+          label: opt.label,
+          value: opt.value
+        }))
+      ];
+      this.supervisorOptions = [
+        { label: "-- All --", value: "" },
+        ...(data?.supervisors || []).map((opt) => ({
+          label: opt.label,
+          value: opt.value
+        }))
+      ];
+      this.filtersLoaded = true;
+    } catch (error) {
+      console.error("Error loading filter options:", error);
+    }
   }
 
   tryInitFromComponentInputs() {
@@ -215,17 +263,58 @@ export default class EmailMassSendBase extends NavigationMixin(
     ];
   }
 
+  get hasActiveFilters() {
+    const yearIsCustom =
+      this.contractYearFilter &&
+      this.contractYearFilter !== String(new Date().getFullYear());
+
+    return (
+      this.selectedRegionalManager ||
+      this.selectedCounty ||
+      this.customerNameFilter ||
+      this.selectedSupervisor ||
+      yearIsCustom
+    );
+  }
+
+  get hasNoActiveFilters() {
+    return !this.hasActiveFilters;
+  }
+
+  get showNoResultsWithFilters() {
+    return (
+      this.isContractsMode &&
+      this.hasActiveFilters &&
+      this.customers &&
+      this.customers.length === 0
+    );
+  }
+
   /* =====================================================
        LOAD DATA
     ===================================================== */
   async loadData() {
-    this.isLoading = true;
+    const showFullPageSpinner = !this.customers.length;
+    if (showFullPageSpinner) {
+      this.isLoading = true;
+    } else {
+      this.isUpdating = true;
+    }
     this.accessError = undefined;
 
     try {
-      const res = await getInitData({
-        inputIds: this.inputIds
-      });
+      const res = this.isContractsMode
+        ? await getInitDataFiltered({
+            inputIds: this.inputIds,
+            regionalManagerId: this.selectedRegionalManager || null,
+            county: this.selectedCounty || null,
+            customerName: this.customerNameFilter || null,
+            supervisorId: this.selectedSupervisor || null,
+            contractYear: this.contractYearFilter || null
+          })
+        : await getInitData({
+            inputIds: this.inputIds
+          });
 
       if (!res.hasAccess) {
         this.accessError =
@@ -241,22 +330,33 @@ export default class EmailMassSendBase extends NavigationMixin(
         value: t.id
       }));
 
+      const previousById = new Map(
+        (this.customers || []).map((c) => [c.customerId, c])
+      );
+
       // Always keep basic customer structure
-      this.customers = (res.customers || []).map((c) => ({
-        ...c,
-        expanded: true,
-        isExpandedLabel: c.expanded ? "Expand" : "Collapse",
-        isHovered: false,
-        isEditing: false,
-        isEditContentLoading: false,
-        emailSubjectOverride: null,
-        emailBodyOverride: null,
-        // In contracts mode we also expect contracts array with selection flags
-        contracts: (c.contracts || []).map((cv) => ({
-          ...cv,
-          isSelected: true
-        }))
-      }));
+      this.customers = (res.customers || []).map((c) => {
+        const prev = previousById.get(c.customerId);
+        return {
+          ...c,
+          expanded: prev?.expanded ?? true,
+          isExpandedLabel: prev?.expanded === false ? "Expand" : "Collapse",
+          isHovered: false,
+          isEditing: false,
+          isEditContentLoading: false,
+          emailSubjectOverride: prev?.emailSubjectOverride ?? null,
+          emailBodyOverride: prev?.emailBodyOverride ?? null,
+          contracts: (c.contracts || []).map((cv) => {
+            const prevContract = (prev?.contracts || []).find(
+              (p) => p.contentVersionId === cv.contentVersionId
+            );
+            return {
+              ...cv,
+              isSelected: prevContract ? prevContract.isSelected : true
+            };
+          })
+        };
+      });
       this.applyCustomerDisplayFields();
 
       this.sendLog = res.recentLogs || [];
@@ -266,7 +366,11 @@ export default class EmailMassSendBase extends NavigationMixin(
       if (this.isContractsMode) {
         this.customers.forEach((c) => {
           const setIds = new Set();
-          (c.contracts || []).forEach((cv) => setIds.add(cv.contentVersionId));
+          (c.contracts || []).forEach((cv) => {
+            if (cv.isSelected) {
+              setIds.add(cv.contentVersionId);
+            }
+          });
           this.selectedContractVersionIdsByCustomer.set(c.customerId, setIds);
         });
       }
@@ -274,7 +378,51 @@ export default class EmailMassSendBase extends NavigationMixin(
       this.toast("Error", this.normalizeError(e), "error");
     } finally {
       this.isLoading = false;
+      this.isUpdating = false;
     }
+  }
+
+  /* =====================================================
+       CONTRACT FILE FILTERS (contracts mode)
+    ===================================================== */
+  handleRegionalManagerChange(event) {
+    this.selectedRegionalManager = event.detail.value;
+    this.loadData();
+  }
+
+  handleCountyChange(event) {
+    this.selectedCounty = event.detail.value;
+    this.loadData();
+  }
+
+  handleCustomerNameChange(event) {
+    this.customerNameFilter = event.detail.value;
+    this.loadData();
+  }
+
+  handleSupervisorChange(event) {
+    this.selectedSupervisor = event.detail.value;
+    this.loadData();
+  }
+
+  handleContractYearChange(event) {
+    const val = (event.detail.value || "").replace(/\D/g, "");
+    if (!val) {
+      this.contractYearFilter = "";
+      this.loadData();
+      return;
+    }
+    this.contractYearFilter = val.slice(0, 4);
+    this.loadData();
+  }
+
+  clearFilters() {
+    this.selectedRegionalManager = "";
+    this.selectedCounty = "";
+    this.customerNameFilter = "";
+    this.selectedSupervisor = "";
+    this.contractYearFilter = String(new Date().getFullYear());
+    this.loadData();
   }
 
   /* =====================================================
@@ -447,6 +595,31 @@ export default class EmailMassSendBase extends NavigationMixin(
       setIds.add(contractId);
     } else {
       setIds.delete(contractId);
+    }
+    this.selectedContractVersionIdsByCustomer.set(customerId, setIds);
+  }
+
+  handleToggleAllContracts(event) {
+    const customerId = event.currentTarget.dataset.customerId;
+    const selected = event.currentTarget.dataset.selected === "true";
+
+    this.customers = this.customers.map((c) => {
+      if (c.customerId !== customerId) {
+        return c;
+      }
+      return {
+        ...c,
+        contracts: (c.contracts || []).map((contract) => ({
+          ...contract,
+          isSelected: selected
+        }))
+      };
+    });
+
+    const setIds = new Set();
+    if (selected) {
+      const row = this.customers.find((c) => c.customerId === customerId);
+      (row?.contracts || []).forEach((cv) => setIds.add(cv.contentVersionId));
     }
     this.selectedContractVersionIdsByCustomer.set(customerId, setIds);
   }

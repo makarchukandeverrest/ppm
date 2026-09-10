@@ -1,0 +1,18 @@
+.filter-section {
+    background: linear-gradient(135deg, #f4f6f9 0%, #e8ecf1 100%);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 8px;
+    border: 1px solid #d8dde6;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.filter-section h3 {
+    color: #16325c;
+    font-weight: 600;
+}
+
+.filter-section lightning-combobox,
+.filter-section lightning-input {
+    --sds-c-input-radius-border: 4px;
+}

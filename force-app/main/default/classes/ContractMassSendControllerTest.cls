@@ -1053,6 +1053,158 @@ static void testSendContracts_CoversCustomBodyBranch() {
     Test.stopTest();
 }
 
+    private static ContentVersion createLinkedContractFile(Id accountId, String title) {
+        ContentVersion cv = new ContentVersion(
+            Title = title,
+            PathOnClient = title + '.pdf',
+            VersionData = Blob.valueOf('Test PDF Content'),
+            IsMajorVersion = true
+        );
+        insert cv;
+
+        ContentVersion inserted = [
+            SELECT Id, ContentDocumentId
+            FROM ContentVersion
+            WHERE Id = :cv.Id
+        ];
+        insert new ContentDocumentLink(
+            ContentDocumentId = inserted.ContentDocumentId,
+            LinkedEntityId = accountId,
+            ShareType = 'V',
+            Visibility = 'AllUsers'
+        );
+        return inserted;
+    }
+
+    @isTest
+    static void testGetInitDataFiltered_YearAndExclusions() {
+        Account acc = [SELECT Id FROM Account LIMIT 1];
+        String year = String.valueOf(Date.today().year());
+        String otherYear = String.valueOf(Date.today().year() - 1);
+
+        createLinkedContractFile(acc.Id, 'Contract ' + year + ' Main');
+        createLinkedContractFile(acc.Id, 'Contract ' + year + ' Extra');
+        createLinkedContractFile(acc.Id, 'Contract ' + otherYear + ' Old');
+        createLinkedContractFile(acc.Id, 'Signed Contract ' + year);
+        createLinkedContractFile(acc.Id, 'Contract ' + year + ' Completed');
+        createLinkedContractFile(acc.Id, 'Contract ' + year + ' Welcome Letter');
+        createLinkedContractFile(acc.Id, 'Contract ' + year + ' Bid Worksheet');
+
+        Test.startTest();
+        ContractMassSendController.testBypassPermissions = true;
+        ContractMassSendController.InitResponse response =
+            ContractMassSendController.getInitDataFiltered(
+                new List<Id>{ acc.Id },
+                null,
+                null,
+                null,
+                null,
+                year
+            );
+        Test.stopTest();
+
+        System.assertNotEquals(null, response.customers, 'Customers should not be null');
+        System.assertEquals(1, response.customers.size(), 'Matching customer should be returned');
+        System.assertEquals(2, response.customers[0].contracts.size(),
+            'Only unsigned current-year contract files should be returned');
+        for (ContractMassSendController.ContractDto dto : response.customers[0].contracts) {
+            System.assert(dto.title.contains(year), 'Returned file should contain contract year');
+            System.assert(!dto.title.contains('Signed'), 'Signed files should be excluded');
+            System.assert(!dto.title.contains('Completed'), 'Completed files should be excluded');
+            System.assert(!dto.title.contains('Welcome Letter'), 'Welcome Letter should be excluded');
+            System.assert(!dto.title.contains('Bid Worksheet'), 'Bid Worksheet should be excluded');
+        }
+    }
+
+    @isTest
+    static void testGetInitDataFiltered_CustomerNameFilter() {
+        Account acc = [SELECT Id, Name FROM Account LIMIT 1];
+        String year = String.valueOf(Date.today().year());
+        createLinkedContractFile(acc.Id, 'Contract ' + year + ' Named');
+
+        Test.startTest();
+        ContractMassSendController.testBypassPermissions = true;
+        ContractMassSendController.InitResponse match =
+            ContractMassSendController.getInitDataFiltered(
+                new List<Id>{ acc.Id },
+                null,
+                null,
+                'Customer',
+                null,
+                year
+            );
+        ContractMassSendController.InitResponse noMatch =
+            ContractMassSendController.getInitDataFiltered(
+                new List<Id>{ acc.Id },
+                null,
+                null,
+                'NoSuchCustomerNameXYZ',
+                null,
+                year
+            );
+        Test.stopTest();
+
+        System.assertEquals(1, match.customers.size(), 'Name filter should keep matching account');
+        System.assertEquals(0, noMatch.customers.size(), 'Name filter should exclude non-matching account');
+    }
+
+    @isTest
+    static void testGetInitDataFiltered_AccountFieldFilters() {
+        Account acc = [SELECT Id FROM Account LIMIT 1];
+        String year = String.valueOf(Date.today().year());
+        createLinkedContractFile(acc.Id, 'Contract ' + year + ' Fields');
+
+        Schema.DescribeFieldResult countyDescribe = Account.County__c.getDescribe();
+        String countyValue;
+        for (Schema.PicklistEntry entry : countyDescribe.getPicklistValues()) {
+            if (entry.isActive()) {
+                countyValue = entry.getValue();
+                break;
+            }
+        }
+
+        Test.startTest();
+        ContractMassSendController.testBypassPermissions = true;
+        ContractMassSendController.InitResponse noRm =
+            ContractMassSendController.getInitDataFiltered(
+                new List<Id>{ acc.Id },
+                UserInfo.getUserId(),
+                null,
+                null,
+                null,
+                year
+            );
+        ContractMassSendController.InitResponse noCounty = countyValue == null
+            ? new ContractMassSendController.InitResponse()
+            : ContractMassSendController.getInitDataFiltered(
+                new List<Id>{ acc.Id },
+                null,
+                countyValue,
+                null,
+                null,
+                year
+            );
+        ContractMassSendController.InitResponse noSupervisor =
+            ContractMassSendController.getInitDataFiltered(
+                new List<Id>{ acc.Id },
+                null,
+                null,
+                null,
+                UserInfo.getUserId(),
+                year
+            );
+        Test.stopTest();
+
+        System.assertEquals(0, noRm.customers.size(),
+            'RM filter should exclude account without that regional manager');
+        if (countyValue != null) {
+            System.assertEquals(0, noCounty.customers.size(),
+                'County filter should exclude account without that county');
+        }
+        System.assertEquals(0, noSupervisor.customers.size(),
+            'Supervisor filter should exclude account without that supervisor');
+    }
+
     @isTest
     static void testBuildContractSendPdfCcAddresses_includesRmAndNamedUsers() {
         List<String> cc = ContractMassSendController.buildContractSendPdfCcAddresses(
@@ -1119,5 +1271,4 @@ static void testSendContracts_CoversCustomBodyBranch() {
             'Expected Regional Manager email from Contract Bid Lead Owner.'
         );
     }
-
 }
