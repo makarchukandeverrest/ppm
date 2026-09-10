@@ -18,8 +18,8 @@
   &quot;Need Contact Verification&quot;, 
     IMAGE(&quot;/resource/Red&quot;, &quot;Need Contact Verification&quot;, 30, 30) &amp; &quot; Need Contact Verification&quot;,
   
-  &quot;Contact Verified&quot;, 
-    IMAGE(&quot;/resource/Emerald_Green&quot;, &quot;Contact Verified&quot;, 30, 30) &amp; &quot; Contact Verified&quot;,
+  &quot;Contact Verified and Updated&quot;, 
+    IMAGE(&quot;/resource/Emerald_Green&quot;, &quot;Contact Verified and Updated&quot;, 30, 30) &amp; &quot; Contact Verified and Updated&quot;,
   
   &quot;Contract Sent Via Docusign&quot;, 
     IMAGE(&quot;/resource/Purple&quot;, &quot;Contract Sent Via Docusign&quot;, 30, 30) &amp; &quot; Contract Sent Via Docusign&quot;,
