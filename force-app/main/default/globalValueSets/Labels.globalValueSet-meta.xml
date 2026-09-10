@@ -91,6 +91,11 @@
         <label>MISSING FILE/CONTACT INFO</label>
     </customValue>
     <customValue>
+        <fullName>Resend Bid</fullName>
+        <default>false</default>
+        <label>Resend Bid</label>
+    </customValue>
+    <customValue>
         <fullName>Assumptive Lead</fullName>
         <default>false</default>
         <isActive>false</isActive>
