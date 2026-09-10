@@ -341,6 +341,7 @@ public class UnifiedActivityControllerTest {
 
             EmailMessage emailMessage = new EmailMessage(
                 Subject = 'Email with attachment',
+                FromName = 'Stephanie Pratt',
                 FromAddress = 'sender@example.com',
                 ToAddress = 'recipient@example.com',
                 TextBody = 'Body',
@@ -386,6 +387,43 @@ public class UnifiedActivityControllerTest {
             result.items[0].type
         );
         System.assertEquals(1, result.items[0].attachmentCount, 'Email should report one attachment');
+        System.assertEquals(
+            'Stephanie Pratt',
+            result.items[0].createdByName,
+            'Email activity should show FromName, not CreatedBy'
+        );
+    }
+
+    @IsTest
+    static void testGetUnifiedActivities_emailFallsBackToFromAddress() {
+        User u = createTestUser();
+        Account acc;
+        System.runAs(u) {
+            acc = createTestAccount();
+            insert new EmailMessage(
+                Subject = 'Email without from name',
+                FromAddress = 'sender@example.com',
+                ToAddress = 'recipient@example.com',
+                TextBody = 'Body',
+                Status = '3',
+                Incoming = false,
+                RelatedToId = acc.Id
+            );
+        }
+
+        Test.startTest();
+        UnifiedActivityModels.ActivityPageResult result;
+        System.runAs(u) {
+            result = getActivities(acc.Id, 'DESC', 20, 0, UnifiedActivityMapper.TYPE_EMAIL, null);
+        }
+        Test.stopTest();
+
+        System.assertEquals(1, result.items.size(), 'Expected one email activity');
+        System.assertEquals(
+            'sender@example.com',
+            result.items[0].createdByName,
+            'Email activity should fall back to FromAddress when FromName is blank'
+        );
     }
 
     @IsTest

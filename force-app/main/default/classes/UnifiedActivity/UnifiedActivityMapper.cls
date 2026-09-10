@@ -82,7 +82,7 @@ TYPE_EVENT,
                 body,
                 em.CreatedDate,
                 em.CreatedById,
-                em.CreatedBy?.Name,
+                resolveEmailActorName(em),
                 EMAIL_STATUS_MAP.get(em.Status),
                 null,
                 UnifiedActivityUtils.resolveSourceLabel(em.RelatedToId, em.ActivityId, recordLabels)
@@ -131,6 +131,16 @@ TYPE_EVENT,
         String description = taskRecord.Description;
         return description.contains('To:')
             && description.contains('Subject:');
+    }
+
+    private String resolveEmailActorName(EmailMessage em) {
+        if (String.isNotBlank(em.FromName)) {
+            return em.FromName;
+        }
+        if (String.isNotBlank(em.FromAddress)) {
+            return em.FromAddress;
+        }
+        return em.CreatedBy?.Name;
     }
 
     private String resolveEmailBody(EmailMessage em) {
