@@ -797,41 +797,71 @@ private class ContractMassSendControllerTest {
             Visibility = 'AllUsers'
         );
 
-        List<EmailTemplate> templates = [
-            SELECT Id
-            FROM EmailTemplate
-            WHERE IsActive = true
-            LIMIT 1
-        ];
-        if (templates.isEmpty()) {
-            return;
-        }
-
         ContractMassSendController.SendReqRow reqRow =
             new ContractMassSendController.SendReqRow();
         reqRow.customerId = opp.Id;
         reqRow.contentVersionIds = new List<Id>{ insertedCv.Id };
+        reqRow.parsedContent = true;
+        reqRow.subject = 'Proposal subject';
+        reqRow.body = '<p>Proposal body</p>';
         String requestJson = JSON.serialize(
             new List<ContractMassSendController.SendReqRow>{ reqRow }
         );
 
         Test.startTest();
         ContractMassSendController.testBypassPermissions = true;
-        try {
-            ContractMassSendController.SendResponse response =
-                ContractMassSendController.sendContracts(
-                    new List<Id>{ opp.Id },
-                    templates[0].Id,
-                    requestJson,
-                    'Proposal subject',
-                    '<p>Proposal body</p>'
-                );
-            System.assertNotEquals(null, response);
-            System.assertNotEquals(null, response.logs);
-        } catch (Exception e) {
-            System.assert(true, 'Exception handled for coverage: ' + e.getMessage());
-        }
+        ContractMassSendController.SendResponse response =
+            ContractMassSendController.sendContracts(
+                new List<Id>{ opp.Id },
+                null,
+                requestJson,
+                'Proposal subject',
+                '<p>Proposal body</p>'
+            );
         Test.stopTest();
+
+        System.assertNotEquals(null, response);
+        System.assert(!response.logs.isEmpty(), 'Expected send logs for Proposal');
+        System.assertEquals('Sent', response.logs[0].status, response.logs[0].message);
+    }
+
+    @isTest
+    static void testSendContracts_Opportunity_MissingPrimaryContact() {
+        Account acc = new Account(Name = 'Opp No Contact Acc');
+        insert acc;
+        Opportunity opp = new Opportunity(
+            Name = 'No Contact Proposal',
+            AccountId = acc.Id,
+            StageName = 'Draft',
+            CloseDate = Date.today().addDays(10)
+        );
+        insert opp;
+
+        ContractMassSendController.SendReqRow reqRow =
+            new ContractMassSendController.SendReqRow();
+        reqRow.customerId = opp.Id;
+        reqRow.parsedContent = true;
+        reqRow.subject = 's';
+        reqRow.body = '<p>b</p>';
+
+        Test.startTest();
+        ContractMassSendController.testBypassPermissions = true;
+        ContractMassSendController.SendResponse response =
+            ContractMassSendController.sendContracts(
+                new List<Id>{ opp.Id },
+                null,
+                JSON.serialize(new List<ContractMassSendController.SendReqRow>{ reqRow }),
+                's',
+                '<p>b</p>'
+            );
+        Test.stopTest();
+
+        System.assertEquals(1, response.logs.size());
+        System.assertEquals('Failed', response.logs[0].status);
+        System.assert(
+            response.logs[0].message.contains('Primary Contact'),
+            response.logs[0].message
+        );
     }
 
     @isTest
@@ -901,68 +931,94 @@ private class ContractMassSendControllerTest {
 
     @isTest
     static void testGetInitData_WithoutPermission() {
-        // Test without bypassing permissions - result depends on running user's permissions
         Account acc = [SELECT Id FROM Account LIMIT 1];
-        
+
         Test.startTest();
-        // Do NOT set testBypassPermissions = true
-        ContractMassSendController.InitResponse response = 
+        ContractMassSendController.testForceDenyPermission = true;
+        ContractMassSendController.InitResponse response =
             ContractMassSendController.getInitData(new List<Id>{ acc.Id });
         Test.stopTest();
 
-        System.assertNotEquals(null, response, 'Response should not be null');
-        // hasAccess depends on whether running user has Mass_Contract_Send permission
-        // Test validates the method runs successfully regardless of permission state
-        System.assertNotEquals(null, response.templates, 'Templates should be initialized');
+        System.assertEquals(false, response.hasAccess);
+        System.assert(
+            response.accessMessage != null &&
+              response.accessMessage.contains('Mass_Contract_Send'),
+            response.accessMessage
+        );
     }
 
     @isTest
     static void testSendContracts_WithoutPermission() {
-        // Test without bypassing permissions - behavior depends on running user's permissions
         Account acc = [SELECT Id FROM Account LIMIT 1];
         ContentVersion cv = [SELECT Id FROM ContentVersion LIMIT 1];
-        List<EmailTemplate> templates = [SELECT Id FROM EmailTemplate WHERE IsActive = true LIMIT 1];
 
-        if (!templates.isEmpty()) {
-            ContractMassSendController.SendReqRow reqRow = new ContractMassSendController.SendReqRow();
-            reqRow.customerId = acc.Id;
-            reqRow.contentVersionIds = new List<Id>{ cv.Id };
-            String requestJson = JSON.serialize(new List<ContractMassSendController.SendReqRow>{ reqRow });
+        ContractMassSendController.SendReqRow reqRow =
+            new ContractMassSendController.SendReqRow();
+        reqRow.customerId = acc.Id;
+        reqRow.contentVersionIds = new List<Id>{ cv.Id };
+        reqRow.parsedContent = true;
+        reqRow.subject = 'Subject';
+        reqRow.body = 'Body';
+        String requestJson = JSON.serialize(
+            new List<ContractMassSendController.SendReqRow>{ reqRow }
+        );
 
-            Test.startTest();
-            // Do NOT set testBypassPermissions = true
-            try {
-                ContractMassSendController.sendContracts(
-                    new List<Id>{ acc.Id },
-                    templates[0].Id,
-                    requestJson,
-                    'Subject',
-                    'Body'
-                );
-                // If we get here, user has permission - that's valid
-                System.assert(true, 'User has permission - method executed');
-            } catch (AuraHandledException e) {
-                // If exception thrown, user lacks permission - that's also valid
-                System.assert(true, 'Permission exception thrown');
-            } catch (Exception e) {
-                // Handle other exceptions (template errors, etc.)
-                System.assert(true, 'Other exception handled: ' + e.getMessage());
-            }
-            Test.stopTest();
+        Test.startTest();
+        ContractMassSendController.testForceDenyPermission = true;
+        Boolean threw = false;
+        try {
+            ContractMassSendController.sendContracts(
+                new List<Id>{ acc.Id },
+                null,
+                requestJson,
+                'Subject',
+                'Body'
+            );
+        } catch (AuraHandledException e) {
+            threw = true;
         }
+        Test.stopTest();
+        System.assertEquals(true, threw, 'Expected permission AuraHandledException');
     }
 
     @isTest
     static void testHasPermissionMethod() {
-        // Test the hasPermission method with bypass enabled
         Test.startTest();
         ContractMassSendController.testBypassPermissions = true;
-        // Call getInitData to exercise hasPermission with bypass
-        ContractMassSendController.InitResponse response = 
+        ContractMassSendController.InitResponse response =
             ContractMassSendController.getInitData(new List<Id>());
         Test.stopTest();
 
         System.assertEquals(true, response.hasAccess, 'HasAccess should be true with bypass');
+    }
+
+    @isTest
+    static void testSendContracts_Account_ParsedContent() {
+        Account acc = [SELECT Id FROM Account LIMIT 1];
+        ContentVersion cv = [SELECT Id FROM ContentVersion LIMIT 1];
+
+        ContractMassSendController.SendReqRow reqRow =
+            new ContractMassSendController.SendReqRow();
+        reqRow.customerId = acc.Id;
+        reqRow.contentVersionIds = new List<Id>{ cv.Id };
+        reqRow.parsedContent = true;
+        reqRow.subject = 'Acc subject';
+        reqRow.body = '<p>Acc body</p>';
+
+        Test.startTest();
+        ContractMassSendController.testBypassPermissions = true;
+        ContractMassSendController.SendResponse response =
+            ContractMassSendController.sendContracts(
+                new List<Id>{ acc.Id },
+                null,
+                JSON.serialize(new List<ContractMassSendController.SendReqRow>{ reqRow }),
+                'Acc subject',
+                '<p>Acc body</p>'
+            );
+        Test.stopTest();
+
+        System.assert(!response.logs.isEmpty());
+        System.assertEquals('Sent', response.logs[0].status, response.logs[0].message);
     }
 
     @isTest
@@ -1291,4 +1347,277 @@ static void testSendContracts_CoversCustomBodyBranch() {
         );
     }
 
+    @isTest
+    static void testHasPermission_EvaluatesFeatureManagementLine() {
+        Account acc = [SELECT Id FROM Account LIMIT 1];
+        Test.startTest();
+        ContractMassSendController.testBypassPermissions = false;
+        ContractMassSendController.testForceDenyPermission = false;
+        ContractMassSendController.InitResponse response =
+            ContractMassSendController.getInitData(new List<Id>{ acc.Id });
+        Test.stopTest();
+        System.assertNotEquals(null, response);
+    }
+
+    @isTest
+    static void testSendContracts_WorkOrderContextFromRowWorkOrderId() {
+        Account acc = [SELECT Id FROM Account LIMIT 1];
+        ContentVersion cv = [SELECT Id FROM ContentVersion LIMIT 1];
+        WorkOrder wo = [SELECT Id FROM WorkOrder LIMIT 1];
+
+        ContractMassSendController.SendReqRow reqRow =
+            new ContractMassSendController.SendReqRow();
+        reqRow.customerId = acc.Id;
+        reqRow.workOrderId = wo.Id;
+        reqRow.contentVersionIds = new List<Id>{ cv.Id };
+        reqRow.parsedContent = true;
+        reqRow.subject = 'WO ctx';
+        reqRow.body = '<p>body</p>';
+
+        Test.startTest();
+        ContractMassSendController.testBypassPermissions = true;
+        ContractMassSendController.SendResponse response =
+            ContractMassSendController.sendContracts(
+                new List<Id>{ acc.Id },
+                null,
+                JSON.serialize(new List<ContractMassSendController.SendReqRow>{ reqRow }),
+                'WO ctx',
+                '<p>body</p>'
+            );
+        Test.stopTest();
+
+        System.assert(!response.logs.isEmpty());
+    }
+
+    @isTest
+    static void testSendContracts_StmNotFoundAndNoEmail() {
+        Service_Team_Member__c missing = new Service_Team_Member__c(
+            Name = 'Missing STM',
+            Email__c = 'missing.stm@example.com'
+        );
+        insert missing;
+        Id missingId = missing.Id;
+        delete missing;
+
+        Service_Team_Member__c noEmail = new Service_Team_Member__c(
+            Name = 'No Email STM',
+            Email__c = null
+        );
+        insert noEmail;
+
+        ContractMassSendController.SendReqRow rowMissing =
+            new ContractMassSendController.SendReqRow();
+        rowMissing.customerId = missingId;
+        rowMissing.parsedContent = true;
+        rowMissing.subject = 's';
+        rowMissing.body = '<p>b</p>';
+
+        ContractMassSendController.SendReqRow rowNoEmail =
+            new ContractMassSendController.SendReqRow();
+        rowNoEmail.customerId = noEmail.Id;
+        rowNoEmail.parsedContent = true;
+        rowNoEmail.subject = 's';
+        rowNoEmail.body = '<p>b</p>';
+
+        Test.startTest();
+        ContractMassSendController.testBypassPermissions = true;
+        ContractMassSendController.SendResponse response =
+            ContractMassSendController.sendContracts(
+                new List<Id>{ noEmail.Id },
+                null,
+                JSON.serialize(
+                    new List<ContractMassSendController.SendReqRow>{
+                        rowMissing,
+                        rowNoEmail
+                    }
+                ),
+                's',
+                '<p>b</p>'
+            );
+        Test.stopTest();
+
+        System.assertEquals(2, response.logs.size());
+        System.assertEquals('Failed', response.logs[0].status);
+        System.assert(
+            response.logs[0].message.contains('not found') ||
+              response.logs[1].message.contains('no email'),
+            response.logs[0].message + ' / ' + response.logs[1].message
+        );
+    }
+
+    @isTest
+    static void testSendContracts_StmSuccess_ParsedContent() {
+        Service_Team_Member__c stm = [
+            SELECT Id, Email__c
+            FROM Service_Team_Member__c
+            WHERE Email__c != null
+            LIMIT 1
+        ];
+        WorkOrder wo = [
+            SELECT Id
+            FROM WorkOrder
+            WHERE Service_Team_Member__c = :stm.Id
+            LIMIT 1
+        ];
+
+        ContractMassSendController.SendReqRow reqRow =
+            new ContractMassSendController.SendReqRow();
+        reqRow.customerId = stm.Id;
+        reqRow.workOrderId = wo.Id;
+        reqRow.parsedContent = true;
+        reqRow.subject = 'STM ok';
+        reqRow.body = '<p>STM body</p>';
+
+        Test.startTest();
+        ContractMassSendController.testBypassPermissions = true;
+        ContractMassSendController.SendResponse response =
+            ContractMassSendController.sendContracts(
+                new List<Id>{ wo.Id },
+                null,
+                JSON.serialize(new List<ContractMassSendController.SendReqRow>{ reqRow }),
+                'STM ok',
+                '<p>STM body</p>'
+            );
+        Test.stopTest();
+
+        System.assert(!response.logs.isEmpty());
+        System.assertEquals('Sent', response.logs[0].status, response.logs[0].message);
+    }
+
+    @isTest
+    static void testSendContracts_OpportunityNotFound_AndAccountPrimaryFallback() {
+        Account acc = [SELECT Id, Primary_Contact__c FROM Account LIMIT 1];
+
+        Opportunity ghost = new Opportunity(
+            Name = 'Ghost Proposal',
+            AccountId = acc.Id,
+            StageName = 'Draft',
+            CloseDate = Date.today().addDays(7)
+        );
+        insert ghost;
+        Id ghostId = ghost.Id;
+        delete ghost;
+
+        Opportunity oppFallback = new Opportunity(
+            Name = 'Fallback Proposal',
+            AccountId = acc.Id,
+            StageName = 'Draft',
+            CloseDate = Date.today().addDays(8)
+            // no Customer_Primary_Contact__c — should fall back to Account primary
+        );
+        insert oppFallback;
+
+        ContractMassSendController.SendReqRow rowGhost =
+            new ContractMassSendController.SendReqRow();
+        rowGhost.customerId = ghostId;
+        rowGhost.parsedContent = true;
+        rowGhost.subject = 's';
+        rowGhost.body = '<p>b</p>';
+
+        ContractMassSendController.SendReqRow rowFallback =
+            new ContractMassSendController.SendReqRow();
+        rowFallback.customerId = oppFallback.Id;
+        rowFallback.parsedContent = true;
+        rowFallback.subject = 's';
+        rowFallback.body = '<p>b</p>';
+
+        Test.startTest();
+        ContractMassSendController.testBypassPermissions = true;
+        ContractMassSendController.SendResponse response =
+            ContractMassSendController.sendContracts(
+                new List<Id>{ oppFallback.Id },
+                null,
+                JSON.serialize(
+                    new List<ContractMassSendController.SendReqRow>{
+                        rowGhost,
+                        rowFallback
+                    }
+                ),
+                's',
+                '<p>b</p>'
+            );
+        Test.stopTest();
+
+        System.assertEquals(2, response.logs.size());
+        System.assertEquals('Failed', response.logs[0].status);
+        System.assert(
+            response.logs[0].message.contains('Proposal not found'),
+            response.logs[0].message
+        );
+        System.assertEquals('Sent', response.logs[1].status, response.logs[1].message);
+    }
+
+    @isTest
+    static void testPreviewEmail_NullTemplate_AndOpportunityExplicitContact() {
+        Account acc = [SELECT Id, Primary_Contact__c FROM Account LIMIT 1];
+        Opportunity opp = new Opportunity(
+            Name = 'Preview Explicit Contact',
+            AccountId = acc.Id,
+            StageName = 'Draft',
+            CloseDate = Date.today().addDays(9),
+            Customer_Primary_Contact__c = acc.Primary_Contact__c
+        );
+        insert opp;
+
+        List<EmailTemplate> templates = [
+            SELECT Id
+            FROM EmailTemplate
+            WHERE IsActive = true
+            LIMIT 1
+        ];
+        if (templates.isEmpty()) {
+            return;
+        }
+
+        Boolean nullTplThrew = false;
+        try {
+            ContractMassSendController.previewEmail(
+                null,
+                opp.Id,
+                null,
+                null,
+                's',
+                '<p>b</p>'
+            );
+        } catch (AuraHandledException e) {
+            nullTplThrew = true;
+        }
+        System.assertEquals(true, nullTplThrew);
+
+        Test.startTest();
+        Map<String, Object> res = ContractMassSendController.previewEmail(
+            templates[0].Id,
+            opp.Id,
+            acc.Primary_Contact__c,
+            null,
+            'Preview subject',
+            '<p>Preview body</p>'
+        );
+        Test.stopTest();
+
+        System.assertNotEquals(null, res);
+        System.assert(res.containsKey('subject'));
+        System.assert(res.containsKey('body'));
+    }
+
+    @isTest
+    static void testGetInitData_WorkOrderWithoutServiceTeamMembers() {
+        Account acc = [SELECT Id FROM Account LIMIT 1];
+        WorkOrder bareWo = new WorkOrder(
+            Subject = 'Bare WO',
+            Status = 'New',
+            Priority = 'Low',
+            AccountId = acc.Id
+        );
+        insert bareWo;
+
+        Test.startTest();
+        ContractMassSendController.testBypassPermissions = true;
+        ContractMassSendController.InitResponse response =
+            ContractMassSendController.getInitData(new List<Id>{ bareWo.Id });
+        Test.stopTest();
+
+        System.assertNotEquals(null, response.customers);
+        System.assertEquals(0, response.customers.size());
+    }
 }

@@ -2,10 +2,15 @@ public with sharing class ContractMassSendController {
   @TestVisible
   private static Boolean testBypassPermissions = false;
 
+  @TestVisible
+  private static Boolean testForceDenyPermission = false;
+
   private static Boolean hasPermission() {
-    // TEMPORARY: Bypass permission check for debugging
-    return true;
-    // Original: return testBypassPermissions || FeatureManagement.checkPermission('Mass_Contract_Send');
+    if (testForceDenyPermission) {
+      return false;
+    }
+    return testBypassPermissions ||
+      FeatureManagement.checkPermission('Mass_Contract_Send');
   }
 
   private static Boolean isServiceTeamMemberId(Id recordId) {
