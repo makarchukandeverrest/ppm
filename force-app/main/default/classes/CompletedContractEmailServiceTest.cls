@@ -132,6 +132,34 @@ private class CompletedContractEmailServiceTest {
         System.assert(bidIds.contains(bid.Id));
     }
 
+    @IsTest
+    static void signedContractRecipientResolver_SplitsContractAndProposalLists() {
+        SignedContractRecipientResolver resolver = new SignedContractRecipientResolver();
+        List<String> contractEmails = resolver.resolveToAddresses();
+        List<String> proposalEmails = resolver.resolveProposalToAddresses();
+
+        System.assert(
+            contractEmails.contains('office@premierswim.com'),
+            'Office should remain on Contract Bid emails'
+        );
+        System.assert(
+            proposalEmails.contains('office@premierswim.com'),
+            'Office should be on Proposal emails'
+        );
+        System.assert(
+            proposalEmails.contains('angelly@premierswim.com'),
+            'Angelley should receive Proposal emails'
+        );
+        System.assert(
+            !contractEmails.contains('angelly@premierswim.com'),
+            'Angelley should not receive Contract Bid emails'
+        );
+        System.assert(
+            !proposalEmails.contains('jessica@premierswim.com'),
+            'Jessica should not receive Proposal emails'
+        );
+    }
+
     private static void assertContainsEmail(String expectedEmail) {
         Boolean found = false;
         for (String actualEmail : DocuSignCompletedContractEmailService.lastRecipientEmails) {
