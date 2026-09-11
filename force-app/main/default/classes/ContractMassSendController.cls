@@ -1,29 +1,4 @@
 public with sharing class ContractMassSendController {
-  /**
-   * Put either token in HTML/text email templates; Apex replaces with a line-item table
-   * when merge whatId is a Work Order (send + preview).
-   */
-  private static final List<String> LINE_ITEM_PLACEHOLDERS = new List<String>{
-    '[LINE_ITEMS]',
-    '[LINE ITEM]'
-  };
-
-  /**
-   * Classic merge often leaves WorkOrder.Account billing/shipping blank; Apex fills from SOQL.
-   */
-  private static final String ACCOUNT_ADDRESS_PLACEHOLDER = '[ACCOUNT_ADDRESS]';
-
-  private static final Set<String> CONTRACT_SEND_PDF_TEMPLATE_DEVELOPER_NAMES = new Set<String>{
-    'Contract_Send_PDF_Regular_Customer',
-    'Contract_Send_PDF_New_Customer'
-  };
-
-  private static final List<String> CONTRACT_SEND_PDF_CC_USER_NAMES = new List<String>{
-    'Roman Shestakov',
-    'Stephanie Pratt',
-    'Jessica Floyd'
-  };
-
   @TestVisible
   private static Boolean testBypassPermissions = false;
 
@@ -42,9 +17,10 @@ public with sharing class ContractMassSendController {
     return recordId != null && recordId.getSobjectType() == WorkOrder.SObjectType;
   }
 
-  /** Org-wide address used when the mass-send host is a Work Order record page. */
-  private static final String WORK_ORDER_ORG_WIDE_EMAIL_ADDRESS =
-    'sf_workorders@premierswim.com';
+  private static Boolean isOpportunityId(Id recordId) {
+    return recordId != null &&
+      recordId.getSobjectType() == Opportunity.SObjectType;
+  }
 
   /**
    * Work Order-driven send: any inputId is a Work Order, or any send row has workOrderId
@@ -69,345 +45,6 @@ public with sharing class ContractMassSendController {
       }
     }
     return false;
-  }
-
-  private static OrgWideEmailAddress getWorkOrderOrgWideEmailAddress() {
-    List<OrgWideEmailAddress> rows = [
-      SELECT Id, DisplayName, Address
-      FROM OrgWideEmailAddress
-      WHERE Address = :WORK_ORDER_ORG_WIDE_EMAIL_ADDRESS AND IsVerified = TRUE
-      LIMIT 1
-    ];
-    return rows.isEmpty() ? null : rows[0];
-  }
-
-  /**
-   * From: Work Order org-wide mailbox when in WO context; Reply-To matches that mailbox.
-   * Otherwise: current user's verified OWEA or user email, Reply-To = running user.
-   * When setOrgWideEmailAddressId is set, do NOT call setSenderDisplayName (API limitation).
-   */
-  private static void applyOutboundSenderIdentity(
-    Messaging.SingleEmailMessage mail,
-    User currentUser,
-    Boolean useWorkOrderMailbox
-  ) {
-    if (useWorkOrderMailbox) {
-      OrgWideEmailAddress woOwea = getWorkOrderOrgWideEmailAddress();
-      if (woOwea != null) {
-        mail.setOrgWideEmailAddressId(woOwea.Id);
-        mail.setReplyTo(woOwea.Address);
-        return;
-      }
-    }
-
-    List<OrgWideEmailAddress> oweaList = [
-      SELECT Id, Address
-      FROM OrgWideEmailAddress
-      WHERE Address = :currentUser.Email AND IsVerified = TRUE
-      LIMIT 1
-    ];
-    if (!oweaList.isEmpty()) {
-      mail.setOrgWideEmailAddressId(oweaList[0].Id);
-      mail.setReplyTo(currentUser.Email);
-      return;
-    }
-
-    mail.setReplyTo(currentUser.Email);
-    mail.setSenderDisplayName(currentUser.Email);
-  }
-
-  /**
-   * Mustache-style {{{Recipient.Name}}} is not merged by Salesforce; classic merge uses {!Recipient.Name}.
-   * Apex Matcher has no appendReplacement — rebuild with substring per match.
-   */
-  private static String normalizeTripleBraceMergeFields(String text) {
-    if (String.isBlank(text)) {
-      return text;
-    }
-    Pattern p = Pattern.compile('\\{\\{\\{([^}]+)\\}\\}\\}');
-    String result = text;
-    while (true) {
-      Matcher m = p.matcher(result);
-      if (!m.find()) {
-        break;
-      }
-      String path = m.group(1) != null ? m.group(1).trim() : '';
-      Integer startPos = m.start();
-      Integer endPos = m.end();
-      result =
-        result.substring(0, startPos) +
-        '{!' +
-        path +
-        '}' +
-        result.substring(endPos);
-    }
-    return result;
-  }
-
-  /** Safe cleanup when merge fails; avoids replaceAll('$1') throwing on edge-case subjects. */
-  private static String softenCaseMergeFailures(String text) {
-    if (String.isBlank(text)) {
-      return text;
-    }
-    Pattern p = Pattern.compile('\\{\\{\\{?Case\\.([^}]+)\\}\\}?');
-    String result = text;
-    while (true) {
-      Matcher m = p.matcher(result);
-      if (!m.find()) {
-        break;
-      }
-      String field = m.group(1) != null ? m.group(1) : '';
-      Integer startPos = m.start();
-      Integer endPos = m.end();
-      result =
-        result.substring(0, startPos) +
-        '[Case.' +
-        field +
-        ']' +
-        result.substring(endPos);
-    }
-    return result;
-  }
-
-  /**
-   * renderStoredEmailTemplate resolves Recipient/Sender; renderEmailTemplate(whoId, whatId, strings) does not
-   * bind those email-template aliases — merge runs but values are blank. Map to the concrete merge objects.
-   */
-  private static String expandEmailMergeAliases(String text, Id whoId) {
-    if (String.isBlank(text) || whoId == null) {
-      return text;
-    }
-    String out = text;
-    Schema.SObjectType whoType = whoId.getSobjectType();
-    if (whoType == Contact.SObjectType) {
-      out = out.replace('{!Recipient.', '{!Contact.');
-    } else if (whoType == Lead.SObjectType) {
-      out = out.replace('{!Recipient.', '{!Lead.');
-    } else if (whoType == User.SObjectType) {
-      out = out.replace('{!Recipient.', '{!User.');
-    }
-    out = out.replace('{!Sender.', '{!User.');
-    return out;
-  }
-
-  private static String prepareForRenderEmailTemplate(String text, Id whoId) {
-    return expandEmailMergeAliases(
-      normalizeTripleBraceMergeFields(text),
-      whoId
-    );
-  }
-
-  private static String escapeHtml(String raw) {
-    if (raw == null) {
-      return '';
-    }
-    return raw.replace('&', '&amp;')
-      .replace('<', '&lt;')
-      .replace('>', '&gt;')
-      .replace('"', '&quot;');
-  }
-
-  /**
-   * Replaces [LINE_ITEMS] / [LINE ITEMS] with an HTML table of Quick Book line items.
-   * When serviceTeamMemberId is set, only line items with that Service_Team_Member__c are included.
-   * No-op if workOrderId is not a Work Order, content blank, or no placeholder present.
-   */
-  private static String applyLineItemsPlaceholder(
-    String content,
-    Id workOrderId,
-    Id serviceTeamMemberId
-  ) {
-    if (String.isBlank(content) || !isWorkOrderId(workOrderId)) {
-      return content;
-    }
-    Boolean needs = false;
-    for (String ph : LINE_ITEM_PLACEHOLDERS) {
-      if (content.contains(ph)) {
-        needs = true;
-        break;
-      }
-    }
-    if (!needs) {
-      return content;
-    }
-    String tableHtml = buildQuickBookLineItemsHtml(
-      workOrderId,
-      serviceTeamMemberId
-    );
-    String out = content;
-    for (String ph : LINE_ITEM_PLACEHOLDERS) {
-      out = out.replace(ph, tableHtml);
-    }
-    return out;
-  }
-
-  private static String buildQuickBookLineItemsHtml(
-    Id workOrderId,
-    Id serviceTeamMemberId
-  ) {
-    List<Quick_Book_Work_Order_Line_Item__c> lines;
-    if (serviceTeamMemberId != null) {
-      lines = [
-        SELECT Name, Description__c, Quantity__c
-        FROM Quick_Book_Work_Order_Line_Item__c
-        WHERE
-          Work_Order__c = :workOrderId
-          AND Service_Team_Member__c = :serviceTeamMemberId
-        ORDER BY CreatedDate ASC
-      ];
-    } else {
-      lines = [
-        SELECT Name, Description__c, Quantity__c
-        FROM Quick_Book_Work_Order_Line_Item__c
-        WHERE Work_Order__c = :workOrderId
-        ORDER BY CreatedDate ASC
-      ];
-    }
-
-    if (lines.isEmpty()) {
-      if (serviceTeamMemberId != null) {
-        return '<p><em>No line items on this work order are assigned to you.</em></p>';
-      }
-      return '<p><em>No line items on this work order.</em></p>';
-    }
-
-    List<String> rows = new List<String>();
-    rows.add(
-      '<table style="border-collapse:collapse;width:100%;max-width:640px;font-family:Arial,sans-serif;font-size:14px;">'
-    );
-    rows.add(
-      '<thead><tr style="background:#f3f3f3;">' +
-        '<th style="border:1px solid #ccc;padding:8px;text-align:left;">Item</th>' +
-        '<th style="border:1px solid #ccc;padding:8px;text-align:left;">Description</th>' +
-        '<th style="border:1px solid #ccc;padding:8px;text-align:right;">Qty</th>' +
-        '</tr></thead><tbody>'
-    );
-
-    for (Quick_Book_Work_Order_Line_Item__c li : lines) {
-      rows.add(
-        '<tr>' +
-          '<td style="border:1px solid #ccc;padding:8px;">' +
-          escapeHtml(li.Name) +
-          '</td>' +
-          '<td style="border:1px solid #ccc;padding:8px;">' +
-          escapeHtml(li.Description__c) +
-          '</td>' +
-          '<td style="border:1px solid #ccc;padding:8px;text-align:right;">' +
-          (li.Quantity__c != null ? String.valueOf(li.Quantity__c) : '') +
-          '</td>' +
-          '</tr>'
-      );
-    }
-
-    rows.add('</tbody></table>');
-    return String.join(rows, '');
-  }
-
-  private static String applyAccountAddressPlaceholder(
-    String content,
-    Id workOrderId,
-    Boolean useHtmlLineBreaks
-  ) {
-    if (String.isBlank(content) || !isWorkOrderId(workOrderId)) {
-      return content;
-    }
-    if (!content.contains(ACCOUNT_ADDRESS_PLACEHOLDER)) {
-      return content;
-    }
-    String snippet = useHtmlLineBreaks
-      ? buildAccountAddressHtml(workOrderId)
-      : buildAccountAddressOneLineEscaped(workOrderId);
-    return content.replace(ACCOUNT_ADDRESS_PLACEHOLDER, snippet);
-  }
-
-  private static String buildAccountAddressOneLineEscaped(Id workOrderId) {
-    String plain = formatWorkOrderAccountAddressPlain(workOrderId);
-    if (String.isBlank(plain)) {
-      return '';
-    }
-    return escapeHtml(plain.replace('\n', ', '));
-  }
-
-  private static String buildAccountAddressHtml(Id workOrderId) {
-    String plain = formatWorkOrderAccountAddressPlain(workOrderId);
-    if (String.isBlank(plain)) {
-      return '<em>No account or billing/shipping address on file.</em>';
-    }
-    List<String> esc = new List<String>();
-    for (String line : plain.split('\n', -1)) {
-      if (String.isNotBlank(line)) {
-        esc.add(escapeHtml(line.trim()));
-      }
-    }
-    return esc.isEmpty()
-      ? '<em>No address lines.</em>'
-      : String.join(esc, '<br/>');
-  }
-
-  /** Billing first; if empty, shipping. Street line + "City, State PostalCode" line. */
-  private static String formatWorkOrderAccountAddressPlain(Id workOrderId) {
-    List<WorkOrder> wos = [
-      SELECT
-        AccountId,
-        Account.BillingStreet,
-        Account.BillingCity,
-        Account.BillingState,
-        Account.BillingPostalCode,
-        Account.ShippingStreet,
-        Account.ShippingCity,
-        Account.ShippingState,
-        Account.ShippingPostalCode
-      FROM WorkOrder
-      WHERE Id = :workOrderId
-      LIMIT 1
-    ];
-    if (wos.isEmpty() || wos[0].AccountId == null) {
-      return null;
-    }
-    Account a = wos[0].Account;
-    String street = a.BillingStreet;
-    String city = a.BillingCity;
-    String state = a.BillingState;
-    String zip = a.BillingPostalCode;
-    if (addressAllBlank(street, city, state, zip)) {
-      street = a.ShippingStreet;
-      city = a.ShippingCity;
-      state = a.ShippingState;
-      zip = a.ShippingPostalCode;
-    }
-    if (addressAllBlank(street, city, state, zip)) {
-      return null;
-    }
-    List<String> lines = new List<String>();
-    if (String.isNotBlank(street)) {
-      lines.add(street.trim());
-    }
-    List<String> cityStateZip = new List<String>();
-    if (String.isNotBlank(city)) {
-      cityStateZip.add(city.trim());
-    }
-    if (String.isNotBlank(state)) {
-      cityStateZip.add(state.trim());
-    }
-    if (String.isNotBlank(zip)) {
-      cityStateZip.add(zip.trim());
-    }
-    if (!cityStateZip.isEmpty()) {
-      lines.add(String.join(cityStateZip, ', '));
-    }
-    return String.join(lines, '\n');
-  }
-
-  private static Boolean addressAllBlank(
-    String street,
-    String city,
-    String state,
-    String zip
-  ) {
-    return String.isBlank(street) &&
-      String.isBlank(city) &&
-      String.isBlank(state) &&
-      String.isBlank(zip);
   }
 
   /* =========================================================
@@ -451,6 +88,12 @@ public with sharing class ContractMassSendController {
     /** Merge / activity context for Work Order mass send (Service Team recipients) */
     @AuraEnabled
     public Id workOrderId;
+    /** Account name for Proposal filter UI */
+    @AuraEnabled
+    public String accountName;
+    /** Regional Manager Id for Proposal filter UI */
+    @AuraEnabled
+    public Id regionalManagerId;
     @AuraEnabled
     public List<ContractDto> contracts;
   }
@@ -479,6 +122,18 @@ public with sharing class ContractMassSendController {
     public List<CustomerDto> customers;
     @AuraEnabled
     public List<LogRowDto> recentLogs;
+  }
+
+  /** Server-side filter bag used by getInitDataFiltered for Proposal rows. */
+  public class InitFilters {
+    @AuraEnabled
+    public String regionalManagerId;
+    @AuraEnabled
+    public String customerName;
+    @AuraEnabled
+    public String contractYear;
+    @AuraEnabled
+    public Boolean requireContracts;
   }
 
   /* =========================================================
@@ -619,6 +274,9 @@ public with sharing class ContractMassSendController {
 
       return res;
     }
+    else if (sobjectType == 'Opportunity') {
+      return MassSendOpportunityService.buildInitData(inputIds, res, null);
+    }
     else {
       // Unsupported type
     }
@@ -742,10 +400,51 @@ public with sharing class ContractMassSendController {
     return res;
   }
 
+  /**
+   * Server-side filtered init for Proposal (Opportunity) mass send.
+   * Filters by Regional Manager, customer/Account name, and contract year in PDF title.
+   */
+  @AuraEnabled(cacheable=true)
+  public static InitResponse getInitDataFiltered(
+    List<Id> inputIds,
+    String regionalManagerId,
+    String customerName,
+    String contractYear,
+    Boolean requireContracts
+  ) {
+    InitResponse res = new InitResponse();
+
+    if (!hasPermission()) {
+      res.hasAccess = false;
+      res.accessMessage = 'Missing permission: Mass_Contract_Send';
+      return res;
+    }
+    res.hasAccess = true;
+
+    if (inputIds == null) {
+      inputIds = new List<Id>();
+    }
+
+    if (inputIds.isEmpty()) {
+      res.customers = new List<CustomerDto>();
+      res.templates = new List<TemplateDto>();
+      res.recentLogs = new List<LogRowDto>();
+      return res;
+    }
+
+    InitFilters filters = new InitFilters();
+    filters.regionalManagerId = regionalManagerId;
+    filters.customerName = customerName;
+    filters.contractYear = contractYear;
+    filters.requireContracts = requireContracts;
+
+    return MassSendOpportunityService.buildInitData(inputIds, res, filters);
+  }
+
   private static final String PREMIER_POOL_TEMPLATE_FOLDER = 'Premier Pool Templates';
 
   /** Classic HTML/custom/VF templates in the Premier Pool Templates folder only. */
-  private static List<TemplateDto> loadPremierPoolTemplatesForUi() {
+  public static List<TemplateDto> loadPremierPoolTemplatesForUi() {
     List<TemplateDto> out = new List<TemplateDto>();
     for (EmailTemplate t : [
       SELECT Id, Name
@@ -779,10 +478,6 @@ public with sharing class ContractMassSendController {
     }
     return out;
   }
-
-  /* =========================================================
-       SEND
-    ========================================================= */
 
   /* =========================================================
        TEMPLATE DETAILS
@@ -848,11 +543,17 @@ public with sharing class ContractMassSendController {
 
     Set<Id> accountIds = new Set<Id>();
     Set<Id> stmIds = new Set<Id>();
+    Set<Id> proposalIds = new Set<Id>();
     Set<Id> cvIds = new Set<Id>();
 
     for (SendReqRow r : rows) {
       if (isServiceTeamMemberId(r.customerId)) {
         stmIds.add(r.customerId);
+      } else if (isOpportunityId(r.customerId)) {
+        proposalIds.add(r.customerId);
+        if (r.contentVersionIds != null) {
+          cvIds.addAll(r.contentVersionIds);
+        }
       } else {
         accountIds.add(r.customerId);
         if (r.contentVersionIds != null) {
@@ -878,6 +579,34 @@ public with sharing class ContractMassSendController {
             'Only latest contract versions can be sent.'
           );
         }
+      }
+    }
+
+    Map<Id, Opportunity> proposalById = proposalIds.isEmpty()
+      ? new Map<Id, Opportunity>()
+      : new Map<Id, Opportunity>(
+          [
+            SELECT
+              Id,
+              Name,
+              AccountId,
+              Account.Name,
+              Account.Primary_Contact__c,
+              Account.Primary_Contact__r.Email,
+              Account.Primary_Contact__r.FirstName,
+              Account.Primary_Contact__r.LastName,
+              Customer_Primary_Contact__c,
+              Customer_Primary_Contact__r.Email,
+              Customer_Primary_Contact__r.FirstName,
+              Customer_Primary_Contact__r.LastName
+            FROM Opportunity
+            WHERE Id IN :proposalIds
+          ]
+        );
+
+    for (Opportunity opp : proposalById.values()) {
+      if (opp.AccountId != null) {
+        accountIds.add(opp.AccountId);
       }
     }
 
@@ -922,13 +651,9 @@ public with sharing class ContractMassSendController {
 
     Boolean useWorkOrderMailbox = isWorkOrderPageContext(inputIds, rows);
 
-    String templateDeveloperName = resolveEmailTemplateDeveloperName(emailTemplateId);
-    List<String> namedCcEmails = new List<String>();
-    Map<Id, String> accountToRmEmail = new Map<Id, String>();
-    if (CONTRACT_SEND_PDF_TEMPLATE_DEVELOPER_NAMES.contains(templateDeveloperName)) {
-      namedCcEmails = loadNamedContractSendPdfCcEmails();
-      accountToRmEmail = resolveRegionalManagerEmailsByAccount(accountIds);
-    }
+    String templateDeveloperName = MassSendEmailBuilder.resolveEmailTemplateDeveloperName(emailTemplateId);
+    List<String> namedCcEmails = MassSendEmailBuilder.loadNamedContractSendPdfCcEmails();
+    Map<Id, String> accountToRmEmail = MassSendEmailBuilder.resolveRegionalManagerEmailsByAccount(accountIds);
 
     for (SendReqRow r : rows) {
       String rowSubject = r.subject != null ? r.subject : subject;
@@ -965,92 +690,35 @@ public with sharing class ContractMassSendController {
           mergeWhatId = inputIds[0];
         }
 
-        Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
-        mail.setToAddresses(new List<String>{ stm.Email__c });
-        mail.setWhatId(mergeWhatId);
-        mail.setSaveAsActivity(true);
+        MassSendEmailBuilder.BuildRequest req = new MassSendEmailBuilder.BuildRequest();
+        req.toAddresses = new List<String>{ stm.Email__c };
+        req.mergeWhoId = UserInfo.getUserId();
+        req.whatId = mergeWhatId;
+        req.contentVersionIds = r.contentVersionIds;
+        req.parsedContent = r.parsedContent;
+        req.rowSubject = r.subject;
+        req.rowBody = r.body;
+        req.defaultSubject = subject;
+        req.defaultBody = body;
+        req.emailTemplateId = emailTemplateId;
+        req.templateDeveloperName = templateDeveloperName;
+        req.recipientEmail = stm.Email__c;
+        req.sendingUser = sendingUser;
+        req.useWorkOrderMailbox = useWorkOrderMailbox;
+        req.applyWorkOrderPlaceholders = (r.parsedContent != true);
+        req.lineItemsRestrictStmId = stm.Id;
 
-        applyOutboundSenderIdentity(mail, sendingUser, useWorkOrderMailbox);
-
-        // whoId must be Contact, Lead, or User for merge API; STM is recipient via setToAddresses only.
-        Id whoForMerge = UserInfo.getUserId();
-        if (r.parsedContent == true && String.isNotBlank(rowBody)) {
-          mail.setSubject(
-            String.isNotBlank(rowSubject) ? rowSubject : ''
-          );
-          mail.setHtmlBody(rowBody);
-        } else if (emailTemplateId != null) {
-          Messaging.SingleEmailMessage rendered = Messaging.renderStoredEmailTemplate(
-            emailTemplateId,
-            whoForMerge,
-            mergeWhatId
-          );
-
-          if (String.isNotBlank(rowBody)) {
-            String mergeBody = prepareForRenderEmailTemplate(rowBody, whoForMerge);
-            String mergeSubject = prepareForRenderEmailTemplate(rowSubject, whoForMerge);
-            List<String> bodiesToRender = new List<String>{ mergeBody };
-            if (String.isNotBlank(rowSubject)) {
-              bodiesToRender.add(mergeSubject);
-            }
-
-            List<Messaging.RenderEmailTemplateBodyResult> renderResults = Messaging.renderEmailTemplate(
-              whoForMerge,
-              mergeWhatId,
-              bodiesToRender
-            );
-
-            if (renderResults[0].getSuccess()) {
-              mail.setHtmlBody(renderResults[0].getMergedBody());
-            } else {
-              mail.setHtmlBody(mergeBody);
-            }
-
-            if (
-              String.isNotBlank(rowSubject) &&
-              renderResults.size() > 1 &&
-              renderResults[1].getSuccess()
-            ) {
-              mail.setSubject(renderResults[1].getMergedBody());
-            } else if (String.isNotBlank(rowSubject)) {
-              mail.setSubject(mergeSubject);
-            } else {
-              mail.setSubject(rendered.getSubject());
-            }
-          } else {
-            mail.setSubject(rendered.getSubject());
-            mail.setHtmlBody(rendered.getHtmlBody());
-          }
-        } else {
-          throw new AuraHandledException('Email template is required.');
+        MassSendEmailBuilder.EmailBuildResult result = MassSendEmailBuilder.buildEmail(req);
+        if (String.isNotBlank(result.errorMessage)) {
+          LogRowDto log = new LogRowDto();
+          log.customerName = stm.Name;
+          log.status = 'Failed';
+          log.message = result.errorMessage;
+          logs.add(log);
+          continue;
         }
 
-        if (r.parsedContent != true && isWorkOrderId(mergeWhatId)) {
-          mail.setHtmlBody(
-            applyAccountAddressPlaceholder(
-              applyLineItemsPlaceholder(
-                mail.getHtmlBody(),
-                mergeWhatId,
-                stm.Id
-              ),
-              mergeWhatId,
-              true
-            )
-          );
-          mail.setSubject(
-            applyAccountAddressPlaceholder(
-              applyLineItemsPlaceholder(
-                mail.getSubject(),
-                mergeWhatId,
-                stm.Id
-              ),
-              mergeWhatId,
-              false
-            )
-          );
-        }
-
-        emails.add(mail);
+        emails.add(result.mail);
 
         LogRowDto stmLog = new LogRowDto();
         stmLog.customerName = stm.Name;
@@ -1058,6 +726,109 @@ public with sharing class ContractMassSendController {
         stmLog.message = 'Email is being sent...';
         logs.add(stmLog);
         emailIndexToLogs.put(emailIndex, new List<LogRowDto>{ stmLog });
+        emailIndex++;
+        continue;
+      }
+
+      if (isOpportunityId(r.customerId)) {
+        Opportunity opp = proposalById.get(r.customerId);
+        if (opp == null) {
+          LogRowDto log = new LogRowDto();
+          log.customerName = 'Unknown';
+          log.status = 'Failed';
+          log.message = 'Proposal not found.';
+          logs.add(log);
+          continue;
+        }
+
+        Id whoId;
+        String whoEmail;
+        if (opp.Customer_Primary_Contact__c != null) {
+          whoId = opp.Customer_Primary_Contact__c;
+          whoEmail = opp.Customer_Primary_Contact__r != null
+            ? opp.Customer_Primary_Contact__r.Email
+            : null;
+        } else if (
+          opp.AccountId != null &&
+          opp.Account.Primary_Contact__c != null
+        ) {
+          whoId = opp.Account.Primary_Contact__c;
+          whoEmail = opp.Account.Primary_Contact__r != null
+            ? opp.Account.Primary_Contact__r.Email
+            : null;
+        }
+
+        if (whoId == null) {
+          LogRowDto log = new LogRowDto();
+          log.customerName = opp.Name;
+          log.status = 'Failed';
+          log.message = 'Primary Contact is missing.';
+          logs.add(log);
+          continue;
+        }
+        if (String.isBlank(whoEmail)) {
+          LogRowDto log = new LogRowDto();
+          log.customerName = opp.Name;
+          log.status = 'Failed';
+          log.message = 'Primary Contact has no email.';
+          logs.add(log);
+          continue;
+        }
+
+        MassSendEmailBuilder.BuildRequest req = new MassSendEmailBuilder.BuildRequest();
+        req.targetWhoId = whoId;
+        req.mergeWhoId = whoId;
+        req.whatId = opp.AccountId;
+        req.contentVersionIds = r.contentVersionIds;
+        req.parsedContent = r.parsedContent;
+        req.rowSubject = r.subject;
+        req.rowBody = r.body;
+        req.defaultSubject = subject;
+        req.defaultBody = body;
+        req.emailTemplateId = emailTemplateId;
+        req.templateDeveloperName = templateDeveloperName;
+        req.recipientEmail = whoEmail;
+        req.sendingUser = sendingUser;
+        req.useWorkOrderMailbox = useWorkOrderMailbox;
+        req.regionalManagerEmail = accountToRmEmail.get(opp.AccountId);
+        req.namedCcEmails = namedCcEmails;
+
+        MassSendEmailBuilder.EmailBuildResult result = MassSendEmailBuilder.buildEmail(req);
+        if (String.isNotBlank(result.errorMessage)) {
+          LogRowDto log = new LogRowDto();
+          log.customerName = opp.Name;
+          log.status = 'Failed';
+          log.message = result.errorMessage;
+          logs.add(log);
+          continue;
+        }
+
+        emails.add(result.mail);
+
+        List<LogRowDto> currentEmailLogs = new List<LogRowDto>();
+        if (r.contentVersionIds != null && !r.contentVersionIds.isEmpty()) {
+          for (Id cvId : r.contentVersionIds) {
+            ContentVersion cv = cvById.get(cvId);
+            LogRowDto log = new LogRowDto();
+            log.customerName = opp.Name;
+            log.fileTitle = cv != null ? cv.Title : null;
+            log.versionNumber = cv != null
+              ? Integer.valueOf(cv.VersionNumber)
+              : null;
+            log.status = 'Sending';
+            log.message = 'Email is being sent...';
+            logs.add(log);
+            currentEmailLogs.add(log);
+          }
+        } else {
+          LogRowDto log = new LogRowDto();
+          log.customerName = opp.Name;
+          log.status = 'Sending';
+          log.message = 'Email is being sent...';
+          logs.add(log);
+          currentEmailLogs.add(log);
+        }
+        emailIndexToLogs.put(emailIndex, currentEmailLogs);
         emailIndex++;
         continue;
       }
@@ -1082,89 +853,35 @@ public with sharing class ContractMassSendController {
         continue;
       }
 
-      Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
-      mail.setTargetObjectId(acc.Primary_Contact__c);
-      mail.setWhatId(acc.Id);
-      if (r.contentVersionIds != null && !r.contentVersionIds.isEmpty()) {
-        mail.setEntityAttachments(r.contentVersionIds);
-      }
-      mail.setSaveAsActivity(true);
+      MassSendEmailBuilder.BuildRequest req = new MassSendEmailBuilder.BuildRequest();
+      req.targetWhoId = acc.Primary_Contact__c;
+      req.mergeWhoId = acc.Primary_Contact__c;
+      req.whatId = acc.Id;
+      req.contentVersionIds = r.contentVersionIds;
+      req.parsedContent = r.parsedContent;
+      req.rowSubject = r.subject;
+      req.rowBody = r.body;
+      req.defaultSubject = subject;
+      req.defaultBody = body;
+      req.emailTemplateId = emailTemplateId;
+      req.templateDeveloperName = templateDeveloperName;
+      req.recipientEmail = acc.Primary_Contact__r.Email;
+      req.sendingUser = sendingUser;
+      req.useWorkOrderMailbox = useWorkOrderMailbox;
+      req.regionalManagerEmail = accountToRmEmail.get(acc.Id);
+      req.namedCcEmails = namedCcEmails;
 
-      applyOutboundSenderIdentity(mail, sendingUser, useWorkOrderMailbox);
-
-      // Attach contracts only in "with contracts" mode
-      if (r.contentVersionIds != null && !r.contentVersionIds.isEmpty()) {
-        mail.setEntityAttachments(r.contentVersionIds);
-      }
-      mail.setSaveAsActivity(true);
-
-      // USE SALESFORCE NATIVE TEMPLATE RENDERING
-      // renderStoredEmailTemplate properly merges ALL fields
-      if (r.parsedContent == true && String.isNotBlank(rowBody)) {
-        mail.setSubject(
-          String.isNotBlank(rowSubject) ? rowSubject : ''
-        );
-        mail.setHtmlBody(rowBody);
-      } else if (emailTemplateId != null) {
-        Messaging.SingleEmailMessage rendered = Messaging.renderStoredEmailTemplate(
-          emailTemplateId,
-          acc.Primary_Contact__c, // whoId (Contact)
-          acc.Id // whatId (Account)
-        );
-
-        // If user provided custom subject/body, use renderEmailTemplate to merge those
-        if (String.isNotBlank(rowBody)) {
-          Id whoForAcc = acc.Primary_Contact__c;
-          String mergeBody = prepareForRenderEmailTemplate(rowBody, whoForAcc);
-          String mergeSubject = prepareForRenderEmailTemplate(rowSubject, whoForAcc);
-          List<String> bodiesToRender = new List<String>{ mergeBody };
-          if (String.isNotBlank(rowSubject)) {
-            bodiesToRender.add(mergeSubject);
-          }
-
-          List<Messaging.RenderEmailTemplateBodyResult> renderResults = Messaging.renderEmailTemplate(
-            whoForAcc, // whoId
-            acc.Id, // whatId
-            bodiesToRender
-          );
-
-          // Get rendered body
-          if (renderResults[0].getSuccess()) {
-            mail.setHtmlBody(renderResults[0].getMergedBody());
-          } else {
-            mail.setHtmlBody(mergeBody); // Fallback to unmerged
-          }
-
-          // Get rendered subject
-          if (
-            String.isNotBlank(rowSubject) &&
-            renderResults.size() > 1 &&
-            renderResults[1].getSuccess()
-          ) {
-            mail.setSubject(renderResults[1].getMergedBody());
-          } else if (String.isNotBlank(rowSubject)) {
-            mail.setSubject(mergeSubject);
-          } else {
-            mail.setSubject(rendered.getSubject());
-          }
-        } else {
-          // Use fully rendered template
-          mail.setSubject(rendered.getSubject());
-          mail.setHtmlBody(rendered.getHtmlBody());
-        }
-      } else {
-        throw new AuraHandledException('Email template is required.');
+      MassSendEmailBuilder.EmailBuildResult result = MassSendEmailBuilder.buildEmail(req);
+      if (String.isNotBlank(result.errorMessage)) {
+        LogRowDto log = new LogRowDto();
+        log.customerName = acc.Name;
+        log.status = 'Failed';
+        log.message = result.errorMessage;
+        logs.add(log);
+        continue;
       }
 
-      applyContractSendPdfCcAddresses(
-        mail,
-        templateDeveloperName,
-        acc.Primary_Contact__r.Email,
-        accountToRmEmail.get(acc.Id),
-        namedCcEmails
-      );
-
-      emails.add(mail);
+      emails.add(result.mail);
 
       // Build log rows:
       // - With contracts: one row per attached ContentVersion
@@ -1256,6 +973,57 @@ public with sharing class ContractMassSendController {
       ];
       whoId = UserInfo.getUserId();
       whatId = isWorkOrderId(workOrderId) ? workOrderId : stm.Id;
+    } else if (customerId != null && isOpportunityId(customerId)) {
+      Opportunity opp = [
+        SELECT
+          Id,
+          Name,
+          AccountId,
+          Account.Primary_Contact__c,
+          Customer_Primary_Contact__c
+        FROM Opportunity
+        WHERE Id = :customerId
+        LIMIT 1
+      ];
+      whatId = opp.AccountId;
+
+      if (contactId != null) {
+        List<Contact> explicitWho = [
+          SELECT Id
+          FROM Contact
+          WHERE Id = :contactId
+          LIMIT 1
+        ];
+        if (explicitWho.isEmpty()) {
+          throw new AuraHandledException('Contact not found for preview.');
+        }
+        whoId = contactId;
+      } else if (opp.Customer_Primary_Contact__c != null) {
+        whoId = opp.Customer_Primary_Contact__c;
+      } else if (
+        opp.AccountId != null &&
+        opp.Account.Primary_Contact__c != null
+      ) {
+        whoId = opp.Account.Primary_Contact__c;
+      } else if (opp.AccountId != null) {
+        List<Contact> anyOnAccount = [
+          SELECT Id
+          FROM Contact
+          WHERE AccountId = :opp.AccountId
+          ORDER BY CreatedDate ASC
+          LIMIT 1
+        ];
+        if (anyOnAccount.isEmpty()) {
+          throw new AuraHandledException(
+            'Unable to resolve Contact for preview. Set a Primary Contact on the Proposal or Account.'
+          );
+        }
+        whoId = anyOnAccount[0].Id;
+      } else {
+        throw new AuraHandledException(
+          'Unable to resolve Contact for preview. Set a Primary Contact on the Proposal or Account.'
+        );
+      }
     } else {
       // Resolve Account
       Account acc;
@@ -1347,22 +1115,22 @@ public with sharing class ContractMassSendController {
             ? renderedTemplate.getHtmlBody()
             : null;
 
-          finalBody = applyLineItemsPlaceholder(
+          finalBody = MassSendEmailBuilder.applyLineItemsPlaceholder(
             finalBody,
             whatId,
             lineItemsRestrictStmId
           );
-          finalSubject = applyLineItemsPlaceholder(
+          finalSubject = MassSendEmailBuilder.applyLineItemsPlaceholder(
             finalSubject,
             whatId,
             lineItemsRestrictStmId
           );
-          finalBody = applyAccountAddressPlaceholder(
+          finalBody = MassSendEmailBuilder.applyAccountAddressPlaceholder(
             finalBody,
             whatId,
             true
           );
-          finalSubject = applyAccountAddressPlaceholder(
+          finalSubject = MassSendEmailBuilder.applyAccountAddressPlaceholder(
             finalSubject,
             whatId,
             false
@@ -1395,8 +1163,8 @@ public with sharing class ContractMassSendController {
       rawBody = String.isNotBlank(t.HtmlValue) ? t.HtmlValue : t.Body;
     }
 
-    rawBody = prepareForRenderEmailTemplate(rawBody, whoId);
-    rawSubject = prepareForRenderEmailTemplate(rawSubject, whoId);
+    rawBody = MassSendEmailBuilder.prepareForRenderEmailTemplate(rawBody, whoId);
+    rawSubject = MassSendEmailBuilder.prepareForRenderEmailTemplate(rawSubject, whoId);
 
     try {
       List<String> bodiesToRender = new List<String>{ rawBody };
@@ -1433,29 +1201,29 @@ public with sharing class ContractMassSendController {
       finalSubject = rawSubject;
 
       if (finalBody != null) {
-        finalBody = softenCaseMergeFailures(finalBody);
+        finalBody = MassSendEmailBuilder.softenCaseMergeFailures(finalBody);
       }
       if (finalSubject != null) {
-        finalSubject = softenCaseMergeFailures(finalSubject);
+        finalSubject = MassSendEmailBuilder.softenCaseMergeFailures(finalSubject);
       }
     }
 
-    finalBody = applyLineItemsPlaceholder(
+    finalBody = MassSendEmailBuilder.applyLineItemsPlaceholder(
       finalBody,
       whatId,
       lineItemsRestrictStmId
     );
-    finalSubject = applyLineItemsPlaceholder(
+    finalSubject = MassSendEmailBuilder.applyLineItemsPlaceholder(
       finalSubject,
       whatId,
       lineItemsRestrictStmId
     );
-    finalBody = applyAccountAddressPlaceholder(
+    finalBody = MassSendEmailBuilder.applyAccountAddressPlaceholder(
       finalBody,
       whatId,
       true
     );
-    finalSubject = applyAccountAddressPlaceholder(
+    finalSubject = MassSendEmailBuilder.applyAccountAddressPlaceholder(
       finalSubject,
       whatId,
       false
@@ -1466,122 +1234,5 @@ public with sharing class ContractMassSendController {
       'body' => finalBody,
       'mergeFieldError' => mergeFieldError
     };
-  }
-
-  /* ---------- Contract Send PDF CC (template-specific) ---------- */
-
-  private static String resolveEmailTemplateDeveloperName(Id emailTemplateId) {
-    if (emailTemplateId == null) {
-      return null;
-    }
-    List<EmailTemplate> templates = [
-      SELECT DeveloperName
-      FROM EmailTemplate
-      WHERE Id = :emailTemplateId
-      LIMIT 1
-    ];
-    return templates.isEmpty() ? null : templates[0].DeveloperName;
-  }
-
-  private static List<String> loadNamedContractSendPdfCcEmails() {
-    Map<String, String> emailByName = new Map<String, String>();
-    for (User userRecord : [
-      SELECT Name, Email
-      FROM User
-      WHERE Name IN :CONTRACT_SEND_PDF_CC_USER_NAMES
-      AND IsActive = true
-    ]) {
-      if (String.isNotBlank(userRecord.Email)) {
-        emailByName.put(userRecord.Name, userRecord.Email);
-      }
-    }
-
-    List<String> emails = new List<String>();
-    for (String userName : CONTRACT_SEND_PDF_CC_USER_NAMES) {
-      if (emailByName.containsKey(userName)) {
-        emails.add(emailByName.get(userName));
-      }
-    }
-    return emails;
-  }
-
-  @TestVisible
-  private static Map<Id, String> resolveRegionalManagerEmailsByAccount(Set<Id> accountIds) {
-    Map<Id, String> accountToRmEmail = new Map<Id, String>();
-    if (accountIds == null || accountIds.isEmpty()) {
-      return accountToRmEmail;
-    }
-
-    for (Contract_Bid__c bid : [
-      SELECT Customer__c, Lead_Owner__r.Email, CreatedDate
-      FROM Contract_Bid__c
-      WHERE Customer__c IN :accountIds
-      AND Lead_Owner__c != NULL
-      AND Lead_Owner__r.IsActive = true
-      AND Lead_Owner__r.Email != NULL
-      ORDER BY CreatedDate DESC
-    ]) {
-      if (!accountToRmEmail.containsKey(bid.Customer__c)) {
-        accountToRmEmail.put(bid.Customer__c, bid.Lead_Owner__r.Email);
-      }
-    }
-    return accountToRmEmail;
-  }
-
-  private static void applyContractSendPdfCcAddresses(
-    Messaging.SingleEmailMessage mail,
-    String templateDeveloperName,
-    String toEmail,
-    String regionalManagerEmail,
-    List<String> namedCcEmails
-  ) {
-    if (mail == null || !CONTRACT_SEND_PDF_TEMPLATE_DEVELOPER_NAMES.contains(templateDeveloperName)) {
-      return;
-    }
-    List<String> ccEmails = buildContractSendPdfCcAddresses(
-      toEmail,
-      regionalManagerEmail,
-      namedCcEmails
-    );
-    if (!ccEmails.isEmpty()) {
-      mail.setCcAddresses(ccEmails);
-    }
-  }
-
-  @TestVisible
-  private static List<String> buildContractSendPdfCcAddresses(
-    String toEmail,
-    String regionalManagerEmail,
-    List<String> namedCcEmails
-  ) {
-    Set<String> seen = new Set<String>();
-    List<String> ccEmails = new List<String>();
-    String toEmailKey = String.isBlank(toEmail) ? null : toEmail.trim().toLowerCase();
-
-    addCcEmail(ccEmails, seen, toEmailKey, regionalManagerEmail);
-    if (namedCcEmails != null) {
-      for (String namedEmail : namedCcEmails) {
-        addCcEmail(ccEmails, seen, toEmailKey, namedEmail);
-      }
-    }
-    return ccEmails;
-  }
-
-  private static void addCcEmail(
-    List<String> ccEmails,
-    Set<String> seen,
-    String toEmailKey,
-    String emailValue
-  ) {
-    if (String.isBlank(emailValue)) {
-      return;
-    }
-    String trimmed = emailValue.trim();
-    String key = trimmed.toLowerCase();
-    if (key == toEmailKey || seen.contains(key)) {
-      return;
-    }
-    seen.add(key);
-    ccEmails.add(trimmed);
   }
 }
