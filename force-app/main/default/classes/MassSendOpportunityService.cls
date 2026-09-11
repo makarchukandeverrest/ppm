@@ -7,6 +7,14 @@ public with sharing class MassSendOpportunityService {
     List<Id> inputIds,
     ContractMassSendController.InitResponse res
   ) {
+    return buildInitData(inputIds, res, null);
+  }
+
+  public static ContractMassSendController.InitResponse buildInitData(
+    List<Id> inputIds,
+    ContractMassSendController.InitResponse res,
+    ContractMassSendController.InitFilters filters
+  ) {
     Map<Id, Opportunity> oppById = new Map<Id, Opportunity>(
       [
         SELECT
@@ -114,6 +122,53 @@ public with sharing class MassSendOpportunityService {
 
     res.templates = ContractMassSendController.loadPremierPoolTemplatesForUi();
     res.recentLogs = new List<ContractMassSendController.LogRowDto>();
+
+    if (filters != null) {
+      Id regionalManagerFilter = String.isNotBlank(filters.regionalManagerId)
+        ? (Id) filters.regionalManagerId
+        : null;
+      String nameTerm = String.isNotBlank(filters.customerName)
+        ? filters.customerName.trim().toLowerCase()
+        : null;
+      String year = String.isNotBlank(filters.contractYear)
+        ? filters.contractYear.trim()
+        : null;
+      Boolean requireContracts = filters.requireContracts == true;
+
+      List<ContractMassSendController.CustomerDto> filtered = new List<ContractMassSendController.CustomerDto>();
+      for (ContractMassSendController.CustomerDto dto : res.customers) {
+        if (
+          regionalManagerFilter != null &&
+          dto.regionalManagerId != regionalManagerFilter
+        ) {
+          continue;
+        }
+        if (nameTerm != null) {
+          String hay =
+            (dto.customerName != null ? dto.customerName : '') +
+            ' ' +
+            (dto.accountName != null ? dto.accountName : '');
+          if (!hay.toLowerCase().contains(nameTerm)) {
+            continue;
+          }
+        }
+        if (year != null) {
+          List<ContractMassSendController.ContractDto> yearContracts = new List<ContractMassSendController.ContractDto>();
+          for (ContractMassSendController.ContractDto c : dto.contracts) {
+            if (c.title != null && c.title.contains(year)) {
+              yearContracts.add(c);
+            }
+          }
+          dto.contracts = yearContracts;
+        }
+        if (requireContracts && dto.contracts.isEmpty()) {
+          continue;
+        }
+        filtered.add(dto);
+      }
+      res.customers = filtered;
+    }
+
     return res;
   }
 }
