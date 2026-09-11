@@ -56,8 +56,115 @@
           </template>
         </div>
 
+        <!-- Same filters as Send Contract Bid (Send PDF + Send Emails) -->
+        <template if:true={showContractFilters}>
+          <div class="slds-m-around_medium filter-section">
+            <h3 class="slds-text-heading_small slds-m-bottom_small">
+              <lightning-icon
+                icon-name="utility:filterList"
+                size="x-small"
+                class="slds-m-right_x-small"
+              ></lightning-icon>
+              Filter Contracts
+            </h3>
+            <div class="slds-grid slds-gutters slds-wrap">
+              <div
+                class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 slds-m-bottom_small"
+              >
+                <lightning-combobox
+                  name="regionalManager"
+                  label="Regional Manager"
+                  value={selectedRegionalManager}
+                  options={regionalManagerOptions}
+                  onchange={handleRegionalManagerChange}
+                  placeholder="Select Regional Manager"
+                >
+                </lightning-combobox>
+              </div>
+              <div
+                class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 slds-m-bottom_small"
+              >
+                <lightning-combobox
+                  name="managementCompany"
+                  label="Management Company"
+                  value={selectedManagementCompany}
+                  options={managementCompanyOptions}
+                  onchange={handleManagementCompanyChange}
+                  placeholder="Select Management Company"
+                >
+                </lightning-combobox>
+              </div>
+              <div
+                class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 slds-m-bottom_small"
+              >
+                <lightning-input
+                  type="text"
+                  name="customerName"
+                  label="Customer Name"
+                  value={customerNameFilter}
+                  onchange={handleCustomerNameChange}
+                  placeholder="Search by customer name..."
+                >
+                </lightning-input>
+              </div>
+              <div
+                class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 slds-m-bottom_small"
+              >
+                <lightning-input
+                  type="text"
+                  name="contractYear"
+                  label="Contract Year"
+                  value={contractYearFilter}
+                  onchange={handleContractYearChange}
+                  maxlength="4"
+                  placeholder="e.g. 2026"
+                  field-level-help="Show contract files whose title contains this year"
+                >
+                </lightning-input>
+              </div>
+            </div>
+            <div class="slds-m-top_small">
+              <lightning-button
+                variant="neutral"
+                label="Clear Filters"
+                onclick={clearFilters}
+                icon-name="utility:clear"
+                class="slds-m-right_small"
+                disabled={hasNoActiveFilters}
+              >
+              </lightning-button>
+            </div>
+          </div>
+        </template>
+
         <!-- Customers list (shared for both modes) -->
         <div class="slds-p-around_medium">
+          <template if:true={isUpdating}>
+            <div class="slds-is-relative" style="min-height: 3rem">
+              <lightning-spinner
+                alternative-text="Loading"
+                size="small"
+              ></lightning-spinner>
+            </div>
+          </template>
+
+          <template if:true={showNoResultsWithFilters}>
+            <div
+              class="slds-m-around_medium slds-box slds-theme_shade slds-text-align_center"
+            >
+              <lightning-icon
+                icon-name="utility:info"
+                alternative-text="Info"
+                size="small"
+                class="slds-m-right_x-small"
+              ></lightning-icon>
+              <span class="slds-text-color_weak">
+                No contracts match the selected filters. Try adjusting your
+                filter criteria.
+              </span>
+            </div>
+          </template>
+
           <template if:true={customers.length}>
             <div class="slds-text-title_bold slds-m-bottom_small">
               Selected Customers ({customers.length})
