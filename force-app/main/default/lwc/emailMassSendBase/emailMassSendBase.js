@@ -4,7 +4,6 @@ import { CurrentPageReference, NavigationMixin } from "lightning/navigation";
 import { CloseActionScreenEvent } from "lightning/actions";
 
 import getInitData from "@salesforce/apex/ContractMassSendController.getInitData";
-import getInitDataFiltered from "@salesforce/apex/ContractMassSendController.getInitDataFiltered";
 import sendContracts from "@salesforce/apex/ContractMassSendController.sendContracts";
 import getTemplateDetails from "@salesforce/apex/ContractMassSendController.getTemplateDetails";
 import previewEmail from "@salesforce/apex/ContractMassSendController.previewEmail";
@@ -320,7 +319,8 @@ export default class EmailMassSendBase extends NavigationMixin(
 
   get showContractFilters() {
     const raw = String(this.inputIds[0] || this.recordId || "");
-    return !raw.startsWith("0WO");
+    // Filters are only for Account/Bid (contracts mode); not for Opportunity or Work Order.
+    return !raw.startsWith("0WO") && !raw.startsWith("006");
   }
 
   _isOpportunityContext() {
@@ -401,20 +401,10 @@ export default class EmailMassSendBase extends NavigationMixin(
             })
           : Promise.resolve([]);
 
-      const initDataPromise = areOpportunities
-        ? getInitDataFiltered({
-            inputIds: this.inputIds,
-            regionalManagerId: this.selectedRegionalManager || null,
-            customerName: this.customerNameFilter || null,
-            contractYear: this.contractYearFilter || null,
-            requireContracts: this.isContractsMode
-          })
-        : getInitData({
-            inputIds: this.inputIds
-          });
-
       const [res, accountsWithFiles] = await Promise.all([
-        initDataPromise,
+        getInitData({
+          inputIds: this.inputIds
+        }),
         filesPromise
       ]);
 

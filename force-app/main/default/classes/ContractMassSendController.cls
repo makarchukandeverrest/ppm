@@ -124,18 +124,6 @@ public with sharing class ContractMassSendController {
     public List<LogRowDto> recentLogs;
   }
 
-  /** Server-side filter bag used by getInitDataFiltered for Proposal rows. */
-  public class InitFilters {
-    @AuraEnabled
-    public String regionalManagerId;
-    @AuraEnabled
-    public String customerName;
-    @AuraEnabled
-    public String contractYear;
-    @AuraEnabled
-    public Boolean requireContracts;
-  }
-
   /* =========================================================
        INIT (Record Page + List View)
     ========================================================= */
@@ -275,7 +263,7 @@ public with sharing class ContractMassSendController {
       return res;
     }
     else if (sobjectType == 'Opportunity') {
-      return MassSendOpportunityService.buildInitData(inputIds, res, null);
+      return MassSendOpportunityService.buildInitData(inputIds, res);
     }
     else {
       // Unsupported type
@@ -398,47 +386,6 @@ public with sharing class ContractMassSendController {
     res.recentLogs = new List<LogRowDto>();
 
     return res;
-  }
-
-  /**
-   * Server-side filtered init for Proposal (Opportunity) mass send.
-   * Filters by Regional Manager, customer/Account name, and contract year in PDF title.
-   */
-  @AuraEnabled(cacheable=true)
-  public static InitResponse getInitDataFiltered(
-    List<Id> inputIds,
-    String regionalManagerId,
-    String customerName,
-    String contractYear,
-    Boolean requireContracts
-  ) {
-    InitResponse res = new InitResponse();
-
-    if (!hasPermission()) {
-      res.hasAccess = false;
-      res.accessMessage = 'Missing permission: Mass_Contract_Send';
-      return res;
-    }
-    res.hasAccess = true;
-
-    if (inputIds == null) {
-      inputIds = new List<Id>();
-    }
-
-    if (inputIds.isEmpty()) {
-      res.customers = new List<CustomerDto>();
-      res.templates = new List<TemplateDto>();
-      res.recentLogs = new List<LogRowDto>();
-      return res;
-    }
-
-    InitFilters filters = new InitFilters();
-    filters.regionalManagerId = regionalManagerId;
-    filters.customerName = customerName;
-    filters.contractYear = contractYear;
-    filters.requireContracts = requireContracts;
-
-    return MassSendOpportunityService.buildInitData(inputIds, res, filters);
   }
 
   private static final String PREMIER_POOL_TEMPLATE_FOLDER = 'Premier Pool Templates';
