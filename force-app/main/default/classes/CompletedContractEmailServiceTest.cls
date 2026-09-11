@@ -133,7 +133,7 @@ private class CompletedContractEmailServiceTest {
     }
 
     @IsTest
-    static void handleCompletedProposalFiles_SendsEmailToAccountingAndAdrian() {
+    static void handleCompletedProposalFiles_SendsEmailToProposalRecipients() {
         Account acc = [SELECT Id FROM Account WHERE Name = 'Signed Copy Account' LIMIT 1];
         Opportunity proposal = new Opportunity(
             Name = 'Signed Copy Proposal',
@@ -170,7 +170,7 @@ private class CompletedContractEmailServiceTest {
         System.assertEquals(
             new Set<String>(expectedProposalEmails),
             new Set<String>(DocuSignCompletedContractEmailService.lastRecipientEmails),
-            'Proposal signed copy should go only to Accounting and Adrian metadata recipients'
+            'Proposal signed copy should go only to Proposal Applies To recipients'
         );
     }
 
@@ -219,6 +219,38 @@ private class CompletedContractEmailServiceTest {
         Test.stopTest();
 
         System.assertEquals(1, Limits.getEmailInvocations(), 'Queueable job should send the signed copy');
+    }
+
+    @IsTest
+    static void signedContractRecipientResolver_SplitsContractAndProposalLists() {
+        SignedContractRecipientResolver resolver = new SignedContractRecipientResolver();
+        List<String> contractEmails = resolver.resolveToAddresses();
+        List<String> proposalEmails = resolver.resolveProposalToAddresses();
+
+        System.assert(
+            contractEmails.contains('office@premierswim.com'),
+            'Office should remain on Contract Bid emails'
+        );
+        System.assert(
+            proposalEmails.contains('office@premierswim.com'),
+            'Office should be on Proposal emails'
+        );
+        System.assert(
+            proposalEmails.contains('angelly@premierswim.com'),
+            'Angelley should receive Proposal emails'
+        );
+        System.assert(
+            !contractEmails.contains('angelly@premierswim.com'),
+            'Angelley should not receive Contract Bid emails'
+        );
+        System.assert(
+            !proposalEmails.contains('jessica@premierswim.com'),
+            'Jessica should not receive Proposal emails'
+        );
+        System.assert(
+            !proposalEmails.contains('accounting@premierswim.com'),
+            'Accounting should not receive Proposal emails'
+        );
     }
 
     private static void assertContainsEmail(String expectedEmail) {

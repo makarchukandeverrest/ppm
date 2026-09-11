@@ -1,9 +1,9 @@
 public with sharing class SignedContractRecipientResolver {
     @TestVisible
-    private static final List<String> PROPOSAL_RECIPIENT_DEVELOPER_NAMES = new List<String>{
-        'Accounting',
-        'Adrian'
-    };
+    public static final String APPLIES_TO_CONTRACT_BID = 'Contract_Bid';
+    @TestVisible
+    public static final String APPLIES_TO_PROPOSAL = 'Proposal';
+    private static final String APPLIES_TO_BOTH = 'Both';
 
     private final List<Signed_Contract_Recipient__mdt> activeRecipients;
 
@@ -12,9 +12,18 @@ public with sharing class SignedContractRecipientResolver {
     }
 
     public List<String> resolveToAddresses() {
+        return resolveToAddresses(APPLIES_TO_CONTRACT_BID);
+    }
+
+    public List<String> resolveProposalToAddresses() {
+        return resolveToAddresses(APPLIES_TO_PROPOSAL);
+    }
+
+    public List<String> resolveToAddresses(String appliesTo) {
+        String target = String.isBlank(appliesTo) ? APPLIES_TO_CONTRACT_BID : appliesTo;
         Set<String> uniqueEmails = new Set<String>();
         for (Signed_Contract_Recipient__mdt recipient : activeRecipients) {
-            if (String.isBlank(recipient.Email__c)) {
+            if (!appliesToTarget(recipient, target) || String.isBlank(recipient.Email__c)) {
                 continue;
             }
             uniqueEmails.add(recipient.Email__c.trim().toLowerCase());
@@ -22,16 +31,14 @@ public with sharing class SignedContractRecipientResolver {
         return new List<String>(uniqueEmails);
     }
 
-    public List<String> resolveProposalToAddresses() {
-        Set<String> uniqueEmails = new Set<String>();
-        for (String developerName : PROPOSAL_RECIPIENT_DEVELOPER_NAMES) {
-            Signed_Contract_Recipient__mdt recipient = Signed_Contract_Recipient__mdt.getInstance(developerName);
-            if (recipient == null || String.isBlank(recipient.Email__c)) {
-                continue;
-            }
-            uniqueEmails.add(recipient.Email__c.trim().toLowerCase());
+    private static Boolean appliesToTarget(Signed_Contract_Recipient__mdt recipient, String target) {
+        if (String.isBlank(recipient.Applies_To__c) || recipient.Applies_To__c == APPLIES_TO_CONTRACT_BID) {
+            return target == APPLIES_TO_CONTRACT_BID;
         }
-        return new List<String>(uniqueEmails);
+        if (recipient.Applies_To__c == APPLIES_TO_PROPOSAL) {
+            return target == APPLIES_TO_PROPOSAL;
+        }
+        return recipient.Applies_To__c == APPLIES_TO_BOTH;
     }
 
     private static List<Signed_Contract_Recipient__mdt> loadActiveRecipients() {
