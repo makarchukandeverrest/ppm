@@ -14,4 +14,8 @@
         <field>Recipient_Type__c</field>
         <value xsi:type="xsd:string">Email</value>
     </values>
+    <values>
+        <field>Applies_To__c</field>
+        <value xsi:type="xsd:string">Contract_Bid</value>
+    </values>
 </CustomMetadata>
