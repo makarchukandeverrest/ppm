@@ -1,11 +1,16 @@
 <template>
   <lightning-card title="Send Emails" icon-name="standard:email">
     <template if:true={isLoading}>
-      <div class="slds-p-around_medium">
+      <div class="slds-p-around_medium slds-text-align_center">
         <lightning-spinner
           alternative-text="Loading"
           size="small"
         ></lightning-spinner>
+        <template if:true={sendProgressText}>
+          <p class="slds-m-top_medium slds-text-body_regular">
+            {sendProgressText}
+          </p>
+        </template>
       </div>
     </template>
 
@@ -344,6 +349,13 @@
         <div
           class="slds-p-around_medium slds-border_top slds-grid slds-grid_align-end slds-gutters_small"
         >
+          <template if:true={sendError}>
+            <div class="slds-col slds-size_1-of-1 slds-m-bottom_small">
+              <div class="slds-notify slds-notify_alert slds-alert_error" role="alert">
+                <h2>{sendError}</h2>
+              </div>
+            </div>
+          </template>
           <div class="slds-col">
             <lightning-button
               variant="neutral"

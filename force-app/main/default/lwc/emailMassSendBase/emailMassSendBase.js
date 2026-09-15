@@ -31,7 +31,7 @@ export default class EmailMassSendBase extends NavigationMixin(
     return this._selectedRecordIds;
   }
   set selectedRecordIds(value) {
-    this._selectedRecordIds = Array.isArray(value) ? value : [];
+    this._selectedRecordIds = value ? [].concat(value).filter((id) => !!id) : [];
     this.tryInitFromComponentInputs();
   }
 
@@ -47,9 +47,13 @@ export default class EmailMassSendBase extends NavigationMixin(
   selectedTemplateId;
   subject = "";
   body = "";
+  hasEditedGlobalEmail = false;
+  skipNextBodyChange = false;
 
   isLoading = false;
   accessError;
+  sendError;
+  sendProgressText;
 
   // 🔑 Source of truth for Apex
   inputIds = [];
@@ -83,8 +87,11 @@ export default class EmailMassSendBase extends NavigationMixin(
     }
 
     if (pageRef.state?.ids && !this.inputIds.length) {
-      this.inputIds = pageRef.state.ids.split(",");
-      this.loadData();
+      this.inputIds = pageRef.state.ids.split(",").filter((id) => !!id);
+      if (this.inputIds.length) {
+        this.hasLoaded = true;
+        this.loadData();
+      }
       return;
     }
 
@@ -118,7 +125,19 @@ export default class EmailMassSendBase extends NavigationMixin(
   }
 
   tryInitFromComponentInputs() {
-    // Priority 1: customersData (Single String, new approach)
+    if (this.hasLoaded) {
+      return;
+    }
+
+    // Priority 1: selectedRecordIds (list view / Flow collection — no 4k text cap)
+    if (this.selectedRecordIds && this.selectedRecordIds.length) {
+      this.inputIds = [...this.selectedRecordIds];
+      this.hasLoaded = true;
+      this.loadData();
+      return;
+    }
+
+    // Priority 2: customersData (legacy concatenated JSON string)
     if (this.customersData) {
       try {
         const jsonString = `[${this.customersData.replace(/,\s*$/, "")}]`;
@@ -129,6 +148,7 @@ export default class EmailMassSendBase extends NavigationMixin(
           .filter((id) => !!id);
 
         if (this.inputIds.length > 0) {
+          this.hasLoaded = true;
           this.loadData();
         }
       } catch (error) {
@@ -138,7 +158,7 @@ export default class EmailMassSendBase extends NavigationMixin(
       return;
     }
 
-    // Priority 2: flowRecords (Array, legacy)
+    // Priority 3: flowRecords (Array, legacy)
     if (this.flowRecords && this.flowRecords.length > 0) {
       try {
         this.inputIds = this.flowRecords
@@ -149,6 +169,7 @@ export default class EmailMassSendBase extends NavigationMixin(
           .filter((id) => !!id);
 
         if (this.inputIds.length > 0) {
+          this.hasLoaded = true;
           this.loadData();
         }
       } catch (error) {
@@ -158,21 +179,12 @@ export default class EmailMassSendBase extends NavigationMixin(
       return;
     }
 
-    // Priority 3: Direct Record ID (record page / quick action — often set after connect)
+    // Priority 4: Direct Record ID (record page / quick action — often set after connect)
     if (this.recordId) {
-      if (!this.inputIds.length) {
-        this.inputIds = [this.recordId];
-        this.loadData();
-      }
+      this.inputIds = [this.recordId];
+      this.hasLoaded = true;
+      this.loadData();
       return;
-    }
-
-    // Priority 4: Selected Records (List View wrapper)
-    if (this.selectedRecordIds && this.selectedRecordIds.length) {
-      if (!this.inputIds.length) {
-        this.inputIds = [...this.selectedRecordIds];
-        this.loadData();
-      }
     }
   }
 
@@ -290,6 +302,8 @@ export default class EmailMassSendBase extends NavigationMixin(
       });
       this.subject = details.subject;
       this.body = details.body;
+      this.hasEditedGlobalEmail = false;
+      this.skipNextBodyChange = true;
       this.customers = this.customers.map((c) => ({
         ...c,
         emailSubjectOverride: null,
@@ -305,11 +319,18 @@ export default class EmailMassSendBase extends NavigationMixin(
 
   handleSubjectChange(event) {
     this.subject = event.detail.value;
+    this.hasEditedGlobalEmail = true;
     this.applyCustomerDisplayFields();
   }
 
   handleBodyChange(event) {
     this.body = event.detail.value;
+    if (this.skipNextBodyChange) {
+      this.skipNextBodyChange = false;
+      this.applyCustomerDisplayFields();
+      return;
+    }
+    this.hasEditedGlobalEmail = true;
     this.applyCustomerDisplayFields();
   }
 
@@ -471,6 +492,7 @@ export default class EmailMassSendBase extends NavigationMixin(
     ===================================================== */
   async handleSend() {
     this.isLoading = true;
+    this.sendError = undefined;
 
     try {
       const payload = [];
@@ -538,23 +560,38 @@ export default class EmailMassSendBase extends NavigationMixin(
         }
       }
 
-      const res = await sendContracts({
-        inputIds: this.inputIds,
-        emailTemplateId: this.selectedTemplateId,
-        requestJson: JSON.stringify(payload),
-        subject: this.subject,
-        body: this.body
-      });
+      // Template merge during sendEmail runs SOQL inside Email_Platform.
+      // A 10-email batch hit 101 queries around recipient 5; keep this tiny.
+      const BATCH_SIZE = 2;
+      const allLogs = [];
+      for (let i = 0; i < payload.length; i += BATCH_SIZE) {
+        const batch = payload.slice(i, i + BATCH_SIZE);
+        const from = i + 1;
+        const to = Math.min(i + BATCH_SIZE, payload.length);
+        this.sendProgressText = `Sending ${from}–${to} of ${payload.length}...`;
 
-      this.sendLog = res.logs || [];
+        const res = await sendContracts({
+          inputIds: this.inputIds,
+          emailTemplateId: this.selectedTemplateId,
+          requestJson: JSON.stringify(batch),
+          subject: this.hasEditedGlobalEmail ? this.subject : null,
+          body: this.hasEditedGlobalEmail ? this.body : null
+        });
+        allLogs.push(...(res.logs || []));
+        this.sendLog = [...allLogs];
+      }
+
+      this.sendProgressText = undefined;
       this.toast(
         "Sent",
-        "Emails were processed. See Send History for details.",
+        `${allLogs.length} emails were processed. See Send History for details.`,
         "success"
       );
     } catch (e) {
-      this.toast("Error", this.normalizeError(e), "error");
+      this.sendError = this.normalizeError(e);
+      this.toast("Error", this.sendError, "error");
     } finally {
+      this.sendProgressText = undefined;
       this.isLoading = false;
     }
   }

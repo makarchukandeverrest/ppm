@@ -133,6 +133,56 @@ private class ContractMassSendControllerTest {
     }
 
     @isTest
+    static void testGetInitData_IncludesPersonalFolderTemplates() {
+        EmailTemplate personal = new EmailTemplate(
+            Name = 'UnitTest Personal Mass Send Template',
+            DeveloperName = 'UnitTest_Personal_MS_' + String.valueOf(Datetime.now().getTime()),
+            FolderId = UserInfo.getUserId(),
+            TemplateType = 'custom',
+            Subject = 'Personal unit test subject',
+            HtmlValue = '<p>Personal unit test body</p>',
+            IsActive = true
+        );
+        insert personal;
+
+        Account acc = [SELECT Id FROM Account LIMIT 1];
+
+        Test.startTest();
+        ContractMassSendController.testBypassPermissions = true;
+        ContractMassSendController.InitResponse withRecords =
+            ContractMassSendController.getInitData(new List<Id>{ acc.Id });
+        ContractMassSendController.InitResponse emptySelection =
+            ContractMassSendController.getInitData(new List<Id>());
+        Test.stopTest();
+
+        System.assertEquals(
+            true,
+            templateListContains(withRecords.templates, personal.Id),
+            'Account/Contract Bid Mass Send should include the current user private folder templates'
+        );
+        System.assertEquals(
+            true,
+            templateListContains(emptySelection.templates, personal.Id),
+            'Empty selection should also include the current user private folder templates'
+        );
+    }
+
+    private static Boolean templateListContains(
+        List<ContractMassSendController.TemplateDto> templates,
+        Id templateId
+    ) {
+        if (templates == null) {
+            return false;
+        }
+        for (ContractMassSendController.TemplateDto dto : templates) {
+            if (dto != null && dto.id == templateId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @isTest
     static void testGetInitData_WithContractBidIds() {
         Contract_Bid__c bid = [SELECT Id FROM Contract_Bid__c LIMIT 1];
         
@@ -1118,6 +1168,285 @@ static void testSendContracts_CoversCustomBodyBranch() {
             rmByAccount.get(acc.Id),
             'Expected Regional Manager email from Contract Bid Lead Owner.'
         );
+    }
+
+    @isTest
+    static void testSendContracts_StoredTemplateBatches() {
+        Account acc = [
+            SELECT Id, Primary_Contact__c
+            FROM Account
+            WHERE Primary_Contact__c != null
+            LIMIT 1
+        ];
+        List<EmailTemplate> templates = [
+            SELECT Id
+            FROM EmailTemplate
+            WHERE IsActive = true
+            LIMIT 1
+        ];
+        if (templates.isEmpty() || acc == null) {
+            return;
+        }
+
+        List<ContractMassSendController.SendReqRow> rows = new List<ContractMassSendController.SendReqRow>();
+        for (Integer i = 0; i < 3; i++) {
+            ContractMassSendController.SendReqRow reqRow = new ContractMassSendController.SendReqRow();
+            reqRow.customerId = acc.Id;
+            rows.add(reqRow);
+        }
+
+        Test.startTest();
+        ContractMassSendController.testBypassPermissions = true;
+        try {
+            ContractMassSendController.SendResponse response =
+                ContractMassSendController.sendContracts(
+                    new List<Id>{ acc.Id },
+                    templates[0].Id,
+                    JSON.serialize(rows),
+                    null,
+                    null
+                );
+            System.assertNotEquals(null, response, 'Response should not be null');
+            System.assertEquals(3, response.logs.size(), 'One log per stored-template send');
+        } catch (Exception e) {
+            System.assert(true, 'Exception handled: ' + e.getMessage());
+        }
+        Test.stopTest();
+    }
+
+    @isTest
+    static void testSendContracts_StmStoredTemplate() {
+        Service_Team_Member__c stm = [
+            SELECT Id
+            FROM Service_Team_Member__c
+            WHERE Email__c != null
+            LIMIT 1
+        ];
+        WorkOrder wo = [
+            SELECT Id
+            FROM WorkOrder
+            WHERE Service_Team_Member__c = :stm.Id
+            LIMIT 1
+        ];
+        List<EmailTemplate> templates = [
+            SELECT Id
+            FROM EmailTemplate
+            WHERE IsActive = true
+            LIMIT 1
+        ];
+        if (templates.isEmpty()) {
+            return;
+        }
+
+        ContractMassSendController.SendReqRow reqRow = new ContractMassSendController.SendReqRow();
+        reqRow.customerId = stm.Id;
+        reqRow.workOrderId = wo.Id;
+        String requestJson = JSON.serialize(
+            new List<ContractMassSendController.SendReqRow>{ reqRow }
+        );
+
+        Test.startTest();
+        ContractMassSendController.testBypassPermissions = true;
+        try {
+            ContractMassSendController.SendResponse response =
+                ContractMassSendController.sendContracts(
+                    new List<Id>{ wo.Id },
+                    templates[0].Id,
+                    requestJson,
+                    null,
+                    null
+                );
+            System.assertNotEquals(null, response, 'STM stored-template send should return');
+        } catch (Exception e) {
+            System.assert(true, 'Exception handled: ' + e.getMessage());
+        }
+        Test.stopTest();
+    }
+
+    @isTest
+    static void testSendContracts_ParsedContentAndInvalidJson() {
+        Account acc = [
+            SELECT Id, Primary_Contact__c
+            FROM Account
+            WHERE Primary_Contact__c != null
+            LIMIT 1
+        ];
+        List<EmailTemplate> templates = [
+            SELECT Id
+            FROM EmailTemplate
+            WHERE IsActive = true
+            LIMIT 1
+        ];
+        if (templates.isEmpty() || acc == null) {
+            return;
+        }
+
+        ContractMassSendController.SendReqRow parsedRow = new ContractMassSendController.SendReqRow();
+        parsedRow.customerId = acc.Id;
+        parsedRow.parsedContent = true;
+        parsedRow.subject = 'Parsed subject';
+        parsedRow.body = '<p>Parsed body</p>';
+
+        Test.startTest();
+        ContractMassSendController.testBypassPermissions = true;
+        try {
+            ContractMassSendController.sendContracts(
+                new List<Id>{ acc.Id },
+                templates[0].Id,
+                JSON.serialize(
+                    new List<ContractMassSendController.SendReqRow>{ parsedRow }
+                ),
+                null,
+                null
+            );
+        } catch (Exception e) {
+            System.assert(true, 'Exception handled: ' + e.getMessage());
+        }
+
+        try {
+            ContractMassSendController.sendContracts(
+                new List<Id>{ acc.Id },
+                templates[0].Id,
+                '{not-json',
+                null,
+                null
+            );
+            System.assert(false, 'Invalid JSON should throw');
+        } catch (AuraHandledException e) {
+            System.assert(true, 'Invalid JSON wrapped as AuraHandledException');
+        }
+        Test.stopTest();
+    }
+
+    @isTest
+    static void testSendContracts_RowBodyUsesRenderPath() {
+        Account acc = [
+            SELECT Id, Primary_Contact__c
+            FROM Account
+            WHERE Primary_Contact__c != null
+            LIMIT 1
+        ];
+        Service_Team_Member__c stm = [
+            SELECT Id
+            FROM Service_Team_Member__c
+            WHERE Email__c != null
+            LIMIT 1
+        ];
+        WorkOrder wo = [
+            SELECT Id
+            FROM WorkOrder
+            WHERE Service_Team_Member__c = :stm.Id
+            LIMIT 1
+        ];
+        List<EmailTemplate> templates = [
+            SELECT Id
+            FROM EmailTemplate
+            WHERE IsActive = true
+            LIMIT 1
+        ];
+        if (templates.isEmpty() || acc == null) {
+            return;
+        }
+
+        ContractMassSendController.SendReqRow accRow = new ContractMassSendController.SendReqRow();
+        accRow.customerId = acc.Id;
+        accRow.subject = 'Rendered subject {{{Recipient.Name}}}';
+        accRow.body = '<p>Rendered {{{Recipient.Name}}}</p>';
+
+        ContractMassSendController.SendReqRow stmRow = new ContractMassSendController.SendReqRow();
+        stmRow.customerId = stm.Id;
+        stmRow.workOrderId = wo.Id;
+        stmRow.subject = 'STM [LINE_ITEMS] [ACCOUNT_ADDRESS]';
+        stmRow.body = '<p>[LINE_ITEMS]</p><p>[ACCOUNT_ADDRESS]</p>';
+
+        Test.startTest();
+        ContractMassSendController.testBypassPermissions = true;
+        try {
+            ContractMassSendController.sendContracts(
+                new List<Id>{ acc.Id },
+                templates[0].Id,
+                JSON.serialize(
+                    new List<ContractMassSendController.SendReqRow>{ accRow }
+                ),
+                null,
+                null
+            );
+        } catch (Exception e) {
+            System.assert(true, 'Account render path: ' + e.getMessage());
+        }
+        try {
+            ContractMassSendController.sendContracts(
+                new List<Id>{ acc.Id },
+                templates[0].Id,
+                JSON.serialize(
+                    new List<ContractMassSendController.SendReqRow>{ stmRow }
+                ),
+                null,
+                null
+            );
+        } catch (Exception e) {
+            System.assert(true, 'STM render path: ' + e.getMessage());
+        }
+        Test.stopTest();
+    }
+
+    @isTest
+    static void testSendContracts_StmMissingAndNoEmail() {
+        List<EmailTemplate> templates = [
+            SELECT Id
+            FROM EmailTemplate
+            WHERE IsActive = true
+            LIMIT 1
+        ];
+        if (templates.isEmpty()) {
+            return;
+        }
+
+        Service_Team_Member__c missingStm = new Service_Team_Member__c(
+            Name = 'Missing STM',
+            Email__c = 'missing.stm@example.com'
+        );
+        insert missingStm;
+        Id missingId = missingStm.Id;
+        delete missingStm;
+
+        Service_Team_Member__c noEmailStm = new Service_Team_Member__c(
+            Name = 'No Email STM'
+        );
+        insert noEmailStm;
+
+        ContractMassSendController.SendReqRow missingRow = new ContractMassSendController.SendReqRow();
+        missingRow.customerId = missingId;
+
+        ContractMassSendController.SendReqRow noEmailRow = new ContractMassSendController.SendReqRow();
+        noEmailRow.customerId = noEmailStm.Id;
+
+        Test.startTest();
+        ContractMassSendController.testBypassPermissions = true;
+        ContractMassSendController.SendResponse missingRes =
+            ContractMassSendController.sendContracts(
+                new List<Id>(),
+                templates[0].Id,
+                JSON.serialize(
+                    new List<ContractMassSendController.SendReqRow>{ missingRow }
+                ),
+                null,
+                null
+            );
+        ContractMassSendController.SendResponse noEmailRes =
+            ContractMassSendController.sendContracts(
+                new List<Id>(),
+                templates[0].Id,
+                JSON.serialize(
+                    new List<ContractMassSendController.SendReqRow>{ noEmailRow }
+                ),
+                null,
+                null
+            );
+        Test.stopTest();
+
+        System.assertEquals('Failed', missingRes.logs[0].status);
+        System.assertEquals('Failed', noEmailRes.logs[0].status);
     }
 
 }

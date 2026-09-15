@@ -11,10 +11,17 @@
     <targetConfigs>
         <targetConfig targets="lightning__FlowScreen">
             <property
+        name="selectedRecordIds"
+        type="String[]"
+        label="Selected Record IDs"
+        description="Ids selected on the list view (Contract Bids or Accounts). Prefer this over Customers Data."
+        role="inputOnly"
+      />
+            <property
         name="customersData"
         type="String"
         label="Customers Data"
-        description="Concatenated JSON objects"
+        description="Concatenated JSON objects (legacy; Flow text vars cap at 4000 characters)"
         role="inputOnly"
       />
             <property

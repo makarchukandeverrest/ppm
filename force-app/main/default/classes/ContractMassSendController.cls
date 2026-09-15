@@ -28,9 +28,7 @@ public with sharing class ContractMassSendController {
   private static Boolean testBypassPermissions = false;
 
   private static Boolean hasPermission() {
-    // TEMPORARY: Bypass permission check for debugging
-    return true;
-    // Original: return testBypassPermissions || FeatureManagement.checkPermission('Mass_Contract_Send');
+    return testBypassPermissions || FeatureManagement.checkPermission('Mass_Contract_Send');
   }
 
   private static Boolean isServiceTeamMemberId(Id recordId) {
@@ -71,14 +69,37 @@ public with sharing class ContractMassSendController {
     return false;
   }
 
+  private static OrgWideEmailAddress cachedWorkOrderOwea;
+  private static Boolean cachedWorkOrderOweaQueried = false;
+  private static OrgWideEmailAddress cachedUserOwea;
+  private static String cachedUserOweaEmail;
+
   private static OrgWideEmailAddress getWorkOrderOrgWideEmailAddress() {
-    List<OrgWideEmailAddress> rows = [
-      SELECT Id, DisplayName, Address
-      FROM OrgWideEmailAddress
-      WHERE Address = :WORK_ORDER_ORG_WIDE_EMAIL_ADDRESS AND IsVerified = TRUE
-      LIMIT 1
-    ];
-    return rows.isEmpty() ? null : rows[0];
+    if (!cachedWorkOrderOweaQueried) {
+      List<OrgWideEmailAddress> rows = [
+        SELECT Id, DisplayName, Address
+        FROM OrgWideEmailAddress
+        WHERE Address = :WORK_ORDER_ORG_WIDE_EMAIL_ADDRESS AND IsVerified = TRUE
+        LIMIT 1
+      ];
+      cachedWorkOrderOwea = rows.isEmpty() ? null : rows[0];
+      cachedWorkOrderOweaQueried = true;
+    }
+    return cachedWorkOrderOwea;
+  }
+
+  private static OrgWideEmailAddress getUserOrgWideEmailAddress(String userEmail) {
+    if (cachedUserOweaEmail != userEmail) {
+      List<OrgWideEmailAddress> oweaList = [
+        SELECT Id, Address
+        FROM OrgWideEmailAddress
+        WHERE Address = :userEmail AND IsVerified = TRUE
+        LIMIT 1
+      ];
+      cachedUserOwea = oweaList.isEmpty() ? null : oweaList[0];
+      cachedUserOweaEmail = userEmail;
+    }
+    return cachedUserOwea;
   }
 
   /**
@@ -100,20 +121,25 @@ public with sharing class ContractMassSendController {
       }
     }
 
-    List<OrgWideEmailAddress> oweaList = [
-      SELECT Id, Address
-      FROM OrgWideEmailAddress
-      WHERE Address = :currentUser.Email AND IsVerified = TRUE
-      LIMIT 1
-    ];
-    if (!oweaList.isEmpty()) {
-      mail.setOrgWideEmailAddressId(oweaList[0].Id);
+    OrgWideEmailAddress userOwea = getUserOrgWideEmailAddress(currentUser.Email);
+    if (userOwea != null) {
+      mail.setOrgWideEmailAddressId(userOwea.Id);
       mail.setReplyTo(currentUser.Email);
       return;
     }
 
     mail.setReplyTo(currentUser.Email);
     mail.setSenderDisplayName(currentUser.Email);
+  }
+
+  private static AuraHandledException auraError(String message) {
+    AuraHandledException ex = new AuraHandledException(message);
+    ex.setMessage(message);
+    return ex;
+  }
+
+  private static Boolean shouldUseStoredTemplate(SendReqRow row) {
+    return row != null && row.parsedContent != true && row.body == null && row.subject == null;
   }
 
   /**
@@ -506,16 +532,7 @@ public with sharing class ContractMassSendController {
       res.customers = new List<CustomerDto>();
 
       // Still load templates so the user can see the UI
-      res.templates = new List<TemplateDto>();
-      for (EmailTemplate t : [
-        SELECT Id, Name
-        FROM EmailTemplate
-        WHERE IsActive = TRUE
-        ORDER BY Name
-        LIMIT 200
-      ]) {
-        res.templates.add(new TemplateDto(t.Id, t.Name));
-      }
+      res.templates = loadMassSendEmailTemplatesForUi();
       res.recentLogs = new List<LogRowDto>();
       return res;
     }
@@ -734,8 +751,8 @@ public with sharing class ContractMassSendController {
       res.customers.add(dto);
     }
 
-    /* ---------- Email Templates (Account / Contract Bid — Premier Pool folder only) ---------- */
-    res.templates = loadPremierPoolTemplatesForUi();
+    /* ---------- Email Templates (shared Premier Pool folder + current user's private folder) ---------- */
+    res.templates = loadMassSendEmailTemplatesForUi();
 
     res.recentLogs = new List<LogRowDto>();
 
@@ -744,16 +761,23 @@ public with sharing class ContractMassSendController {
 
   private static final String PREMIER_POOL_TEMPLATE_FOLDER = 'Premier Pool Templates';
 
-  /** Classic HTML/custom/VF templates in the Premier Pool Templates folder only. */
-  private static List<TemplateDto> loadPremierPoolTemplatesForUi() {
+  /**
+   * Classic HTML/custom/VF templates from Premier Pool Templates and the running user's
+   * private folder (EmailTemplate.FolderId is the User Id for personal templates).
+   */
+  private static List<TemplateDto> loadMassSendEmailTemplatesForUi() {
     List<TemplateDto> out = new List<TemplateDto>();
+    Id personalFolderId = UserInfo.getUserId();
     for (EmailTemplate t : [
       SELECT Id, Name
       FROM EmailTemplate
       WHERE
         IsActive = TRUE
         AND TemplateType IN ('custom', 'html', 'visualforce')
-        AND Folder.Name = :PREMIER_POOL_TEMPLATE_FOLDER
+        AND (
+          Folder.Name = :PREMIER_POOL_TEMPLATE_FOLDER
+          OR FolderId = :personalFolderId
+        )
       ORDER BY Name
       LIMIT 200
     ]) {
@@ -841,6 +865,28 @@ public with sharing class ContractMassSendController {
       throw new AuraHandledException('Nothing to send.');
     }
 
+    try {
+      return sendContractsInternal(
+        inputIds,
+        emailTemplateId,
+        requestJson,
+        subject,
+        body
+      );
+    } catch (AuraHandledException e) {
+      throw e;
+    } catch (Exception e) {
+      throw auraError(e.getMessage());
+    }
+  }
+
+  private static SendResponse sendContractsInternal(
+    List<Id> inputIds,
+    Id emailTemplateId,
+    String requestJson,
+    String subject,
+    String body
+  ) {
     List<SendReqRow> rows = (List<SendReqRow>) JSON.deserialize(
       requestJson,
       List<SendReqRow>.class
@@ -979,6 +1025,10 @@ public with sharing class ContractMassSendController {
             String.isNotBlank(rowSubject) ? rowSubject : ''
           );
           mail.setHtmlBody(rowBody);
+        } else if (emailTemplateId != null && shouldUseStoredTemplate(r)) {
+          mail.setTargetObjectId(whoForMerge);
+          mail.setTreatTargetObjectAsRecipient(false);
+          mail.setTemplateId(emailTemplateId);
         } else if (emailTemplateId != null) {
           Messaging.SingleEmailMessage rendered = Messaging.renderStoredEmailTemplate(
             emailTemplateId,
@@ -1025,7 +1075,11 @@ public with sharing class ContractMassSendController {
           throw new AuraHandledException('Email template is required.');
         }
 
-        if (r.parsedContent != true && isWorkOrderId(mergeWhatId)) {
+        if (
+          r.parsedContent != true &&
+          isWorkOrderId(mergeWhatId) &&
+          !shouldUseStoredTemplate(r)
+        ) {
           mail.setHtmlBody(
             applyAccountAddressPlaceholder(
               applyLineItemsPlaceholder(
@@ -1098,13 +1152,13 @@ public with sharing class ContractMassSendController {
       }
       mail.setSaveAsActivity(true);
 
-      // USE SALESFORCE NATIVE TEMPLATE RENDERING
-      // renderStoredEmailTemplate properly merges ALL fields
       if (r.parsedContent == true && String.isNotBlank(rowBody)) {
         mail.setSubject(
           String.isNotBlank(rowSubject) ? rowSubject : ''
         );
         mail.setHtmlBody(rowBody);
+      } else if (emailTemplateId != null && shouldUseStoredTemplate(r)) {
+        mail.setTemplateId(emailTemplateId);
       } else if (emailTemplateId != null) {
         Messaging.SingleEmailMessage rendered = Messaging.renderStoredEmailTemplate(
           emailTemplateId,
@@ -1197,24 +1251,36 @@ public with sharing class ContractMassSendController {
     }
 
     if (!emails.isEmpty()) {
-      Messaging.SendEmailResult[] results = Messaging.sendEmail(emails, false);
+      Integer batchSize = 2;
+      for (
+        Integer startIdx = 0;
+        startIdx < emails.size();
+        startIdx += batchSize
+      ) {
+        Integer endIdx = Math.min(startIdx + batchSize, emails.size());
+        List<Messaging.SingleEmailMessage> batch = new List<Messaging.SingleEmailMessage>();
+        for (Integer j = startIdx; j < endIdx; j++) {
+          batch.add(emails[j]);
+        }
 
-      for (Integer i = 0; i < results.size(); i++) {
-        Messaging.SendEmailResult result = results[i];
-        List<LogRowDto> emailLogs = emailIndexToLogs.get(i);
+        Messaging.SendEmailResult[] results = Messaging.sendEmail(batch, false);
+        for (Integer i = 0; i < results.size(); i++) {
+          Messaging.SendEmailResult result = results[i];
+          List<LogRowDto> emailLogs = emailIndexToLogs.get(startIdx + i);
 
-        if (emailLogs != null) {
-          for (LogRowDto log : emailLogs) {
-            if (result.isSuccess()) {
-              log.status = 'Sent';
-              log.message = 'Email sent successfully.';
-            } else {
-              log.status = 'Failed';
-              String errorMsg = 'Unknown error';
-              if (result.getErrors() != null && result.getErrors().size() > 0) {
-                errorMsg = result.getErrors()[0].getMessage();
+          if (emailLogs != null) {
+            for (LogRowDto log : emailLogs) {
+              if (result.isSuccess()) {
+                log.status = 'Sent';
+                log.message = 'Email sent successfully.';
+              } else {
+                log.status = 'Failed';
+                String errorMsg = 'Unknown error';
+                if (result.getErrors() != null && result.getErrors().size() > 0) {
+                  errorMsg = result.getErrors()[0].getMessage();
+                }
+                log.message = errorMsg;
               }
-              log.message = errorMsg;
             }
           }
         }

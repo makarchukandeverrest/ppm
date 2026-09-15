@@ -1553,6 +1553,10 @@
         <enabled>true</enabled>
         <externalCredentialPrincipal>SharePoint-sharePoint</externalCredentialPrincipal>
     </externalCredentialPrincipalAccesses>
+    <customPermissions>
+        <enabled>true</enabled>
+        <name>Mass_Contract_Send</name>
+    </customPermissions>
     <hasActivationRequired>false</hasActivationRequired>
     <label>Regional Manager</label>
     <objectPermissions>
