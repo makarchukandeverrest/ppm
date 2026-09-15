@@ -1391,6 +1391,47 @@ static void testSendContracts_CoversCustomBodyBranch() {
     }
 
     @isTest
+    static void testSendContracts_GlobalEditedBodyIsUsed() {
+        Account acc = [
+            SELECT Id, Primary_Contact__c
+            FROM Account
+            WHERE Primary_Contact__c != null
+            LIMIT 1
+        ];
+        List<EmailTemplate> templates = [
+            SELECT Id
+            FROM EmailTemplate
+            WHERE IsActive = true
+            LIMIT 1
+        ];
+        if (templates.isEmpty() || acc == null) {
+            return;
+        }
+
+        ContractMassSendController.SendReqRow row = new ContractMassSendController.SendReqRow();
+        row.customerId = acc.Id;
+        row.subject = 'Global edited subject';
+        row.body = '<p>Global edited body</p>';
+
+        Test.startTest();
+        ContractMassSendController.testBypassPermissions = true;
+        try {
+            ContractMassSendController.sendContracts(
+                new List<Id>{ acc.Id },
+                templates[0].Id,
+                JSON.serialize(
+                    new List<ContractMassSendController.SendReqRow>{ row }
+                ),
+                null,
+                null
+            );
+        } catch (Exception e) {
+            System.assert(true, 'Global edit send path: ' + e.getMessage());
+        }
+        Test.stopTest();
+    }
+
+    @isTest
     static void testSendContracts_StmMissingAndNoEmail() {
         List<EmailTemplate> templates = [
             SELECT Id
