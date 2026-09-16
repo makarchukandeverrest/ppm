@@ -387,8 +387,17 @@ public with sharing class DocuSignDfsleEnvelopeService {
 
         parts.add(
             '<p>' +
-            'Best regards,<br/><br/>' +
-            escapeHtmlText(ENVELOPE_EMAIL_SIGNATURE_TEAM) +
+            escapeHtmlText('----') +
+            '<br/>' +
+            escapeHtmlText('Premier Pool Management, Inc.') +
+            '<br/>' +
+            escapeHtmlText('12339 Carroll Ave, Suite B') +
+            '<br/>' +
+            escapeHtmlText('Rockville, MD 20852') +
+            '<br/><br/>' +
+            escapeHtmlText('T: 301 989 2200') +
+            '<br/>' +
+            escapeHtmlText('F: 301 989 2261') +
             '</p>'
         );
         parts.add(
@@ -453,10 +462,20 @@ public with sharing class DocuSignDfsleEnvelopeService {
             );
         }
 
+
         parts.add(
             '<p>' +
-            'Best Regards,<br/><br/>' +
-            escapeHtmlText(ENVELOPE_EMAIL_SIGNATURE_TEAM) +
+            escapeHtmlText('----') +
+            '<br/>' +
+            escapeHtmlText('Premier Pool Management, Inc.') +
+            '<br/>' +
+            escapeHtmlText('12339 Carroll Ave, Suite B') +
+            '<br/>' +
+            escapeHtmlText('Rockville, MD 20852') +
+            '<br/><br/>' +
+            escapeHtmlText('T: 301 989 2200') +
+            '<br/>' +
+            escapeHtmlText('F: 301 989 2261') +
             '</p>'
         );
         parts.add(
@@ -600,19 +619,44 @@ public with sharing class DocuSignDfsleEnvelopeService {
         List<dfsle.Recipient> recipients = new List<dfsle.Recipient>();
         Set<String> seenEmails = new Set<String>();
         Integer routingOrder = 1;
+        Boolean signerAdded = false;
 
+        // Secondary Contact stays first. Same email as Account → Signer (not CC).
         if (secondaryContact != null && String.isNotBlank(secondaryContact.email)) {
-            addCarbonCopyRecipient(
+            String secondaryEmailKey = secondaryContact.email.toLowerCase();
+            Boolean sameAsSigner =
+                String.isNotBlank(signerEmail) &&
+                secondaryEmailKey == signerEmail.toLowerCase();
+
+            if (sameAsSigner) {
+                seenEmails.add(secondaryEmailKey);
+                recipients.add(
+                    dfsle.Recipient.fromSource(
+                        String.isNotBlank(secondaryContact.name)
+                            ? secondaryContact.name
+                            : signerName,
+                        secondaryContact.email,
+                        null,
+                        'Signer',
+                        new dfsle.Entity(contractBidId)
+                    )
+                        .withTabs(buildSignerTabs())
+                        .withRoutingOrder(routingOrder)
+                );
+                routingOrder++;
+                signerAdded = true;
+            } else if (addCarbonCopyRecipient(
                 recipients,
                 secondaryContact,
                 ROLE_SECONDARY_CONTACT,
                 seenEmails,
                 routingOrder
-            );
-            routingOrder++;
+            )) {
+                routingOrder++;
+            }
         }
 
-        if (String.isNotBlank(signerEmail)) {
+        if (!signerAdded && String.isNotBlank(signerEmail)) {
             String signerEmailKey = signerEmail.toLowerCase();
             if (!seenEmails.contains(signerEmailKey)) {
                 seenEmails.add(signerEmailKey);
