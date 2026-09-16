@@ -60,13 +60,11 @@ private class ContractBidBudgetSeasonServiceTest {
             LIMIT 1
         ];
         Contract_Bid__c currentMonthBid = [
-            SELECT Id, Name
+            SELECT Id
             FROM Contract_Bid__c
             WHERE Name = 'Current Month Bid'
             LIMIT 1
         ];
-        String currentMonth = MONTHS[Date.today().month() - 1];
-
         Test.startTest();
         ContractBidBudgetSeasonService.createTasks();
         Test.stopTest();
@@ -84,13 +82,10 @@ private class ContractBidBudgetSeasonServiceTest {
         System.assertEquals('Not Started', createdTask.Status);
         System.assertEquals('Normal', createdTask.Priority);
         System.assertEquals(Date.today(), createdTask.ActivityDate);
-        System.assertEquals(
-            'Budget Season ' + currentMonth + ': ' + currentMonthBid.Name,
-            createdTask.Subject
-        );
+        System.assertEquals('Time to Follow up', createdTask.Subject);
         System.assert(
-            createdTask.Description.contains(currentMonthBid.Name),
-            'Description should reference the Contract Bid name'
+            createdTask.Description.contains('It\'s time to reach out to this pool.'),
+            'Description should contain the follow-up body'
         );
     }
 
