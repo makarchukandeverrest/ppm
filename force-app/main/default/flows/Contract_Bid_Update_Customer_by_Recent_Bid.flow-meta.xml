@@ -123,6 +123,12 @@
             </value>
         </inputAssignments>
         <inputAssignments>
+            <field>Regional_Manager__c</field>
+            <value>
+                <elementReference>$Record.Lead_Owner__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
             <field>NormalSeason_Holiday_Close_Time__c</field>
             <value>
                 <elementReference>$Record.NormalSeason_Holiday_Close_Time__c</elementReference>
@@ -349,6 +355,13 @@
         <filterLogic>or</filterLogic>
         <filters>
             <field>Label__c</field>
+            <operator>IsChanged</operator>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </filters>
+        <filters>
+            <field>Lead_Owner__c</field>
             <operator>IsChanged</operator>
             <value>
                 <booleanValue>true</booleanValue>
@@ -645,5 +658,5 @@
         <recordTriggerType>Update</recordTriggerType>
         <triggerType>RecordAfterSave</triggerType>
     </start>
-    <status>Draft</status>
+    <status>Active</status>
 </Flow>
