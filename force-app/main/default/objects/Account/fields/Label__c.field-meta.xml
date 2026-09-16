@@ -94,6 +94,16 @@
                 <default>false</default>
                 <label>New record created</label>
             </value>
+            <value>
+                <fullName>Mass Created</fullName>
+                <default>false</default>
+                <label>Mass Created</label>
+            </value>
+            <value>
+                <fullName>MISSING FILE/CONTACT INFO</fullName>
+                <default>false</default>
+                <label>MISSING FILE/CONTACT INFO</label>
+            </value>
         </valueSetDefinition>
     </valueSet>
     <visibleLines>4</visibleLines>

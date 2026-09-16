@@ -72,6 +72,12 @@
             </value>
         </inputAssignments>
         <inputAssignments>
+            <field>Regional_Manager__c</field>
+            <value>
+                <elementReference>$Record.Recent_Contract_Bid__r.Lead_Owner__c</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
             <field>NormalSeason_Holiday_Close_Time__c</field>
             <value>
                 <elementReference>$Record.Recent_Contract_Bid__r.NormalSeason_Holiday_Close_Time__c</elementReference>
@@ -314,5 +320,5 @@
         <recordTriggerType>Update</recordTriggerType>
         <triggerType>RecordAfterSave</triggerType>
     </start>
-    <status>Obsolete</status>
+    <status>Active</status>
 </Flow>
