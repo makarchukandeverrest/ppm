@@ -2739,10 +2739,6 @@
         <viewAllFields>false</viewAllFields>
         <viewAllRecords>false</viewAllRecords>
     </objectPermissions>
-    <flowAccesses>
-        <enabled>true</enabled>
-        <flow>Contract_Mass_Send</flow>
-    </flowAccesses>
     <tabVisibilities>
         <tab>Contract_Bid__c</tab>
         <visibility>DefaultOn</visibility>
