@@ -511,7 +511,7 @@
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>$Record.Account__r.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference>$Record.Deal__r.Account.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
@@ -547,7 +547,7 @@
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>$Record.Account__r.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference>$Record.Deal__r.Account.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
@@ -583,7 +583,7 @@
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>$Record.Account__r.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference>$Record.Deal__r.Account.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
@@ -612,7 +612,7 @@
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>$Record.Account__r.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference>$Record.Deal__r.Account.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
@@ -641,7 +641,7 @@
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>$Record.Account__r.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference>$Record.Deal__r.Account.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
