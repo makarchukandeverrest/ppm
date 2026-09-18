@@ -1,6 +1,7 @@
 public with sharing class DocuSignEnvelopeVoidService {
     private static final String DEFAULT_VOID_REASON = 'Contract Bid completed';
     private static final String SETTINGS_DEVELOPER_NAME = 'Void_Envelopes';
+    private static final Integer ENVELOPES_PER_JOB = 40;
 
     public class Request {
         @InvocableVariable(required=true label='Envelope Status Records')
@@ -13,6 +14,12 @@ public with sharing class DocuSignEnvelopeVoidService {
     public class DocuSignVoidException extends Exception {
     }
 
+    public class VoidWork {
+        public Id statusId;
+        public String docuSignId;
+        public String reason;
+    }
+
     @TestVisible
     private static DocuSign_API_Settings__mdt testSettings;
 
@@ -22,51 +29,105 @@ public with sharing class DocuSignEnvelopeVoidService {
         callout=true
     )
     public static void voidEnvelopes(List<Request> requests) {
-        if (requests == null || requests.isEmpty()) {
+        List<VoidWork> workItems = collectWork(requests);
+        if (workItems.isEmpty()) {
             return;
         }
+        getSettings();
+        System.enqueueJob(new Job(workItems));
+    }
 
-        Boolean hasWork = false;
-        for (Request req : requests) {
-            if (req != null && req.envelopeStatuses != null && !req.envelopeStatuses.isEmpty()) {
-                hasWork = true;
-                break;
+    public class Job implements Queueable, Database.AllowsCallouts {
+        private List<VoidWork> workItems;
+
+        public Job(List<VoidWork> workItems) {
+            this.workItems = workItems == null ? new List<VoidWork>() : workItems;
+        }
+
+        public void execute(QueueableContext context) {
+            if (workItems.isEmpty()) {
+                return;
+            }
+
+            Integer endIndex = Math.min(ENVELOPES_PER_JOB, workItems.size());
+            List<VoidWork> currentBatch = new List<VoidWork>();
+            for (Integer i = 0; i < endIndex; i++) {
+                currentBatch.add(workItems[i]);
+            }
+
+            voidBatchIndependently(currentBatch);
+
+            if (endIndex < workItems.size()) {
+                List<VoidWork> remaining = new List<VoidWork>();
+                for (Integer i = endIndex; i < workItems.size(); i++) {
+                    remaining.add(workItems[i]);
+                }
+                System.enqueueJob(new Job(remaining));
             }
         }
-        if (!hasWork) {
+    }
+
+    private static List<VoidWork> collectWork(List<Request> requests) {
+        List<VoidWork> workItems = new List<VoidWork>();
+        if (requests == null || requests.isEmpty()) {
+            return workItems;
+        }
+        for (Request req : requests) {
+            if (req == null || req.envelopeStatuses == null || req.envelopeStatuses.isEmpty()) {
+                continue;
+            }
+            String reason = String.isBlank(req.voidReason) ? DEFAULT_VOID_REASON : req.voidReason;
+            for (dfsle__EnvelopeStatus__c statusRec : req.envelopeStatuses) {
+                if (statusRec == null || String.isBlank(statusRec.dfsle__DocuSignId__c)) {
+                    continue;
+                }
+                VoidWork item = new VoidWork();
+                item.statusId = statusRec.Id;
+                item.docuSignId = statusRec.dfsle__DocuSignId__c.trim();
+                item.reason = reason;
+                workItems.add(item);
+            }
+        }
+        return workItems;
+    }
+
+    @TestVisible
+    static void voidBatchIndependently(List<VoidWork> workItems) {
+        if (workItems == null || workItems.isEmpty()) {
             return;
         }
 
         DocuSign_API_Settings__mdt settings = getSettings();
         List<dfsle__EnvelopeStatus__c> statusesToUpdate = new List<dfsle__EnvelopeStatus__c>();
 
-        for (Request req : requests) {
-            if (req == null || req.envelopeStatuses == null || req.envelopeStatuses.isEmpty()) {
+        for (VoidWork item : workItems) {
+            if (item == null || String.isBlank(item.docuSignId)) {
                 continue;
             }
-
-            String reason = String.isBlank(req.voidReason) ? DEFAULT_VOID_REASON : req.voidReason;
-            for (dfsle__EnvelopeStatus__c statusRec : req.envelopeStatuses) {
-                if (statusRec == null || String.isBlank(statusRec.dfsle__DocuSignId__c)) {
-                    continue;
-                }
-
+            try {
                 voidEnvelope(
                     settings.Named_Credential__c,
                     settings.Account_Id__c,
-                    statusRec.dfsle__DocuSignId__c,
-                    reason
+                    item.docuSignId,
+                    item.reason
                 );
-
-                if (statusRec.Id != null) {
+                if (item.statusId != null) {
                     statusesToUpdate.add(
                         new dfsle__EnvelopeStatus__c(
-                            Id = statusRec.Id,
+                            Id = item.statusId,
                             dfsle__Status__c = 'Voided',
-                            dfsle__Reason__c = reason
+                            dfsle__Reason__c = item.reason
                         )
                     );
                 }
+            } catch (Exception ex) {
+                System.debug(
+                    LoggingLevel.ERROR,
+                    'DocuSign void failed for envelope ' +
+                    item.docuSignId +
+                    ': ' +
+                    ex.getMessage()
+                );
             }
         }
 

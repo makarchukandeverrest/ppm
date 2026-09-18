@@ -1,5 +1,7 @@
 @IsTest
 private class DocuSignEnvelopeVoidServiceTest {
+    private static Integer mockCalls;
+
     private class DocuSignVoidMock implements HttpCalloutMock {
         private final Integer statusCode;
         private final String body;
@@ -15,6 +17,22 @@ private class DocuSignEnvelopeVoidServiceTest {
             HttpResponse res = new HttpResponse();
             res.setStatusCode(statusCode);
             res.setBody(body);
+            return res;
+        }
+    }
+
+    private class SequenceVoidMock implements HttpCalloutMock {
+        public HttpResponse respond(HttpRequest req) {
+            System.assertEquals('PUT', req.getMethod());
+            mockCalls++;
+            HttpResponse res = new HttpResponse();
+            if (mockCalls == 1) {
+                res.setStatusCode(200);
+                res.setBody('{"status":"voided"}');
+            } else {
+                res.setStatusCode(400);
+                res.setBody('{"message":"bad request"}');
+            }
             return res;
         }
     }
@@ -62,6 +80,35 @@ private class DocuSignEnvelopeVoidServiceTest {
             new List<DocuSignEnvelopeVoidService.Request>{ req }
         );
         Test.stopTest();
+    }
+
+    @IsTest
+    static void voidBatch_continuesAfterOneCalloutFailure() {
+        mockCalls = 0;
+        Test.setMock(HttpCalloutMock.class, new SequenceVoidMock());
+        DocuSignEnvelopeVoidService.testSettings = new DocuSign_API_Settings__mdt(
+            Named_Credential__c = 'DocuSign',
+            Account_Id__c = '12345'
+        );
+
+        DocuSignEnvelopeVoidService.VoidWork okItem = new DocuSignEnvelopeVoidService.VoidWork();
+        okItem.docuSignId = 'env-ok';
+        okItem.reason = 'Contract Bid completed';
+        DocuSignEnvelopeVoidService.VoidWork failedItem = new DocuSignEnvelopeVoidService.VoidWork();
+        failedItem.docuSignId = 'env-fail';
+        failedItem.reason = 'Contract Bid completed';
+
+        Test.startTest();
+        DocuSignEnvelopeVoidService.voidBatchIndependently(
+            new List<DocuSignEnvelopeVoidService.VoidWork>{ okItem, failedItem }
+        );
+        Test.stopTest();
+
+        System.assertEquals(
+            2,
+            mockCalls,
+            'A failed void must not abort remaining envelopes in the batch.'
+        );
     }
 
     @IsTest
