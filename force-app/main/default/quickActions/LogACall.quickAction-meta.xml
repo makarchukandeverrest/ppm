@@ -11,7 +11,7 @@
             </quickActionLayoutItems>
             <quickActionLayoutItems>
                 <emptySpace>false</emptySpace>
-                <field>ActivityDate</field>
+                <field>Description</field>
                 <uiBehavior>Edit</uiBehavior>
             </quickActionLayoutItems>
             <quickActionLayoutItems>
@@ -26,9 +26,8 @@
                 <uiBehavior>Edit</uiBehavior>
             </quickActionLayoutItems>
             <quickActionLayoutItems>
-                <emptySpace>false</emptySpace>
-                <field>OwnerId</field>
-                <uiBehavior>Required</uiBehavior>
+                <emptySpace>true</emptySpace>
+                <uiBehavior>Edit</uiBehavior>
             </quickActionLayoutItems>
             <quickActionLayoutItems>
                 <emptySpace>false</emptySpace>
@@ -37,8 +36,8 @@
             </quickActionLayoutItems>
         </quickActionLayoutColumns>
     </quickActionLayout>
-    <standardLabel>New</standardLabel>
+    <standardLabel>LogACall</standardLabel>
     <targetObject>Task</targetObject>
     <targetRecordType>Task.Standard_Task</targetRecordType>
-    <type>Create</type>
+    <type>LogACall</type>
 </QuickAction>
