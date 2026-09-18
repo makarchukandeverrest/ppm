@@ -5,7 +5,7 @@
     <name>Extended Early bird</name>
     <relatedEntityType>Account</relatedEntityType>
     <style>none</style>
-    <subject>2026 Premier Pool Management Proposal—[{{Account.Name}}]</subject>
+    <subject>2026 Premier Pool Management Proposal—{{{Account.Name}}}</subject>
     <type>custom</type>
     <uiType>SFX</uiType>
 </EmailTemplate>

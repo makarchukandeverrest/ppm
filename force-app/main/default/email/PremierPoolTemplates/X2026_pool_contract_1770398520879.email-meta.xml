@@ -3,7 +3,7 @@
     <available>true</available>
     <encodingKey>UTF-8</encodingKey>
     <name>2026 pool contract</name>
-    <relatedEntityType>CommSubscriptionConsent</relatedEntityType>
+    <relatedEntityType>Account</relatedEntityType>
     <style>none</style>
     <subject>{{{Account.Name}}} Follow-Up: 2026 Renewal Contracts + Winterization</subject>
     <type>custom</type>
