@@ -1,4 +1,4 @@
-public with sharing class DocuSignEnvelopeVoidService {
+public without sharing class DocuSignEnvelopeVoidService {
     private static final String DEFAULT_VOID_REASON = 'Contract Bid completed';
     private static final String SETTINGS_DEVELOPER_NAME = 'Void_Envelopes';
     private static final Integer ENVELOPES_PER_JOB = 40;
