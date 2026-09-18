@@ -1,0 +1,25 @@
+<html>
+<head>
+	<title></title>
+</head>
+<body style="height: auto; min-height: auto;">Hello {{{Recipient.FirstName}}},<br />
+<br />
+Thank you for considering our pool management proposal. I'm attaching the contract, along with our welcome letter, references, recommendation letters, and a copy of our certificate of insurance. Please review everything and see how we compare to the competition, and let me know if we can schedule a time to discuss how we can be of service to you in the future.<br />
+<br />
+Our "turn-key" pool management contract includes:<br />
+• Spring start-up (inspection, repairs, health department inspection and permits)<br />
+• American Red Cross certified lifeguards and pool operators fully trained to your property's specific needs<br />
+• General liability insurance with a $10,000,000 limit<br />
+• All pool chemicals included<br />
+• A minimum of 3 weekly visits by our supervisory staff<br />
+• Our management and service teams are available and on-call 24/7<br />
+• A timely and thorough winterization of your facility with all winterization chemicals included<br />
+<br />
+We have years of experience in providing excellent pool management services with a long list of references to back it up. In addition to our reliable service, we also offer very competitive prices along with great discounts for new and existing customers.<br />
+<br />
+Please let me know if there is anything else that we can do to earn your business.<br />
+<br />
+Thank you,<br />
+{{{Sender.Name}}}<br />
+{{{Organization.Name}}}</body>
+</html>
