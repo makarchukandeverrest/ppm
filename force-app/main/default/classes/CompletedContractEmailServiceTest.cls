@@ -108,6 +108,29 @@ private class CompletedContractEmailServiceTest {
     }
 
     @IsTest
+    static void sendForContentVersionIds_SendsEmailForCompletedPdf() {
+        Contract_Bid__c bid = [SELECT Id FROM Contract_Bid__c WHERE Name = 'Signed Copy Bid' LIMIT 1];
+
+        ContentVersion completedFile = new ContentVersion(
+            Title = 'Queued Contract',
+            PathOnClient = 'Queued Contract.pdf',
+            VersionData = Blob.valueOf('signed pdf'),
+            IsMajorVersion = true,
+            FirstPublishLocationId = bid.Id
+        );
+        insert completedFile;
+
+        Test.startTest();
+        DocuSignCompletedContractEmailService.sendForContentVersionIds(null);
+        DocuSignCompletedContractEmailService.sendForContentVersionIds(new List<Id>());
+        DocuSignCompletedContractEmailService.sendForContentVersionIds(new List<Id>{ completedFile.Id });
+        Integer emailsSent = Limits.getEmailInvocations();
+        Test.stopTest();
+
+        System.assertEquals(1, emailsSent, 'Queueable entry point should send one signed-copy email');
+    }
+
+    @IsTest
     static void completedContractBidResolver_MapsContentDocumentToBid() {
         Contract_Bid__c bid = [SELECT Id FROM Contract_Bid__c WHERE Name = 'Signed Copy Bid' LIMIT 1];
 

@@ -6,6 +6,17 @@ public with sharing class DocuSignCompletedContractEmailService {
     @TestVisible
     private static List<String> lastRecipientEmails;
 
+    public static void sendForContentVersionIds(List<Id> contentVersionIds) {
+        if (contentVersionIds == null || contentVersionIds.isEmpty()) {
+            return;
+        }
+        handleCompletedContractFiles([
+            SELECT Id, Title, ContentDocumentId, FirstPublishLocationId
+            FROM ContentVersion
+            WHERE Id IN :contentVersionIds
+        ]);
+    }
+
     public static void handleCompletedContractFiles(List<ContentVersion> versions) {
         if (versions == null || versions.isEmpty()) {
             return;
