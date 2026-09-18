@@ -72,6 +72,10 @@
                 <behavior>Edit</behavior>
                 <field>Connexus__c</field>
             </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Stop_Sending_Reminders__c</field>
+            </layoutItems>
         </layoutColumns>
         <style>TwoColumnsTopToBottom</style>
     </layoutSections>

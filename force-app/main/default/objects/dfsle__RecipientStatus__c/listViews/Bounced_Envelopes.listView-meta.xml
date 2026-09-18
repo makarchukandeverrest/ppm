@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Bounced_Envelopes</fullName>
+    <columns>NAME</columns>
+    <columns>dfsle__Email__c</columns>
+    <columns>dfsle__Status__c</columns>
+    <columns>Email_Bounced__c</columns>
+    <columns>Bounce_Reason__c</columns>
+    <columns>Bounced_Detected_At__c</columns>
+    <columns>dfsle__Sent__c</columns>
+    <columns>dfsle__EnvelopeStatus__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>Email_Bounced__c</field>
+        <operation>equals</operation>
+        <value>1</value>
+    </filters>
+    <label>Bounced Envelopes</label>
+</ListView>

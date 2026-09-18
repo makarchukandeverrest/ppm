@@ -56,8 +56,8 @@
           </template>
         </div>
 
-        <!-- Same filters as Send Contract Bid (Send PDF + Send Emails) -->
-        <template if:true={showContractFilters}>
+        <!-- Contract file filters (contracts mode) -->
+        <template if:true={isContractsMode}>
           <div class="slds-m-around_medium filter-section">
             <h3 class="slds-text-heading_small slds-m-bottom_small">
               <lightning-icon
@@ -208,6 +208,32 @@
                     <div class="slds-text-body_small slds-text-color_weak">
                       Email: {cust.customerEmail}
                     </div>
+                    <template if:true={isContractsMode}>
+                      <div
+                        class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small"
+                      >
+                        <template if:true={cust.regionalManagerName}>
+                          <span class="slds-m-right_medium">
+                            <lightning-icon
+                              icon-name="utility:user"
+                              size="xx-small"
+                              class="slds-m-right_xx-small"
+                            ></lightning-icon>
+                            RM: {cust.regionalManagerName}
+                          </span>
+                        </template>
+                        <template if:true={cust.managementCompanyName}>
+                          <span>
+                            <lightning-icon
+                              icon-name="utility:company"
+                              size="xx-small"
+                              class="slds-m-right_xx-small"
+                            ></lightning-icon>
+                            {cust.managementCompanyName}
+                          </span>
+                        </template>
+                      </div>
+                    </template>
 
                     <template if:true={cust.primaryContactMissing}>
                       <div
@@ -374,6 +400,25 @@
                   <!-- Contracts mode: contracts list -->
                   <template if:true={isContractsMode}>
                     <template if:true={cust.contracts.length}>
+                      <div class="slds-m-top_small slds-m-bottom_x-small">
+                        <lightning-button
+                          variant="base"
+                          label="Select all"
+                          data-customer-id={cust.customerId}
+                          data-selected="true"
+                          onclick={handleToggleAllContracts}
+                        >
+                        </lightning-button>
+                        <lightning-button
+                          variant="base"
+                          label="Deselect all"
+                          data-customer-id={cust.customerId}
+                          data-selected="false"
+                          onclick={handleToggleAllContracts}
+                          class="slds-m-left_small"
+                        >
+                        </lightning-button>
+                      </div>
                       <ul class="slds-list_dotted slds-m-top_small">
                         <template for:each={cust.contracts} for:item="contract">
                           <li
@@ -421,14 +466,15 @@
                       <div
                         class="slds-m-top_x-small slds-text-body_small slds-text-color_weak"
                       >
-                        Only latest versions are shown (ContentVersion.IsLatest
-                        = true).
+                        Latest versions of contract files matching the year
+                        filter. Signed, completed, welcome letter, and bid
+                        worksheet files are excluded.
                       </div>
                     </template>
 
                     <template if:false={cust.contracts.length}>
                       <div class="slds-text-body_small slds-text-color_weak">
-                        No latest contract versions found for this customer.
+                        No matching contract files found for this customer.
                       </div>
                     </template>
                   </template>
@@ -438,12 +484,14 @@
           </template>
 
           <template if:false={customers.length}>
-            <div class="slds-text-body_small slds-text-color_weak">
-              <template if:true={isSimpleMode}> No customers found. </template>
-              <template if:true={isContractsMode}>
-                No customers/contracts found.
-              </template>
-            </div>
+            <template if:false={showNoResultsWithFilters}>
+              <div class="slds-text-body_small slds-text-color_weak">
+                <template if:true={isSimpleMode}> No customers found. </template>
+                <template if:true={isContractsMode}>
+                  No customers/contracts found.
+                </template>
+              </div>
+            </template>
           </template>
         </div>
 

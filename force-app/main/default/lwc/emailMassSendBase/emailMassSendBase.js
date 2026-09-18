@@ -4,70 +4,11 @@ import { CurrentPageReference, NavigationMixin } from "lightning/navigation";
 import { CloseActionScreenEvent } from "lightning/actions";
 
 import getInitData from "@salesforce/apex/ContractMassSendController.getInitData";
+import getInitDataFiltered from "@salesforce/apex/ContractMassSendController.getInitDataFiltered";
 import sendContracts from "@salesforce/apex/ContractMassSendController.sendContracts";
 import getTemplateDetails from "@salesforce/apex/ContractMassSendController.getTemplateDetails";
 import previewEmail from "@salesforce/apex/ContractMassSendController.previewEmail";
 import getFilterOptions from "@salesforce/apex/AccountFilesController.getFilterOptions";
-import getAccountsWithFiles from "@salesforce/apex/AccountFilesController.getAccountsWithFiles";
-
-function isLightningOrigin(origin) {
-  return typeof origin === "string" && origin.includes(".lightning.force.com");
-}
-
-function resolveLightningOrigin() {
-  try {
-    const ancestors = window.location.ancestorOrigins;
-    if (ancestors) {
-      for (let i = 0; i < ancestors.length; i++) {
-        if (isLightningOrigin(ancestors[i])) {
-          return ancestors[i];
-        }
-      }
-    }
-  } catch (e) {
-    // Cross-origin ancestor access can throw in some browsers.
-  }
-
-  try {
-    if (document.referrer) {
-      const referrerOrigin = new URL(document.referrer).origin;
-      if (isLightningOrigin(referrerOrigin)) {
-        return referrerOrigin;
-      }
-    }
-  } catch (e) {
-    // Ignore malformed referrer.
-  }
-
-  const origin = window.location.origin;
-  if (isLightningOrigin(origin)) {
-    return origin;
-  }
-
-  // List-view Flow buttons run in a Visualforce iframe (servlet.Integration).
-  return origin
-    .replace("--c.sandbox.vf.force.com", ".sandbox.lightning.force.com")
-    .replace("--c.vf.force.com", ".lightning.force.com")
-    .replace(".vf.force.com", ".lightning.force.com")
-    .replace("--c.visualforce.com", ".lightning.force.com")
-    .replace(".my.salesforce.com", ".lightning.force.com");
-}
-
-function openFileInNewTab(contentDocumentId, contentVersionId) {
-  const lightningOrigin = resolveLightningOrigin();
-  if (contentDocumentId && lightningOrigin) {
-    window.open(
-      `${lightningOrigin}/lightning/r/ContentDocument/${contentDocumentId}/view`,
-      "_blank"
-    );
-    return;
-  }
-
-  const path = contentVersionId
-    ? `/sfc/servlet.shepherd/version/download/${contentVersionId}`
-    : `/sfc/servlet.shepherd/document/download/${contentDocumentId}`;
-  window.open(path, "_blank");
-}
 
 export default class EmailMassSendBase extends NavigationMixin(
   LightningElement
@@ -113,7 +54,7 @@ export default class EmailMassSendBase extends NavigationMixin(
   isUpdating = false;
   accessError;
 
-  // Contract file filters (contracts mode — same as Send Contract Bid)
+  // Contract file filters (contracts mode — same as contractsSendSelector on dev)
   @track selectedRegionalManager = "";
   @track selectedManagementCompany = "";
   @track customerNameFilter = "";
@@ -193,7 +134,7 @@ export default class EmailMassSendBase extends NavigationMixin(
   }
 
   async loadFilterOptions() {
-    if (!this.showContractFilters || this.filtersLoaded) {
+    if (!this.isContractsMode || this.filtersLoaded) {
       return;
     }
     try {
@@ -317,24 +258,6 @@ export default class EmailMassSendBase extends NavigationMixin(
     ];
   }
 
-  get showContractFilters() {
-    const raw = String(this.inputIds[0] || this.recordId || "");
-    // Filters are only for Account/Bid (contracts mode); not for Opportunity or Work Order.
-    return !raw.startsWith("0WO") && !raw.startsWith("006");
-  }
-
-  _isOpportunityContext() {
-    const raw = String(this.inputIds[0] || this.recordId || "");
-    return raw.startsWith("006");
-  }
-
-  _getCurrentContractYear() {
-    // Bid/Account: next season (prod). Proposal PDFs are usually current year.
-    return this._isOpportunityContext()
-      ? String(new Date().getFullYear())
-      : String(new Date().getFullYear() + 1);
-  }
-
   get hasActiveFilters() {
     const yearIsCustom =
       this.contractYearFilter &&
@@ -354,23 +277,11 @@ export default class EmailMassSendBase extends NavigationMixin(
 
   get showNoResultsWithFilters() {
     return (
-      this.showContractFilters &&
+      this.isContractsMode &&
       this.hasActiveFilters &&
       this.customers &&
       this.customers.length === 0
     );
-  }
-
-  _pdfContractsFromAccountFiles(account) {
-    return (account?.files || [])
-      .filter((file) => (file.FileExtension || "").toLowerCase() === "pdf")
-      .map((file) => ({
-        contentVersionId: file.Id,
-        contentDocumentId: file.ContentDocumentId,
-        title: file.Title,
-        fileExtension: file.FileExtension,
-        isSelected: true
-      }));
   }
 
   /* =====================================================
@@ -386,27 +297,17 @@ export default class EmailMassSendBase extends NavigationMixin(
     this.accessError = undefined;
 
     try {
-      const firstId = String(this.inputIds[0] || this.recordId || "");
-      const areBids = firstId.startsWith("a0b");
-      const areOpportunities = this._isOpportunityContext();
-      const filesPromise =
-        this.showContractFilters && !areOpportunities
-          ? getAccountsWithFiles({
-              recordId: this.recordId || (areBids ? firstId : null),
-              recordIds: areBids ? this.inputIds : null,
-              regionalManagerId: this.selectedRegionalManager || null,
-              managementCompanyId: this.selectedManagementCompany || null,
-              customerName: this.customerNameFilter || null,
-              contractYear: this.contractYearFilter || null
-            })
-          : Promise.resolve([]);
-
-      const [res, accountsWithFiles] = await Promise.all([
-        getInitData({
-          inputIds: this.inputIds
-        }),
-        filesPromise
-      ]);
+      const res = this.isContractsMode
+        ? await getInitDataFiltered({
+            inputIds: this.inputIds,
+            regionalManagerId: this.selectedRegionalManager || null,
+            managementCompanyId: this.selectedManagementCompany || null,
+            customerName: this.customerNameFilter || null,
+            contractYear: this.contractYearFilter || null
+          })
+        : await getInitData({
+            inputIds: this.inputIds
+          });
 
       if (!res.hasAccess) {
         this.accessError =
@@ -425,28 +326,10 @@ export default class EmailMassSendBase extends NavigationMixin(
       const previousById = new Map(
         (this.customers || []).map((c) => [c.customerId, c])
       );
-      const filesByAccountId = new Map(
-        (accountsWithFiles || []).map((acc) => [acc.accountId, acc])
-      );
 
-      let customers = (res.customers || []).map((c) => {
+      // Always keep basic customer structure
+      this.customers = (res.customers || []).map((c) => {
         const prev = previousById.get(c.customerId);
-        const filteredAccount = filesByAccountId.get(c.customerId);
-        let contracts;
-        if (!this.isContractsMode) {
-          contracts = (c.contracts || []).map((cv) => ({
-            ...cv,
-            isSelected: true
-          }));
-        } else if (areOpportunities) {
-          // Proposal: PDFs linked to Opportunity (from ContractMassSendController)
-          contracts = (c.contracts || []).map((cv) => ({
-            ...cv,
-            isSelected: true
-          }));
-        } else {
-          contracts = this._pdfContractsFromAccountFiles(filteredAccount);
-        }
         return {
           ...c,
           expanded: prev?.expanded ?? true,
@@ -456,15 +339,17 @@ export default class EmailMassSendBase extends NavigationMixin(
           isEditContentLoading: false,
           emailSubjectOverride: prev?.emailSubjectOverride ?? null,
           emailBodyOverride: prev?.emailBodyOverride ?? null,
-          contracts
+          contracts: (c.contracts || []).map((cv) => {
+            const prevContract = (prev?.contracts || []).find(
+              (p) => p.contentVersionId === cv.contentVersionId
+            );
+            return {
+              ...cv,
+              isSelected: prevContract ? prevContract.isSelected : true
+            };
+          })
         };
       });
-
-      if (this.showContractFilters && !areOpportunities) {
-        customers = customers.filter((c) => filesByAccountId.has(c.customerId));
-      }
-
-      this.customers = customers;
       this.applyCustomerDisplayFields();
 
       this.sendLog = res.recentLogs || [];
@@ -487,6 +372,47 @@ export default class EmailMassSendBase extends NavigationMixin(
       this.isLoading = false;
       this.isUpdating = false;
     }
+  }
+
+  /* =====================================================
+       CONTRACT FILE FILTERS (contracts mode)
+    ===================================================== */
+  _getCurrentContractYear() {
+    return String(new Date().getFullYear() + 1);
+  }
+
+  handleRegionalManagerChange(event) {
+    this.selectedRegionalManager = event.detail.value;
+    this.loadData();
+  }
+
+  handleManagementCompanyChange(event) {
+    this.selectedManagementCompany = event.detail.value;
+    this.loadData();
+  }
+
+  handleCustomerNameChange(event) {
+    this.customerNameFilter = event.detail.value;
+    this.loadData();
+  }
+
+  handleContractYearChange(event) {
+    const val = (event.detail.value || "").replace(/\D/g, "");
+    if (!val) {
+      this.contractYearFilter = this._getCurrentContractYear();
+      this.loadData();
+      return;
+    }
+    this.contractYearFilter = val.slice(0, 4);
+    this.loadData();
+  }
+
+  clearFilters() {
+    this.selectedRegionalManager = "";
+    this.selectedManagementCompany = "";
+    this.customerNameFilter = "";
+    this.contractYearFilter = this._getCurrentContractYear();
+    this.loadData();
   }
 
   /* =====================================================
@@ -697,8 +623,32 @@ export default class EmailMassSendBase extends NavigationMixin(
     this.selectedContractVersionIdsByCustomer.set(customerId, setIds);
   }
 
-  // Handle file preview. List-view Flows run in a VF iframe, so Lightning
-  // filePreview URLs built from window.location.origin do not work.
+  handleToggleAllContracts(event) {
+    const customerId = event.currentTarget.dataset.customerId;
+    const selected = event.currentTarget.dataset.selected === "true";
+
+    this.customers = this.customers.map((c) => {
+      if (c.customerId !== customerId) {
+        return c;
+      }
+      return {
+        ...c,
+        contracts: (c.contracts || []).map((contract) => ({
+          ...contract,
+          isSelected: selected
+        }))
+      };
+    });
+
+    const setIds = new Set();
+    if (selected) {
+      const row = this.customers.find((c) => c.customerId === customerId);
+      (row?.contracts || []).forEach((cv) => setIds.add(cv.contentVersionId));
+    }
+    this.selectedContractVersionIdsByCustomer.set(customerId, setIds);
+  }
+
+  // Handle file preview - opens file in new browser tab (contracts mode)
   handlePreviewFile(event) {
     const fileId =
       event.currentTarget?.dataset?.fileId || event.target?.dataset?.fileId;

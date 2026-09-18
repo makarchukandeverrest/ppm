@@ -141,6 +141,10 @@
                 <behavior>Edit</behavior>
                 <field>Regional_Manager__c</field>
             </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Stop_Sending_Reminders__c</field>
+            </layoutItems>
         </layoutColumns>
         <layoutColumns>
             <layoutItems>
