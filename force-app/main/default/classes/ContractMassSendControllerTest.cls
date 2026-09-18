@@ -1098,7 +1098,6 @@ static void testSendContracts_CoversCustomBodyBranch() {
                 null,
                 null,
                 null,
-                null,
                 year
             );
         Test.stopTest();
@@ -1130,7 +1129,6 @@ static void testSendContracts_CoversCustomBodyBranch() {
                 null,
                 null,
                 'Customer',
-                null,
                 year
             );
         ContractMassSendController.InitResponse noMatch =
@@ -1139,7 +1137,6 @@ static void testSendContracts_CoversCustomBodyBranch() {
                 null,
                 null,
                 'NoSuchCustomerNameXYZ',
-                null,
                 year
             );
         Test.stopTest();
@@ -1154,14 +1151,8 @@ static void testSendContracts_CoversCustomBodyBranch() {
         String year = String.valueOf(Date.today().year());
         createLinkedContractFile(acc.Id, 'Contract ' + year + ' Fields');
 
-        Schema.DescribeFieldResult countyDescribe = Account.County__c.getDescribe();
-        String countyValue;
-        for (Schema.PicklistEntry entry : countyDescribe.getPicklistValues()) {
-            if (entry.isActive()) {
-                countyValue = entry.getValue();
-                break;
-            }
-        }
+        Management_Company__c mc = new Management_Company__c(Name = 'Mass Send Filter MC');
+        insert mc;
 
         Test.startTest();
         ContractMassSendController.testBypassPermissions = true;
@@ -1171,38 +1162,22 @@ static void testSendContracts_CoversCustomBodyBranch() {
                 UserInfo.getUserId(),
                 null,
                 null,
-                null,
                 year
             );
-        ContractMassSendController.InitResponse noCounty = countyValue == null
-            ? new ContractMassSendController.InitResponse()
-            : ContractMassSendController.getInitDataFiltered(
-                new List<Id>{ acc.Id },
-                null,
-                countyValue,
-                null,
-                null,
-                year
-            );
-        ContractMassSendController.InitResponse noSupervisor =
+        ContractMassSendController.InitResponse noMc =
             ContractMassSendController.getInitDataFiltered(
                 new List<Id>{ acc.Id },
                 null,
+                mc.Id,
                 null,
-                null,
-                UserInfo.getUserId(),
                 year
             );
         Test.stopTest();
 
         System.assertEquals(0, noRm.customers.size(),
             'RM filter should exclude account without that regional manager');
-        if (countyValue != null) {
-            System.assertEquals(0, noCounty.customers.size(),
-                'County filter should exclude account without that county');
-        }
-        System.assertEquals(0, noSupervisor.customers.size(),
-            'Supervisor filter should exclude account without that supervisor');
+        System.assertEquals(0, noMc.customers.size(),
+            'Management Company filter should exclude account without that company on a bid');
     }
 
     @isTest

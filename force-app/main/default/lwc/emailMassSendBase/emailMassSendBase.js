@@ -54,15 +54,13 @@ export default class EmailMassSendBase extends NavigationMixin(
   isUpdating = false;
   accessError;
 
-  // Contract file filters (contracts mode — same as contractsSendSelector)
+  // Contract file filters (contracts mode — same as contractsSendSelector on dev)
   @track selectedRegionalManager = "";
-  @track selectedCounty = "";
+  @track selectedManagementCompany = "";
   @track customerNameFilter = "";
-  @track selectedSupervisor = "";
-  @track contractYearFilter = String(new Date().getFullYear());
+  @track contractYearFilter = String(new Date().getFullYear() + 1);
   @track regionalManagerOptions = [];
-  @track countyOptions = [];
-  @track supervisorOptions = [];
+  @track managementCompanyOptions = [];
   filtersLoaded = false;
 
   // 🔑 Source of truth for Apex
@@ -145,16 +143,9 @@ export default class EmailMassSendBase extends NavigationMixin(
           value: opt.value
         }))
       ];
-      this.countyOptions = [
+      this.managementCompanyOptions = [
         { label: "-- All --", value: "" },
-        ...(data?.counties || []).map((opt) => ({
-          label: opt.label,
-          value: opt.value
-        }))
-      ];
-      this.supervisorOptions = [
-        { label: "-- All --", value: "" },
-        ...(data?.supervisors || []).map((opt) => ({
+        ...(data?.managementCompanies || []).map((opt) => ({
           label: opt.label,
           value: opt.value
         }))
@@ -266,13 +257,12 @@ export default class EmailMassSendBase extends NavigationMixin(
   get hasActiveFilters() {
     const yearIsCustom =
       this.contractYearFilter &&
-      this.contractYearFilter !== String(new Date().getFullYear());
+      this.contractYearFilter !== this._getCurrentContractYear();
 
     return (
       this.selectedRegionalManager ||
-      this.selectedCounty ||
+      this.selectedManagementCompany ||
       this.customerNameFilter ||
-      this.selectedSupervisor ||
       yearIsCustom
     );
   }
@@ -307,9 +297,8 @@ export default class EmailMassSendBase extends NavigationMixin(
         ? await getInitDataFiltered({
             inputIds: this.inputIds,
             regionalManagerId: this.selectedRegionalManager || null,
-            county: this.selectedCounty || null,
+            managementCompanyId: this.selectedManagementCompany || null,
             customerName: this.customerNameFilter || null,
-            supervisorId: this.selectedSupervisor || null,
             contractYear: this.contractYearFilter || null
           })
         : await getInitData({
@@ -385,13 +374,17 @@ export default class EmailMassSendBase extends NavigationMixin(
   /* =====================================================
        CONTRACT FILE FILTERS (contracts mode)
     ===================================================== */
+  _getCurrentContractYear() {
+    return String(new Date().getFullYear() + 1);
+  }
+
   handleRegionalManagerChange(event) {
     this.selectedRegionalManager = event.detail.value;
     this.loadData();
   }
 
-  handleCountyChange(event) {
-    this.selectedCounty = event.detail.value;
+  handleManagementCompanyChange(event) {
+    this.selectedManagementCompany = event.detail.value;
     this.loadData();
   }
 
@@ -400,15 +393,10 @@ export default class EmailMassSendBase extends NavigationMixin(
     this.loadData();
   }
 
-  handleSupervisorChange(event) {
-    this.selectedSupervisor = event.detail.value;
-    this.loadData();
-  }
-
   handleContractYearChange(event) {
     const val = (event.detail.value || "").replace(/\D/g, "");
     if (!val) {
-      this.contractYearFilter = "";
+      this.contractYearFilter = this._getCurrentContractYear();
       this.loadData();
       return;
     }
@@ -418,10 +406,9 @@ export default class EmailMassSendBase extends NavigationMixin(
 
   clearFilters() {
     this.selectedRegionalManager = "";
-    this.selectedCounty = "";
+    this.selectedManagementCompany = "";
     this.customerNameFilter = "";
-    this.selectedSupervisor = "";
-    this.contractYearFilter = String(new Date().getFullYear());
+    this.contractYearFilter = this._getCurrentContractYear();
     this.loadData();
   }
 
