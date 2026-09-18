@@ -10,6 +10,12 @@
         <field>dfsle__EnvelopeStatus__c.dfsle__Recipients__r$dfsle__Status__c</field>
     </columns>
     <columns>
+        <field>dfsle__EnvelopeStatus__c.dfsle__Recipients__r$Email_Bounced__c</field>
+    </columns>
+    <columns>
+        <field>dfsle__EnvelopeStatus__c.dfsle__Recipients__r$Bounce_Reason__c</field>
+    </columns>
+    <columns>
         <field>dfsle__EnvelopeStatus__c.dfsle__Recipients__r$dfsle__LastStatusUpdate__c</field>
     </columns>
     <columns>
@@ -19,12 +25,20 @@
         <field>dfsle__EnvelopeStatus__c.dfsle__Recipients__r$dfsle__Sent__c</field>
     </columns>
     <filter>
+        <booleanFilter>(1 OR 2) AND 3</booleanFilter>
         <criteriaItems>
             <column>dfsle__EnvelopeStatus__c.dfsle__Recipients__r$dfsle__Status__c</column>
             <columnToColumn>false</columnToColumn>
             <isUnlocked>false</isUnlocked>
             <operator>equals</operator>
             <value>AutoResponded</value>
+        </criteriaItems>
+        <criteriaItems>
+            <column>dfsle__EnvelopeStatus__c.dfsle__Recipients__r$Email_Bounced__c</column>
+            <columnToColumn>false</columnToColumn>
+            <isUnlocked>false</isUnlocked>
+            <operator>equals</operator>
+            <value>1</value>
         </criteriaItems>
         <criteriaItems>
             <column>dfsle__EnvelopeStatus__c.dfsle__Recipients__r$dfsle__Sent__c</column>

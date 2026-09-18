@@ -318,4 +318,87 @@ public with sharing class CustomerRegionalManagerServiceTest {
             'Closed Proposal Regional_Manager__c should NOT be changed'
         );
     }
+
+    @IsTest
+    static void testSyncCaseRMFromCustomer_Insert() {
+        User rm = getRegionalManagerUser();
+
+        Account acc = new Account(
+            Name = 'Case RM Sync Customer',
+            Regional_Manager__c = rm.Id
+        );
+        insert acc;
+
+        List<Case> cases = new List<Case>{
+            new Case(
+                Subject = 'Case RM Service Insert',
+                AccountId = acc.Id,
+                Status = 'New',
+                Origin = 'Web'
+            )
+        };
+
+        Test.startTest();
+        CustomerRegionalManagerService.syncCaseRMFromCustomer(cases);
+        Test.stopTest();
+
+        System.assertEquals(
+            rm.Id,
+            cases[0].Regional_Manager__c,
+            'Case Regional_Manager__c should be set from Account'
+        );
+    }
+
+    @IsTest
+    static void testAccountRMChange_UpdatesRelatedCases() {
+        User rm = getRegionalManagerUser();
+        Profile standardProfile = [
+            SELECT Id
+            FROM Profile
+            WHERE Name = 'Standard User'
+            LIMIT 1
+        ];
+        User otherRm = new User(
+            Alias = 'rm2',
+            Email = 'rm2@example.com',
+            EmailEncodingKey = 'UTF-8',
+            LastName = 'OtherRM',
+            LanguageLocaleKey = 'en_US',
+            LocaleSidKey = 'en_US',
+            TimeZoneSidKey = 'America/New_York',
+            Username = 'rm2' + String.valueOf(Datetime.now().getTime()) + '@ppm.test',
+            ProfileId = standardProfile.Id
+        );
+        insert otherRm;
+
+        Test.startTest();
+        Account acc = new Account(
+            Name = 'Case Cascade Customer',
+            Regional_Manager__c = rm.Id
+        );
+        insert acc;
+
+        Case relatedCase = new Case(
+            Subject = 'Related Case',
+            AccountId = acc.Id,
+            Status = 'New',
+            Origin = 'Web'
+        );
+        insert relatedCase;
+
+        acc.Regional_Manager__c = otherRm.Id;
+        update acc;
+        Test.stopTest();
+
+        Case caseAfter = [
+            SELECT Id, Regional_Manager__c
+            FROM Case
+            WHERE Id = :relatedCase.Id
+        ];
+        System.assertEquals(
+            otherRm.Id,
+            caseAfter.Regional_Manager__c,
+            'Case Regional Manager should stay in sync when Account RM changes'
+        );
+    }
 }

@@ -21,6 +21,11 @@
         <label>Need More Info</label>
     </customValue>
     <customValue>
+        <fullName>Assumptive Lead</fullName>
+        <default>false</default>
+        <label>Assumptive Lead</label>
+    </customValue>
+    <customValue>
         <fullName>Assumptive Bid</fullName>
         <default>false</default>
         <label>Assumptive Bid</label>
@@ -79,6 +84,16 @@
         <fullName>New record created</fullName>
         <default>false</default>
         <label>New record created</label>
+    </customValue>
+    <customValue>
+        <fullName>Mass Created</fullName>
+        <default>false</default>
+        <label>Mass Created</label>
+    </customValue>
+    <customValue>
+        <fullName>MISSING FILE/CONTACT INFO</fullName>
+        <default>false</default>
+        <label>MISSING FILE/CONTACT INFO</label>
     </customValue>
     <customValue>
         <fullName>Goran to do</fullName>

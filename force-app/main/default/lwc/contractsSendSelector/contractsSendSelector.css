@@ -185,3 +185,7 @@
 .account-new-client {
     margin-top: 4px;
 }
+
+.sending-overlay {
+    min-height: 6rem;
+}

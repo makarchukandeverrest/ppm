@@ -9,8 +9,7 @@ public class AccountWithFiles {
     @AuraEnabled public String ebdDueDate;
     // Filter-related fields for display
     @AuraEnabled public String regionalManagerName;
-    @AuraEnabled public String countyName;
-    @AuraEnabled public String supervisorName;
+    @AuraEnabled public String managementCompanyName;
 
     // Reminder and expiration – FINAL values only (number of days)
     @AuraEnabled public String reminderValue;   // final: "1"-"7" or custom number

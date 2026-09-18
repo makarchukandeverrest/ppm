@@ -30,7 +30,7 @@
             <name>senderAddress</name>
             <value>
                 <inputConfiguratorMode>Custom</inputConfiguratorMode>
-                <stringValue>office@premierswim.com</stringValue>
+                <stringValue>sfalert@sf.premierswim.com</stringValue>
             </value>
         </inputParameters>
         <inputParameters>
