@@ -16,7 +16,7 @@
     <!-- Activity list -->
     <template if:true={hasActivities}>
         <ul class="slds-timeline">
-            <template for:each={activities} for:item="item">
+            <template for:each={displayActivities} for:item="item">
                 <li key={item.id} class="slds-timeline__item_expandable slds-timeline__item_call">
                     <div class="slds-media">
                         <div class="slds-media__figure">
@@ -60,6 +60,35 @@
                             </div>
 
                             <template if:true={item.hasDisplayBody}>
+                                <template if:true={item.isCollapsibleBody}>
+                                    <div class="slds-m-top_x-small slds-m-left_xx-large">
+                                        <button
+                                            class="slds-button slds-button_reset email-body-toggle"
+                                            type="button"
+                                            data-id={item.id}
+                                            aria-expanded={item.expandAria}
+                                            onclick={handleToggleBody}>
+                                            <lightning-icon
+                                                icon-name={item.expandIcon}
+                                                size="xx-small"
+                                                alternative-text={item.toggleLabel}
+                                                class="slds-m-right_xx-small">
+                                            </lightning-icon>
+                                            <span>{item.toggleLabel}</span>
+                                        </button>
+                                        <template if:true={item.showPreview}>
+                                            <p class="slds-text-body_small slds-text-color_weak email-body-preview">
+                                                {item.bodyPreview}
+                                            </p>
+                                        </template>
+                                        <template if:true={item.showCollapsedStatus}>
+                                            <p class="slds-m-top_xx-small">
+                                                <span class="slds-badge slds-badge_lightest">{item.status}</span>
+                                            </p>
+                                        </template>
+                                    </div>
+                                </template>
+                                <template if:true={item.showFullBody}>
                                 <div class="slds-box slds-theme_shade slds-m-top_x-small slds-m-left_xx-large activity-description">
                                     <template if:true={item.hasContentParts}>
                                         <template for:each={item.contentParts} for:item="part">
@@ -109,6 +138,7 @@
                                         </p>
                                     </template>
                                 </div>
+                                </template>
                             </template>
                         </div>
                     </div>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<EmailTemplate xmlns="http://soap.sforce.com/2006/04/metadata">
+    <available>true</available>
+    <description>DocuSign / Contract Send PDF email for existing (regular) customers.</description>
+    <encodingKey>UTF-8</encodingKey>
+    <name>Contract Send PDF - Regular Customer</name>
+    <relatedEntityType>Account</relatedEntityType>
+    <style>none</style>
+    <subject>Premier Pool Management Proposal - {{{Account.Name}}}</subject>
+    <type>custom</type>
+    <uiType>SFX</uiType>
+</EmailTemplate>

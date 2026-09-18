@@ -44,7 +44,7 @@ public with sharing class ContractMassSendController {
 
   /** Org-wide address used when the mass-send host is a Work Order record page. */
   private static final String WORK_ORDER_ORG_WIDE_EMAIL_ADDRESS =
-    'sfalert@ppsfalerts.com';
+    'sfalert@sf.premierswim.com';
 
   /**
    * Work Order-driven send: any inputId is a Work Order, or any send row has workOrderId
@@ -452,7 +452,19 @@ public with sharing class ContractMassSendController {
     @AuraEnabled
     public Id workOrderId;
     @AuraEnabled
+    public String regionalManagerName;
+    @AuraEnabled
+    public String managementCompanyName;
+    @AuraEnabled
     public List<ContractDto> contracts;
+  }
+
+  private class InitFilters {
+    public String regionalManagerId;
+    public String managementCompanyId;
+    public String customerName;
+    public String contractYear;
+    public Boolean applyContractFileFilters;
   }
 
   public class LogRowDto {
@@ -487,6 +499,34 @@ public with sharing class ContractMassSendController {
 
   @AuraEnabled(cacheable=true)
   public static InitResponse getInitData(List<Id> inputIds) {
+    return getInitDataInternal(inputIds, null);
+  }
+
+  /**
+   * Contracts-mode init: same as getInitData, plus Account/file filters matching
+   * contractsSendSelector (RM, management company, customer name, contract year).
+   */
+  @AuraEnabled
+  public static InitResponse getInitDataFiltered(
+    List<Id> inputIds,
+    String regionalManagerId,
+    String managementCompanyId,
+    String customerName,
+    String contractYear
+  ) {
+    InitFilters filters = new InitFilters();
+    filters.regionalManagerId = regionalManagerId;
+    filters.managementCompanyId = managementCompanyId;
+    filters.customerName = customerName;
+    filters.contractYear = contractYear;
+    filters.applyContractFileFilters = true;
+    return getInitDataInternal(inputIds, filters);
+  }
+
+  private static InitResponse getInitDataInternal(
+    List<Id> inputIds,
+    InitFilters filters
+  ) {
     InitResponse res = new InitResponse();
 
     /* ---------- Permission ---------- */
@@ -532,11 +572,18 @@ public with sharing class ContractMassSendController {
     } else if (sobjectType == 'Contract_Bid__c') {
       // Resolve Customers from Contract Bids
       List<Contract_Bid__c> bids = [
-        SELECT Customer__c
+        SELECT Customer__c, Management_Company__c
         FROM Contract_Bid__c
         WHERE Id IN :inputIds
       ];
       for (Contract_Bid__c cb : bids) {
+        if (
+          filters != null &&
+          String.isNotBlank(filters.managementCompanyId) &&
+          cb.Management_Company__c != filters.managementCompanyId
+        ) {
+          continue;
+        }
         if (cb.Customer__c != null) {
           customerIds.add(cb.Customer__c);
         }
@@ -631,10 +678,24 @@ public with sharing class ContractMassSendController {
     /* ---------- Accounts ---------- */
     Map<Id, Account> accById = new Map<Id, Account>(
       [
-        SELECT Id, Name, Primary_Contact__c, Primary_Contact__r.Email
+        SELECT
+          Id,
+          Name,
+          Primary_Contact__c,
+          Primary_Contact__r.Email,
+          Regional_Manager__c,
+          Regional_Manager__r.Name
         FROM Account
         WHERE Id IN :customerIds
       ]
+    );
+
+    Boolean applyFileFilters =
+      filters != null && filters.applyContractFileFilters == true;
+
+    Map<Id, String> managementCompanyByAccount = loadManagementCompanyNames(
+      customerIds,
+      filters
     );
 
     /* ---------- Files ---------- */
@@ -655,25 +716,7 @@ public with sharing class ContractMassSendController {
       customerToDocIds.get(l.LinkedEntityId).add(l.ContentDocumentId);
     }
 
-    List<ContentVersion> cvs = docIds.isEmpty()
-      ? new List<ContentVersion>()
-      : [
-          SELECT
-            Id,
-            Title,
-            ContentDocumentId,
-            VersionNumber,
-            FileExtension,
-            ContentDocument.LatestPublishedVersionId,
-            ContentDocument.LastModifiedDate
-          FROM ContentVersion
-          WHERE
-            ContentDocumentId IN :docIds
-            AND IsLatest = TRUE
-            AND FileExtension = 'pdf'
-            AND Title LIKE '%Contract%'
-          ORDER BY ContentDocument.LastModifiedDate DESC
-        ];
+    List<ContentVersion> cvs = queryContractVersions(docIds, filters);
 
     // Map: ContentDocumentId -> ContractDto with LastModifiedDate
     Map<Id, ContractDto> latestByDoc = new Map<Id, ContractDto>();
@@ -701,6 +744,18 @@ public with sharing class ContractMassSendController {
       if (acc == null)
         continue;
 
+      if (applyFileFilters && !accountMatchesFilters(acc, filters)) {
+        continue;
+      }
+      if (
+        applyFileFilters &&
+        filters != null &&
+        String.isNotBlank(filters.managementCompanyId) &&
+        !managementCompanyByAccount.containsKey(custId)
+      ) {
+        continue;
+      }
+
       CustomerDto dto = new CustomerDto();
       dto.customerId = acc.Id;
       dto.customerName = acc.Name;
@@ -708,27 +763,45 @@ public with sharing class ContractMassSendController {
         ? acc.Primary_Contact__r.Email
         : null;
       dto.primaryContactMissing = acc.Primary_Contact__r == null;
+      dto.regionalManagerName = acc.Regional_Manager__r != null
+        ? acc.Regional_Manager__r.Name
+        : null;
+      dto.managementCompanyName = managementCompanyByAccount.get(acc.Id);
 
       dto.contracts = new List<ContractDto>();
 
-      // Select ONLY the latest contract based on LastModifiedDate
       if (customerToDocIds.containsKey(custId)) {
-        Id latestDocId = null;
-        DateTime latestDate = null;
-
-        for (Id docId : customerToDocIds.get(custId)) {
-          if (latestByDoc.containsKey(docId)) {
-            DateTime docDate = docLastModified.get(docId);
-            if (latestDate == null || docDate > latestDate) {
-              latestDate = docDate;
-              latestDocId = docId;
+        if (applyFileFilters) {
+          List<ContractDto> matching = new List<ContractDto>();
+          for (Id docId : customerToDocIds.get(custId)) {
+            if (latestByDoc.containsKey(docId)) {
+              matching.add(latestByDoc.get(docId));
             }
           }
-        }
+          dto.contracts.addAll(matching);
+        } else {
+          // Legacy: select ONLY the latest contract based on LastModifiedDate
+          Id latestDocId = null;
+          DateTime latestDate = null;
 
-        if (latestDocId != null) {
-          dto.contracts.add(latestByDoc.get(latestDocId));
+          for (Id docId : customerToDocIds.get(custId)) {
+            if (latestByDoc.containsKey(docId)) {
+              DateTime docDate = docLastModified.get(docId);
+              if (latestDate == null || docDate > latestDate) {
+                latestDate = docDate;
+                latestDocId = docId;
+              }
+            }
+          }
+
+          if (latestDocId != null) {
+            dto.contracts.add(latestByDoc.get(latestDocId));
+          }
         }
+      }
+
+      if (applyFileFilters && dto.contracts.isEmpty()) {
+        continue;
       }
 
       res.customers.add(dto);
@@ -760,6 +833,138 @@ public with sharing class ContractMassSendController {
       out.add(new TemplateDto(t.Id, t.Name));
     }
     return out;
+  }
+
+  private static Boolean accountMatchesFilters(Account acc, InitFilters filters) {
+    if (filters == null) {
+      return true;
+    }
+    if (
+      String.isNotBlank(filters.regionalManagerId) &&
+      acc.Regional_Manager__c != filters.regionalManagerId
+    ) {
+      return false;
+    }
+    if (String.isNotBlank(filters.customerName)) {
+      String name = acc.Name != null ? acc.Name.toLowerCase() : '';
+      if (!name.contains(filters.customerName.toLowerCase())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static Map<Id, String> loadManagementCompanyNames(
+    Set<Id> customerIds,
+    InitFilters filters
+  ) {
+    Map<Id, String> namesByAccount = new Map<Id, String>();
+    if (customerIds == null || customerIds.isEmpty()) {
+      return namesByAccount;
+    }
+
+    String managementCompanyId =
+      filters == null ? null : filters.managementCompanyId;
+
+    for (Contract_Bid__c cb : [
+      SELECT Customer__c, Management_Company__c, Management_Company__r.Name
+      FROM Contract_Bid__c
+      WHERE Customer__c IN :customerIds
+    ]) {
+      if (
+        String.isNotBlank(managementCompanyId) &&
+        cb.Management_Company__c != managementCompanyId
+      ) {
+        continue;
+      }
+      if (
+        cb.Customer__c != null &&
+        !namesByAccount.containsKey(cb.Customer__c) &&
+        cb.Management_Company__r != null
+      ) {
+        namesByAccount.put(cb.Customer__c, cb.Management_Company__r.Name);
+      }
+    }
+    return namesByAccount;
+  }
+
+  /**
+   * File rules aligned with AccountFilesController.getAccountsWithFiles when
+   * applyContractFileFilters is true (year, exclude signed/completed/welcome/bid).
+   */
+  private static List<ContentVersion> queryContractVersions(
+    Set<Id> docIds,
+    InitFilters filters
+  ) {
+    if (docIds == null || docIds.isEmpty()) {
+      return new List<ContentVersion>();
+    }
+
+    Boolean applyFileFilters =
+      filters != null && filters.applyContractFileFilters == true;
+
+    List<ContentVersion> cvs;
+    if (applyFileFilters) {
+      String contractYearFilter = String.isNotBlank(filters.contractYear)
+        ? filters.contractYear.trim()
+        : String.valueOf(Date.today().year() + 1);
+      String contractYearLike =
+        '%' + String.escapeSingleQuotes(contractYearFilter) + '%';
+
+      cvs = [
+        SELECT
+          Id,
+          Title,
+          ContentDocumentId,
+          VersionNumber,
+          FileExtension,
+          ContentDocument.LatestPublishedVersionId,
+          ContentDocument.LastModifiedDate
+        FROM ContentVersion
+        WHERE
+          ContentDocumentId IN :docIds
+          AND IsLatest = TRUE
+          AND FileExtension IN ('pdf', 'doc', 'docx')
+          AND Title LIKE '%Contract%'
+          AND Title LIKE :contractYearLike
+          AND (NOT Title LIKE '%Signed Contract%')
+          AND (NOT Title LIKE '%Completed%')
+        ORDER BY ContentDocument.LastModifiedDate DESC
+      ];
+
+      List<ContentVersion> filtered = new List<ContentVersion>();
+      for (ContentVersion cv : cvs) {
+        if (
+          cv.Title != null &&
+          cv.Title.contains(contractYearFilter) &&
+          !cv.Title.contains('Welcome Letter') &&
+          !cv.Title.contains('Bid Worksheet') &&
+          !cv.Title.contains('Signed Contract') &&
+          !cv.Title.contains('Completed')
+        ) {
+          filtered.add(cv);
+        }
+      }
+      return filtered;
+    }
+
+    return [
+      SELECT
+        Id,
+        Title,
+        ContentDocumentId,
+        VersionNumber,
+        FileExtension,
+        ContentDocument.LatestPublishedVersionId,
+        ContentDocument.LastModifiedDate
+      FROM ContentVersion
+      WHERE
+        ContentDocumentId IN :docIds
+        AND IsLatest = TRUE
+        AND FileExtension = 'pdf'
+        AND Title LIKE '%Contract%'
+      ORDER BY ContentDocument.LastModifiedDate DESC
+    ];
   }
 
   /** Classic templates for Work Order mass send: name contains "Work Order" (any folder). */

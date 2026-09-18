@@ -32,25 +32,6 @@
         </rules>
     </decisions>
     <environments>Default</environments>
-    <formulas>
-        <name>Worksheet_Integration_Key_Formula</name>
-        <dataType>String</dataType>
-        <expression>IF(
-  ISBLANK(TEXT($Record.Contract_Year__c)),
-  $Record.Name,
-  TRIM(
-    IF(
-      REGEX(RIGHT($Record.Name, 9), &quot;[0-9]{4}-[0-9]{4}&quot;),
-      LEFT($Record.Name, LEN($Record.Name) - 9),
-      IF(
-        REGEX(RIGHT($Record.Name, 11), &quot;[0-9]{4} - [0-9]{4}&quot;),
-        LEFT($Record.Name, LEN($Record.Name) - 11),
-        $Record.Name
-      )
-    )
-  ) &amp; &quot; &quot; &amp; SUBSTITUTE(TEXT($Record.Contract_Year__c), &quot;-&quot;, &quot; - &quot;)
-)</expression>
-    </formulas>
     <interviewLabel>Contract Bid Regional Manager Fill on Creation {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Contract Bid Regional Manager Fill on Creation</label>
     <processMetadataValues>
@@ -85,27 +66,11 @@
         </inputAssignments>
         <inputReference>$Record</inputReference>
     </recordUpdates>
-    <recordUpdates>
-        <name>Fill_Worksheet_Integration_Key</name>
-        <label>Fill Worksheet Integration Key</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <connector>
-            <targetReference>Customer_RM_Active</targetReference>
-        </connector>
-        <inputAssignments>
-            <field>Worksheet_Integration_Key__c</field>
-            <value>
-                <elementReference>Worksheet_Integration_Key_Formula</elementReference>
-            </value>
-        </inputAssignments>
-        <inputReference>$Record</inputReference>
-    </recordUpdates>
     <start>
         <locationX>0</locationX>
         <locationY>0</locationY>
         <connector>
-            <targetReference>Fill_Worksheet_Integration_Key</targetReference>
+            <targetReference>Customer_RM_Active</targetReference>
         </connector>
         <object>Contract_Bid__c</object>
         <recordTriggerType>Create</recordTriggerType>

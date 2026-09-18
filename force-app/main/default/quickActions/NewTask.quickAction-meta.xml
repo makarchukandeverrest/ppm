@@ -39,6 +39,6 @@
     </quickActionLayout>
     <standardLabel>New</standardLabel>
     <targetObject>Task</targetObject>
-    <targetRecordType>Task.Regional_Manager_Request</targetRecordType>
+    <targetRecordType>Task.Standard_Task</targetRecordType>
     <type>Create</type>
 </QuickAction>
