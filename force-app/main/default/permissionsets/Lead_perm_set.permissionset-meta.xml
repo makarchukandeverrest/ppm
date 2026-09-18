@@ -655,11 +655,6 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
-        <field>Account.Stop_Sending_Reminders__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
         <field>Account.Supervisor_Lookup__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -1326,11 +1321,6 @@
     <fieldPermissions>
         <editable>true</editable>
         <field>Contract_Bid__c.Stage__c</field>
-        <readable>true</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>true</editable>
-        <field>Contract_Bid__c.Stop_Sending_Reminders__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
