@@ -22,6 +22,11 @@ public with sharing class ContractMassSendController {
     return recordId != null && recordId.getSobjectType() == WorkOrder.SObjectType;
   }
 
+  private static Boolean isOpportunityId(Id recordId) {
+    return recordId != null &&
+      recordId.getSobjectType() == Opportunity.SObjectType;
+  }
+
   /** Org-wide address used when the mass-send host is a Work Order record page. */
   private static final String WORK_ORDER_ORG_WIDE_EMAIL_ADDRESS =
     'sfalert@sf.premierswim.com';

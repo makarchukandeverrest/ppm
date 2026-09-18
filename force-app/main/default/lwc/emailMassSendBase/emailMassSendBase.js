@@ -134,7 +134,7 @@ export default class EmailMassSendBase extends NavigationMixin(
   }
 
   async loadFilterOptions() {
-    if (!this.isContractsMode || this.filtersLoaded) {
+    if (!this.showContractFilters || this.filtersLoaded) {
       return;
     }
     try {
@@ -258,6 +258,21 @@ export default class EmailMassSendBase extends NavigationMixin(
     ];
   }
 
+  get showContractFilters() {
+    const raw = String(this.inputIds[0] || this.recordId || "");
+    // Filters are only for Account/Bid (contracts mode); not for Opportunity or Work Order.
+    return (
+      this.isContractsMode &&
+      !raw.startsWith("0WO") &&
+      !raw.startsWith("006")
+    );
+  }
+
+  _isOpportunityContext() {
+    const raw = String(this.inputIds[0] || this.recordId || "");
+    return raw.startsWith("006");
+  }
+
   get hasActiveFilters() {
     const yearIsCustom =
       this.contractYearFilter &&
@@ -277,7 +292,7 @@ export default class EmailMassSendBase extends NavigationMixin(
 
   get showNoResultsWithFilters() {
     return (
-      this.isContractsMode &&
+      this.showContractFilters &&
       this.hasActiveFilters &&
       this.customers &&
       this.customers.length === 0
@@ -297,7 +312,7 @@ export default class EmailMassSendBase extends NavigationMixin(
     this.accessError = undefined;
 
     try {
-      const res = this.isContractsMode
+      const res = this.showContractFilters
         ? await getInitDataFiltered({
             inputIds: this.inputIds,
             regionalManagerId: this.selectedRegionalManager || null,
@@ -378,46 +393,12 @@ export default class EmailMassSendBase extends NavigationMixin(
        CONTRACT FILE FILTERS (contracts mode)
     ===================================================== */
   _getCurrentContractYear() {
-    return String(new Date().getFullYear() + 1);
+    // Bid/Account: next season. Proposal PDFs are usually current year.
+    return this._isOpportunityContext()
+      ? String(new Date().getFullYear())
+      : String(new Date().getFullYear() + 1);
   }
 
-  handleRegionalManagerChange(event) {
-    this.selectedRegionalManager = event.detail.value;
-    this.loadData();
-  }
-
-  handleManagementCompanyChange(event) {
-    this.selectedManagementCompany = event.detail.value;
-    this.loadData();
-  }
-
-  handleCustomerNameChange(event) {
-    this.customerNameFilter = event.detail.value;
-    this.loadData();
-  }
-
-  handleContractYearChange(event) {
-    const val = (event.detail.value || "").replace(/\D/g, "");
-    if (!val) {
-      this.contractYearFilter = this._getCurrentContractYear();
-      this.loadData();
-      return;
-    }
-    this.contractYearFilter = val.slice(0, 4);
-    this.loadData();
-  }
-
-  clearFilters() {
-    this.selectedRegionalManager = "";
-    this.selectedManagementCompany = "";
-    this.customerNameFilter = "";
-    this.contractYearFilter = this._getCurrentContractYear();
-    this.loadData();
-  }
-
-  /* =====================================================
-       CONTRACT FILE FILTERS (contracts mode)
-    ===================================================== */
   handleRegionalManagerChange(event) {
     this.selectedRegionalManager = event.detail.value;
     this.loadData();
