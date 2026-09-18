@@ -207,7 +207,7 @@
             <label>Ready To Send</label>
         </rules>
     </decisions>
-    <description>Sends a Salesforce email to all DocuSign Carbon Copy recipients when a Winterization Letters envelope is sent. Runs 1 minute after dfsle__Sent__c so dfsle__Recipient__c rows exist (DocuSign inserts the envelope as Sent first, then recipients). Matches Envelope Configuration Winterization Letters (a0DVv000012UXI3MAO). Recipients are selected by Type=CarbonCopy. Roles on this template: Carbon Copy, Carbon Copy 2, Regional Manager. Signer 1 is excluded.</description>
+    <description>Sends a Salesforce email to all DocuSign Carbon Copy recipients when a Winterization Letters envelope is sent. Runs 5 minutes after dfsle__Sent__c so dfsle__Recipient__c rows exist (DocuSign inserts the envelope as Sent first, then recipients). Matches Envelope Configuration Winterization Letters (a0DVv000012UXI3MAO). Recipients are selected by Type=CarbonCopy. Roles on this template: Carbon Copy, Carbon Copy 2, Regional Manager. Signer 1 is excluded.</description>
     <environments>Default</environments>
     <interviewLabel>Winterization DocuSign CC Sent Notify {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Winterization DocuSign CC Sent Notify</label>
@@ -358,7 +358,7 @@
                 <targetReference>Get_Case</targetReference>
             </connector>
             <label>After Recipients Exist</label>
-            <offsetNumber>1</offsetNumber>
+            <offsetNumber>5</offsetNumber>
             <offsetUnit>Minutes</offsetUnit>
             <recordField>dfsle__Sent__c</recordField>
             <timeSource>RecordField</timeSource>
