@@ -67,8 +67,13 @@ public without sharing class StopSendingRemindersService {
                 currentBatch.add(envelopeIds[i]);
             }
 
+            Exception calloutFailure;
             if (performCallouts == true) {
-                disableRemindersInDocuSign(currentBatch);
+                try {
+                    disableRemindersInDocuSign(currentBatch);
+                } catch (Exception ex) {
+                    calloutFailure = ex;
+                }
             }
 
             if (endIndex < envelopeIds.size()) {
@@ -77,6 +82,10 @@ public without sharing class StopSendingRemindersService {
                     remaining.add(envelopeIds[i]);
                 }
                 System.enqueueJob(new Job(remaining));
+            }
+
+            if (calloutFailure != null) {
+                throw calloutFailure;
             }
         }
     }
@@ -291,22 +300,27 @@ public without sharing class StopSendingRemindersService {
 
         String namedCredential = resolveNamedCredential();
         String docuSignAccountId = resolveDocuSignAccountId();
+        List<String> failures = new List<String>();
 
         for (String envelopeId : envelopeIds) {
             if (String.isBlank(envelopeId)) {
                 continue;
             }
+            String trimmedId = envelopeId.trim();
             try {
-                disableReminderForEnvelope(namedCredential, docuSignAccountId, envelopeId.trim());
+                disableReminderForEnvelope(namedCredential, docuSignAccountId, trimmedId);
             } catch (Exception ex) {
-                System.debug(
-                    LoggingLevel.ERROR,
-                    'Failed to disable DocuSign reminders for envelope ' +
-                    envelopeId +
-                    ': ' +
-                    ex.getMessage()
-                );
+                failures.add(trimmedId + ': ' + ex.getMessage());
             }
+        }
+
+        if (!failures.isEmpty()) {
+            throw new DocuSignNotificationException(
+                'Failed to disable DocuSign reminders for ' +
+                failures.size() +
+                ' envelope(s): ' +
+                String.join(failures, ' | ')
+            );
         }
     }
 

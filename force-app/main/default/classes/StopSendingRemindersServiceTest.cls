@@ -127,12 +127,22 @@ private class StopSendingRemindersServiceTest {
         StopSendingRemindersService.testDocuSignAccountId = 'TEST-DOCUSIGN-ACCOUNT';
         Test.setMock(HttpCalloutMock.class, new FailingGetNotificationMock());
 
+        Boolean threw = false;
         Test.startTest();
-        StopSendingRemindersService.disableRemindersInDocuSign(
-            new List<String>{ '11111111-1111-1111-1111-111111111111' }
-        );
+        try {
+            StopSendingRemindersService.disableRemindersInDocuSign(
+                new List<String>{ '11111111-1111-1111-1111-111111111111' }
+            );
+        } catch (StopSendingRemindersService.DocuSignNotificationException ex) {
+            threw = true;
+            System.assert(
+                ex.getMessage().contains('Failed to disable DocuSign reminders'),
+                ex.getMessage()
+            );
+        }
         Test.stopTest();
 
+        System.assertEquals(true, threw, 'Callout failure must fail the job, not debug-and-continue.');
         System.assertEquals(0, putCount, 'PUT must not run when GET notification fails.');
         System.assertEquals(null, lastPutBody);
     }
@@ -145,17 +155,46 @@ private class StopSendingRemindersServiceTest {
         StopSendingRemindersService.testDocuSignAccountId = 'TEST-DOCUSIGN-ACCOUNT';
         Test.setMock(HttpCalloutMock.class, new IncompleteGetNotificationMock());
 
+        Boolean threw = false;
         Test.startTest();
-        StopSendingRemindersService.disableRemindersInDocuSign(
-            new List<String>{ '11111111-1111-1111-1111-111111111111' }
-        );
+        try {
+            StopSendingRemindersService.disableRemindersInDocuSign(
+                new List<String>{ '11111111-1111-1111-1111-111111111111' }
+            );
+        } catch (StopSendingRemindersService.DocuSignNotificationException ex) {
+            threw = true;
+        }
         Test.stopTest();
 
+        System.assertEquals(true, threw, 'Incomplete GET body must fail the job.');
         System.assertEquals(
             0,
             putCount,
             'PUT must not run when GET notification omits expiration settings.'
         );
+    }
+
+    @IsTest
+    static void job_throwsWhenDocuSignCalloutFails() {
+        lastPutBody = null;
+        putCount = 0;
+        StopSendingRemindersService.performCallouts = true;
+        StopSendingRemindersService.testDocuSignAccountId = 'TEST-DOCUSIGN-ACCOUNT';
+        Test.setMock(HttpCalloutMock.class, new FailingGetNotificationMock());
+
+        Boolean threw = false;
+        Test.startTest();
+        try {
+            new StopSendingRemindersService.Job(
+                new List<String>{ '11111111-1111-1111-1111-111111111111' }
+            )
+            .execute(null);
+        } catch (StopSendingRemindersService.DocuSignNotificationException ex) {
+            threw = true;
+        }
+        Test.stopTest();
+
+        System.assertEquals(true, threw, 'Queueable job must fail so the error is visible in Apex Jobs.');
     }
 
     @IsTest
