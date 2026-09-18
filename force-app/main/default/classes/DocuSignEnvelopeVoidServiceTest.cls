@@ -26,6 +26,8 @@ private class DocuSignEnvelopeVoidServiceTest {
 
     private class DocuSignApiMock implements HttpCalloutMock {
         private final Map<String, String> getStatusByEnvelopeId = new Map<String, String>();
+        private final Map<String, Integer> putStatusByEnvelopeId = new Map<String, Integer>();
+        private final Map<String, String> putBodyByEnvelopeId = new Map<String, String>();
         private final Integer putStatusCode;
         private final String putBody;
         Integer getCalls = 0;
@@ -38,6 +40,12 @@ private class DocuSignEnvelopeVoidServiceTest {
 
         private DocuSignApiMock withGetStatus(String envelopeId, String status) {
             getStatusByEnvelopeId.put(envelopeId, status);
+            return this;
+        }
+
+        private DocuSignApiMock withPutStatus(String envelopeId, Integer statusCode, String body) {
+            putStatusByEnvelopeId.put(envelopeId, statusCode);
+            putBodyByEnvelopeId.put(envelopeId, body);
             return this;
         }
 
@@ -61,6 +69,11 @@ private class DocuSignEnvelopeVoidServiceTest {
 
             putCalls++;
             System.assert(req.getEndpoint().contains('/envelopes/'));
+            if (putStatusByEnvelopeId.containsKey(envelopeId)) {
+                res.setStatusCode(putStatusByEnvelopeId.get(envelopeId));
+                res.setBody(putBodyByEnvelopeId.get(envelopeId));
+                return res;
+            }
             res.setStatusCode(putStatusCode);
             res.setBody(putBody);
             return res;
@@ -128,8 +141,7 @@ private class DocuSignEnvelopeVoidServiceTest {
         Test.stopTest();
 
         System.assertEquals(1, results.size());
-        System.assertEquals(1, results[0].voidedCount);
-        System.assertEquals(0, results[0].skippedCount);
+        System.assertEquals(true, results[0].success);
         System.assertEquals(1, mock.getCalls);
         System.assertEquals(1, mock.putCalls);
     }
@@ -142,22 +154,18 @@ private class DocuSignEnvelopeVoidServiceTest {
         Test.setMock(HttpCalloutMock.class, mock);
         assignTestSettings();
 
-        DocuSignEnvelopeVoidService.Request req = newRequest(
-            new List<dfsle__EnvelopeStatus__c>{
-                statusRec(COMPLETED_ID, 'Sent'),
-                statusRec(SENT_ID, 'Sent')
-            }
-        );
-
         Test.startTest();
-        List<DocuSignEnvelopeVoidService.Result> results =
-            DocuSignEnvelopeVoidService.voidEnvelopes(
-                new List<DocuSignEnvelopeVoidService.Request>{ req }
+        DocuSignEnvelopeVoidService.Result result =
+            DocuSignEnvelopeVoidService.voidBatchIndependently(
+                new List<DocuSignEnvelopeVoidService.VoidWork>{
+                    workItem(COMPLETED_ID),
+                    workItem(SENT_ID)
+                }
             );
         Test.stopTest();
 
-        System.assertEquals(1, results[0].voidedCount);
-        System.assertEquals(1, results[0].skippedCount);
+        System.assertEquals(1, result.voidedCount);
+        System.assertEquals(1, result.skippedCount);
         System.assertEquals(2, mock.getCalls);
         System.assertEquals(1, mock.putCalls);
     }
@@ -169,21 +177,41 @@ private class DocuSignEnvelopeVoidServiceTest {
         Test.setMock(HttpCalloutMock.class, mock);
         assignTestSettings();
 
-        DocuSignEnvelopeVoidService.Request req = newRequest(
-            new List<dfsle__EnvelopeStatus__c>{ statusRec(SENT_ID, 'Sent') }
-        );
-
         Test.startTest();
-        List<DocuSignEnvelopeVoidService.Result> results =
-            DocuSignEnvelopeVoidService.voidEnvelopes(
-                new List<DocuSignEnvelopeVoidService.Request>{ req }
+        DocuSignEnvelopeVoidService.Result result =
+            DocuSignEnvelopeVoidService.voidBatchIndependently(
+                new List<DocuSignEnvelopeVoidService.VoidWork>{ workItem(SENT_ID) }
             );
         Test.stopTest();
 
-        System.assertEquals(true, results[0].success);
-        System.assertEquals(0, results[0].voidedCount);
-        System.assertEquals(1, results[0].skippedCount);
+        System.assertEquals(true, result.success);
+        System.assertEquals(0, result.voidedCount);
+        System.assertEquals(1, result.skippedCount);
         System.assertEquals(1, mock.putCalls);
+    }
+
+    @IsTest
+    static void voidBatch_continuesAfterOneCalloutFailure() {
+        DocuSignApiMock mock = new DocuSignApiMock(200, '{"status":"voided"}')
+            .withGetStatus('env-ok', 'sent')
+            .withGetStatus('env-fail', 'sent')
+            .withPutStatus('env-fail', 500, '{"message":"bad request"}');
+        Test.setMock(HttpCalloutMock.class, mock);
+        assignTestSettings();
+
+        Test.startTest();
+        DocuSignEnvelopeVoidService.Result result =
+            DocuSignEnvelopeVoidService.voidBatchIndependently(
+                new List<DocuSignEnvelopeVoidService.VoidWork>{
+                    workItem('env-ok'),
+                    workItem('env-fail')
+                }
+            );
+        Test.stopTest();
+
+        System.assertEquals(1, result.voidedCount);
+        System.assertEquals(0, result.skippedCount);
+        System.assertEquals(2, mock.putCalls, 'A failed void must not abort remaining envelopes.');
     }
 
     @IsTest
@@ -345,6 +373,13 @@ private class DocuSignEnvelopeVoidServiceTest {
         req.envelopeStatuses = statuses;
         req.voidReason = 'Contract Bid completed';
         return req;
+    }
+
+    private static DocuSignEnvelopeVoidService.VoidWork workItem(String docuSignId) {
+        DocuSignEnvelopeVoidService.VoidWork item = new DocuSignEnvelopeVoidService.VoidWork();
+        item.docuSignId = docuSignId;
+        item.reason = 'Contract Bid completed';
+        return item;
     }
 
     private static dfsle__EnvelopeStatus__c statusRec(String docuSignId, String status) {

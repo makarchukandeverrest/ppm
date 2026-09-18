@@ -1,10 +1,11 @@
-public with sharing class DocuSignEnvelopeVoidService {
+public without sharing class DocuSignEnvelopeVoidService {
     private static final String DEFAULT_VOID_REASON = 'Contract Bid completed';
     private static final String SUPERSEDED_VOID_REASON = 'Superseded by a new contract envelope';
     private static final String SETTINGS_DEVELOPER_NAME = 'Void_Envelopes';
     private static final String INVALID_STATE_ERROR = 'ENVELOPE_CANNOT_VOID_INVALID_STATE';
     private static final Set<String> OPEN_STATUSES = new Set<String>{ 'Sent', 'Delivered' };
     private static final Set<String> VOIDABLE_STATUSES = new Set<String>{ 'sent', 'delivered' };
+    private static final Integer ENVELOPES_PER_JOB = 40;
     @TestVisible
     private static final Integer NEW_ENVELOPE_WINDOW_HOURS = 24;
 
@@ -66,6 +67,12 @@ public with sharing class DocuSignEnvelopeVoidService {
     public class DocuSignVoidException extends Exception {
     }
 
+    public class VoidWork {
+        public Id statusId;
+        public String docuSignId;
+        public String reason;
+    }
+
     private class DocuSignEnvelopePayload {
         public String status;
         public String errorCode;
@@ -94,64 +101,53 @@ public with sharing class DocuSignEnvelopeVoidService {
     )
     public static List<Result> voidEnvelopes(List<Request> requests) {
         List<Result> results = new List<Result>();
-        if (requests == null || requests.isEmpty()) {
-            return results;
-        }
-
-        Boolean hasWork = false;
-        for (Request req : requests) {
-            if (req != null && req.envelopeStatuses != null && !req.envelopeStatuses.isEmpty()) {
-                hasWork = true;
-                break;
+        List<VoidWork> workItems = collectWork(requests);
+        if (workItems.isEmpty()) {
+            if (requests == null || requests.isEmpty()) {
+                return results;
             }
-        }
-        if (!hasWork) {
             for (Integer i = 0; i < requests.size(); i++) {
                 results.add(emptySuccessResult());
             }
             return results;
         }
 
-        DocuSign_API_Settings__mdt settings = getSettings();
-        List<dfsle__EnvelopeStatus__c> statusesToUpdate = new List<dfsle__EnvelopeStatus__c>();
-
-        for (Request req : requests) {
-            Result result = emptySuccessResult();
-            if (req == null || req.envelopeStatuses == null || req.envelopeStatuses.isEmpty()) {
-                results.add(result);
-                continue;
-            }
-
-            String reason = String.isBlank(req.voidReason) ? DEFAULT_VOID_REASON : req.voidReason;
-            for (dfsle__EnvelopeStatus__c statusRec : req.envelopeStatuses) {
-                VoidAttempt attempt = voidOneEnvelope(settings, statusRec, reason);
-                if (attempt.voided) {
-                    result.voidedCount++;
-                } else if (attempt.skipped) {
-                    result.skippedCount++;
-                }
-                if (statusRec != null && statusRec.Id != null && attempt.salesforceStatus != null) {
-                    dfsle__EnvelopeStatus__c updateRec = new dfsle__EnvelopeStatus__c(
-                        Id = statusRec.Id,
-                        dfsle__Status__c = attempt.salesforceStatus
-                    );
-                    if (attempt.voided) {
-                        updateRec.dfsle__Reason__c = attempt.reason;
-                    }
-                    statusesToUpdate.add(updateRec);
-                }
-            }
-            result.message = result.voidedCount +
-                ' voided, ' +
-                result.skippedCount +
-                ' skipped';
-            results.add(result);
-        }
-
-        if (!statusesToUpdate.isEmpty()) {
-            update statusesToUpdate;
+        getSettings();
+        System.enqueueJob(new Job(workItems));
+        for (Integer i = 0; i < requests.size(); i++) {
+            results.add(emptySuccessResult());
         }
         return results;
+    }
+
+    public class Job implements Queueable, Database.AllowsCallouts {
+        private List<VoidWork> workItems;
+
+        public Job(List<VoidWork> workItems) {
+            this.workItems = workItems == null ? new List<VoidWork>() : workItems;
+        }
+
+        public void execute(QueueableContext context) {
+            if (workItems.isEmpty()) {
+                return;
+            }
+
+            Integer endIndex = Math.min(ENVELOPES_PER_JOB, workItems.size());
+            List<VoidWork> currentBatch = new List<VoidWork>();
+            for (Integer i = 0; i < endIndex; i++) {
+                currentBatch.add(workItems[i]);
+            }
+
+            voidBatchIndependently(currentBatch);
+
+            if (endIndex < workItems.size()) {
+                List<VoidWork> remaining = new List<VoidWork>();
+                for (Integer i = endIndex; i < workItems.size(); i++) {
+                    remaining.add(workItems[i]);
+                }
+                System.enqueueJob(new Job(remaining));
+            }
+        }
     }
 
     @AuraEnabled
@@ -188,8 +184,8 @@ public with sharing class DocuSignEnvelopeVoidService {
             Request req = new Request();
             req.envelopeStatuses = statusesToVoid;
             req.voidReason = SUPERSEDED_VOID_REASON;
-            List<Result> voidResults = voidEnvelopes(new List<Request>{ req });
-            return voidResults.isEmpty() ? 0 : voidResults[0].voidedCount;
+            Result voidResult = voidBatchIndependently(collectWork(new List<Request>{ req }));
+            return voidResult == null ? 0 : voidResult.voidedCount;
         } catch (AuraHandledException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -267,6 +263,86 @@ public with sharing class DocuSignEnvelopeVoidService {
         result.success = true;
         result.voidedCount = 0;
         result.skippedCount = 0;
+        return result;
+    }
+
+    private static List<VoidWork> collectWork(List<Request> requests) {
+        List<VoidWork> workItems = new List<VoidWork>();
+        if (requests == null || requests.isEmpty()) {
+            return workItems;
+        }
+        for (Request req : requests) {
+            if (req == null || req.envelopeStatuses == null || req.envelopeStatuses.isEmpty()) {
+                continue;
+            }
+            String reason = String.isBlank(req.voidReason) ? DEFAULT_VOID_REASON : req.voidReason;
+            for (dfsle__EnvelopeStatus__c statusRec : req.envelopeStatuses) {
+                if (statusRec == null || String.isBlank(statusRec.dfsle__DocuSignId__c)) {
+                    continue;
+                }
+                VoidWork item = new VoidWork();
+                item.statusId = statusRec.Id;
+                item.docuSignId = statusRec.dfsle__DocuSignId__c.trim();
+                item.reason = reason;
+                workItems.add(item);
+            }
+        }
+        return workItems;
+    }
+
+    @TestVisible
+    static Result voidBatchIndependently(List<VoidWork> workItems) {
+        Result result = emptySuccessResult();
+        if (workItems == null || workItems.isEmpty()) {
+            return result;
+        }
+
+        DocuSign_API_Settings__mdt settings = getSettings();
+        List<dfsle__EnvelopeStatus__c> statusesToUpdate = new List<dfsle__EnvelopeStatus__c>();
+
+        for (VoidWork item : workItems) {
+            if (item == null || String.isBlank(item.docuSignId)) {
+                continue;
+            }
+            try {
+                dfsle__EnvelopeStatus__c statusRec = new dfsle__EnvelopeStatus__c(
+                    Id = item.statusId,
+                    dfsle__DocuSignId__c = item.docuSignId
+                );
+                VoidAttempt attempt = voidOneEnvelope(settings, statusRec, item.reason);
+                if (attempt.voided) {
+                    result.voidedCount++;
+                } else if (attempt.skipped) {
+                    result.skippedCount++;
+                }
+                if (item.statusId != null && attempt.salesforceStatus != null) {
+                    dfsle__EnvelopeStatus__c updateRec = new dfsle__EnvelopeStatus__c(
+                        Id = item.statusId,
+                        dfsle__Status__c = attempt.salesforceStatus
+                    );
+                    if (attempt.voided) {
+                        updateRec.dfsle__Reason__c = attempt.reason;
+                    }
+                    statusesToUpdate.add(updateRec);
+                }
+            } catch (Exception ex) {
+                System.debug(
+                    LoggingLevel.ERROR,
+                    'DocuSign void failed for envelope ' +
+                    item.docuSignId +
+                    ': ' +
+                    ex.getMessage()
+                );
+            }
+        }
+
+        if (!statusesToUpdate.isEmpty()) {
+            update statusesToUpdate;
+        }
+        result.message = result.voidedCount +
+            ' voided, ' +
+            result.skippedCount +
+            ' skipped';
         return result;
     }
 
