@@ -11,11 +11,7 @@ public without sharing class StopSendingRemindersService {
     @TestVisible
     private static final String SANDBOX_NAMED_CREDENTIAL = 'DocuSign';
     @TestVisible
-    private static final String SANDBOX_AUTH_NAMED_CREDENTIAL = 'DocuSignAuth';
-    @TestVisible
     private static final String PRODUCTION_NAMED_CREDENTIAL = 'ArtemDocuDevCredential';
-    @TestVisible
-    private static final String PRODUCTION_DOCUSIGN_ACCOUNT_ID = '41191243';
 
     private static final Integer ENVELOPES_PER_JOB = 40;
 
@@ -299,7 +295,7 @@ public without sharing class StopSendingRemindersService {
         }
 
         String namedCredential = resolveNamedCredential();
-        String docuSignAccountId = resolveDocuSignAccountId();
+        String docuSignAccountId = resolveDocuSignAccountId(namedCredential);
         List<String> failures = new List<String>();
 
         for (String envelopeId : envelopeIds) {
@@ -427,50 +423,57 @@ public without sharing class StopSendingRemindersService {
     }
 
     @TestVisible
-    static String resolveDocuSignAccountId() {
+    static String resolveDocuSignAccountId(String namedCredential) {
         if (Test.isRunningTest() && String.isNotBlank(testDocuSignAccountId)) {
             return testDocuSignAccountId;
         }
         if (Test.isRunningTest()) {
             return 'TEST-DOCUSIGN-ACCOUNT';
         }
-        if (!isSandboxOrg()) {
-            return PRODUCTION_DOCUSIGN_ACCOUNT_ID;
+        if (String.isBlank(namedCredential)) {
+            throw new DocuSignNotificationException(
+                'Could not resolve DocuSign accountId: named credential is blank'
+            );
         }
 
         HttpRequest request = new HttpRequest();
-        request.setEndpoint('callout:' + SANDBOX_AUTH_NAMED_CREDENTIAL + '/oauth/userinfo');
+        request.setEndpoint(
+            'callout:' + namedCredential + '/restapi/v2.1/login_information'
+        );
         request.setMethod('GET');
         request.setHeader('Accept', 'application/json');
+        request.setTimeout(120000);
 
         HttpResponse response = new Http().send(request);
-        if (response.getStatusCode() != 200) {
+        if (response.getStatusCode() != 200 || String.isBlank(response.getBody())) {
             throw new DocuSignNotificationException(
-                'Could not resolve DocuSign accountId: GET /oauth/userinfo status=' +
+                'Could not resolve DocuSign accountId: GET /login_information status=' +
                 response.getStatusCode() +
                 ' body=' +
                 response.getBody()
             );
         }
 
-        Map<String, Object> payload = (Map<String, Object>) JSON.deserializeUntyped(response.getBody());
-        List<Object> accounts = (List<Object>) payload.get('accounts');
+        Map<String, Object> payload = (Map<String, Object>) JSON.deserializeUntyped(
+            response.getBody()
+        );
+        List<Object> accounts = (List<Object>) payload.get('loginAccounts');
         if (accounts == null || accounts.isEmpty()) {
             throw new DocuSignNotificationException(
-                'Could not resolve DocuSign accountId: GET /oauth/userinfo returned no accounts'
+                'Could not resolve DocuSign accountId: GET /login_information returned no accounts'
             );
         }
 
         for (Object row : accounts) {
             Map<String, Object> accountRow = (Map<String, Object>) row;
-            Object isDefault = accountRow.get('is_default');
+            Object isDefault = accountRow.get('isDefault');
             if (isDefault == true || 'true'.equalsIgnoreCase(String.valueOf(isDefault))) {
-                return String.valueOf(accountRow.get('account_id'));
+                return String.valueOf(accountRow.get('accountId'));
             }
         }
 
         Map<String, Object> firstAccount = (Map<String, Object>) accounts[0];
-        return String.valueOf(firstAccount.get('account_id'));
+        return String.valueOf(firstAccount.get('accountId'));
     }
 
     private static Boolean isSandboxOrg() {

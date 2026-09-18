@@ -201,11 +201,11 @@ private class StopSendingRemindersServiceTest {
     static void buildNotificationEndpoint_usesRestApiPath() {
         String endpoint = StopSendingRemindersService.buildNotificationEndpoint(
             'DocuSign',
-            '41191243',
+            'TEST-DOCUSIGN-ACCOUNT',
             'env-123'
         );
         System.assertEquals(
-            'callout:DocuSign/restapi/v2.1/accounts/41191243/envelopes/env-123/notification',
+            'callout:DocuSign/restapi/v2.1/accounts/TEST-DOCUSIGN-ACCOUNT/envelopes/env-123/notification',
             endpoint
         );
     }
