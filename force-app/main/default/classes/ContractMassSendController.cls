@@ -451,6 +451,12 @@ public with sharing class ContractMassSendController {
     /** Merge / activity context for Work Order mass send (Service Team recipients) */
     @AuraEnabled
     public Id workOrderId;
+    /** Account name for Proposal mass-send filter UI */
+    @AuraEnabled
+    public String accountName;
+    /** Regional Manager Id for Proposal mass-send filter UI */
+    @AuraEnabled
+    public Id regionalManagerId;
     @AuraEnabled
     public List<ContractDto> contracts;
   }
@@ -745,7 +751,7 @@ public with sharing class ContractMassSendController {
   private static final String PREMIER_POOL_TEMPLATE_FOLDER = 'Premier Pool Templates';
 
   /** Classic HTML/custom/VF templates in the Premier Pool Templates folder only. */
-  private static List<TemplateDto> loadPremierPoolTemplatesForUi() {
+  public static List<TemplateDto> loadPremierPoolTemplatesForUi() {
     List<TemplateDto> out = new List<TemplateDto>();
     for (EmailTemplate t : [
       SELECT Id, Name
