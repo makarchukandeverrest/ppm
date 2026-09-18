@@ -318,6 +318,12 @@ public without sharing class StopSendingRemindersService {
         String endpoint = buildNotificationEndpoint(namedCredential, accountId, envelopeId);
 
         Map<String, Object> payload = getNotificationSettings(endpoint);
+        if (payload == null || payload.isEmpty() || !hasExpirationSettings(payload)) {
+            throw new DocuSignNotificationException(
+                'GET notification did not return a full notification body; aborting PUT for envelope ' +
+                envelopeId
+            );
+        }
         payload.put('useAccountDefaults', 'false');
 
         Map<String, Object> reminders = payload.containsKey('reminders')
@@ -359,14 +365,28 @@ public without sharing class StopSendingRemindersService {
 
         HttpResponse response = new Http().send(request);
         if (response.getStatusCode() != 200 || String.isBlank(response.getBody())) {
-            return new Map<String, Object>();
+            throw new DocuSignNotificationException(
+                'GET notification status=' +
+                response.getStatusCode() +
+                ' body=' +
+                response.getBody()
+            );
         }
 
         Object parsed = JSON.deserializeUntyped(response.getBody());
-        if (parsed instanceof Map<String, Object>) {
-            return (Map<String, Object>) parsed;
+        if (!(parsed instanceof Map<String, Object>)) {
+            throw new DocuSignNotificationException(
+                'GET notification returned non-object JSON: ' + response.getBody()
+            );
         }
-        return new Map<String, Object>();
+        return (Map<String, Object>) parsed;
+    }
+
+    private static Boolean hasExpirationSettings(Map<String, Object> payload) {
+        if (payload == null || !payload.containsKey('expirations') || payload.get('expirations') == null) {
+            return false;
+        }
+        return payload.get('expirations') instanceof Map<String, Object>;
     }
 
     @TestVisible

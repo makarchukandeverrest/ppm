@@ -120,6 +120,45 @@ private class StopSendingRemindersServiceTest {
     }
 
     @IsTest
+    static void disableRemindersInDocuSign_doesNotPutWhenGetFails() {
+        lastPutBody = null;
+        putCount = 0;
+        StopSendingRemindersService.performCallouts = true;
+        StopSendingRemindersService.testDocuSignAccountId = 'TEST-DOCUSIGN-ACCOUNT';
+        Test.setMock(HttpCalloutMock.class, new FailingGetNotificationMock());
+
+        Test.startTest();
+        StopSendingRemindersService.disableRemindersInDocuSign(
+            new List<String>{ '11111111-1111-1111-1111-111111111111' }
+        );
+        Test.stopTest();
+
+        System.assertEquals(0, putCount, 'PUT must not run when GET notification fails.');
+        System.assertEquals(null, lastPutBody);
+    }
+
+    @IsTest
+    static void disableRemindersInDocuSign_doesNotPutWhenGetBodyIsIncomplete() {
+        lastPutBody = null;
+        putCount = 0;
+        StopSendingRemindersService.performCallouts = true;
+        StopSendingRemindersService.testDocuSignAccountId = 'TEST-DOCUSIGN-ACCOUNT';
+        Test.setMock(HttpCalloutMock.class, new IncompleteGetNotificationMock());
+
+        Test.startTest();
+        StopSendingRemindersService.disableRemindersInDocuSign(
+            new List<String>{ '11111111-1111-1111-1111-111111111111' }
+        );
+        Test.stopTest();
+
+        System.assertEquals(
+            0,
+            putCount,
+            'PUT must not run when GET notification omits expiration settings.'
+        );
+    }
+
+    @IsTest
     static void buildNotificationEndpoint_usesRestApiPath() {
         String endpoint = StopSendingRemindersService.buildNotificationEndpoint(
             'DocuSign',
@@ -234,6 +273,40 @@ private class StopSendingRemindersServiceTest {
                 res.setBody(
                     '{"useAccountDefaults":"false","reminders":{"reminderEnabled":"true","reminderDelay":"2","reminderFrequency":"2"},"expirations":{"expireEnabled":"true","expireAfter":"120","expireWarn":"0"}}'
                 );
+                return res;
+            }
+            putCount++;
+            lastPutBody = req.getBody();
+            res.setStatusCode(200);
+            res.setBody('{}');
+            return res;
+        }
+    }
+
+    private class FailingGetNotificationMock implements HttpCalloutMock {
+        public HTTPResponse respond(HTTPRequest req) {
+            HttpResponse res = new HttpResponse();
+            res.setHeader('Content-Type', 'application/json');
+            if (req.getMethod() == 'GET') {
+                res.setStatusCode(500);
+                res.setBody('{"error":"unavailable"}');
+                return res;
+            }
+            putCount++;
+            lastPutBody = req.getBody();
+            res.setStatusCode(200);
+            res.setBody('{}');
+            return res;
+        }
+    }
+
+    private class IncompleteGetNotificationMock implements HttpCalloutMock {
+        public HTTPResponse respond(HTTPRequest req) {
+            HttpResponse res = new HttpResponse();
+            res.setHeader('Content-Type', 'application/json');
+            if (req.getMethod() == 'GET') {
+                res.setStatusCode(200);
+                res.setBody('{"useAccountDefaults":"false","reminders":{"reminderEnabled":"true"}}');
                 return res;
             }
             putCount++;
