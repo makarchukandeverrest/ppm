@@ -82,6 +82,22 @@
             <targetReference>For_Each_Id</targetReference>
         </connector>
     </assignments>
+    <assignments>
+        <name>proposal_id_to_JSON_assignment</name>
+        <label>Proposal Id to JSON Assignment</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignmentItems>
+            <assignToReference>Customers_Email</assignToReference>
+            <operator>Add</operator>
+            <value>
+                <stringValue>{&quot;email&quot;:&quot;&quot;,&quot;accountId&quot;:&quot;{!For_Each_Proposal.Id}&quot;},</stringValue>
+            </value>
+        </assignmentItems>
+        <connector>
+            <targetReference>For_Each_Proposal</targetReference>
+        </connector>
+    </assignments>
     <customProperties>
         <name>ScreenProgressIndicator</name>
         <value>
@@ -126,6 +142,21 @@
                 <targetReference>Get_Contract_Bids</targetReference>
             </connector>
             <label>Contract Bid</label>
+        </rules>
+        <rules>
+            <name>Proposal</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>LastId_Sample</leftValueReference>
+                <operator>StartsWith</operator>
+                <rightValue>
+                    <stringValue>006</stringValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Proposals</targetReference>
+            </connector>
+            <label>Proposal</label>
         </rules>
     </decisions>
     <environments>Default</environments>
@@ -172,6 +203,20 @@
         </nextValueConnector>
         <noMoreValuesConnector>
             <targetReference>Check_Record_Type</targetReference>
+        </noMoreValuesConnector>
+    </loops>
+    <loops>
+        <name>For_Each_Proposal</name>
+        <label>For Each Proposal</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <collectionReference>Get_Proposals</collectionReference>
+        <iterationOrder>Asc</iterationOrder>
+        <nextValueConnector>
+            <targetReference>proposal_id_to_JSON_assignment</targetReference>
+        </nextValueConnector>
+        <noMoreValuesConnector>
+            <targetReference>Send_Email</targetReference>
         </noMoreValuesConnector>
     </loops>
     <processMetadataValues>
@@ -256,6 +301,28 @@
         <object>Account</object>
         <queriedFields>Id</queriedFields>
         <queriedFields>Email__c</queriedFields>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Proposals</name>
+        <label>Get Proposals</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>For_Each_Proposal</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>In</operator>
+            <value>
+                <elementReference>ids</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>false</getFirstRecordOnly>
+        <object>Opportunity</object>
+        <queriedFields>Id</queriedFields>
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordLookups>
     <screens>

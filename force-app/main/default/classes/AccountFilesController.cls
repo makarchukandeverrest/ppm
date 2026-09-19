@@ -78,7 +78,7 @@ public with sharing class AccountFilesController {
         return options;
     }
     
-    @AuraEnabled(cacheable=true)
+    @AuraEnabled
     public static List<AccountWithFiles> getAccountsWithFiles(
         String recordId,
         List<Id> recordIds,
