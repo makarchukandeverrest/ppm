@@ -32,12 +32,12 @@
                 </div>
                 <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 slds-m-bottom_small">
                     <lightning-combobox
-                        name="county"
-                        label="County"
-                        value={selectedCounty}
-                        options={countyOptions}
-                        onchange={handleCountyChange}
-                        placeholder="Select County">
+                        name="managementCompany"
+                        label="Management Company"
+                        value={selectedManagementCompany}
+                        options={managementCompanyOptions}
+                        onchange={handleManagementCompanyChange}
+                        placeholder="Select Management Company">
                     </lightning-combobox>
                 </div>
                 <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 slds-m-bottom_small">
@@ -49,16 +49,6 @@
                         onchange={handleCustomerNameChange}
                         placeholder="Search by customer name...">
                     </lightning-input>
-                </div>
-                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 slds-m-bottom_small">
-                    <lightning-combobox
-                        name="supervisor"
-                        label="Supervisor"
-                        value={selectedSupervisor}
-                        options={supervisorOptions}
-                        onchange={handleSupervisorChange}
-                        placeholder="Select Supervisor">
-                    </lightning-combobox>
                 </div>
                 <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 slds-m-bottom_small">
                     <lightning-input
@@ -183,16 +173,10 @@
                                         RM: {acc.regionalManagerName}
                                     </span>
                                 </template>
-                                <template if:true={acc.countyName}>
-                                    <span class="slds-m-right_medium">
-                                        <lightning-icon icon-name="utility:location" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
-                                        {acc.countyName}
-                                    </span>
-                                </template>
-                                <template if:true={acc.supervisorName}>
+                                <template if:true={acc.managementCompanyName}>
                                     <span>
-                                        <lightning-icon icon-name="utility:groups" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
-                                        Supervisor: {acc.supervisorName}
+                                        <lightning-icon icon-name="utility:world" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                        MC: {acc.managementCompanyName}
                                     </span>
                                 </template>
                             </div>

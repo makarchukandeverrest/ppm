@@ -3,8 +3,7 @@ public with sharing class AccountFilesController {
     // DTO for filter options
     public class FilterOptions {
         @AuraEnabled public List<PicklistOption> regionalManagers;
-        @AuraEnabled public List<PicklistOption> counties;
-        @AuraEnabled public List<PicklistOption> supervisors;
+        @AuraEnabled public List<PicklistOption> managementCompanies;
     }
     
     public class PicklistOption {
@@ -21,46 +20,38 @@ public with sharing class AccountFilesController {
     public static FilterOptions getFilterOptions() {
         FilterOptions options = new FilterOptions();
         options.regionalManagers = new List<PicklistOption>();
-        options.counties = new List<PicklistOption>();
-        options.supervisors = new List<PicklistOption>();
+        options.managementCompanies = new List<PicklistOption>();
         
         // Get active stages
         StageReferenceSettings__mdt stageReference = StageReferenceSettings__mdt.getInstance('Active_Stages');
         List<String> activeStages = stageReference.Stage_Names__c.split(',');
         
-        // First get all customer IDs from active Contract_Bid__c
+        // First get all customer IDs and Management Companies from active Contract_Bid__c
         Set<Id> customerIds = new Set<Id>();
+        Set<Id> managementCompanyIds = new Set<Id>();
         
         for (Contract_Bid__c cb : [
-            SELECT Customer__c 
+            SELECT Customer__c, Management_Company__c
             FROM Contract_Bid__c 
             WHERE Stage__c IN :activeStages
             AND Customer__c != null
         ]) {
             customerIds.add(cb.Customer__c);
+            if (cb.Management_Company__c != null) {
+                managementCompanyIds.add(cb.Management_Company__c);
+            }
         }
         
-        // Get unique Regional Managers, Counties, and Supervisors from Customers (Accounts)
+        // Get unique Regional Managers from Customers (Accounts)
         Set<Id> regionalManagerIds = new Set<Id>();
-        Set<Id> supervisorIds = new Set<Id>();
-        Set<String> countyValues = new Set<String>();
         
         for (Account acc : [
-            SELECT Id, BillingCountry, Regional_Manager__c, Supervisor_Lookup__c, County__c 
+            SELECT Id, Regional_Manager__c
             FROM Account 
             WHERE Id IN :customerIds
         ]) {
-            // Regional Manager from Account
             if (acc.Regional_Manager__c != null) {
                 regionalManagerIds.add(acc.Regional_Manager__c);
-            }
-            // Supervisor from Account
-            if (acc.Supervisor_Lookup__c != null) {
-                supervisorIds.add(acc.Supervisor_Lookup__c);
-            }
-            // County__c from Account
-            if (String.isNotBlank(acc.County__c)) {
-                countyValues.add(acc.County__c);
             }
         }
         
@@ -74,23 +65,14 @@ public with sharing class AccountFilesController {
             options.regionalManagers.add(new PicklistOption(u.Name, u.Id));
         }
         
-        // Get Supervisor names
-        for (Supervisor__c sup : [
-            SELECT Id, Name, Last_Name__c
-            FROM Supervisor__c
-            WHERE Id IN :supervisorIds
+        // Get Management Company names
+        for (Management_Company__c mc : [
+            SELECT Id, Name
+            FROM Management_Company__c
+            WHERE Id IN :managementCompanyIds
             ORDER BY Name
         ]) {
-            String label = sup.Name;
-            if (String.isNotBlank(sup.Last_Name__c)) {
-                label += ' ' + sup.Last_Name__c;
-            }
-            options.supervisors.add(new PicklistOption(label, sup.Id));
-        }
-        
-        // Build County options (label = value)
-        for (String c : countyValues) {
-            options.counties.add(new PicklistOption(c, c));
+            options.managementCompanies.add(new PicklistOption(mc.Name, mc.Id));
         }
         
         return options;
@@ -101,9 +83,8 @@ public with sharing class AccountFilesController {
         String recordId,
         List<Id> recordIds,
         String regionalManagerId,
-        String county,
+        String managementCompanyId,
         String customerName,
-        String supervisorId,
         String contractYear
     ) {
         List<AccountWithFiles> result = new List<AccountWithFiles>();
@@ -130,10 +111,9 @@ public with sharing class AccountFilesController {
         String soqlQuery = 'SELECT Id, Name, Customer__c, Stage__c, ' +
                            'Customer__r.Name, Customer__r.Email__c, ' +
                            'Customer__r.BillingCountry, ' +
-                           'Customer__r.Supervisor_Lookup__c, Customer__r.Supervisor_Lookup__r.Name, ' +
                            'Customer__r.Regional_Manager__c, Customer__r.Regional_Manager__r.Name, ' +
-                           'Customer__r.County__c, EBD_Due_Date__c, ' +
-                           'Renewal_Client__c ' +
+                           'Management_Company__c, Management_Company__r.Name, ' +
+                           'EBD_Due_Date__c, Renewal_Client__c ' +
                            'FROM Contract_Bid__c ' +
                            'WHERE Customer__c != null';
 
@@ -172,16 +152,9 @@ public with sharing class AccountFilesController {
                 }
             }
             
-            // Apply County filter (County__c on Account)
-            if (String.isNotBlank(county)) {
-                if (contract.Customer__r.County__c != county) {
-                    continue;
-                }
-            }
-            
-            // Apply Supervisor filter (from Account)
-            if (String.isNotBlank(supervisorId)) {
-                if (contract.Customer__r.Supervisor_Lookup__c != supervisorId) {
+            // Apply Management Company filter (from Contract Bid)
+            if (String.isNotBlank(managementCompanyId)) {
+                if (contract.Management_Company__c != managementCompanyId) {
                     continue;
                 }
             }
@@ -331,9 +304,8 @@ public with sharing class AccountFilesController {
                 awf.regionalManagerName = contract.Customer__r.Regional_Manager__r != null 
                     ? contract.Customer__r.Regional_Manager__r.Name 
                     : null;
-                awf.countyName = contract.Customer__r.County__c;
-                awf.supervisorName = contract.Customer__r.Supervisor_Lookup__r != null 
-                    ? contract.Customer__r.Supervisor_Lookup__r.Name 
+                awf.managementCompanyName = contract.Management_Company__r != null
+                    ? contract.Management_Company__r.Name
                     : null;
                 
                 result.add(awf);

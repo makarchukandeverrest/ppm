@@ -81,6 +81,22 @@
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
+        <apexClass>DocuSignBouncePollService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>DocuSignBouncePollBatch</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>DocuSignBouncePollScheduler</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>DocuSignBouncePollServiceTest</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
         <apexClass>EmailMessageBounceJob</apexClass>
         <enabled>true</enabled>
     </classAccesses>
@@ -647,6 +663,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
+        <field>Account.Stop_Sending_Reminders__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
         <field>Account.Supervisor_Lookup__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -1147,6 +1168,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>Contract_Bid__c.Primary_Contact_Info__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>Contract_Bid__c.Profit_5__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -1308,6 +1334,11 @@
     <fieldPermissions>
         <editable>true</editable>
         <field>Contract_Bid__c.Stage__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Contract_Bid__c.Stop_Sending_Reminders__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -1537,6 +1568,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
+        <field>Opportunity.Stop_Sending_Reminders__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
         <field>Supervisor__c.Active__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -1638,6 +1674,10 @@
         <tab>standard-FlowRecord</tab>
         <visibility>Visible</visibility>
     </tabSettings>
+    <userPermissions>
+        <enabled>true</enabled>
+        <name>RunFlow</name>
+    </userPermissions>
     <userPermissions>
         <enabled>true</enabled>
         <name>SendCustomNotifications</name>

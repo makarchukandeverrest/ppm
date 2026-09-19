@@ -22,8 +22,7 @@ public with sharing class DocuSignDfsleEnvelopeService {
     private static final Set<String> DEFAULT_CC_USER_NAMES = new Set<String>{
         'Roman Shestakov',
         'Stephanie Pratt',
-        'Jessica Floyd',
-        'Adrian Voicu'
+        'Jessica Floyd'
     };
 
     private static final List<String> ENVELOPE_EMAIL_BODY_BULLETS = new List<String>{
@@ -40,6 +39,7 @@ public with sharing class DocuSignDfsleEnvelopeService {
     private static final String STAGE_CONTRACT_SENT = 'Contract Sent via DocuSign';
     private static final String STAGE_PROPOSAL_REVIEW = 'Proposal/Review';
     private static final String STAGE_CLOSED_WON = 'Closed - WON';
+    private static final String STAGE_CLOSED_LOST = 'Closed - LOST';
     private static final String STAGE_REFERENCE_ACTIVE_STAGES = 'Active_Stages';
     private static final String STATUS_EMAIL_DRAFT = '0';
     private static final String EMAIL_SUBJECT_TEMPLATE = 'Sent Contracts for {0}';
@@ -599,35 +599,43 @@ public with sharing class DocuSignDfsleEnvelopeService {
         List<dfsle.Recipient> recipients = new List<dfsle.Recipient>();
         Set<String> seenEmails = new Set<String>();
         Integer routingOrder = 1;
+        Boolean secondarySameAsSigner =
+            secondaryContact != null
+            && String.isNotBlank(secondaryContact.email)
+            && String.isNotBlank(signerEmail)
+            && secondaryContact.email.equalsIgnoreCase(signerEmail);
 
-        if (secondaryContact != null && String.isNotBlank(secondaryContact.email)) {
-            addCarbonCopyRecipient(
+        // Secondary CC stays before the signer only when it is a different person.
+        // If Primary == Secondary, keep the signer and skip the duplicate CC.
+        if (
+            secondaryContact != null
+            && String.isNotBlank(secondaryContact.email)
+            && !secondarySameAsSigner
+            && addCarbonCopyRecipient(
                 recipients,
                 secondaryContact,
                 ROLE_SECONDARY_CONTACT,
                 seenEmails,
                 routingOrder
-            );
+            )
+        ) {
             routingOrder++;
         }
 
         if (String.isNotBlank(signerEmail)) {
-            String signerEmailKey = signerEmail.toLowerCase();
-            if (!seenEmails.contains(signerEmailKey)) {
-                seenEmails.add(signerEmailKey);
-                recipients.add(
-                    dfsle.Recipient.fromSource(
-                        signerName,
-                        signerEmail,
-                        null,
-                        'Signer',
-                        new dfsle.Entity(contractBidId)
-                    )
-                        .withTabs(buildSignerTabs())
-                        .withRoutingOrder(routingOrder)
-                );
-                routingOrder++;
-            }
+            seenEmails.add(signerEmail.toLowerCase());
+            recipients.add(
+                dfsle.Recipient.fromSource(
+                    signerName,
+                    signerEmail,
+                    null,
+                    'Signer',
+                    new dfsle.Entity(contractBidId)
+                )
+                    .withTabs(buildSignerTabs())
+                    .withRoutingOrder(routingOrder)
+            );
+            routingOrder++;
         }
 
         if (ccRecipients != null) {
@@ -690,6 +698,9 @@ public with sharing class DocuSignDfsleEnvelopeService {
             new Map<String, Map<String, Object>>{
                 dfsle.Envelope.STATUS_COMPLETED => new Map<String, Object>{
                     'Contract_Bid__c.Stage__c' => STAGE_CLOSED_WON
+                },
+                dfsle.Envelope.STATUS_DECLINED => new Map<String, Object>{
+                    'Contract_Bid__c.Stage__c' => STAGE_CLOSED_LOST
                 }
             },
             new Map<String, Map<String, Object>>{
