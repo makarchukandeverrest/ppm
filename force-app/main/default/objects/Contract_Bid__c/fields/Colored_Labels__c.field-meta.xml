@@ -35,8 +35,12 @@ IF(INCLUDES(Label__c, &quot;Warm Lead&quot;),
 IMAGE(&quot;/resource/Orange&quot;, &quot;Warm Lead&quot;, 30, 30) &amp; &quot; Warm Lead &quot;,
 &quot;&quot;) &amp;
 
+IF(INCLUDES(Label__c, &quot;Resend Bid&quot;),
+IMAGE(&quot;/resource/Red&quot;, &quot;Resend Bid&quot;, 30, 30) &amp; &quot; Resend Bid &quot;,
+&quot;&quot;) &amp;
+
 IF(INCLUDES(Label__c, &quot;Assumptive Bid&quot;),
-IMAGE(&quot;/resource/Grey&quot;, &quot;Assumptive Bid&quot;, 30, 30) &amp; &quot; Assumptive Bid&quot;,
+IMAGE(&quot;/resource/Grey&quot;, &quot;Assumptive Bid&quot;, 30, 30) &amp; &quot; Assumptive Bid &quot;,
 &quot;&quot;) &amp;
 
 IF(INCLUDES(Label__c, &quot;Sales Form Lead&quot;),
@@ -65,6 +69,14 @@ IMAGE(&quot;/resource/Black&quot;, &quot;Goran to Complete&quot;, 30, 30) &amp; 
 
 IF(INCLUDES(Label__c, &quot;New record created&quot;),
 IMAGE(&quot;/resource/Pink&quot;, &quot;New record created&quot;, 30, 30) &amp; &quot; New record created &quot;,
+&quot;&quot;) &amp;
+
+IF(INCLUDES(Label__c, &quot;Mass Created&quot;),
+IMAGE(&quot;/resource/Black&quot;, &quot;Mass Created&quot;, 30, 30) &amp; &quot; Mass Created &quot;,
+&quot;&quot;) &amp;
+
+IF(INCLUDES(Label__c, &quot;MISSING FILE/CONTACT INFO&quot;),
+IMAGE(&quot;/resource/Black&quot;, &quot;MISSING FILE/CONTACT INFO&quot;, 30, 30) &amp; &quot; MISSING FILE/CONTACT INFO &quot;,
 &quot;&quot;)
 )</formula>
     <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
