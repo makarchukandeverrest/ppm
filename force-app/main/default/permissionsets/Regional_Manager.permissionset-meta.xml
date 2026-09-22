@@ -37,11 +37,23 @@
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
+        <apexClass>MassSendEmailBuilder</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>MassSendOpportunityService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
         <apexClass>CompletedContractBidResolver</apexClass>
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
         <apexClass>DocuSignCompletedContractEmailService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>DocuSignCompletedEmailJob</apexClass>
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
@@ -142,6 +154,26 @@
     </classAccesses>
     <classAccesses>
         <apexClass>MapCustomersController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>MassCloneController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>MassClonePayload</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>MassCloneRecordBuilder</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>MassCloneRowResult</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>MassCloneService</apexClass>
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
@@ -643,6 +675,11 @@
     <fieldPermissions>
         <editable>true</editable>
         <field>Account.Stage__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Account.Stop_Sending_Reminders__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -1316,6 +1353,11 @@
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
+        <editable>true</editable>
+        <field>Contract_Bid__c.Stop_Sending_Reminders__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
         <editable>false</editable>
         <field>Contract_Bid__c.Taxes__c</field>
         <readable>true</readable>
@@ -1538,6 +1580,11 @@
     <fieldPermissions>
         <editable>true</editable>
         <field>Opportunity.PDF_Requested_At__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Opportunity.Stop_Sending_Reminders__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>

@@ -34,10 +34,21 @@ public class ContentVersionTriggerHandler extends TriggerHandler {
             return;
         }
 
+        List<Id> completedIds = new List<Id>();
+        for (ContentVersion version : completedVersions) {
+            completedIds.add(version.Id);
+        }
+
         try {
-            DocuSignCompletedContractEmailService.handleCompletedContractFiles(completedVersions);
+            // Wait 1 minute so DocuSign can link the file to Bid/Proposal before we send.
+            // Tests send inline: queueable Limits/statics are not visible in the test method.
+            if (Test.isRunningTest()) {
+                DocuSignCompletedContractEmailService.sendForContentVersionIds(completedIds);
+            } else {
+                System.enqueueJob(new DocuSignCompletedEmailJob(completedIds), 1);
+            }
         } catch (Exception e) {
-            System.debug('ERROR in DocuSignCompletedContractEmailService: ' + e.getMessage());
+            System.debug('ERROR in DocuSignCompletedEmailJob: ' + e.getMessage());
             System.debug(e.getStackTraceString());
         }
     }

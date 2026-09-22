@@ -4,9 +4,11 @@ import { CurrentPageReference, NavigationMixin } from "lightning/navigation";
 import { CloseActionScreenEvent } from "lightning/actions";
 
 import getInitData from "@salesforce/apex/ContractMassSendController.getInitData";
+import getInitDataFiltered from "@salesforce/apex/ContractMassSendController.getInitDataFiltered";
 import sendContracts from "@salesforce/apex/ContractMassSendController.sendContracts";
 import getTemplateDetails from "@salesforce/apex/ContractMassSendController.getTemplateDetails";
 import previewEmail from "@salesforce/apex/ContractMassSendController.previewEmail";
+import getFilterOptions from "@salesforce/apex/AccountFilesController.getFilterOptions";
 
 export default class EmailMassSendBase extends NavigationMixin(
   LightningElement
@@ -49,7 +51,17 @@ export default class EmailMassSendBase extends NavigationMixin(
   body = "";
 
   isLoading = false;
+  isUpdating = false;
   accessError;
+
+  // Contract file filters (contracts mode — same as contractsSendSelector on dev)
+  @track selectedRegionalManager = "";
+  @track selectedManagementCompany = "";
+  @track customerNameFilter = "";
+  @track contractYearFilter = String(new Date().getFullYear() + 1);
+  @track regionalManagerOptions = [];
+  @track managementCompanyOptions = [];
+  filtersLoaded = false;
 
   // 🔑 Source of truth for Apex
   inputIds = [];
@@ -72,6 +84,9 @@ export default class EmailMassSendBase extends NavigationMixin(
 
   // customerId -> Set(contentVersionId) (used in contracts mode)
   selectedContractVersionIdsByCustomer = new Map();
+
+  // Debounce timers for text filter inputs
+  _filterTimeouts = {};
 
   /* =====================================================
        READ IDS FROM URL (Custom Tab / Navigation)
@@ -115,6 +130,33 @@ export default class EmailMassSendBase extends NavigationMixin(
     }
 
     this.tryInitFromComponentInputs();
+    this.loadFilterOptions();
+  }
+
+  async loadFilterOptions() {
+    if (!this.showContractFilters || this.filtersLoaded) {
+      return;
+    }
+    try {
+      const data = await getFilterOptions();
+      this.regionalManagerOptions = [
+        { label: "-- All --", value: "" },
+        ...(data?.regionalManagers || []).map((opt) => ({
+          label: opt.label,
+          value: opt.value
+        }))
+      ];
+      this.managementCompanyOptions = [
+        { label: "-- All --", value: "" },
+        ...(data?.managementCompanies || []).map((opt) => ({
+          label: opt.label,
+          value: opt.value
+        }))
+      ];
+      this.filtersLoaded = true;
+    } catch (error) {
+      console.error("Error loading filter options:", error);
+    }
   }
 
   tryInitFromComponentInputs() {
@@ -129,6 +171,7 @@ export default class EmailMassSendBase extends NavigationMixin(
           .filter((id) => !!id);
 
         if (this.inputIds.length > 0) {
+          this.contractYearFilter = this._getCurrentContractYear();
           this.loadData();
         }
       } catch (error) {
@@ -215,17 +258,71 @@ export default class EmailMassSendBase extends NavigationMixin(
     ];
   }
 
+  get showContractFilters() {
+    const raw = String(this.inputIds[0] || this.recordId || "");
+    // Filters are only for Account/Bid (contracts mode); not for Opportunity or Work Order.
+    return (
+      this.isContractsMode &&
+      !raw.startsWith("0WO") &&
+      !raw.startsWith("006")
+    );
+  }
+
+  _isOpportunityContext() {
+    const raw = String(this.inputIds[0] || this.recordId || "");
+    return raw.startsWith("006");
+  }
+
+  get hasActiveFilters() {
+    const yearIsCustom =
+      this.contractYearFilter &&
+      this.contractYearFilter !== this._getCurrentContractYear();
+
+    return (
+      this.selectedRegionalManager ||
+      this.selectedManagementCompany ||
+      this.customerNameFilter ||
+      yearIsCustom
+    );
+  }
+
+  get hasNoActiveFilters() {
+    return !this.hasActiveFilters;
+  }
+
+  get showNoResultsWithFilters() {
+    return (
+      this.showContractFilters &&
+      this.hasActiveFilters &&
+      this.customers &&
+      this.customers.length === 0
+    );
+  }
+
   /* =====================================================
        LOAD DATA
     ===================================================== */
   async loadData() {
-    this.isLoading = true;
+    const showFullPageSpinner = !this.customers.length;
+    if (showFullPageSpinner) {
+      this.isLoading = true;
+    } else {
+      this.isUpdating = true;
+    }
     this.accessError = undefined;
 
     try {
-      const res = await getInitData({
-        inputIds: this.inputIds
-      });
+      const res = this.showContractFilters
+        ? await getInitDataFiltered({
+            inputIds: this.inputIds,
+            regionalManagerId: this.selectedRegionalManager || null,
+            managementCompanyId: this.selectedManagementCompany || null,
+            customerName: this.customerNameFilter || null,
+            contractYear: this.contractYearFilter || null
+          })
+        : await getInitData({
+            inputIds: this.inputIds
+          });
 
       if (!res.hasAccess) {
         this.accessError =
@@ -241,32 +338,46 @@ export default class EmailMassSendBase extends NavigationMixin(
         value: t.id
       }));
 
+      const previousById = new Map(
+        (this.customers || []).map((c) => [c.customerId, c])
+      );
+
       // Always keep basic customer structure
-      this.customers = (res.customers || []).map((c) => ({
-        ...c,
-        expanded: true,
-        isExpandedLabel: c.expanded ? "Expand" : "Collapse",
-        isHovered: false,
-        isEditing: false,
-        isEditContentLoading: false,
-        emailSubjectOverride: null,
-        emailBodyOverride: null,
-        // In contracts mode we also expect contracts array with selection flags
-        contracts: (c.contracts || []).map((cv) => ({
-          ...cv,
-          isSelected: true
-        }))
-      }));
+      this.customers = (res.customers || []).map((c) => {
+        const prev = previousById.get(c.customerId);
+        return {
+          ...c,
+          expanded: prev?.expanded ?? true,
+          isExpandedLabel: prev?.expanded === false ? "Expand" : "Collapse",
+          isHovered: false,
+          isEditing: false,
+          isEditContentLoading: false,
+          emailSubjectOverride: prev?.emailSubjectOverride ?? null,
+          emailBodyOverride: prev?.emailBodyOverride ?? null,
+          contracts: (c.contracts || []).map((cv) => {
+            const prevContract = (prev?.contracts || []).find(
+              (p) => p.contentVersionId === cv.contentVersionId
+            );
+            return {
+              ...cv,
+              isSelected: prevContract ? prevContract.isSelected : true
+            };
+          })
+        };
+      });
       this.applyCustomerDisplayFields();
 
       this.sendLog = res.recentLogs || [];
       this.selectedContractVersionIdsByCustomer = new Map();
 
-      // Default: preselect all contracts (contracts mode only)
       if (this.isContractsMode) {
         this.customers.forEach((c) => {
           const setIds = new Set();
-          (c.contracts || []).forEach((cv) => setIds.add(cv.contentVersionId));
+          (c.contracts || []).forEach((cv) => {
+            if (cv.isSelected) {
+              setIds.add(cv.contentVersionId);
+            }
+          });
           this.selectedContractVersionIdsByCustomer.set(c.customerId, setIds);
         });
       }
@@ -274,7 +385,49 @@ export default class EmailMassSendBase extends NavigationMixin(
       this.toast("Error", this.normalizeError(e), "error");
     } finally {
       this.isLoading = false;
+      this.isUpdating = false;
     }
+  }
+
+  /* =====================================================
+       CONTRACT FILE FILTERS (contracts mode)
+    ===================================================== */
+  _getCurrentContractYear() {
+    // Bid/Account: next season. Proposal PDFs are usually current year.
+    return this._isOpportunityContext()
+      ? String(new Date().getFullYear())
+      : String(new Date().getFullYear() + 1);
+  }
+
+  handleRegionalManagerChange(event) {
+    this.selectedRegionalManager = event.detail.value;
+    this.loadData();
+  }
+
+  handleManagementCompanyChange(event) {
+    this.selectedManagementCompany = event.detail.value;
+    this.loadData();
+  }
+
+  handleCustomerNameChange(event) {
+    this.customerNameFilter = event.detail.value;
+    this._debounce("customerName", () => this.loadData());
+  }
+
+  handleContractYearChange(event) {
+    const val = (event.detail.value || "").replace(/\D/g, "");
+    this.contractYearFilter = val
+      ? val.slice(0, 4)
+      : this._getCurrentContractYear();
+    this._debounce("contractYear", () => this.loadData());
+  }
+
+  clearFilters() {
+    this.selectedRegionalManager = "";
+    this.selectedManagementCompany = "";
+    this.customerNameFilter = "";
+    this.contractYearFilter = this._getCurrentContractYear();
+    this.loadData();
   }
 
   /* =====================================================
@@ -451,19 +604,48 @@ export default class EmailMassSendBase extends NavigationMixin(
     this.selectedContractVersionIdsByCustomer.set(customerId, setIds);
   }
 
+  handleToggleAllContracts(event) {
+    const customerId = event.currentTarget.dataset.customerId;
+    const selected = event.currentTarget.dataset.selected === "true";
+
+    this.customers = this.customers.map((c) => {
+      if (c.customerId !== customerId) {
+        return c;
+      }
+      return {
+        ...c,
+        contracts: (c.contracts || []).map((contract) => ({
+          ...contract,
+          isSelected: selected
+        }))
+      };
+    });
+
+    const setIds = new Set();
+    if (selected) {
+      const row = this.customers.find((c) => c.customerId === customerId);
+      (row?.contracts || []).forEach((cv) => setIds.add(cv.contentVersionId));
+    }
+    this.selectedContractVersionIdsByCustomer.set(customerId, setIds);
+  }
+
   // Handle file preview - opens file in new browser tab (contracts mode)
   handlePreviewFile(event) {
     const fileId =
-      event.target.dataset.fileId || event.currentTarget.dataset.fileId;
+      event.currentTarget?.dataset?.fileId || event.target?.dataset?.fileId;
+    const versionId =
+      event.currentTarget?.dataset?.versionId || event.target?.dataset?.versionId;
 
     if (!fileId) {
-      console.error("No file ID found for preview");
+      this.toast(
+        "Preview unavailable",
+        "This file has no Salesforce document ID.",
+        "error"
+      );
       return;
     }
 
-    const baseUrl = window.location.origin;
-    const previewUrl = `${baseUrl}/lightning/page/filePreview?selectedRecordId=${fileId}`;
-    window.open(previewUrl, "_blank");
+    openFileInNewTab(fileId, versionId);
   }
 
   /* =====================================================
@@ -564,6 +746,14 @@ export default class EmailMassSendBase extends NavigationMixin(
     ===================================================== */
   toast(title, message, variant) {
     this.dispatchEvent(new ShowToastEvent({ title, message, variant }));
+  }
+
+  _debounce(key, fn, delay = 300) {
+    clearTimeout(this._filterTimeouts[key]);
+    this._filterTimeouts[key] = setTimeout(() => {
+      fn();
+      delete this._filterTimeouts[key];
+    }, delay);
   }
 
   normalizeError(e) {
