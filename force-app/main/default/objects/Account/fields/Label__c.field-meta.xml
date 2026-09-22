@@ -104,6 +104,11 @@
                 <default>false</default>
                 <label>MISSING FILE/CONTACT INFO</label>
             </value>
+            <value>
+                <fullName>Resend Bid</fullName>
+                <default>false</default>
+                <label>Resend Bid</label>
+            </value>
         </valueSetDefinition>
     </valueSet>
     <visibleLines>4</visibleLines>
