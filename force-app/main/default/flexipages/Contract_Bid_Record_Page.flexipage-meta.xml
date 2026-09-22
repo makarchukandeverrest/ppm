@@ -75,6 +75,12 @@
                 <identifier>runtime_sales_pathassistant_pathAssistant</identifier>
             </componentInstance>
         </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentName>voidPreviousEnvelopesPrompt</componentName>
+                <identifier>c_voidPreviousEnvelopesPrompt</identifier>
+            </componentInstance>
+        </itemInstances>
         <name>header</name>
         <type>Region</type>
     </flexiPageRegions>
@@ -403,16 +409,6 @@
                 </fieldInstanceProperties>
                 <fieldItem>Record.Go_through_Corporate__c</fieldItem>
                 <identifier>RecordGo_through_Corporate_cField</identifier>
-            </fieldInstance>
-        </itemInstances>
-        <itemInstances>
-            <fieldInstance>
-                <fieldInstanceProperties>
-                    <name>uiBehavior</name>
-                    <value>none</value>
-                </fieldInstanceProperties>
-                <fieldItem>Record.Stop_Sending_Reminders__c</fieldItem>
-                <identifier>RecordStop_Sending_Reminders_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <name>overviewOptionsLeft</name>
@@ -1572,6 +1568,140 @@
     </flexiPageRegions>
     <flexiPageRegions>
         <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>readonly</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Last_Email_Sent__c</fieldItem>
+                <identifier>RecordLast_Email_Sent_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>readonly</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Last_Email_Received__c</fieldItem>
+                <identifier>RecordLast_Email_Received_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>readonly</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Email_Messages_Count__c</fieldItem>
+                <identifier>RecordEmail_Messages_Count_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>readonly</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Total_Activities_Count__c</fieldItem>
+                <identifier>RecordTotal_Activities_Count_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <name>activityTrackingLeft</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>readonly</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Last_Stage_Change__c</fieldItem>
+                <identifier>RecordLast_Stage_Change_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>readonly</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Previous_Stage__c</fieldItem>
+                <identifier>RecordPrevious_Stage_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>readonly</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Latest_Call_Log__c</fieldItem>
+                <identifier>RecordLatest_Call_Log_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>readonly</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Latest_Post__c</fieldItem>
+                <identifier>RecordLatest_Post_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <name>activityTrackingRight</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>body</name>
+                    <value>activityTrackingLeft</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:column</componentName>
+                <identifier>activityTrackingColumnLeft</identifier>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>body</name>
+                    <value>activityTrackingRight</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:column</componentName>
+                <identifier>activityTrackingColumnRight</identifier>
+            </componentInstance>
+        </itemInstances>
+        <name>activityTrackingColumns</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>columns</name>
+                    <value>activityTrackingColumns</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>horizontalAlignment</name>
+                    <value>false</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>label</name>
+                    <value>Activity Tracking</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:fieldSection</componentName>
+                <identifier>activityTrackingSection</identifier>
+            </componentInstance>
+        </itemInstances>
+        <name>activityTrackingTabContent</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
             <componentInstance>
                 <componentInstanceProperties>
                     <name>active</name>
@@ -1665,6 +1795,20 @@
                         <operator>NE</operator>
                     </criteria>
                 </visibilityRule>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>body</name>
+                    <value>activityTrackingTabContent</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>title</name>
+                    <value>Activity</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:tab</componentName>
+                <identifier>activityTrackingTab</identifier>
             </componentInstance>
         </itemInstances>
         <name>maintabs</name>
