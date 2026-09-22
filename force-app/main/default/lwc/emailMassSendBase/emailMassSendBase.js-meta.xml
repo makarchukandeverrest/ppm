@@ -24,6 +24,13 @@
         description="Controls behavior of the Email Mass Send component (e.g. simple, contracts)."
         default="simple"
       />
+            <property
+        name="selectedRecordIds"
+        type="String[]"
+        label="Selected Record Ids"
+        description="Record IDs selected from a list view or passed in by Flow."
+        role="inputOnly"
+      />
         </targetConfig>
     </targetConfigs>
 </LightningComponentBundle>

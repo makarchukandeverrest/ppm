@@ -28,7 +28,7 @@ public with sharing class UnifiedActivitySelector {
             return new List<EmailMessage>();
         }
         return [
-            SELECT Id, Subject, TextBody, HtmlBody, RelatedToId, ActivityId, CreatedDate, CreatedById, CreatedBy.Name, Status
+            SELECT Id, Subject, TextBody, HtmlBody, RelatedToId, ActivityId, CreatedDate, CreatedById, CreatedBy.Name, FromName, FromAddress, Status
             FROM EmailMessage
             WHERE Id IN :emailIds WITH USER_MODE
             ORDER BY CreatedDate DESC

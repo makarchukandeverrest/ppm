@@ -2,7 +2,7 @@
 <head>
 	<title></title>
 </head>
-<body style="height: auto; min-height: auto;">Hi {{{Account.Primary_Contact__c}}},<br />
+<body style="height: auto; min-height: auto;">Hi {{{Recipient.FirstName}}},<br />
 <br />
 Please review the attached pool management proposal and let us know if you have any questions or would like to discuss any aspect of the agreement.<br />
 <br />

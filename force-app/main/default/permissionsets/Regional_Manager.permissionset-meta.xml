@@ -37,11 +37,23 @@
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
+        <apexClass>MassSendEmailBuilder</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>MassSendOpportunityService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
         <apexClass>CompletedContractBidResolver</apexClass>
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
         <apexClass>DocuSignCompletedContractEmailService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>DocuSignCompletedEmailJob</apexClass>
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
@@ -54,6 +66,14 @@
     </classAccesses>
     <classAccesses>
         <apexClass>DocuSignDfsleEnvelopeServiceTest</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>DocuSignEnvelopeVoidService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>DocuSignEnvelopeVoidServiceTest</apexClass>
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
@@ -74,6 +94,22 @@
     </classAccesses>
     <classAccesses>
         <apexClass>DocuSignWebhookHandler</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>DocuSignBouncePollService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>DocuSignBouncePollBatch</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>DocuSignBouncePollScheduler</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>DocuSignBouncePollServiceTest</apexClass>
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
@@ -118,6 +154,26 @@
     </classAccesses>
     <classAccesses>
         <apexClass>MapCustomersController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>MassCloneController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>MassClonePayload</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>MassCloneRecordBuilder</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>MassCloneRowResult</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>MassCloneService</apexClass>
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
@@ -623,6 +679,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
+        <field>Account.Stop_Sending_Reminders__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
         <field>Account.Supervisor_Lookup__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -1123,6 +1184,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>Contract_Bid__c.Primary_Contact_Info__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>Contract_Bid__c.Profit_5__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -1284,6 +1350,11 @@
     <fieldPermissions>
         <editable>true</editable>
         <field>Contract_Bid__c.Stage__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Contract_Bid__c.Stop_Sending_Reminders__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -1513,6 +1584,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
+        <field>Opportunity.Stop_Sending_Reminders__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
         <field>Supervisor__c.Active__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -1614,6 +1690,10 @@
         <tab>standard-FlowRecord</tab>
         <visibility>Visible</visibility>
     </tabSettings>
+    <userPermissions>
+        <enabled>true</enabled>
+        <name>RunFlow</name>
+    </userPermissions>
     <userPermissions>
         <enabled>true</enabled>
         <name>SendCustomNotifications</name>

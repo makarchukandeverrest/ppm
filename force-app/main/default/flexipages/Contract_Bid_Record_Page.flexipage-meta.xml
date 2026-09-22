@@ -75,6 +75,12 @@
                 <identifier>runtime_sales_pathassistant_pathAssistant</identifier>
             </componentInstance>
         </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentName>voidPreviousEnvelopesPrompt</componentName>
+                <identifier>c_voidPreviousEnvelopesPrompt</identifier>
+            </componentInstance>
+        </itemInstances>
         <name>header</name>
         <type>Region</type>
     </flexiPageRegions>
@@ -403,6 +409,16 @@
                 </fieldInstanceProperties>
                 <fieldItem>Record.Go_through_Corporate__c</fieldItem>
                 <identifier>RecordGo_through_Corporate_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Stop_Sending_Reminders__c</fieldItem>
+                <identifier>RecordStop_Sending_Reminders_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <name>overviewOptionsLeft</name>
