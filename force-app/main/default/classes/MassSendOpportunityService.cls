@@ -80,8 +80,7 @@ public with sharing class MassSendOpportunityService {
 
       ContractMassSendController.CustomerDto dto = new ContractMassSendController.CustomerDto();
       dto.customerId = opp.Id;
-      dto.customerName = opp.Name;
-      dto.accountName = opp.AccountId != null ? opp.Account.Name : null;
+      dto.customerName = customerName(opp);
       dto.proposalReferenceNumber = opp.Reference_Number__c;
       dto.regionalManagerId = opp.Regional_Manager__c != null
         ? opp.Regional_Manager__c
@@ -119,19 +118,23 @@ public with sharing class MassSendOpportunityService {
     return res;
   }
 
-  /** Customer name plus Proposal reference number for send rows and logs. */
+  /** Customer on the Proposal. Account and Customer are the same record. */
+  public static String customerName(Opportunity opp) {
+    if (opp != null && opp.Account != null && String.isNotBlank(opp.Account.Name)) {
+      return opp.Account.Name;
+    }
+    if (opp != null && String.isNotBlank(opp.Name)) {
+      return opp.Name;
+    }
+    return 'Unknown';
+  }
+
+  /** Customer name plus Proposal reference number for send logs. */
   public static String sendLabel(Opportunity opp) {
-    if (opp == null) {
-      return 'Unknown';
+    String name = customerName(opp);
+    if (opp == null || String.isBlank(opp.Reference_Number__c)) {
+      return name;
     }
-    String customerName = opp.AccountId != null &&
-      opp.Account != null &&
-      String.isNotBlank(opp.Account.Name)
-      ? opp.Account.Name
-      : opp.Name;
-    if (String.isBlank(opp.Reference_Number__c)) {
-      return customerName;
-    }
-    return customerName + ' · ' + opp.Reference_Number__c;
+    return name + ' · ' + opp.Reference_Number__c;
   }
 }

@@ -97,9 +97,6 @@ public with sharing class ContractMassSendController {
     /** Merge / activity context for Work Order mass send (Service Team recipients) */
     @AuraEnabled
     public Id workOrderId;
-    /** Account name for Proposal rows */
-    @AuraEnabled
-    public String accountName;
     /** Opportunity.Reference_Number__c, shown on Proposal send rows */
     @AuraEnabled
     public String proposalReferenceNumber;
