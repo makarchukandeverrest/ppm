@@ -177,6 +177,7 @@
         <listViewButtons>Mass_Send</listViewButtons>
         <listViewButtons>Send_Emails</listViewButtons>
         <listViewButtons>Mass_Clone</listViewButtons>
+        <listViewButtons>Update_DocuSign_Expiration</listViewButtons>
         <searchResultsAdditionalFields>Version__c</searchResultsAdditionalFields>
         <searchResultsAdditionalFields>Customer__c</searchResultsAdditionalFields>
         <searchResultsAdditionalFields>Management_Company__c</searchResultsAdditionalFields>
