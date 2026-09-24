@@ -90,6 +90,16 @@ export default class MassCloneBase extends LightningElement {
         return getCloneRule(this.objectApiName);
     }
 
+    isClearedByDefault(fieldName) {
+        return (this.cloneRule.fieldsToClear || []).includes(fieldName);
+    }
+
+    clearDefaultFields(values) {
+        (this.cloneRule.fieldsToClear || []).forEach((fieldName) => {
+            values[fieldName] = null;
+        });
+    }
+
     @wire(getRecordCreateDefaults, {
         objectApiName: '$objectApiName',
         recordTypeId: '$recordTypeId'
@@ -267,6 +277,7 @@ export default class MassCloneBase extends LightningElement {
         this.cloneRule.fieldsToLoad.forEach((fieldName) => {
             sourceValues[fieldName] = getFieldValue(sourceRecord, `${this.objectApiName}.${fieldName}`);
         });
+        this.clearDefaultFields(sourceValues);
 
         const draft = { ...sourceValues, __sourceName: sourceValues.Name };
         const merged = this.applyBulkValuesToDraft(draft);
@@ -885,6 +896,14 @@ export default class MassCloneBase extends LightningElement {
         const merged = { ...(draft || {}), __sourceName: sourceValues?.Name };
 
         [...this.resolvedFieldNames, ...this.cloneRule.fieldsToLoad].forEach((fieldName) => {
+            if (this.isClearedByDefault(fieldName)) {
+                const currentValue = merged[fieldName];
+                if (currentValue === undefined || currentValue === null || currentValue === '') {
+                    merged[fieldName] = null;
+                }
+                return;
+            }
+
             const value = merged[fieldName];
             if (value !== undefined && value !== null && value !== '') {
                 return;
