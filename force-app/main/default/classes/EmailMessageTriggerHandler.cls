@@ -30,7 +30,7 @@ public without sharing class EmailMessageTriggerHandler extends TriggerHandler {
             DocuSignSignedFileAssigner.assignDocuments(docuSignEmails);
         }
 
-        ContractBidActivityStampService.recalculateEmailStats(collectEmailParentIds(newMap.values()));
+        ContractBidActivityStampService.recalculateActivityStats(collectEmailParentIds(newMap.values()));
     }
 
     // ---------------- afterUpdate ----------------
@@ -77,15 +77,15 @@ public without sharing class EmailMessageTriggerHandler extends TriggerHandler {
                 changedEmails.add(oldEm);
             }
         }
-        ContractBidActivityStampService.recalculateEmailStats(collectEmailParentIds(changedEmails));
+        ContractBidActivityStampService.recalculateActivityStats(collectEmailParentIds(changedEmails));
     }
 
     protected override void afterDelete() {
-        ContractBidActivityStampService.recalculateEmailStats(collectEmailParentIds(oldMap.values()));
+        ContractBidActivityStampService.recalculateActivityStats(collectEmailParentIds(oldMap.values()));
     }
 
     protected override void afterUndelete() {
-        ContractBidActivityStampService.recalculateEmailStats(collectEmailParentIds(newMap.values()));
+        ContractBidActivityStampService.recalculateActivityStats(collectEmailParentIds(newMap.values()));
     }
 
     private static Set<Id> collectEmailParentIds(List<EmailMessage> emails) {

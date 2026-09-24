@@ -15,7 +15,7 @@ public with sharing class TaskTriggerHandler extends TriggerHandler {
 
     protected override void afterInsert() {
         TaskQueueNotificationService.notifyQueueMembers(this.newList, null);
-        ContractBidActivityStampService.recalculateLatestCallLog(collectCallParentIds(this.newList));
+        ContractBidActivityStampService.recalculateActivityStats(collectActivityParentIds(this.newList));
     }
 
     protected override void afterUpdate() {
@@ -29,21 +29,21 @@ public with sharing class TaskTriggerHandler extends TriggerHandler {
                 changedTasks.add(oldTask);
             }
         }
-        ContractBidActivityStampService.recalculateLatestCallLog(collectCallParentIds(changedTasks));
+        ContractBidActivityStampService.recalculateActivityStats(collectActivityParentIds(changedTasks));
     }
 
     protected override void afterDelete() {
-        ContractBidActivityStampService.recalculateLatestCallLog(collectCallParentIds(this.oldList));
+        ContractBidActivityStampService.recalculateActivityStats(collectActivityParentIds(this.oldList));
     }
 
     protected override void afterUndelete() {
-        ContractBidActivityStampService.recalculateLatestCallLog(collectCallParentIds(this.newList));
+        ContractBidActivityStampService.recalculateActivityStats(collectActivityParentIds(this.newList));
     }
 
-    private static Set<Id> collectCallParentIds(List<Task> tasks) {
+    private static Set<Id> collectActivityParentIds(List<Task> tasks) {
         Set<Id> parentIds = new Set<Id>();
         for (Task t : tasks) {
-            if (t.WhatId == null || t.TaskSubtype != 'Call') {
+            if (t.WhatId == null || t.TaskSubtype == 'Email') {
                 continue;
             }
             Schema.SObjectType parentType = t.WhatId.getSObjectType();

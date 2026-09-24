@@ -2,6 +2,7 @@ public without sharing class ContractBidActivityStampService {
     private static final Set<String> CLOSED_STAGES = loadClosedStages();
     private static final String EMAIL_STATUS_DRAFT = '5';
     private static final String TASK_SUBTYPE_CALL = 'Call';
+    private static final String TASK_SUBTYPE_EMAIL = 'Email';
 
     public static void stampStageChanges(List<Contract_Bid__c> bids, Map<Id, Contract_Bid__c> oldMap) {
         Datetime now = System.now();
@@ -11,33 +12,52 @@ public without sharing class ContractBidActivityStampService {
         }
     }
 
-    public static void recalculateEmailStats(Set<Id> emailParentIds) {
-        List<Contract_Bid__c> bids = findAffectedBids(emailParentIds);
+    public static void recalculateActivityStats(Set<Id> activityParentIds) {
+        List<Contract_Bid__c> bids = findAffectedBids(activityParentIds);
         if (bids.isEmpty()) {
             return;
         }
+        Set<Id> sourceIds = collectSourceIds(bids);
+        Map<Id, ActivityStats> statsBySourceId = new Map<Id, ActivityStats>();
 
-        Map<Id, EmailStats> statsBySourceId = new Map<Id, EmailStats>();
         for (AggregateResult ar : [
             SELECT RelatedToId sourceId, Incoming incoming, MAX(MessageDate) lastDate, COUNT(Id) total
             FROM EmailMessage
-            WHERE RelatedToId IN :collectSourceIds(bids) AND Status != :EMAIL_STATUS_DRAFT
+            WHERE RelatedToId IN :sourceIds AND Status != :EMAIL_STATUS_DRAFT
             GROUP BY RelatedToId, Incoming
         ]) {
-            Id sourceId = (Id) ar.get('sourceId');
-            if (!statsBySourceId.containsKey(sourceId)) {
-                statsBySourceId.put(sourceId, new EmailStats());
-            }
-            statsBySourceId.get(sourceId).add(
+            statsFor(statsBySourceId, (Id) ar.get('sourceId')).addEmails(
                 (Boolean) ar.get('incoming'),
                 (Datetime) ar.get('lastDate'),
                 (Integer) ar.get('total')
             );
         }
 
+        for (AggregateResult ar : [
+            SELECT WhatId sourceId, TaskSubtype subtype, MAX(CreatedDate) lastDate, COUNT(Id) total
+            FROM Task
+            WHERE WhatId IN :sourceIds AND TaskSubtype != :TASK_SUBTYPE_EMAIL
+            GROUP BY WhatId, TaskSubtype
+        ]) {
+            ActivityStats stats = statsFor(statsBySourceId, (Id) ar.get('sourceId'));
+            stats.otherActivityCount += (Integer) ar.get('total');
+            if (ar.get('subtype') == TASK_SUBTYPE_CALL) {
+                stats.latestCall = later(stats.latestCall, (Datetime) ar.get('lastDate'));
+            }
+        }
+
+        for (AggregateResult ar : [
+            SELECT WhatId sourceId, COUNT(Id) total
+            FROM Event
+            WHERE WhatId IN :sourceIds AND IsChild = false
+            GROUP BY WhatId
+        ]) {
+            statsFor(statsBySourceId, (Id) ar.get('sourceId')).otherActivityCount += (Integer) ar.get('total');
+        }
+
         List<Contract_Bid__c> bidsToUpdate = new List<Contract_Bid__c>();
         for (Contract_Bid__c bid : bids) {
-            EmailStats stats = new EmailStats();
+            ActivityStats stats = new ActivityStats();
             stats.addAll(statsBySourceId.get(bid.Id));
             if (countsAccountActivities(bid)) {
                 stats.addAll(statsBySourceId.get(bid.Customer__c));
@@ -46,35 +66,10 @@ public without sharing class ContractBidActivityStampService {
                 Id = bid.Id,
                 Last_Email_Sent__c = stats.lastSent,
                 Last_Email_Received__c = stats.lastReceived,
-                Email_Messages_Count__c = stats.count
+                Email_Messages_Count__c = stats.emailCount,
+                Latest_Call_Log__c = stats.latestCall,
+                Total_Activities_Count__c = stats.emailCount + stats.otherActivityCount
             ));
-        }
-        update bidsToUpdate;
-    }
-
-    public static void recalculateLatestCallLog(Set<Id> callParentIds) {
-        List<Contract_Bid__c> bids = findAffectedBids(callParentIds);
-        if (bids.isEmpty()) {
-            return;
-        }
-
-        Map<Id, Datetime> latestCallBySourceId = new Map<Id, Datetime>();
-        for (AggregateResult ar : [
-            SELECT WhatId sourceId, MAX(CreatedDate) lastDate
-            FROM Task
-            WHERE WhatId IN :collectSourceIds(bids) AND TaskSubtype = :TASK_SUBTYPE_CALL
-            GROUP BY WhatId
-        ]) {
-            latestCallBySourceId.put((Id) ar.get('sourceId'), (Datetime) ar.get('lastDate'));
-        }
-
-        List<Contract_Bid__c> bidsToUpdate = new List<Contract_Bid__c>();
-        for (Contract_Bid__c bid : bids) {
-            Datetime latestCall = latestCallBySourceId.get(bid.Id);
-            if (countsAccountActivities(bid)) {
-                latestCall = later(latestCall, latestCallBySourceId.get(bid.Customer__c));
-            }
-            bidsToUpdate.add(new Contract_Bid__c(Id = bid.Id, Latest_Call_Log__c = latestCall));
         }
         update bidsToUpdate;
     }
@@ -102,6 +97,13 @@ public without sharing class ContractBidActivityStampService {
         return sourceIds;
     }
 
+    private static ActivityStats statsFor(Map<Id, ActivityStats> statsBySourceId, Id sourceId) {
+        if (!statsBySourceId.containsKey(sourceId)) {
+            statsBySourceId.put(sourceId, new ActivityStats());
+        }
+        return statsBySourceId.get(sourceId);
+    }
+
     private static Set<String> loadClosedStages() {
         Set<String> stages = new Set<String>();
         StageReferenceSettings__mdt settings = StageReferenceSettings__mdt.getInstance('Closed_Stages');
@@ -125,27 +127,31 @@ public without sharing class ContractBidActivityStampService {
         return a > b ? a : b;
     }
 
-    private class EmailStats {
+    private class ActivityStats {
         Datetime lastSent;
         Datetime lastReceived;
-        Integer count = 0;
+        Datetime latestCall;
+        Integer emailCount = 0;
+        Integer otherActivityCount = 0;
 
-        void add(Boolean incoming, Datetime lastDate, Integer total) {
+        void addEmails(Boolean incoming, Datetime lastDate, Integer total) {
             if (incoming) {
                 lastReceived = later(lastReceived, lastDate);
             } else {
                 lastSent = later(lastSent, lastDate);
             }
-            count += total;
+            emailCount += total;
         }
 
-        void addAll(EmailStats other) {
+        void addAll(ActivityStats other) {
             if (other == null) {
                 return;
             }
             lastSent = later(lastSent, other.lastSent);
             lastReceived = later(lastReceived, other.lastReceived);
-            count += other.count;
+            latestCall = later(latestCall, other.latestCall);
+            emailCount += other.emailCount;
+            otherActivityCount += other.otherActivityCount;
         }
     }
 }
