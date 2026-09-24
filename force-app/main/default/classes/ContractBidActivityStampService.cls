@@ -3,6 +3,7 @@ public without sharing class ContractBidActivityStampService {
     private static final String EMAIL_STATUS_DRAFT = '5';
     private static final String TASK_SUBTYPE_CALL = 'Call';
     private static final String TASK_SUBTYPE_EMAIL = 'Email';
+    public static final Set<String> POST_TYPES = new Set<String>{ 'TextPost', 'ContentPost', 'LinkPost' };
 
     public static void stampStageChanges(List<Contract_Bid__c> bids, Map<Id, Contract_Bid__c> oldMap) {
         Datetime now = System.now();
@@ -70,6 +71,50 @@ public without sharing class ContractBidActivityStampService {
                 Latest_Call_Log__c = stats.latestCall,
                 Total_Activities_Count__c = stats.emailCount + stats.otherActivityCount
             ));
+        }
+        update bidsToUpdate;
+    }
+
+    public static void recalculateLatestPost(Set<Id> feedParentIds) {
+        List<Contract_Bid__c> bids = findAffectedBids(feedParentIds);
+        if (bids.isEmpty()) {
+            return;
+        }
+
+        Map<Id, Datetime> latestPostByParentId = new Map<Id, Datetime>();
+        for (Contract_Bid__c bid : [
+            SELECT Id, (SELECT CreatedDate FROM Feeds WHERE Type IN :POST_TYPES ORDER BY CreatedDate DESC LIMIT 1)
+            FROM Contract_Bid__c
+            WHERE Id IN :bids
+        ]) {
+            if (!bid.Feeds.isEmpty()) {
+                latestPostByParentId.put(bid.Id, bid.Feeds[0].CreatedDate);
+            }
+        }
+
+        Set<Id> accountIds = new Set<Id>();
+        for (Contract_Bid__c bid : bids) {
+            if (countsAccountActivities(bid)) {
+                accountIds.add(bid.Customer__c);
+            }
+        }
+        for (Account acc : [
+            SELECT Id, (SELECT CreatedDate FROM Feeds WHERE Type IN :POST_TYPES ORDER BY CreatedDate DESC LIMIT 1)
+            FROM Account
+            WHERE Id IN :accountIds
+        ]) {
+            if (!acc.Feeds.isEmpty()) {
+                latestPostByParentId.put(acc.Id, acc.Feeds[0].CreatedDate);
+            }
+        }
+
+        List<Contract_Bid__c> bidsToUpdate = new List<Contract_Bid__c>();
+        for (Contract_Bid__c bid : bids) {
+            Datetime latestPost = latestPostByParentId.get(bid.Id);
+            if (countsAccountActivities(bid)) {
+                latestPost = later(latestPost, latestPostByParentId.get(bid.Customer__c));
+            }
+            bidsToUpdate.add(new Contract_Bid__c(Id = bid.Id, Latest_Post__c = latestPost));
         }
         update bidsToUpdate;
     }
