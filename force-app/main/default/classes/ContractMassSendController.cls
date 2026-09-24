@@ -97,9 +97,9 @@ public with sharing class ContractMassSendController {
     /** Merge / activity context for Work Order mass send (Service Team recipients) */
     @AuraEnabled
     public Id workOrderId;
-    /** Account name for Proposal filter UI */
+    /** Opportunity.Reference_Number__c, shown on Proposal send rows */
     @AuraEnabled
-    public String accountName;
+    public String proposalReferenceNumber;
     /** Regional Manager Id for Proposal filter UI */
     @AuraEnabled
     public Id regionalManagerId;
@@ -752,6 +752,7 @@ public with sharing class ContractMassSendController {
               Name,
               AccountId,
               Account.Name,
+              Reference_Number__c,
               Account.Primary_Contact__c,
               Account.Primary_Contact__r.Email,
               Account.Primary_Contact__r.FirstName,
@@ -921,7 +922,7 @@ public with sharing class ContractMassSendController {
 
         if (whoId == null) {
           LogRowDto log = new LogRowDto();
-          log.customerName = opp.Name;
+          log.customerName = MassSendOpportunityService.sendLabel(opp);
           log.status = 'Failed';
           log.message = 'Primary Contact is missing.';
           logs.add(log);
@@ -929,7 +930,7 @@ public with sharing class ContractMassSendController {
         }
         if (String.isBlank(whoEmail)) {
           LogRowDto log = new LogRowDto();
-          log.customerName = opp.Name;
+          log.customerName = MassSendOpportunityService.sendLabel(opp);
           log.status = 'Failed';
           log.message = 'Primary Contact has no email.';
           logs.add(log);
@@ -957,7 +958,7 @@ public with sharing class ContractMassSendController {
         MassSendEmailBuilder.EmailBuildResult result = MassSendEmailBuilder.buildEmail(req);
         if (String.isNotBlank(result.errorMessage)) {
           LogRowDto log = new LogRowDto();
-          log.customerName = opp.Name;
+          log.customerName = MassSendOpportunityService.sendLabel(opp);
           log.status = 'Failed';
           log.message = result.errorMessage;
           logs.add(log);
@@ -971,7 +972,7 @@ public with sharing class ContractMassSendController {
           for (Id cvId : r.contentVersionIds) {
             ContentVersion cv = cvById.get(cvId);
             LogRowDto log = new LogRowDto();
-            log.customerName = opp.Name;
+            log.customerName = MassSendOpportunityService.sendLabel(opp);
             log.fileTitle = cv != null ? cv.Title : null;
             log.versionNumber = cv != null
               ? Integer.valueOf(cv.VersionNumber)
@@ -983,7 +984,7 @@ public with sharing class ContractMassSendController {
           }
         } else {
           LogRowDto log = new LogRowDto();
-          log.customerName = opp.Name;
+          log.customerName = MassSendOpportunityService.sendLabel(opp);
           log.status = 'Sending';
           log.message = 'Email is being sent...';
           logs.add(log);
