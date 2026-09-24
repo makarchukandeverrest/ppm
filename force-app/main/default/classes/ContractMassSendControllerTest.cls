@@ -715,7 +715,8 @@ private class ContractMassSendControllerTest {
             AccountId = acc.Id,
             StageName = 'Draft',
             CloseDate = Date.today().addDays(30),
-            Customer_Primary_Contact__c = acc.Primary_Contact__c
+            Customer_Primary_Contact__c = acc.Primary_Contact__c,
+            Reference_Number__c = 'REF-100'
         );
         Opportunity opp2 = new Opportunity(
             Name = 'Proposal Two',
@@ -756,6 +757,12 @@ private class ContractMassSendControllerTest {
             'Should return one row per Proposal even when Accounts match');
         System.assertEquals(opp1.Id, response.customers[0].customerId);
         System.assertEquals(opp2.Id, response.customers[1].customerId);
+        System.assertEquals(
+            'REF-100',
+            response.customers[0].proposalReferenceNumber,
+            'Proposal row should include the reference number'
+        );
+        System.assertEquals(null, response.customers[1].proposalReferenceNumber);
         System.assertEquals(1, response.customers[0].contracts.size(),
             'Proposal One should show PDF linked to the Proposal');
         System.assertEquals(0, response.customers[1].contracts.size(),

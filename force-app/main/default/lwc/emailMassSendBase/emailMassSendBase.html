@@ -182,7 +182,17 @@
                     class="slds-col slds-size_1-of-1 slds-large-size_8-of-12"
                   >
                     <div class="slds-text-heading_small">
-                      {cust.customerName}
+                      <template if:true={cust.accountName}
+                        >{cust.accountName}</template
+                      >
+                      <template if:false={cust.accountName}
+                        >{cust.customerName}</template
+                      >
+                      <template if:true={cust.proposalReferenceNumber}>
+                        <span class="slds-text-color_weak">
+                          · {cust.proposalReferenceNumber}</span
+                        >
+                      </template>
 
                       <!-- Иконка превью -->
                       <lightning-button-icon
@@ -205,6 +215,11 @@
                       >
                       </lightning-button-icon>
                     </div>
+                    <template if:true={cust.accountName}>
+                      <div class="slds-text-body_small slds-text-color_weak">
+                        {cust.customerName}
+                      </div>
+                    </template>
                     <div class="slds-text-body_small slds-text-color_weak">
                       Email: {cust.customerEmail}
                     </div>
