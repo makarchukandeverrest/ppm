@@ -669,6 +669,26 @@ export default class EmailMassSendBase extends NavigationMixin(
   /* =====================================================
        SEND
     ===================================================== */
+  applyEmailContentToSendRow(row, customer) {
+    if (customer.emailSubjectOverride != null) {
+      row.subject = customer.emailSubjectOverride;
+    }
+    if (customer.emailBodyOverride != null) {
+      row.body = customer.emailBodyOverride;
+    }
+    if (
+      customer.emailSubjectOverride != null ||
+      customer.emailBodyOverride != null
+    ) {
+      // Per-recipient editor stores already-merged HTML.
+      row.parsedContent = true;
+    } else if (this.hasEditedGlobalEmail) {
+      // Top subject/body still contain merge fields; Apex must merge them.
+      row.subject = this.subject;
+      row.body = this.body;
+    }
+  }
+
   async handleSend() {
     this.isLoading = true;
     this.sendError = undefined;
@@ -689,15 +709,7 @@ export default class EmailMassSendBase extends NavigationMixin(
               workOrderId: c.workOrderId || null,
               contentVersionIds: ids
             };
-            if (c.emailSubjectOverride != null) {
-              row.subject = c.emailSubjectOverride;
-            }
-            if (c.emailBodyOverride != null) {
-              row.body = c.emailBodyOverride;
-            }
-            if (c.emailSubjectOverride != null || c.emailBodyOverride != null) {
-              row.parsedContent = true;
-            }
+            this.applyEmailContentToSendRow(row, c);
             payload.push(row);
           }
         }
@@ -717,15 +729,7 @@ export default class EmailMassSendBase extends NavigationMixin(
             customerId: c.customerId,
             workOrderId: c.workOrderId || null
           };
-          if (c.emailSubjectOverride != null) {
-            row.subject = c.emailSubjectOverride;
-          }
-          if (c.emailBodyOverride != null) {
-            row.body = c.emailBodyOverride;
-          }
-          if (c.emailSubjectOverride != null || c.emailBodyOverride != null) {
-            row.parsedContent = true;
-          }
+          this.applyEmailContentToSendRow(row, c);
           payload.push(row);
         }
 
