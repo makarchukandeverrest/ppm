@@ -72,6 +72,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(LightningElemen
         return [
             { label: 'All', value: 'All' },
             { label: 'Tasks', value: 'Task' },
+            { label: 'Calls', value: 'Call' },
             { label: 'Events', value: 'Event' },
             { label: 'Emails', value: 'EmailMessage' },
             { label: 'Chatter', value: 'FeedItem' }
@@ -191,7 +192,9 @@ export default class UnifiedActivityFeed extends NavigationMixin(LightningElemen
                 hasDisplayBody,
                 showSourceLabel: this.showSourceLabels && !!item.sourceLabel,
                 displayDate: this.formatDate(item.createdDate),
+                timelineClass: `slds-timeline__item_expandable ${this.timelineItemClass(item.type)}`,
                 isTask: item.type === 'Task',
+                isCall: item.type === 'Call',
                 isEvent: item.type === 'Event',
                 isEmail,
                 isFeed: item.type === 'FeedItem',
@@ -229,6 +232,19 @@ export default class UnifiedActivityFeed extends NavigationMixin(LightningElemen
             return text;
         }
         return `${text.slice(0, maxLength).trim()}…`;
+    }
+
+    timelineItemClass(type) {
+        switch (type) {
+            case 'Call':
+                return 'slds-timeline__item_call';
+            case 'Event':
+                return 'slds-timeline__item_event';
+            case 'EmailMessage':
+                return 'slds-timeline__item_email';
+            default:
+                return 'slds-timeline__item_task';
+        }
     }
 
     get showSourceLabels() {
@@ -286,6 +302,10 @@ export default class UnifiedActivityFeed extends NavigationMixin(LightningElemen
 
     handleNewEvent() {
         this.openNewActivityRecord('Event');
+    }
+
+    handleLogACall() {
+        this.openGlobalQuickAction('Global.LogACall');
     }
 
     handleNewPost() {
