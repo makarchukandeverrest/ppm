@@ -11,17 +11,10 @@
     <targetConfigs>
         <targetConfig targets="lightning__FlowScreen">
             <property
-        name="selectedRecordIds"
-        type="String[]"
-        label="Selected Record IDs"
-        description="Ids selected on the list view (Contract Bids or Accounts). Prefer this over Customers Data."
-        role="inputOnly"
-      />
-            <property
         name="customersData"
         type="String"
         label="Customers Data"
-        description="Concatenated JSON objects (legacy; Flow text vars cap at 4000 characters)"
+        description="Concatenated JSON objects"
         role="inputOnly"
       />
             <property
@@ -30,6 +23,13 @@
         label="Mode"
         description="Controls behavior of the Email Mass Send component (e.g. simple, contracts)."
         default="simple"
+      />
+            <property
+        name="selectedRecordIds"
+        type="String[]"
+        label="Selected Record Ids"
+        description="Record IDs selected from a list view or passed in by Flow."
+        role="inputOnly"
       />
         </targetConfig>
     </targetConfigs>
