@@ -29,6 +29,8 @@ public without sharing class EmailMessageTriggerHandler extends TriggerHandler {
         if (!docuSignEmails.isEmpty()) {
             DocuSignSignedFileAssigner.assignDocuments(docuSignEmails);
         }
+
+        ContractBidActivityStampService.recalculateActivityStats(collectEmailParentIds(newMap.values()));
     }
 
     // ---------------- afterUpdate ----------------
@@ -65,5 +67,38 @@ public without sharing class EmailMessageTriggerHandler extends TriggerHandler {
         if (!docuSignEmails.isEmpty()) {
             DocuSignSignedFileAssigner.assignDocuments(docuSignEmails);
         }
+
+        List<EmailMessage> changedEmails = new List<EmailMessage>();
+        for (EmailMessage em : newMap.values()) {
+            EmailMessage oldEm = oldMap.get(em.Id);
+            if (em.RelatedToId != oldEm.RelatedToId || em.Incoming != oldEm.Incoming
+                || em.MessageDate != oldEm.MessageDate || em.Status != oldEm.Status) {
+                changedEmails.add(em);
+                changedEmails.add(oldEm);
+            }
+        }
+        ContractBidActivityStampService.recalculateActivityStats(collectEmailParentIds(changedEmails));
+    }
+
+    protected override void afterDelete() {
+        ContractBidActivityStampService.recalculateActivityStats(collectEmailParentIds(oldMap.values()));
+    }
+
+    protected override void afterUndelete() {
+        ContractBidActivityStampService.recalculateActivityStats(collectEmailParentIds(newMap.values()));
+    }
+
+    private static Set<Id> collectEmailParentIds(List<EmailMessage> emails) {
+        Set<Id> parentIds = new Set<Id>();
+        for (EmailMessage em : emails) {
+            if (em.RelatedToId == null) {
+                continue;
+            }
+            Schema.SObjectType parentType = em.RelatedToId.getSObjectType();
+            if (parentType == Contract_Bid__c.SObjectType || parentType == Account.SObjectType) {
+                parentIds.add(em.RelatedToId);
+            }
+        }
+        return parentIds;
     }
 }
