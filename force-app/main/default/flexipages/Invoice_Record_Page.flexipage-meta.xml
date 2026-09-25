@@ -179,6 +179,16 @@
                 <identifier>RecordPast_Due_Days__cField</identifier>
             </fieldInstance>
         </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Class_Name__c</fieldItem>
+                <identifier>RecordClass_Name__cField</identifier>
+            </fieldInstance>
+        </itemInstances>
         <name>Facet-37403cf0-da51-45bc-94ae-02ab7fb5d36b</name>
         <type>Facet</type>
     </flexiPageRegions>
