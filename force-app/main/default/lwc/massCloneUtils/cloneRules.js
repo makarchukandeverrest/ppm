@@ -5,6 +5,8 @@ const DEFAULT_RULE = {
     requiredFields: ['Name'],
     fieldsToLoad: [],
     specialFields: [],
+    fieldsToClear: [],
+    formFields: [],
     deriveName: (draft, sourceValues) => draft?.Name || sourceValues?.Name || null
 };
 
@@ -17,7 +19,9 @@ export function registerCloneRule(objectApiName, rule) {
         previewFields: mergeArrays(DEFAULT_RULE.previewFields, rule.previewFields),
         requiredFields: mergeArrays(DEFAULT_RULE.requiredFields, rule.requiredFields),
         fieldsToLoad: mergeArrays(DEFAULT_RULE.fieldsToLoad, rule.fieldsToLoad),
-        specialFields: mergeArrays(DEFAULT_RULE.specialFields, rule.specialFields)
+        specialFields: mergeArrays(DEFAULT_RULE.specialFields, rule.specialFields),
+        fieldsToClear: mergeArrays(DEFAULT_RULE.fieldsToClear, rule.fieldsToClear),
+        formFields: mergeArrays(DEFAULT_RULE.formFields, rule.formFields)
     });
 }
 
@@ -33,10 +37,12 @@ function mergeArrays(defaults, overrides) {
 }
 
 registerCloneRule('Contract_Bid__c', {
-    previewFields: ['Customer__c', 'Contract_Year__c', 'Stage__c', 'Due_Date__c'],
+    previewFields: ['Bid_Number__c', 'Customer__c', 'Contract_Year__c', 'Stage__c', 'Due_Date__c'],
     requiredFields: ['Customer__c', 'Contract_Year__c', 'Stage__c'],
     fieldsToLoad: ['Contract_Year__c'],
     specialFields: ['Contract_Year__c'],
+    fieldsToClear: ['Bid_Number__c'],
+    formFields: ['Bid_Number__c'],
     deriveName: (draft, sourceValues) => {
         const rawName = sourceValues?.Name || draft?.__sourceName;
         const contractYear = draft?.Contract_Year__c || sourceValues?.Contract_Year__c;
