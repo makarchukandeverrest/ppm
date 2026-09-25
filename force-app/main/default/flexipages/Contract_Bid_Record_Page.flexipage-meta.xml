@@ -84,6 +84,12 @@
                 <identifier>c_voidPreviousEnvelopesPrompt</identifier>
             </componentInstance>
         </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentName>voidPreviousEnvelopesPrompt</componentName>
+                <identifier>c_voidPreviousEnvelopesPrompt</identifier>
+            </componentInstance>
+        </itemInstances>
         <name>header</name>
         <type>Region</type>
     </flexiPageRegions>

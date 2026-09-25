@@ -85,6 +85,9 @@ export default class EmailMassSendBase extends NavigationMixin(
   // customerId -> Set(contentVersionId) (used in contracts mode)
   selectedContractVersionIdsByCustomer = new Map();
 
+  // Debounce timers for text filter inputs
+  _filterTimeouts = {};
+
   /* =====================================================
        READ IDS FROM URL (Custom Tab / Navigation)
     ===================================================== */
@@ -131,7 +134,7 @@ export default class EmailMassSendBase extends NavigationMixin(
   }
 
   async loadFilterOptions() {
-    if (!this.isContractsMode || this.filtersLoaded) {
+    if (!this.showContractFilters || this.filtersLoaded) {
       return;
     }
     try {
@@ -168,6 +171,7 @@ export default class EmailMassSendBase extends NavigationMixin(
           .filter((id) => !!id);
 
         if (this.inputIds.length > 0) {
+          this.contractYearFilter = this._getCurrentContractYear();
           this.loadData();
         }
       } catch (error) {
@@ -254,6 +258,21 @@ export default class EmailMassSendBase extends NavigationMixin(
     ];
   }
 
+  get showContractFilters() {
+    const raw = String(this.inputIds[0] || this.recordId || "");
+    // Filters are only for Account/Bid (contracts mode); not for Opportunity or Work Order.
+    return (
+      this.isContractsMode &&
+      !raw.startsWith("0WO") &&
+      !raw.startsWith("006")
+    );
+  }
+
+  _isOpportunityContext() {
+    const raw = String(this.inputIds[0] || this.recordId || "");
+    return raw.startsWith("006");
+  }
+
   get hasActiveFilters() {
     const yearIsCustom =
       this.contractYearFilter &&
@@ -273,7 +292,7 @@ export default class EmailMassSendBase extends NavigationMixin(
 
   get showNoResultsWithFilters() {
     return (
-      this.isContractsMode &&
+      this.showContractFilters &&
       this.hasActiveFilters &&
       this.customers &&
       this.customers.length === 0
@@ -293,7 +312,7 @@ export default class EmailMassSendBase extends NavigationMixin(
     this.accessError = undefined;
 
     try {
-      const res = this.isContractsMode
+      const res = this.showContractFilters
         ? await getInitDataFiltered({
             inputIds: this.inputIds,
             regionalManagerId: this.selectedRegionalManager || null,
@@ -351,7 +370,6 @@ export default class EmailMassSendBase extends NavigationMixin(
       this.sendLog = res.recentLogs || [];
       this.selectedContractVersionIdsByCustomer = new Map();
 
-      // Default: preselect all contracts (contracts mode only)
       if (this.isContractsMode) {
         this.customers.forEach((c) => {
           const setIds = new Set();
@@ -375,7 +393,10 @@ export default class EmailMassSendBase extends NavigationMixin(
        CONTRACT FILE FILTERS (contracts mode)
     ===================================================== */
   _getCurrentContractYear() {
-    return String(new Date().getFullYear() + 1);
+    // Bid/Account: next season. Proposal PDFs are usually current year.
+    return this._isOpportunityContext()
+      ? String(new Date().getFullYear())
+      : String(new Date().getFullYear() + 1);
   }
 
   handleRegionalManagerChange(event) {
@@ -390,18 +411,15 @@ export default class EmailMassSendBase extends NavigationMixin(
 
   handleCustomerNameChange(event) {
     this.customerNameFilter = event.detail.value;
-    this.loadData();
+    this._debounce("customerName", () => this.loadData());
   }
 
   handleContractYearChange(event) {
     const val = (event.detail.value || "").replace(/\D/g, "");
-    if (!val) {
-      this.contractYearFilter = this._getCurrentContractYear();
-      this.loadData();
-      return;
-    }
-    this.contractYearFilter = val.slice(0, 4);
-    this.loadData();
+    this.contractYearFilter = val
+      ? val.slice(0, 4)
+      : this._getCurrentContractYear();
+    this._debounce("contractYear", () => this.loadData());
   }
 
   clearFilters() {
@@ -614,16 +632,20 @@ export default class EmailMassSendBase extends NavigationMixin(
   // Handle file preview - opens file in new browser tab (contracts mode)
   handlePreviewFile(event) {
     const fileId =
-      event.target.dataset.fileId || event.currentTarget.dataset.fileId;
+      event.currentTarget?.dataset?.fileId || event.target?.dataset?.fileId;
+    const versionId =
+      event.currentTarget?.dataset?.versionId || event.target?.dataset?.versionId;
 
     if (!fileId) {
-      console.error("No file ID found for preview");
+      this.toast(
+        "Preview unavailable",
+        "This file has no Salesforce document ID.",
+        "error"
+      );
       return;
     }
 
-    const baseUrl = window.location.origin;
-    const previewUrl = `${baseUrl}/lightning/page/filePreview?selectedRecordId=${fileId}`;
-    window.open(previewUrl, "_blank");
+    openFileInNewTab(fileId, versionId);
   }
 
   /* =====================================================
@@ -724,6 +746,14 @@ export default class EmailMassSendBase extends NavigationMixin(
     ===================================================== */
   toast(title, message, variant) {
     this.dispatchEvent(new ShowToastEvent({ title, message, variant }));
+  }
+
+  _debounce(key, fn, delay = 300) {
+    clearTimeout(this._filterTimeouts[key]);
+    this._filterTimeouts[key] = setTimeout(() => {
+      fn();
+      delete this._filterTimeouts[key];
+    }, delay);
   }
 
   normalizeError(e) {
