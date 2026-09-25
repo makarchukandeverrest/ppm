@@ -13,6 +13,10 @@ export default class UnifiedActivityFeedHeader extends LightningElement {
         this.dispatchEvent(new CustomEvent('newevent'));
     }
 
+    handleLogACall() {
+        this.dispatchEvent(new CustomEvent('logacall'));
+    }
+
     handleNewEmail() {
         this.dispatchEvent(new CustomEvent('newemail'));
     }
