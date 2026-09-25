@@ -1,0 +1,116 @@
+<template>
+  <template lwc:if={isRecordAction}>
+    <lightning-quick-action-panel header="Update DocuSign Expiration">
+      <div class="slds-p-horizontal_medium">
+        <template lwc:if={loadError}>
+          <div
+            class="slds-notify slds-notify_alert slds-alert_error slds-m-bottom_small"
+            role="alert"
+          >
+            {loadError}
+          </div>
+        </template>
+        <p class="slds-m-bottom_medium">{summaryText}</p>
+        <lightning-input
+          type="date"
+          label="New expiration date"
+          value={expirationDate}
+          min={minimumExpirationDate}
+          onchange={handleExpirationChange}
+          required
+        ></lightning-input>
+        <lightning-input
+          class="slds-m-top_small"
+          type="date"
+          label="Expiration warning date"
+          value={warningDate}
+          min={today}
+          max={expirationDate}
+          onchange={handleWarningChange}
+          required
+        ></lightning-input>
+      </div>
+      <div slot="footer">
+        <lightning-button
+          label="Cancel"
+          onclick={handleCancel}
+          disabled={isSubmitting}
+        ></lightning-button>
+        <lightning-button
+          class="slds-m-left_small"
+          variant="brand"
+          label="Update Envelopes"
+          onclick={handleSubmit}
+          disabled={submitDisabled}
+        ></lightning-button>
+      </div>
+    </lightning-quick-action-panel>
+  </template>
+  <template lwc:else>
+    <lightning-card title="Update DocuSign Envelope Expiration">
+      <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+        <template lwc:if={isLoading}>
+          <lightning-spinner
+            alternative-text="Checking open envelopes"
+            size="small"
+          ></lightning-spinner>
+        </template>
+        <template lwc:if={loadError}>
+          <div
+            class="slds-notify slds-notify_alert slds-alert_error"
+            role="alert"
+          >
+            {loadError}
+          </div>
+        </template>
+        <template lwc:else>
+          <template lwc:if={isSubmitting}>
+            <lightning-spinner
+              alternative-text="Queueing updates"
+              size="small"
+            ></lightning-spinner>
+          </template>
+          <template lwc:if={statusMessage}>
+            <div class={statusClass} role="status">{statusMessage}</div>
+          </template>
+          <p class="slds-text-body_regular slds-m-bottom_medium">
+            {summaryText}
+          </p>
+          <lightning-input
+            type="date"
+            name="expirationDate"
+            label="New expiration date"
+            value={expirationDate}
+            min={minimumExpirationDate}
+            onchange={handleExpirationChange}
+            required
+          ></lightning-input>
+          <lightning-input
+            class="slds-m-top_small"
+            type="date"
+            name="warningDate"
+            label="Expiration warning date"
+            value={warningDate}
+            min={today}
+            max={expirationDate}
+            onchange={handleWarningChange}
+            required
+          ></lightning-input>
+          <p class="slds-text-color_weak slds-m-top_medium">
+            Click Queue Updates to process all Sent and Delivered envelopes.
+            Completed, declined, voided, deleted, and expired envelopes are
+            skipped. An envelope is also skipped when a signer auto-responded.
+          </p>
+          <div class="slds-m-top_large slds-grid slds-grid_align-end">
+            <lightning-button
+              variant="brand"
+              label="Queue Updates"
+              onclick={handleSubmit}
+              disabled={submitDisabled}
+            ></lightning-button>
+          </div>
+        </template>
+      </div>
+    </lightning-card>
+  </template>
+</template>
