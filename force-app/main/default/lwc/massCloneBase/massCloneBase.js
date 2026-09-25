@@ -114,7 +114,7 @@ export default class MassCloneBase extends LightningElement {
         if (data) {
             this.objectInfo = data.objectInfos?.[this.objectApiName];
             this.defaultRecordTypeId = data.recordTypeId;
-            this.formSections = this.extractSectionsFromLayout(data.layout);
+            this.formSections = this.withRuleFormFields(this.extractSectionsFromLayout(data.layout));
             this.resolvedFieldNames = this.flattenSectionFields(this.formSections);
             this.layoutError = undefined;
             this.publishFormFieldNames();
@@ -146,14 +146,14 @@ export default class MassCloneBase extends LightningElement {
 
         this.layoutFetchComplete = true;
         this.layoutError = undefined;
-        this.resolvedFieldNames = [...new Set(this._fieldNames)];
-        this.formSections = [
+        this.formSections = this.withRuleFormFields([
             {
                 id: 'explicit-fields',
                 heading: null,
-                fields: this.resolvedFieldNames
+                fields: [...new Set(this._fieldNames)]
             }
-        ];
+        ]);
+        this.resolvedFieldNames = this.flattenSectionFields(this.formSections);
         this.publishFormFieldNames();
     }
 
@@ -197,6 +197,33 @@ export default class MassCloneBase extends LightningElement {
         });
 
         return [...new Set(fields)];
+    }
+
+    withRuleFormFields(sections) {
+        const extraFields = (this.cloneRule.formFields || []).filter(
+            (fieldName) => fieldName && !SYSTEM_FIELDS.has(fieldName)
+        );
+        if (!extraFields.length) {
+            return sections;
+        }
+
+        const present = new Set();
+        sections.forEach((section) => {
+            section.fields.forEach((fieldName) => present.add(fieldName));
+        });
+        const missing = extraFields.filter((fieldName) => !present.has(fieldName));
+        if (!missing.length) {
+            return sections;
+        }
+
+        return [
+            {
+                id: 'clone-rule-fields',
+                heading: null,
+                fields: missing
+            },
+            ...sections
+        ];
     }
 
     flattenSectionFields(sections) {
@@ -280,6 +307,7 @@ export default class MassCloneBase extends LightningElement {
         this.clearDefaultFields(sourceValues);
 
         const draft = { ...sourceValues, __sourceName: sourceValues.Name };
+        this.applyFieldsToClear(draft);
         const merged = this.applyBulkValuesToDraft(draft);
         this.setDraft(recordId, merged);
         this.refreshDraftNames();
@@ -739,7 +767,13 @@ export default class MassCloneBase extends LightningElement {
 
         const values = {};
         Object.entries(templateDraft).forEach(([fieldName, value]) => {
-            if (!BULK_APPLY_EXCLUDED_FIELDS.has(fieldName) && value !== undefined && value !== null && value !== '') {
+            if (
+                !BULK_APPLY_EXCLUDED_FIELDS.has(fieldName) &&
+                !this.isClearedByDefault(fieldName) &&
+                value !== undefined &&
+                value !== null &&
+                value !== ''
+            ) {
                 values[fieldName] = value;
             }
         });
@@ -905,6 +939,12 @@ export default class MassCloneBase extends LightningElement {
             }
 
             const value = merged[fieldName];
+            if (this.isClearedByDefault(fieldName)) {
+                if (value === undefined || value === null || value === '') {
+                    merged[fieldName] = null;
+                }
+                return;
+            }
             if (value !== undefined && value !== null && value !== '') {
                 return;
             }
@@ -917,6 +957,17 @@ export default class MassCloneBase extends LightningElement {
         }
 
         return merged;
+    }
+
+    applyFieldsToClear(draft) {
+        (this.cloneRule.fieldsToClear || []).forEach((fieldName) => {
+            draft[fieldName] = null;
+        });
+        return draft;
+    }
+
+    isClearedByDefault(fieldName) {
+        return (this.cloneRule.fieldsToClear || []).includes(fieldName);
     }
 
     @api
