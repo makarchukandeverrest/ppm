@@ -91,6 +91,10 @@
                 <behavior>Readonly</behavior>
                 <field>Past_Due_Days__c</field>
             </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
+                <field>Class_Name__c</field>
+            </layoutItems>
         </layoutColumns>
         <layoutColumns>
             <layoutItems>
