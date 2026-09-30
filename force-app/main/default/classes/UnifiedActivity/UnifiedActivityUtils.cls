@@ -4,6 +4,7 @@ public class UnifiedActivityUtils {
     public static String iconNameFor(String type) {
         switch on type {
             when 'Task' { return 'standard:task'; }
+            when 'Call' { return 'standard:log_a_call'; }
             when 'Event' { return 'standard:event'; }
             when 'EmailMessage' { return 'standard:email'; }
             when 'FeedItem' { return 'standard:feed'; }
@@ -14,6 +15,7 @@ public class UnifiedActivityUtils {
     public static String formattedTypeFor(String type) {
         switch on type {
             when 'Task' { return 'Task'; }
+            when 'Call' { return 'Call'; }
             when 'Event' { return 'Event'; }
             when 'EmailMessage' { return 'Email'; }
             when 'FeedItem' { return 'Chatter'; }
