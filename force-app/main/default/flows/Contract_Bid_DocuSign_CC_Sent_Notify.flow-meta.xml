@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
     <actionCalls>
         <name>Send_Contract_Sent_Email</name>
@@ -70,7 +70,8 @@
             <assignToReference>ccEmailAddresses</assignToReference>
             <operator>Add</operator>
             <value>
-                <elementReference>Loop_CC_Recipients.dfsle__Email__c</elementReference>
+                <elementReference
+        >Loop_CC_Recipients.dfsle__Email__c</elementReference>
             </value>
         </assignmentItems>
         <connector>
@@ -166,17 +167,19 @@
             <name>Email_Present</name>
             <conditionLogic>and</conditionLogic>
             <conditions>
-                <leftValueReference>Loop_CC_Recipients.dfsle__Email__c</leftValueReference>
+                <leftValueReference
+        >Loop_CC_Recipients.dfsle__Email__c</leftValueReference>
                 <operator>IsNull</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>Loop_CC_Recipients.dfsle__Email__c</leftValueReference>
+                <leftValueReference
+        >Loop_CC_Recipients.dfsle__Email__c</leftValueReference>
                 <operator>NotEqualTo</operator>
                 <rightValue>
-                    <stringValue></stringValue>
+                    <stringValue />
                 </rightValue>
             </conditions>
             <connector>
@@ -207,14 +210,16 @@
             <label>Ready To Send</label>
         </rules>
     </decisions>
-    <description>Sends an additional Salesforce email to DocuSign CarbonCopy recipients when a Contract Bid envelope is sent. Excludes Role Secondary Contact (customer secondary). Note: many internal CCs have blank Role and Type=CarbonCopy.</description>
+    <description
+  >Sends an additional Salesforce email to DocuSign CarbonCopy recipients when a Contract Bid envelope is sent. Runs 1 minute after dfsle__Sent__c so dfsle__Recipient__c rows exist. Excludes Role Secondary Contact (customer secondary). Note: many internal CCs have blank Role and Type=CarbonCopy.</description>
     <environments>Default</environments>
     <formulas>
         <name>Now_Date_TIME</name>
         <dataType>DateTime</dataType>
         <expression>NOW()</expression>
     </formulas>
-    <interviewLabel>Contract Bid DocuSign CC Sent Notify {!$Flow.CurrentDateTime}</interviewLabel>
+    <interviewLabel
+  >Contract Bid DocuSign CC Sent Notify {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Contract Bid DocuSign CC Sent Notify</label>
     <loops>
         <name>Loop_CC_Recipients</name>
@@ -254,7 +259,8 @@
         <label>Get CC Recipients</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Count_CC_Recipients</targetReference>
         </connector>
@@ -299,7 +305,8 @@
         <label>Get Contract Bid</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Decision_Bid_Found</targetReference>
         </connector>
@@ -345,10 +352,8 @@
     <start>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <connector>
-            <targetReference>Get_Contract_Bid</targetReference>
-        </connector>
-        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <doesRequireRecordChangedToMeetCriteria
+    >true</doesRequireRecordChangedToMeetCriteria>
         <filterLogic>and</filterLogic>
         <filters>
             <field>dfsle__SourceId__c</field>
@@ -366,6 +371,17 @@
         </filters>
         <object>dfsle__Envelope__c</object>
         <recordTriggerType>CreateAndUpdate</recordTriggerType>
+        <scheduledPaths>
+            <name>X1_Minute</name>
+            <connector>
+                <targetReference>Get_Contract_Bid</targetReference>
+            </connector>
+            <label>1 Minute</label>
+            <offsetNumber>1</offsetNumber>
+            <offsetUnit>Minutes</offsetUnit>
+            <recordField>dfsle__Sent__c</recordField>
+            <timeSource>RecordField</timeSource>
+        </scheduledPaths>
         <triggerType>RecordAfterSave</triggerType>
     </start>
     <status>Active</status>
