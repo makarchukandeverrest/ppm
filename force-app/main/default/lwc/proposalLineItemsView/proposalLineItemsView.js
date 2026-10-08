@@ -2,7 +2,6 @@ import { LightningElement, api, wire, track } from "lwc";
 import { getRecord, getFieldValue } from "lightning/uiRecordApi";
 import { refreshApex } from "@salesforce/apex";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
-import OPPORTUNITY_OBJECT from "@salesforce/schema/Opportunity";
 import TOTAL_FIELD from "@salesforce/schema/Opportunity.Total__c";
 import TAX_FIELD from "@salesforce/schema/Opportunity.Sales_Tax__c";
 import ACCOUNT_NAME_FIELD from "@salesforce/schema/Opportunity.Account.Name";
@@ -87,7 +86,7 @@ export default class ProposalLineItems extends LightningElement {
       };
 
       this.total =
-      oppTotalValue !== undefined && oppTotalValue !== null
+        oppTotalValue !== undefined && oppTotalValue !== null
           ? oppTotalValue
           : null;
       this.tax = this.proposalDetails.salesTax;
@@ -163,6 +162,9 @@ export default class ProposalLineItems extends LightningElement {
     const item = this.proposalLineItems.find((i) => i.Id === id);
     if (item) {
       item[field] = value;
+      if (field === "Name") {
+        item.Not_Id_Name__c = value;
+      }
       this.proposalLineItems = [...this.proposalLineItems];
     }
   }
@@ -186,6 +188,9 @@ export default class ProposalLineItems extends LightningElement {
 
   handleAddNew() {
     const newItem = {
+      Id: `new-${Date.now()}`,
+      Name: "",
+      Not_Id_Name__c: "",
       Description__c: "",
       Quantity__c: 0,
       Unit_Cost__c: 0.0,
@@ -221,6 +226,7 @@ export default class ProposalLineItems extends LightningElement {
       .filter((item) => !item.isNew)
       .map((item) => ({
         Id: item.Id,
+        Name: item.Name,
         Description__c: item.Description__c,
         Quantity__c: item.Quantity__c,
         Unit_Cost__c: item.Unit_Cost__c,
@@ -231,6 +237,7 @@ export default class ProposalLineItems extends LightningElement {
     const newItems = this.proposalLineItems
       .filter((item) => item.isNew)
       .map((item) => ({
+        Name: item.Name,
         Description__c: item.Description__c,
         Quantity__c: item.Quantity__c,
         Unit_Cost__c: item.Unit_Cost__c,
