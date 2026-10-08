@@ -1,9 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
   <apiVersion>60.0</apiVersion>
   <isExposed>true</isExposed>
   <masterLabel>Unified Activity Feed</masterLabel>
-  <description>Displays Tasks, Events, Email Messages and Chatter posts in a single timeline.</description>
+  <description
+  >Displays Tasks, Events, Email Messages and Chatter posts in a single timeline.</description>
   <targets>
     <target>lightning__RecordPage</target>
     <target>lightning__AppPage</target>
@@ -16,25 +17,50 @@
         type="String"
         label="Default Sort Direction"
         description="ASC or DESC. Default is DESC (newest first)."
-        default="DESC" />
+        default="DESC"
+      />
       <property
         name="maxItems"
         type="Integer"
         label="Page Size"
         description="Number of activities loaded per page. Default is 20."
-        default="20" />
+        default="20"
+      />
       <property
         name="relatedRecordConfig"
         type="String"
         label="Related Record Fields"
         description="Comma-separated lookup fields to include. Format: FieldApiName:Label. Example: Customer__c:Customer or AccountId:Account,ContactId:Contact. Leave empty for current record only."
-        default="" />
+        default=""
+      />
       <property
         name="currentRecordLabel"
         type="String"
         label="Current Record Label"
         description="Optional label for activities on the current record. Defaults to the object label."
-        default="" />
+        default=""
+      />
+      <property
+        name="primaryContactField"
+        type="String"
+        label="Primary Contact Field"
+        description="API name of the primary contact field used to default WhoId / ToAddress. Example: Primary_Contact__c or Customer__r.Primary_Contact__c"
+        default=""
+      />
+      <property
+        name="emailField"
+        type="String"
+        label="Email Field"
+        description="API name of the email field used to default ToAddress for Send Email. Falls back to Primary_Contact__r.Email if empty. Example: Email__c or Customer__r.Email__c"
+        default=""
+      />
+      <property
+        name="locationFields"
+        type="String"
+        label="Location Address Fields"
+        description="Comma-separated API names of address fields used to default Location for Log a Visit. Example: BillingStreet,BillingCity,BillingState,BillingPostalCode,BillingCountry"
+        default=""
+      />
       <objects>
         <object>Account</object>
         <object>Contact</object>

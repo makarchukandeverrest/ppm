@@ -6,10 +6,25 @@ import {
   registerRefreshHandler,
   unregisterRefreshHandler
 } from "lightning/refresh";
-import { getRecord } from "lightning/uiRecordApi";
+import { getRecord, getFieldValue } from "lightning/uiRecordApi";
 import getUnifiedActivities from "@salesforce/apex/UnifiedActivityController.getUnifiedActivities";
 
 const WHO_ID_OBJECTS = new Set(["Contact", "Lead"]);
+
+const DEFAULT_CONFIG = {
+  Account: {
+    primaryContactField: "Primary_Contact__c",
+    emailField: "Email__c",
+    locationFields:
+      "BillingStreet,BillingCity,BillingState,BillingPostalCode,BillingCountry"
+  },
+  Contract_Bid__c: {
+    primaryContactField: "Customer__r.Primary_Contact__c",
+    emailField: "Customer__r.Email__c",
+    locationFields:
+      "Customer__r.BillingStreet,Customer__r.BillingCity,Customer__r.BillingState,Customer__r.BillingPostalCode,Customer__r.BillingCountry"
+  }
+};
 
 export default class UnifiedActivityFeed extends NavigationMixin(
   LightningElement
@@ -17,10 +32,17 @@ export default class UnifiedActivityFeed extends NavigationMixin(
   @api maxItems = 20;
   @api relatedRecordConfig = "";
   @api currentRecordLabel = "";
+  @api primaryContactField = "";
+  @api emailField = "";
+  @api locationFields = "";
 
   _recordId;
   _sortDirection = "DESC";
   objectApiName;
+  activityDefaultFields = [];
+  primaryContactId;
+  primaryContactEmail = "";
+  accountAddress = "";
   refreshHandlerId;
   activities = [];
   totalCount = 0;
@@ -36,7 +58,31 @@ export default class UnifiedActivityFeed extends NavigationMixin(
   wiredRecord({ data }) {
     if (data) {
       this.objectApiName = data.apiName;
+      this.activityDefaultFields = this.resolveActivityDefaultFields(data);
     }
+  }
+
+  @wire(getRecord, {
+    recordId: "$recordId",
+    fields: "$activityDefaultFields"
+  })
+  wiredActivityDefaults({ data }) {
+    if (!data) {
+      return;
+    }
+    this.primaryContactId = this.resolvePrimaryContactId(data);
+    this.primaryContactEmail = this.resolvePrimaryContactEmail(data);
+    this.accountAddress = this.resolveAccountAddress(data);
+  }
+
+  get effectiveConfig() {
+    const defaults = DEFAULT_CONFIG[this.objectApiName] || {};
+    return {
+      primaryContactField:
+        this.primaryContactField || defaults.primaryContactField || "",
+      emailField: this.emailField || defaults.emailField || "",
+      locationFields: this.locationFields || defaults.locationFields || ""
+    };
   }
 
   @api
@@ -47,6 +93,10 @@ export default class UnifiedActivityFeed extends NavigationMixin(
   set recordId(value) {
     if (this._recordId !== value) {
       this._recordId = value;
+      this.primaryContactId = undefined;
+      this.primaryContactEmail = "";
+      this.accountAddress = "";
+      this.activityDefaultFields = [];
       if (value) {
         this.loadActivities(true);
       } else {
@@ -331,14 +381,108 @@ export default class UnifiedActivityFeed extends NavigationMixin(
   }
 
   handleNewEmail() {
-    this.openGlobalQuickAction("Global.SendEmail");
+    const defaults = {};
+    if (this.primaryContactEmail) {
+      defaults.ToAddress = this.primaryContactEmail;
+    }
+    this.openGlobalQuickAction(
+      "Global.SendEmail",
+      Object.keys(defaults).length ? defaults : undefined
+    );
+  }
+
+  resolveActivityDefaultFields(record) {
+    const config = this.effectiveConfig;
+    if (
+      !config.primaryContactField &&
+      !config.emailField &&
+      !config.locationFields
+    ) {
+      return [];
+    }
+
+    const fields = new Set();
+    if (config.primaryContactField) {
+      fields.add(`${record.apiName}.${config.primaryContactField}`);
+      fields.add(
+        `${record.apiName}.${this.resolveContactEmailField(config.primaryContactField)}`
+      );
+    }
+    if (config.emailField) {
+      fields.add(`${record.apiName}.${config.emailField}`);
+    }
+    if (config.locationFields) {
+      config.locationFields
+        .split(",")
+        .map((field) => field.trim())
+        .filter((field) => field.length > 0)
+        .forEach((field) => fields.add(`${record.apiName}.${field}`));
+    }
+    return Array.from(fields);
+  }
+
+  resolveContactEmailField(contactLookupField) {
+    return contactLookupField.replace(/__c$/, "__r") + ".Email";
+  }
+
+  resolvePrimaryContactId(record) {
+    const field = this.effectiveConfig.primaryContactField;
+    if (!field) {
+      return undefined;
+    }
+    return getFieldValue(record, `${record.apiName}.${field}`);
+  }
+
+  resolvePrimaryContactEmail(record) {
+    const config = this.effectiveConfig;
+    const primaryField = config.primaryContactField;
+    const emailField = config.emailField;
+
+    if (primaryField) {
+      const primaryContactEmail = getFieldValue(
+        record,
+        `${record.apiName}.${this.resolveContactEmailField(primaryField)}`
+      );
+      if (primaryContactEmail) {
+        return primaryContactEmail;
+      }
+    }
+    if (emailField) {
+      return getFieldValue(record, `${record.apiName}.${emailField}`) || "";
+    }
+    return "";
+  }
+
+  resolveAccountAddress(record) {
+    const locationFields = this.effectiveConfig.locationFields;
+    if (!locationFields) {
+      return "";
+    }
+    const parts = locationFields
+      .split(",")
+      .map((field) => field.trim())
+      .filter((field) => field.length > 0)
+      .map((field) => getFieldValue(record, `${record.apiName}.${field}`));
+    return this.formatAddress(parts);
+  }
+
+  formatAddress(parts) {
+    return parts
+      .map((part) => (part == null ? "" : String(part).trim()))
+      .filter((part) => part.length > 0)
+      .join(", ");
   }
 
   getActivityDefaults() {
     if (WHO_ID_OBJECTS.has(this.objectApiName)) {
       return { WhoId: this.recordId };
     }
-    return { WhatId: this.recordId };
+
+    const defaults = { WhatId: this.recordId };
+    if (this.primaryContactId) {
+      defaults.WhoId = this.primaryContactId;
+    }
+    return defaults;
   }
 
   getVisitDefaults() {
@@ -347,20 +491,26 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     return {
       ...this.getActivityDefaults(),
       Subject: "Site Visit",
-      StartDateTime: start.toISOString(),
-      EndDateTime: end.toISOString()
+      StartDateTime: start.toISOString().slice(0, 19) + "Z",
+      EndDateTime: end.toISOString().slice(0, 19) + "Z",
+      ...(this.accountAddress ? { Location: this.accountAddress } : {})
     };
   }
 
-  openGlobalQuickAction(apiName) {
+  openGlobalQuickAction(apiName, defaults) {
     if (!this.recordId) {
       return;
+    }
+
+    const state = { recordId: this.recordId };
+    if (defaults) {
+      state.defaultFieldValues = encodeDefaultFieldValues(defaults);
     }
 
     this[NavigationMixin.Navigate]({
       type: "standard__quickAction",
       attributes: { apiName },
-      state: { recordId: this.recordId }
+      state
     });
   }
 
