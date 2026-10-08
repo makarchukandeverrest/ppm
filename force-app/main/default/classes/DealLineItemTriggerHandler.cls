@@ -1,47 +1,64 @@
 public without sharing class DealLineItemTriggerHandler extends TriggerHandler {
-    private List<Deal_Line_Item__c> newList;
-    private List<Deal_Line_Item__c> oldList;
+  private List<Deal_Line_Item__c> newList;
+  private List<Deal_Line_Item__c> oldList;
+  private Map<Id, Deal_Line_Item__c> oldMap;
 
-    public DealLineItemTriggerHandler() {
-        this.newList = (List<Deal_Line_Item__c>) Trigger.new;
-        this.oldList = (List<Deal_Line_Item__c>) Trigger.old;
+  public DealLineItemTriggerHandler() {
+    this.newList = (List<Deal_Line_Item__c>) Trigger.new;
+    this.oldList = (List<Deal_Line_Item__c>) Trigger.old;
+    this.oldMap = (Map<Id, Deal_Line_Item__c>) Trigger.oldMap;
+  }
+
+  protected override void afterInsert() {
+    handleAfterChange(this.newList);
+    ProposalWebhookService.sendProposalUpdates(
+      ProposalWebhookHelper.collectProposalIdsFromLineItems(this.newList, null)
+    );
+  }
+
+  protected override void afterUpdate() {
+    handleAfterChange(this.newList);
+    ProposalWebhookService.sendProposalUpdates(
+      ProposalWebhookHelper.collectProposalIdsFromLineItems(
+        this.newList,
+        this.oldMap
+      )
+    );
+  }
+
+  protected override void afterUndelete() {
+    handleAfterChange(this.newList);
+    ProposalWebhookService.sendProposalUpdates(
+      ProposalWebhookHelper.collectProposalIdsFromLineItems(this.newList, null)
+    );
+  }
+
+  protected override void afterDelete() {
+    handleAfterChange(this.oldList);
+    ProposalWebhookService.sendProposalUpdates(
+      ProposalWebhookHelper.collectProposalIdsFromLineItems(this.oldList, null)
+    );
+  }
+
+  private static void handleAfterChange(List<Deal_Line_Item__c> records) {
+    if (records == null || records.isEmpty()) {
+      return;
     }
 
-    protected override void afterInsert() {
-        handleAfterChange(this.newList);
+    Set<Id> dealIds = new Set<Id>();
+    Set<String> dealQuickBooksIds = new Set<String>();
+
+    for (Deal_Line_Item__c dli : records) {
+      if (dli.Deal__c != null) {
+        dealIds.add(dli.Deal__c);
+      }
+      if (dli.Deal__c == null && String.isNotBlank(dli.Deal_QuickBooks_Id__c)) {
+        dealQuickBooksIds.add(dli.Deal_QuickBooks_Id__c.trim());
+      }
     }
 
-    protected override void afterUpdate() {
-        handleAfterChange(this.newList);
+    if (!dealIds.isEmpty() || !dealQuickBooksIds.isEmpty()) {
+      DealLineItemJSONBuilder.updateDealsWithJSON(dealIds, dealQuickBooksIds);
     }
-
-    protected override void afterUndelete() {
-        handleAfterChange(this.newList);
-    }
-
-    protected override void afterDelete() {
-        handleAfterChange(this.oldList);
-    }
-
-    private static void handleAfterChange(List<Deal_Line_Item__c> records) {
-        if (records == null || records.isEmpty()) {
-            return;
-        }
-
-        Set<Id> dealIds = new Set<Id>();
-        Set<String> dealQuickBooksIds = new Set<String>();
-
-        for (Deal_Line_Item__c dli : records) {
-            if (dli.Deal__c != null) {
-                dealIds.add(dli.Deal__c);
-            }
-            if (dli.Deal__c == null && String.isNotBlank(dli.Deal_QuickBooks_Id__c)) {
-                dealQuickBooksIds.add(dli.Deal_QuickBooks_Id__c.trim());
-            }
-        }
-
-        if (!dealIds.isEmpty() || !dealQuickBooksIds.isEmpty()) {
-            DealLineItemJSONBuilder.updateDealsWithJSON(dealIds, dealQuickBooksIds);
-        }
-    }
+  }
 }

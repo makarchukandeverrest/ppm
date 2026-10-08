@@ -1,69 +1,87 @@
 public without sharing class ProposalTriggerHandler extends TriggerHandler {
-    List<Opportunity> newList;
-    Map<Id, Opportunity> oldMap;
+  List<Opportunity> newList;
+  Map<Id, Opportunity> oldMap;
 
-    public ProposalTriggerHandler() {
-        this.newList = (List<Opportunity>) Trigger.new;
-        this.oldMap  = (Map<Id, Opportunity>) Trigger.oldMap;
+  public ProposalTriggerHandler() {
+    this.newList = (List<Opportunity>) Trigger.new;
+    this.oldMap = (Map<Id, Opportunity>) Trigger.oldMap;
+  }
+
+  protected override void beforeInsert() {
+    //ProposalStatusDefiner.updateStatus(this.newList);
+    ProposalCustomerAssigner.assignCustomer(this.newList);
+    CustomerRegionalManagerService.syncProposalRMFromCustomer(this.newList);
+  }
+
+  protected override void beforeUpdate() {
+    List<Opportunity> oppsNeedingCustomerAssignment = new List<Opportunity>();
+
+    for (Opportunity opp : newList) {
+      if (
+        String.isNotBlank(opp.Account_QuickBooks_Id__c) &&
+        (opp.AccountId == null ||
+        opp.Customer_Billing_Contact__c == null ||
+        opp.Customer_Maintenance_Contact__c == null ||
+        opp.Customer_Primary_Contact__c == null ||
+        opp.Customer_Secondary_Contact__c == null)
+      ) {
+        oppsNeedingCustomerAssignment.add(opp);
+      }
     }
 
-    protected override void beforeInsert() {
-        //ProposalStatusDefiner.updateStatus(this.newList);
-        ProposalCustomerAssigner.assignCustomer(this.newList);
-        CustomerRegionalManagerService.syncProposalRMFromCustomer(this.newList);
+    if (!oppsNeedingCustomerAssignment.isEmpty()) {
+      ProposalCustomerAssigner.assignCustomer(oppsNeedingCustomerAssignment);
+      CustomerRegionalManagerService.syncProposalRMFromCustomer(
+        oppsNeedingCustomerAssignment
+      );
     }
 
-    protected override void beforeUpdate() {
-        List<Opportunity> oppsNeedingCustomerAssignment = new List<Opportunity>();
-
-        for (Opportunity opp : newList) {
-            if (String.isNotBlank(opp.Account_QuickBooks_Id__c) &&
-                (
-                    opp.AccountId == null ||
-                    opp.Customer_Billing_Contact__c == null ||
-                    opp.Customer_Maintenance_Contact__c == null ||
-                    opp.Customer_Primary_Contact__c == null ||
-                    opp.Customer_Secondary_Contact__c == null
-                )) {
-
-                oppsNeedingCustomerAssignment.add(opp);
-            }
-        }
-
-        if (!oppsNeedingCustomerAssignment.isEmpty()) {
-            ProposalCustomerAssigner.assignCustomer(oppsNeedingCustomerAssignment);
-            CustomerRegionalManagerService.syncProposalRMFromCustomer(oppsNeedingCustomerAssignment);
-        }
-
-        List<Opportunity> oppsWithChangedAccount = new List<Opportunity>();
-        for (Opportunity opp : newList) {
-            if (opp.AccountId != oldMap.get(opp.Id).AccountId) {
-                oppsWithChangedAccount.add(opp);
-            }
-        }
-
-        if (!oppsWithChangedAccount.isEmpty()) {
-            OpportunityContactSyncService.assignContacts(oppsWithChangedAccount);
-            CustomerRegionalManagerService.syncProposalRMFromCustomer(oppsWithChangedAccount);
-        }
-        CustomerRegionalManagerService.preventProposalRMOverride(this.newList, this.oldMap);
-        ProposalStatusDefiner.handleStatusChange(this.newList, this.oldMap);
+    List<Opportunity> oppsWithChangedAccount = new List<Opportunity>();
+    for (Opportunity opp : newList) {
+      if (opp.AccountId != oldMap.get(opp.Id).AccountId) {
+        oppsWithChangedAccount.add(opp);
+      }
     }
 
-    protected override void afterUpdate() {
-        Set<Id> stopReminderProposalIds = new Set<Id>();
-        for (Opportunity opp : newList) {
-            Opportunity oldOpp = oldMap.get(opp.Id);
-            if (oldOpp == null) {
-                continue;
-            }
-            if (
-                opp.Stop_Sending_Reminders__c == true &&
-                oldOpp.Stop_Sending_Reminders__c != true
-            ) {
-                stopReminderProposalIds.add(opp.Id);
-            }
-        }
-        StopSendingRemindersService.disableForProposals(stopReminderProposalIds);
+    if (!oppsWithChangedAccount.isEmpty()) {
+      OpportunityContactSyncService.assignContacts(oppsWithChangedAccount);
+      CustomerRegionalManagerService.syncProposalRMFromCustomer(
+        oppsWithChangedAccount
+      );
     }
+    CustomerRegionalManagerService.preventProposalRMOverride(
+      this.newList,
+      this.oldMap
+    );
+    ProposalStatusDefiner.handleStatusChange(this.newList, this.oldMap);
+  }
+
+  protected override void afterInsert() {
+    ProposalWebhookService.sendProposalInserts(
+      ProposalWebhookHelper.collectProposalIdsFromProposals(this.newList, null)
+    );
+  }
+
+  protected override void afterUpdate() {
+    Set<Id> stopReminderProposalIds = new Set<Id>();
+    for (Opportunity opp : newList) {
+      Opportunity oldOpp = oldMap.get(opp.Id);
+      if (oldOpp == null) {
+        continue;
+      }
+      if (
+        opp.Stop_Sending_Reminders__c == true &&
+        oldOpp.Stop_Sending_Reminders__c != true
+      ) {
+        stopReminderProposalIds.add(opp.Id);
+      }
+    }
+    StopSendingRemindersService.disableForProposals(stopReminderProposalIds);
+    ProposalWebhookService.sendProposalUpdates(
+      ProposalWebhookHelper.collectProposalIdsFromProposals(
+        this.newList,
+        this.oldMap
+      )
+    );
+  }
 }
