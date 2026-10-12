@@ -589,7 +589,7 @@ public with sharing class ContractMassSendController {
         WHERE
           ContentDocumentId IN :docIds
           AND IsLatest = TRUE
-          AND FileExtension IN ('pdf', 'doc', 'docx')
+          AND FileExtension = 'pdf'
           AND Title LIKE '%Contract%'
           AND Title LIKE :contractYearLike
           AND (NOT Title LIKE '%Signed Contract%')
@@ -1227,7 +1227,7 @@ public with sharing class ContractMassSendController {
         );
       }
 
-      // whoId for merge must be Contact/Lead/User. Do not rely on Primary_Contact__r — it is often
+      // whoId for merge must be Contact/Lead/User. Do not rely on Primary_Contact__r тАФ it is often
       // null under sharing even when Primary_Contact__c is set; LWC also passes contactId: null.
       if (contactId != null) {
         List<Contact> explicitWho = [
@@ -1266,7 +1266,7 @@ public with sharing class ContractMassSendController {
 
     Id lineItemsRestrictStmId = stmBranch ? customerId : null;
 
-    // Stored-template fast path — skip if body uses {{{ }}} (SF merge expects {!...})
+    // Stored-template fast path тАФ skip if body uses {{{ }}} (SF merge expects {!...})
     if (String.isBlank(body)) {
       Boolean templateUsesTripleBraces = false;
       for (EmailTemplate tChk : [
@@ -1329,11 +1329,11 @@ public with sharing class ContractMassSendController {
       }
     }
 
-    // Здесь работаем с пользовательским subject/body (или fallback)
+    // ╨Ч╨┤╨╡╤Б╤М ╤А╨░╨▒╨╛╤В╨░╨╡╨╝ ╤Б ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤М╤Б╨║╨╕╨╝ subject/body (╨╕╨╗╨╕ fallback)
     String rawBody = body;
     String rawSubject = subject;
 
-    // Если body пустой, забираем HtmlValue/Body из шаблона без рендера (как в getTemplateDetails)
+    // ╨Х╤Б╨╗╨╕ body ╨┐╤Г╤Б╤В╨╛╨╣, ╨╖╨░╨▒╨╕╤А╨░╨╡╨╝ HtmlValue/Body ╨╕╨╖ ╤И╨░╨▒╨╗╨╛╨╜╨░ ╨▒╨╡╨╖ ╤А╨╡╨╜╨┤╨╡╤А╨░ (╨║╨░╨║ ╨▓ getTemplateDetails)
     if (String.isBlank(rawBody)) {
       EmailTemplate t = [
         SELECT Subject, HtmlValue, Body, TemplateType, DeveloperName
@@ -1384,7 +1384,7 @@ public with sharing class ContractMassSendController {
     } catch (Exception ex) {
       mergeFieldError = true;
 
-      // Базовый текст = сырой текст без рендера
+      // ╨С╨░╨╖╨╛╨▓╤Л╨╣ ╤В╨╡╨║╤Б╤В = ╤Б╤Л╤А╨╛╨╣ ╤В╨╡╨║╤Б╤В ╨▒╨╡╨╖ ╤А╨╡╨╜╨┤╨╡╤А╨░
       finalBody = rawBody;
       finalSubject = rawSubject;
 
