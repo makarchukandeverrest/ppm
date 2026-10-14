@@ -20,6 +20,18 @@ public with sharing class ContractBidTriggerHandler extends TriggerHandler {
     ContractBidLabelsFiller.replacePreviousYearLabels(this.newList);
   }
 
+  protected override void beforeUpdate() {
+    List<Contract_Bid__c> bidsChangedStage = new List<Contract_Bid__c>();
+    for (Contract_Bid__c bid : this.newList) {
+      if (this.oldMap.get(bid.Id).Stage__c != bid.Stage__c) {
+        bidsChangedStage.add(bid);
+      }
+    }
+    if (!bidsChangedStage.isEmpty()) {
+      ContractBidActivityStampService.stampStageChanges(bidsChangedStage, this.oldMap);
+    }
+  }
+
   protected override void afterUpdate() {
     updateCurrentCustomerAccounts();
     disableRemindersWhenChecked();
