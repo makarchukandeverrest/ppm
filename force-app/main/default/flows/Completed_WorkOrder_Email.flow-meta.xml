@@ -115,5 +115,5 @@ Amount (Total Price): {!$Record.Proposal__r.Total__c}</stringValue>
         <recordTriggerType>Update</recordTriggerType>
         <triggerType>RecordAfterSave</triggerType>
     </start>
-    <status>Obsolete</status>
+    <status>Active</status>
 </Flow>

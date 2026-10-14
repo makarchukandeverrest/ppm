@@ -14,6 +14,7 @@ public with sharing class MassSendOpportunityService {
           Name,
           AccountId,
           Account.Name,
+          Reference_Number__c,
           Account.Primary_Contact__c,
           Account.Primary_Contact__r.Email,
           Account.Regional_Manager__c,
@@ -79,8 +80,8 @@ public with sharing class MassSendOpportunityService {
 
       ContractMassSendController.CustomerDto dto = new ContractMassSendController.CustomerDto();
       dto.customerId = opp.Id;
-      dto.customerName = opp.Name;
-      dto.accountName = opp.AccountId != null ? opp.Account.Name : null;
+      dto.customerName = customerName(opp);
+      dto.proposalReferenceNumber = opp.Reference_Number__c;
       dto.regionalManagerId = opp.Regional_Manager__c != null
         ? opp.Regional_Manager__c
         : (opp.AccountId != null ? opp.Account.Regional_Manager__c : null);
@@ -115,5 +116,25 @@ public with sharing class MassSendOpportunityService {
     res.templates = ContractMassSendController.loadPremierPoolTemplatesForUi();
     res.recentLogs = new List<ContractMassSendController.LogRowDto>();
     return res;
+  }
+
+  /** Customer on the Proposal. Account and Customer are the same record. */
+  public static String customerName(Opportunity opp) {
+    if (opp != null && opp.Account != null && String.isNotBlank(opp.Account.Name)) {
+      return opp.Account.Name;
+    }
+    if (opp != null && String.isNotBlank(opp.Name)) {
+      return opp.Name;
+    }
+    return 'Unknown';
+  }
+
+  /** Customer name plus Proposal reference number for send logs. */
+  public static String sendLabel(Opportunity opp) {
+    String name = customerName(opp);
+    if (opp == null || String.isBlank(opp.Reference_Number__c)) {
+      return name;
+    }
+    return name + ' · ' + opp.Reference_Number__c;
   }
 }

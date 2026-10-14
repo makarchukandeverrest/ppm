@@ -183,6 +183,11 @@
                   >
                     <div class="slds-text-heading_small">
                       {cust.customerName}
+                      <template if:true={cust.proposalReferenceNumber}>
+                        <span class="slds-text-color_weak">
+                          · {cust.proposalReferenceNumber}</span
+                        >
+                      </template>
 
                       <!-- Иконка превью -->
                       <lightning-button-icon

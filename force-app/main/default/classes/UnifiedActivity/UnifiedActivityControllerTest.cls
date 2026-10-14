@@ -171,6 +171,34 @@ public class UnifiedActivityControllerTest {
     }
 
     @IsTest
+    static void testGetUnifiedActivities_mapsLoggedCall() {
+        User u = createTestUser();
+        Account acc;
+        System.runAs(u) {
+            acc = createTestAccount();
+            insert new Task(
+                WhatId = acc.Id,
+                Subject = 'Logged Call',
+                Status = 'Completed',
+                TaskSubtype = 'Call'
+            );
+        }
+
+        Test.startTest();
+        UnifiedActivityModels.ActivityPageResult result;
+        System.runAs(u) {
+            result = getActivities(acc.Id, 'DESC', 20, 0, UnifiedActivityMapper.TYPE_CALL, null);
+        }
+        Test.stopTest();
+
+        System.assertEquals(1, result.totalCount, 'Logged call should be returned');
+        System.assertEquals(UnifiedActivityMapper.TYPE_CALL, result.items[0].type);
+        System.assertEquals('standard:log_a_call', result.items[0].iconName);
+        System.assertEquals('Call', result.items[0].formattedType);
+        System.assertEquals('Logged Call', result.items[0].title);
+    }
+
+    @IsTest
     static void testGetUnifiedActivities_filtersByType() {
         User u = createTestUser();
         Account acc;
