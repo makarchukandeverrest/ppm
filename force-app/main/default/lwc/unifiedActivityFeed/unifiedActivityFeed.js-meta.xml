@@ -58,7 +58,14 @@
         name="locationFields"
         type="String"
         label="Location Address Fields"
-        description="Comma-separated API names of address fields used to default Location for Log a Visit. Example: BillingStreet,BillingCity,BillingState,BillingPostalCode,BillingCountry"
+        description="Comma-separated API names of address fields used to default Location for Log a Visit. Example: BillingStreet,BillingCity,BillingState,BillingPostalCode,BillingCountry or Customer__r.BillingStreet,Customer__r.BillingCity,..."
+        default=""
+      />
+      <property
+        name="relatedRecordLocationFields"
+        type="String"
+        label="Related Record Location Fields"
+        description="Deprecated. Address is read from the current record using locationFields."
         default=""
       />
       <objects>

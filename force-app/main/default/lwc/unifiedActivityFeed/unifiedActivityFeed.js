@@ -35,11 +35,13 @@ export default class UnifiedActivityFeed extends NavigationMixin(
   @api primaryContactField = "";
   @api emailField = "";
   @api locationFields = "";
+  @api relatedRecordLocationFields = "";
 
   _recordId;
   _sortDirection = "DESC";
   objectApiName;
-  activityDefaultFields = [];
+  activityDefaultFields;
+  relatedRecordId;
   primaryContactId;
   primaryContactEmail = "";
   accountAddress = "";
@@ -66,10 +68,15 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     recordId: "$recordId",
     fields: "$activityDefaultFields"
   })
-  wiredActivityDefaults({ data }) {
+  wiredActivityDefaults({ data, error }) {
+    if (error) {
+      this.showError(error);
+      return;
+    }
     if (!data) {
       return;
     }
+    this.relatedRecordId = this.resolveRelatedRecordId(data);
     this.primaryContactId = this.resolvePrimaryContactId(data);
     this.primaryContactEmail = this.resolvePrimaryContactEmail(data);
     this.accountAddress = this.resolveAccountAddress(data);
@@ -93,10 +100,12 @@ export default class UnifiedActivityFeed extends NavigationMixin(
   set recordId(value) {
     if (this._recordId !== value) {
       this._recordId = value;
+      this.objectApiName = undefined;
+      this.activityDefaultFields = undefined;
       this.primaryContactId = undefined;
       this.primaryContactEmail = "";
       this.accountAddress = "";
-      this.activityDefaultFields = [];
+      this.relatedRecordId = undefined;
       if (value) {
         this.loadActivities(true);
       } else {
@@ -361,11 +370,11 @@ export default class UnifiedActivityFeed extends NavigationMixin(
   }
 
   handleNewTask() {
-    this.openNewActivityRecord("Task");
+    this.openNewActivityRecord("Task", this.getActivityDefaults());
   }
 
   handleNewEvent() {
-    this.openNewActivityRecord("Event");
+    this.openNewActivityRecord("Event", this.getActivityDefaults());
   }
 
   handleLogACall() {
@@ -393,15 +402,12 @@ export default class UnifiedActivityFeed extends NavigationMixin(
 
   resolveActivityDefaultFields(record) {
     const config = this.effectiveConfig;
-    if (
-      !config.primaryContactField &&
-      !config.emailField &&
-      !config.locationFields
-    ) {
-      return [];
-    }
-
     const fields = new Set();
+
+    this.parseRelatedRecordConfig().forEach((field) =>
+      fields.add(`${record.apiName}.${field}`)
+    );
+
     if (config.primaryContactField) {
       fields.add(`${record.apiName}.${config.primaryContactField}`);
       fields.add(
@@ -418,7 +424,21 @@ export default class UnifiedActivityFeed extends NavigationMixin(
         .filter((field) => field.length > 0)
         .forEach((field) => fields.add(`${record.apiName}.${field}`));
     }
+
+    if (fields.size === 0) {
+      return undefined;
+    }
     return Array.from(fields);
+  }
+
+  parseRelatedRecordConfig() {
+    if (!this.relatedRecordConfig) {
+      return [];
+    }
+    return this.relatedRecordConfig
+      .split(",")
+      .map((entry) => entry.split(":")[0].trim())
+      .filter((field) => field.length > 0);
   }
 
   resolveContactEmailField(contactLookupField) {
@@ -453,6 +473,17 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     return "";
   }
 
+  resolveRelatedRecordId(record) {
+    const fields = this.parseRelatedRecordConfig();
+    for (const field of fields) {
+      const value = getFieldValue(record, `${record.apiName}.${field}`);
+      if (value) {
+        return value;
+      }
+    }
+    return undefined;
+  }
+
   resolveAccountAddress(record) {
     const locationFields = this.effectiveConfig.locationFields;
     if (!locationFields) {
@@ -473,12 +504,12 @@ export default class UnifiedActivityFeed extends NavigationMixin(
       .join(", ");
   }
 
-  getActivityDefaults() {
+  getActivityDefaults(whatId = this.recordId) {
     if (WHO_ID_OBJECTS.has(this.objectApiName)) {
       return { WhoId: this.recordId };
     }
 
-    const defaults = { WhatId: this.recordId };
+    const defaults = { WhatId: whatId };
     if (this.primaryContactId) {
       defaults.WhoId = this.primaryContactId;
     }
@@ -489,7 +520,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     const start = new Date();
     const end = new Date(start.getTime() + 60 * 60 * 1000);
     return {
-      ...this.getActivityDefaults(),
+      ...this.getActivityDefaults(this.relatedRecordId),
       Subject: "Site Visit",
       StartDateTime: start.toISOString().slice(0, 19) + "Z",
       EndDateTime: end.toISOString().slice(0, 19) + "Z",
