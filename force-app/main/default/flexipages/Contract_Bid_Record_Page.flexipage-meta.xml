@@ -1,11 +1,12 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <FlexiPage xmlns="http://soap.sforce.com/2006/04/metadata">
     <flexiPageRegions>
         <itemInstances>
             <componentInstance>
                 <componentInstanceProperties>
                     <name>flowArguments</name>
-                    <value>[{&quot;label&quot;:&quot;contractBidId&quot;,&quot;dataType&quot;:&quot;String&quot;,&quot;supportsRecordId&quot;:true,&quot;value&quot;:&quot;{!Record.Id}&quot;}]</value>
+                    <value
+          >[{&quot;label&quot;:&quot;contractBidId&quot;,&quot;dataType&quot;:&quot;String&quot;,&quot;supportsRecordId&quot;:true,&quot;value&quot;:&quot;{!Record.Id}&quot;}]</value>
                 </componentInstanceProperties>
                 <componentInstanceProperties>
                     <name>flowLayout</name>
@@ -71,8 +72,10 @@
                     <name>variant</name>
                     <value>linear</value>
                 </componentInstanceProperties>
-                <componentName>runtime_sales_pathassistant:pathAssistant</componentName>
-                <identifier>runtime_sales_pathassistant_pathAssistant</identifier>
+                <componentName
+        >runtime_sales_pathassistant:pathAssistant</componentName>
+                <identifier
+        >runtime_sales_pathassistant_pathAssistant</identifier>
             </componentInstance>
         </itemInstances>
         <itemInstances>
@@ -89,16 +92,10 @@
             <fieldInstance>
                 <fieldInstanceProperties>
                     <name>uiBehavior</name>
-                    <value>readonly</value>
+                    <value>none</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.Bid_Number__c</fieldItem>
                 <identifier>RecordBid_Number_cField</identifier>
-                <visibilityRule>
-                    <criteria>
-                        <leftValue>{!Record.CreatedBy.Username}</leftValue>
-                        <operator>NE</operator>
-                    </criteria>
-                </visibilityRule>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -253,7 +250,7 @@
             <fieldInstance>
                 <fieldInstanceProperties>
                     <name>uiBehavior</name>
-                    <value>readonly</value>
+                    <value>none</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.Lost_Reason__c</fieldItem>
                 <identifier>RecordLost_Reason_cField</identifier>
@@ -986,7 +983,8 @@
                     <value>none</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.Normal_Season_Monday_Open_Time__c</fieldItem>
-                <identifier>RecordNormal_Season_Monday_Open_Time_cField</identifier>
+                <identifier
+        >RecordNormal_Season_Monday_Open_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -996,7 +994,8 @@
                     <value>none</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.Normal_Season_Tuesday_Open_Time__c</fieldItem>
-                <identifier>RecordNormal_Season_Tuesday_Open_Time_cField</identifier>
+                <identifier
+        >RecordNormal_Season_Tuesday_Open_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1005,8 +1004,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.Normal_Season_Wednesday_Open_Time__c</fieldItem>
-                <identifier>RecordNormal_Season_Wednesday_Open_Time_cField</identifier>
+                <fieldItem
+        >Record.Normal_Season_Wednesday_Open_Time__c</fieldItem>
+                <identifier
+        >RecordNormal_Season_Wednesday_Open_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1015,8 +1016,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.Normal_Season_Thursday_Open_Time__c</fieldItem>
-                <identifier>RecordNormal_Season_Thursday_Open_Time_cField</identifier>
+                <fieldItem
+        >Record.Normal_Season_Thursday_Open_Time__c</fieldItem>
+                <identifier
+        >RecordNormal_Season_Thursday_Open_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1026,7 +1029,8 @@
                     <value>none</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.Normal_Season_Friday_Open_Time__c</fieldItem>
-                <identifier>RecordNormal_Season_Friday_Open_Time_cField</identifier>
+                <identifier
+        >RecordNormal_Season_Friday_Open_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1036,7 +1040,8 @@
                     <value>none</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.NormalSeason_Saturday_Open_Time__c</fieldItem>
-                <identifier>RecordNormalSeason_Saturday_Open_Time_cField</identifier>
+                <identifier
+        >RecordNormalSeason_Saturday_Open_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1046,7 +1051,8 @@
                     <value>none</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.NormalSeason_Sunday_Open_Time__c</fieldItem>
-                <identifier>RecordNormalSeason_Sunday_Open_Time_cField</identifier>
+                <identifier
+        >RecordNormalSeason_Sunday_Open_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1056,7 +1062,8 @@
                     <value>none</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.NormalSeason_Holiday_Open_Time__c</fieldItem>
-                <identifier>RecordNormalSeason_Holiday_Open_Time_cField</identifier>
+                <identifier
+        >RecordNormalSeason_Holiday_Open_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1065,8 +1072,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.NormalSeason_Hours_per_Lifeguard__c</fieldItem>
-                <identifier>RecordNormalSeason_Hours_per_Lifeguard_cField</identifier>
+                <fieldItem
+        >Record.NormalSeason_Hours_per_Lifeguard__c</fieldItem>
+                <identifier
+        >RecordNormalSeason_Hours_per_Lifeguard_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1076,7 +1085,8 @@
                     <value>readonly</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.Normal_Season_Total_Staff_Hours__c</fieldItem>
-                <identifier>RecordNormal_Season_Total_Staff_Hours_cField</identifier>
+                <identifier
+        >RecordNormal_Season_Total_Staff_Hours_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1130,7 +1140,8 @@
                     <value>none</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.Normal_Season_Monday_Close_Time__c</fieldItem>
-                <identifier>RecordNormal_Season_Monday_Close_Time_cField</identifier>
+                <identifier
+        >RecordNormal_Season_Monday_Close_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1139,8 +1150,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.Normal_Season_Tuesday_Close_Time__c</fieldItem>
-                <identifier>RecordNormal_Season_Tuesday_Close_Time_cField</identifier>
+                <fieldItem
+        >Record.Normal_Season_Tuesday_Close_Time__c</fieldItem>
+                <identifier
+        >RecordNormal_Season_Tuesday_Close_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1149,8 +1162,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.Normal_Season_Wednesday_Close_Time__c</fieldItem>
-                <identifier>RecordNormal_Season_Wednesday_Close_Time_cField</identifier>
+                <fieldItem
+        >Record.Normal_Season_Wednesday_Close_Time__c</fieldItem>
+                <identifier
+        >RecordNormal_Season_Wednesday_Close_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1159,8 +1174,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.Normal_Season_Thursday_Close_Time__c</fieldItem>
-                <identifier>RecordNormal_Season_Thursday_Close_Time_cField</identifier>
+                <fieldItem
+        >Record.Normal_Season_Thursday_Close_Time__c</fieldItem>
+                <identifier
+        >RecordNormal_Season_Thursday_Close_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1170,7 +1187,8 @@
                     <value>none</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.Normal_Season_Friday_Close_Time__c</fieldItem>
-                <identifier>RecordNormal_Season_Friday_Close_Time_cField</identifier>
+                <identifier
+        >RecordNormal_Season_Friday_Close_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1179,8 +1197,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.NormalSeason_Saturday_Close_Time__c</fieldItem>
-                <identifier>RecordNormalSeason_Saturday_Close_Time_cField</identifier>
+                <fieldItem
+        >Record.NormalSeason_Saturday_Close_Time__c</fieldItem>
+                <identifier
+        >RecordNormalSeason_Saturday_Close_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1190,7 +1210,8 @@
                     <value>none</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.NormalSeason_Sunday_Close_Time__c</fieldItem>
-                <identifier>RecordNormalSeason_Sunday_Close_Time_cField</identifier>
+                <identifier
+        >RecordNormalSeason_Sunday_Close_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1200,7 +1221,8 @@
                     <value>none</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.NormalSeason_Holiday_Close_Time__c</fieldItem>
-                <identifier>RecordNormalSeason_Holiday_Close_Time_cField</identifier>
+                <identifier
+        >RecordNormalSeason_Holiday_Close_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1209,8 +1231,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.NormalSeason_Number_of_Lifeguards__c</fieldItem>
-                <identifier>RecordNormalSeason_Number_of_Lifeguards_cField</identifier>
+                <fieldItem
+        >Record.NormalSeason_Number_of_Lifeguards__c</fieldItem>
+                <identifier
+        >RecordNormalSeason_Number_of_Lifeguards_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1220,7 +1244,8 @@
                     <value>readonly</value>
                 </fieldInstanceProperties>
                 <fieldItem>Record.Total_Weekly_Peak_Hours_Calc__c</fieldItem>
-                <identifier>RecordTotal_Weekly_Peak_Hours_Calc_cField</identifier>
+                <identifier
+        >RecordTotal_Weekly_Peak_Hours_Calc_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1239,8 +1264,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.Total_Season_Peak_Hours_All_Guards__c</fieldItem>
-                <identifier>RecordTotalSeasonPeakHoursAllGuardscField</identifier>
+                <fieldItem
+        >Record.Total_Season_Peak_Hours_All_Guards__c</fieldItem>
+                <identifier
+        >RecordTotalSeasonPeakHoursAllGuardscField</identifier>
             </fieldInstance>
         </itemInstances>
         <name>peakSeasonRight</name>
@@ -1299,8 +1326,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.SchoolOff_Season_Monday_Open_Time__c</fieldItem>
-                <identifier>RecordSchoolOff_Season_Monday_Open_Time_cField</identifier>
+                <fieldItem
+        >Record.SchoolOff_Season_Monday_Open_Time__c</fieldItem>
+                <identifier
+        >RecordSchoolOff_Season_Monday_Open_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1309,8 +1338,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.SchoolOff_Season_Tuesday_Open_Time__c</fieldItem>
-                <identifier>RecordSchoolOff_Season_Tuesday_Open_Time_cField</identifier>
+                <fieldItem
+        >Record.SchoolOff_Season_Tuesday_Open_Time__c</fieldItem>
+                <identifier
+        >RecordSchoolOff_Season_Tuesday_Open_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1319,8 +1350,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.SchoolOff_Season_Wednesday_Open_Time__c</fieldItem>
-                <identifier>RecordSchoolOff_Season_Wednesday_Open_Time_cField</identifier>
+                <fieldItem
+        >Record.SchoolOff_Season_Wednesday_Open_Time__c</fieldItem>
+                <identifier
+        >RecordSchoolOff_Season_Wednesday_Open_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1329,8 +1362,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.SchoolOff_Season_Thursday_Open_Time__c</fieldItem>
-                <identifier>RecordSchoolOff_Season_Thursday_Open_Time_cField</identifier>
+                <fieldItem
+        >Record.SchoolOff_Season_Thursday_Open_Time__c</fieldItem>
+                <identifier
+        >RecordSchoolOff_Season_Thursday_Open_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1339,8 +1374,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.SchoolOff_Season_Friday_Open_Time__c</fieldItem>
-                <identifier>RecordSchoolOff_Season_Friday_Open_Time_cField</identifier>
+                <fieldItem
+        >Record.SchoolOff_Season_Friday_Open_Time__c</fieldItem>
+                <identifier
+        >RecordSchoolOff_Season_Friday_Open_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1349,8 +1386,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.SchoolOff_Season_Saturday_Open_Time__c</fieldItem>
-                <identifier>RecordSchoolOff_Season_Saturday_Open_Time_cField</identifier>
+                <fieldItem
+        >Record.SchoolOff_Season_Saturday_Open_Time__c</fieldItem>
+                <identifier
+        >RecordSchoolOff_Season_Saturday_Open_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1359,8 +1398,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.SchoolOff_Season_Sunday_Open_Time__c</fieldItem>
-                <identifier>RecordSchoolOff_Season_Sunday_Open_Time_cField</identifier>
+                <fieldItem
+        >Record.SchoolOff_Season_Sunday_Open_Time__c</fieldItem>
+                <identifier
+        >RecordSchoolOff_Season_Sunday_Open_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1369,8 +1410,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.School_Off_Season_Hours_per_Lifeguard__c</fieldItem>
-                <identifier>RecordSchool_Off_Season_Hours_per_Lifeguard_cField</identifier>
+                <fieldItem
+        >Record.School_Off_Season_Hours_per_Lifeguard__c</fieldItem>
+                <identifier
+        >RecordSchool_Off_Season_Hours_per_Lifeguard_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1379,8 +1422,10 @@
                     <name>uiBehavior</name>
                     <value>readonly</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.School_Off_Season_Total_Staff_Hours__c</fieldItem>
-                <identifier>RecordSchool_Off_Season_Total_Staff_Hours_cField</identifier>
+                <fieldItem
+        >Record.School_Off_Season_Total_Staff_Hours__c</fieldItem>
+                <identifier
+        >RecordSchool_Off_Season_Total_Staff_Hours_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1423,8 +1468,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.SchoolOff_Season_Monday_Close_Time__c</fieldItem>
-                <identifier>RecordSchoolOff_Season_Monday_Close_Time_cField</identifier>
+                <fieldItem
+        >Record.SchoolOff_Season_Monday_Close_Time__c</fieldItem>
+                <identifier
+        >RecordSchoolOff_Season_Monday_Close_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1433,8 +1480,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.SchoolOff_Season_Tuesday_Close_Time__c</fieldItem>
-                <identifier>RecordSchoolOff_Season_Tuesday_Close_Time_cField</identifier>
+                <fieldItem
+        >Record.SchoolOff_Season_Tuesday_Close_Time__c</fieldItem>
+                <identifier
+        >RecordSchoolOff_Season_Tuesday_Close_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1443,8 +1492,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.SchoolOff_Season_Wednesday_Close_Time__c</fieldItem>
-                <identifier>RecordSchoolOff_Season_Wednesday_Close_Time_cField</identifier>
+                <fieldItem
+        >Record.SchoolOff_Season_Wednesday_Close_Time__c</fieldItem>
+                <identifier
+        >RecordSchoolOff_Season_Wednesday_Close_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1453,8 +1504,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.SchoolOff_Season_Thursday_Close_Time__c</fieldItem>
-                <identifier>RecordSchoolOff_Season_Thursday_Close_Time_cField</identifier>
+                <fieldItem
+        >Record.SchoolOff_Season_Thursday_Close_Time__c</fieldItem>
+                <identifier
+        >RecordSchoolOff_Season_Thursday_Close_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1463,8 +1516,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.SchoolOff_Season_Friday_Close_Time__c</fieldItem>
-                <identifier>RecordSchoolOff_Season_Friday_Close_Time_cField</identifier>
+                <fieldItem
+        >Record.SchoolOff_Season_Friday_Close_Time__c</fieldItem>
+                <identifier
+        >RecordSchoolOff_Season_Friday_Close_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1473,8 +1528,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.SchoolOff_Season_Saturday_Close_Time__c</fieldItem>
-                <identifier>RecordSchoolOff_Season_Saturday_Close_Time_cField</identifier>
+                <fieldItem
+        >Record.SchoolOff_Season_Saturday_Close_Time__c</fieldItem>
+                <identifier
+        >RecordSchoolOff_Season_Saturday_Close_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1483,8 +1540,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.SchoolOff_Season_Sunday_Close_Time__c</fieldItem>
-                <identifier>RecordSchoolOff_Season_Sunday_Close_Time_cField</identifier>
+                <fieldItem
+        >Record.SchoolOff_Season_Sunday_Close_Time__c</fieldItem>
+                <identifier
+        >RecordSchoolOff_Season_Sunday_Close_Time_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1493,8 +1552,10 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.SchoolOff_Season_Number_of_Lifeguards__c</fieldItem>
-                <identifier>RecordSchoolOff_Season_Number_of_Lifeguards_cField</identifier>
+                <fieldItem
+        >Record.SchoolOff_Season_Number_of_Lifeguards__c</fieldItem>
+                <identifier
+        >RecordSchoolOff_Season_Number_of_Lifeguards_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1503,8 +1564,10 @@
                     <name>uiBehavior</name>
                     <value>readonly</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.Total_School_Off_Season_Weekly_Hours__c</fieldItem>
-                <identifier>RecordTotal_School_Off_Season_Weekly_Hours_cField</identifier>
+                <fieldItem
+        >Record.Total_School_Off_Season_Weekly_Hours__c</fieldItem>
+                <identifier
+        >RecordTotal_School_Off_Season_Weekly_Hours_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
@@ -1574,6 +1637,140 @@
             </componentInstance>
         </itemInstances>
         <name>schoolOffSeasonTabContent</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>readonly</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Last_Email_Sent__c</fieldItem>
+                <identifier>RecordLast_Email_Sent_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>readonly</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Last_Email_Received__c</fieldItem>
+                <identifier>RecordLast_Email_Received_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>readonly</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Email_Messages_Count__c</fieldItem>
+                <identifier>RecordEmail_Messages_Count_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>readonly</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Total_Activities_Count__c</fieldItem>
+                <identifier>RecordTotal_Activities_Count_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <name>activityTrackingLeft</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>readonly</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Last_Stage_Change__c</fieldItem>
+                <identifier>RecordLast_Stage_Change_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>readonly</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Previous_Stage__c</fieldItem>
+                <identifier>RecordPrevious_Stage_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>readonly</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Latest_Call_Log__c</fieldItem>
+                <identifier>RecordLatest_Call_Log_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>readonly</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Latest_Post__c</fieldItem>
+                <identifier>RecordLatest_Post_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <name>activityTrackingRight</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>body</name>
+                    <value>activityTrackingLeft</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:column</componentName>
+                <identifier>activityTrackingColumnLeft</identifier>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>body</name>
+                    <value>activityTrackingRight</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:column</componentName>
+                <identifier>activityTrackingColumnRight</identifier>
+            </componentInstance>
+        </itemInstances>
+        <name>activityTrackingColumns</name>
+        <type>Facet</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>columns</name>
+                    <value>activityTrackingColumns</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>horizontalAlignment</name>
+                    <value>false</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>label</name>
+                    <value>Activity Tracking</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:fieldSection</componentName>
+                <identifier>activityTrackingSection</identifier>
+            </componentInstance>
+        </itemInstances>
+        <name>activityTrackingTabContent</name>
         <type>Facet</type>
     </flexiPageRegions>
     <flexiPageRegions>
@@ -1673,6 +1870,27 @@
                 </visibilityRule>
             </componentInstance>
         </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>body</name>
+                    <value>activityTrackingTabContent</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>title</name>
+                    <value>Activity</value>
+                </componentInstanceProperties>
+                <componentName>flexipage:tab</componentName>
+                <identifier>activityTrackingTab</identifier>
+                <visibilityRule>
+                    <criteria>
+                        <leftValue>{!$User.Profile.Name}</leftValue>
+                        <operator>EQUAL</operator>
+                        <rightValue>System Administrator</rightValue>
+                    </criteria>
+                </visibilityRule>
+            </componentInstance>
+        </itemInstances>
         <name>maintabs</name>
         <type>Facet</type>
     </flexiPageRegions>
@@ -1701,6 +1919,16 @@
         <type>Region</type>
     </flexiPageRegions>
     <flexiPageRegions>
+        <itemInstances>
+            <componentInstance>
+                <componentInstanceProperties>
+                    <name>context</name>
+                    <value>RECORD</value>
+                </componentInstanceProperties>
+                <componentName>forceChatter:publisher</componentName>
+                <identifier>forceChatter_publisher</identifier>
+            </componentInstance>
+        </itemInstances>
         <itemInstances>
             <componentInstance>
                 <componentInstanceProperties>

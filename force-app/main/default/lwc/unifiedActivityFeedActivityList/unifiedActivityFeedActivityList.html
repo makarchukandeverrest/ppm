@@ -17,7 +17,7 @@
     <template if:true={hasActivities}>
         <ul class="slds-timeline">
             <template for:each={displayActivities} for:item="item">
-                <li key={item.id} class="slds-timeline__item_expandable slds-timeline__item_call">
+                <li key={item.id} class={item.timelineClass}>
                     <div class="slds-media">
                         <div class="slds-media__figure">
                             <lightning-icon

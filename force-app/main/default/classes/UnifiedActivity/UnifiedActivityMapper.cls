@@ -1,5 +1,6 @@
 public with sharing class UnifiedActivityMapper {
     public static final String TYPE_TASK = 'Task';
+    public static final String TYPE_CALL = 'Call';
     public static final String TYPE_EVENT = 'Event';
     public static final String TYPE_EMAIL = 'EmailMessage';
     public static final String TYPE_FEED = 'FeedItem';
@@ -31,7 +32,7 @@ public with sharing class UnifiedActivityMapper {
             }
             result.add(new UnifiedActivityModels.ActivityItem(
                 t.Id,
-                TYPE_TASK,
+                isCallTask(t) ? TYPE_CALL : TYPE_TASK,
                 t.Subject,
                 t.Description,
                 t.CreatedDate,
@@ -119,6 +120,10 @@ TYPE_EVENT,
             ));
         }
         return result;
+    }
+
+    private Boolean isCallTask(Task taskRecord) {
+        return taskRecord.TaskSubtype == 'Call';
     }
 
     private Boolean isEmailLikeTask(Task taskRecord) {
