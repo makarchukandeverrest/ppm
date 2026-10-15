@@ -1,0 +1,431 @@
+<template>
+  <div class="mobile-root">
+    <!-- MAP VIEW -->
+    <template if:true={showMapView}>
+      <div class={shellClass}>
+        <div class="mobile-toolbar">
+          <div class="mobile-toolbar__title">
+            <lightning-icon
+              icon-name="standard:account"
+              size="small"
+            ></lightning-icon>
+            <span class="slds-truncate">{cardTitle}</span>
+          </div>
+          <div class="mobile-toolbar__actions">
+            <lightning-button-icon
+              icon-name={landscapeIcon}
+              variant="bare"
+              size="medium"
+              alternative-text={landscapeLabel}
+              title={landscapeLabel}
+              onclick={toggleLandscapeMode}
+            >
+            </lightning-button-icon>
+            <template if:true={hasActiveFilters}>
+              <lightning-button-icon
+                icon-name="utility:clear"
+                variant="bare"
+                size="medium"
+                alternative-text="Clear all filters"
+                title="Clear all filters"
+                onclick={handleClearSearch}
+              >
+              </lightning-button-icon>
+            </template>
+            <button
+              class="mobile-filter-button"
+              type="button"
+              onclick={toggleFilters}
+            >
+              <lightning-icon
+                icon-name="utility:filterList"
+                size="x-small"
+              ></lightning-icon>
+              <span>{filtersButtonLabel}</span>
+            </button>
+          </div>
+        </div>
+
+        <template if:true={hasLoadError}>
+          <div
+            class="slds-notify slds-notify_alert slds-alert_error"
+            role="alert"
+          >
+            <span class="slds-assistive-text">Error</span>
+            <h2>{loadErrorMessage}</h2>
+          </div>
+        </template>
+
+        <div class="mobile-legend">
+          <span class="legend-item"
+            ><span class="legend-dot legend-dot_current"></span>Current</span
+          >
+          <span class="legend-item"
+            ><span class="legend-dot legend-dot_contract-sent"></span>Contract
+            Sent</span
+          >
+          <span class="legend-item"
+            ><span class="legend-dot legend-dot_opportunity"></span>Bid
+            Opportunity</span
+          >
+          <span class="legend-item"
+            ><span class="legend-dot legend-dot_closed-lost"></span>Closed -
+            LOST</span
+          >
+          <span class="legend-item"
+            ><span class="legend-dot legend-dot_active-bid"></span>Active
+            Bid</span
+          >
+          <span class="legend-item"
+            ><span class="legend-dot legend-dot_multi"></span>Multiple</span
+          >
+        </div>
+
+        <div class="mobile-map">
+          <template if:true={hasFilteredMarkers}>
+            <lightning-map
+              map-markers={filteredMapMarkers}
+              markers-title="Customers"
+              onmarkerselect={handleMarkerSelect}
+              selected-marker-value={selectedMarkerValue}
+              list-view="hidden"
+              zoom-level={zoomLevel}
+              center={center}
+              options={mapOptions}
+            >
+            </lightning-map>
+          </template>
+          <template if:false={hasFilteredMarkers}>
+            <div class="mobile-empty">
+              <lightning-icon
+                icon-name="utility:location"
+                size="medium"
+                class="slds-m-bottom_small"
+              ></lightning-icon>
+              <template if:true={hasActiveFilters}>
+                <p>No customer locations match your filters.</p>
+                <lightning-button
+                  class="slds-m-top_small"
+                  label="Clear All Filters"
+                  variant="neutral"
+                  onclick={handleClearSearch}
+                >
+                </lightning-button>
+              </template>
+              <template if:false={hasActiveFilters}>
+                <p>No customer locations available to display.</p>
+              </template>
+            </div>
+          </template>
+        </div>
+      </div>
+    </template>
+
+    <!-- DETAILS VIEW (same pattern as filters — page scroll, no overlay) -->
+    <template if:true={showDetailsView}>
+      <div class="mobile-filters-page mobile-details-page">
+        <div class="mobile-filters-page__header">
+          <div class="mobile-filters-page__title slds-truncate">
+            {detailsPageTitle}
+          </div>
+          <lightning-button-icon
+            icon-name="utility:close"
+            variant="bare"
+            size="medium"
+            alternative-text="Back to map"
+            title="Back to map"
+            onclick={clearSelection}
+          >
+          </lightning-button-icon>
+        </div>
+
+        <div class="mobile-filters-page__content">
+          <template if:true={hasSelectedLocationGroup}>
+            <p
+              class="slds-text-body_small slds-text-color_weak slds-m-bottom_small"
+            >
+              {selectedLocationAddress}
+            </p>
+          </template>
+
+          <template for:each={selectedCustomerDetails} for:item="detail">
+            <div key={detail.accountId} class="mobile-detail">
+              <div class="mobile-detail__head">
+                <button
+                  class="mobile-detail__name"
+                  type="button"
+                  data-record-id={detail.accountId}
+                  data-object="Account"
+                  onclick={handleNavigateToRecord}
+                >
+                  {detail.name}
+                </button>
+                <span class={detail.statusClass}>{detail.statusLabel}</span>
+              </div>
+
+              <template if:false={hasSelectedLocationGroup}>
+                <p
+                  class="slds-text-body_small slds-text-color_weak mobile-detail__address"
+                >
+                  {detail.address}
+                </p>
+              </template>
+
+              <dl class="mobile-detail__list">
+                <template if:true={detail.hasPrimaryContact}>
+                  <div class="mobile-detail__row">
+                    <dt>Contact</dt>
+                    <dd>
+                      <button
+                        class="mobile-link"
+                        type="button"
+                        data-record-id={detail.primaryContactId}
+                        data-object="Contact"
+                        onclick={handleNavigateToRecord}
+                      >
+                        {detail.primaryContactName}
+                      </button>
+                      <template if:true={detail.primaryContactPhone}>
+                        <div>
+                          <lightning-formatted-phone
+                            value={detail.primaryContactPhone}
+                          ></lightning-formatted-phone>
+                        </div>
+                      </template>
+                      <template if:true={detail.primaryContactEmail}>
+                        <div class="slds-truncate">
+                          <lightning-formatted-email
+                            value={detail.primaryContactEmail}
+                          ></lightning-formatted-email>
+                        </div>
+                      </template>
+                    </dd>
+                  </div>
+                </template>
+
+                <template if:true={detail.hasManagementCompany}>
+                  <div class="mobile-detail__row">
+                    <dt>Mgmt Co.</dt>
+                    <dd>
+                      <button
+                        class="mobile-link"
+                        type="button"
+                        data-record-id={detail.managementCompanyId}
+                        data-object="Management_Company__c"
+                        onclick={handleNavigateToRecord}
+                      >
+                        {detail.managementCompanyName}
+                      </button>
+                    </dd>
+                  </div>
+                </template>
+
+                <template if:true={detail.regionalManagerName}>
+                  <div class="mobile-detail__row">
+                    <dt>Manager</dt>
+                    <dd>{detail.regionalManagerName}</dd>
+                  </div>
+                </template>
+
+                <template if:true={detail.hasRecentBid}>
+                  <div class="mobile-detail__row">
+                    <dt>Bid</dt>
+                    <dd>
+                      <div>{detail.recentBid.Name}</div>
+                      <template if:true={detail.recentBid.Stage__c}>
+                        <div class="stage-flow">
+                          <span class="stage-flow__current"
+                            >{detail.recentBid.Stage__c}</span
+                          >
+                          <template if:true={detail.hasNextStage}>
+                            <span class="stage-flow__arrow" aria-hidden="true"
+                              >→</span
+                            >
+                            <span class="stage-flow__next"
+                              >{detail.nextStage}</span
+                            >
+                          </template>
+                        </div>
+                      </template>
+                      <div class="slds-text-body_small slds-text-color_weak">
+                        <template if:true={detail.recentBid.Contract_Year__c}>
+                          <span>{detail.recentBid.Contract_Year__c}</span>
+                        </template>
+                        <template if:true={detail.recentBid.Due_Date__c}>
+                          <span>
+                            · Due
+                            <lightning-formatted-date-time
+                              value={detail.recentBid.Due_Date__c}
+                              year="numeric"
+                              month="short"
+                              day="2-digit"
+                            ></lightning-formatted-date-time
+                          ></span>
+                        </template>
+                        <template if:true={detail.showRecentBidTotal}>
+                          <span>
+                            ·
+                            <lightning-formatted-number
+                              value={detail.recentBid.Total__c}
+                              format-style="currency"
+                              currency-code="USD"
+                            ></lightning-formatted-number
+                          ></span>
+                        </template>
+                      </div>
+                    </dd>
+                  </div>
+                </template>
+
+                <template if:true={detail.lastActivitySubject}>
+                  <div class="mobile-detail__row">
+                    <dt>Last Activity</dt>
+                    <dd>
+                      {detail.lastActivityType} — {detail.lastActivitySubject}
+                      <template if:true={detail.lastActivityDateTime}>
+                        <div class="slds-text-body_small slds-text-color_weak">
+                          <lightning-formatted-date-time
+                            value={detail.lastActivityDateTime}
+                          ></lightning-formatted-date-time>
+                        </div>
+                      </template>
+                    </dd>
+                  </div>
+                </template>
+              </dl>
+
+              <template if:true={detail.contractBidDescription}>
+                <p class="slds-text-body_small mobile-detail__notes">
+                  {detail.contractBidDescription}
+                </p>
+              </template>
+
+              <div class="mobile-detail__actions">
+                <lightning-button
+                  label="Open Account"
+                  variant="brand"
+                  icon-name="utility:open"
+                  stretch
+                  data-record-id={detail.accountId}
+                  data-object="Account"
+                  onclick={handleNavigateToRecord}
+                >
+                </lightning-button>
+                <template if:true={detail.hasContractBid}>
+                  <lightning-button
+                    label="Open Bid"
+                    variant="neutral"
+                    stretch
+                    data-record-id={detail.contractBidId}
+                    data-object="Contract_Bid__c"
+                    onclick={handleNavigateToRecord}
+                  >
+                  </lightning-button>
+                </template>
+              </div>
+            </div>
+          </template>
+
+          <div class="mobile-filters-page__actions">
+            <lightning-button
+              label="Back to Map"
+              variant="brand"
+              stretch
+              onclick={clearSelection}
+            >
+            </lightning-button>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <!-- FILTERS VIEW -->
+    <template if:true={isFiltersOpen}>
+      <div class="mobile-filters-page">
+        <div class="mobile-filters-page__header">
+          <div class="mobile-filters-page__title">Filters</div>
+          <lightning-button-icon
+            icon-name="utility:close"
+            variant="bare"
+            size="medium"
+            alternative-text="Close"
+            title="Close"
+            onclick={closeFilters}
+          >
+          </lightning-button-icon>
+        </div>
+
+        <div class="mobile-filters-page__content">
+          <lightning-input
+            class="slds-m-bottom_small"
+            label="Customer Name or Email"
+            type="search"
+            value={searchTerm}
+            onchange={handleSearch}
+            placeholder="Search by name or email"
+          >
+          </lightning-input>
+
+          <lightning-combobox
+            class="slds-m-bottom_small"
+            name="countyFilter"
+            label="County"
+            value={selectedCounty}
+            placeholder="All Counties"
+            options={countyOptions}
+            onchange={handleCountyChange}
+          >
+          </lightning-combobox>
+
+          <lightning-combobox
+            class="slds-m-bottom_small"
+            data-name="regionalManagerFilter"
+            label="Regional Manager"
+            value={selectedRegionalManager}
+            placeholder="All"
+            options={regionalManagerOptions}
+            onchange={handleRegionalManagerChange}
+          >
+          </lightning-combobox>
+
+          <lightning-combobox
+            class="slds-m-bottom_small"
+            name="contractYearFilter"
+            label="Recent Contract Bid Year"
+            value={selectedContractYear}
+            placeholder="All Contract Years"
+            options={contractYearOptions}
+            onchange={handleContractYearChange}
+          >
+          </lightning-combobox>
+
+          <lightning-checkbox-group
+            class="slds-m-bottom_medium"
+            name="contractPeriodFilter"
+            label="Contract Periods"
+            options={contractPeriodOptions}
+            value={selectedContractPeriods}
+            onchange={handleContractPeriodsChange}
+          >
+          </lightning-checkbox-group>
+
+          <div class="mobile-filters-page__actions">
+            <lightning-button
+              label="Clear All"
+              variant="neutral"
+              onclick={handleClearSearch}
+            >
+            </lightning-button>
+            <lightning-button
+              label={showResultsLabel}
+              variant="brand"
+              stretch
+              onclick={closeFilters}
+            >
+            </lightning-button>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+</template>
