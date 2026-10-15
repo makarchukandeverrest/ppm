@@ -1,21 +1,48 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <ListView xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Ammar_Alkwakneh</fullName>
+    <booleanFilter>1 AND 2 AND 3 AND 4 AND 5</booleanFilter>
     <columns>NAME</columns>
     <columns>Customer__c</columns>
-    <columns>Colored_Labels__c</columns>
-    <columns>Colored_Stage__c</columns>
     <columns>Stage__c</columns>
-    <columns>RFP__c</columns>
-    <columns>Renewal_Client__c</columns>
-    <columns>Management_Company__c</columns>
+    <columns>Label__c</columns>
     <columns>UPDATEDBY_USER.ALIAS</columns>
     <columns>Lead_Generator__c</columns>
+    <columns>Email_Messages_Count__c</columns>
+    <columns>Latest_Call_Log__c</columns>
+    <columns>Latest_Post__c</columns>
+    <columns>Last_Email_Sent__c</columns>
+    <columns>Last_Email_Received__c</columns>
+    <columns>LAST_ACTIVITY</columns>
     <filterScope>Everything</filterScope>
     <filters>
         <field>Lead_Owner__c</field>
         <operation>equals</operation>
         <value>Ammar Alkwakneh</value>
     </filters>
+    <filters>
+        <field>Contract_Year__c</field>
+        <operation>contains</operation>
+        <value>2026-2027</value>
+    </filters>
+    <filters>
+        <field>Stage__c</field>
+        <operation>notEqual</operation>
+        <value
+    >Closed - LOST,Information Verified,Contact Made,Closed - WON,Negotiation Started,Need Contact Verification</value>
+    </filters>
+    <filters>
+        <field>Renewal_Client__c</field>
+        <operation>notEqual</operation>
+        <value>1</value>
+    </filters>
+    <filters>
+        <field>Label__c</field>
+        <operation>excludes</operation>
+        <value>On Hold</value>
+    </filters>
     <label>Ammar Alkwakneh</label>
+    <sharedTo>
+        <group>Regional_Ammar</group>
+    </sharedTo>
 </ListView>
