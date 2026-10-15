@@ -6,6 +6,13 @@
           alternative-text="Loading"
           size="small"
         ></lightning-spinner>
+        <template if:true={sendProgressText}>
+          <div
+            class="slds-text-align_center slds-text-body_regular slds-p-vertical_large"
+          >
+            {sendProgressText}
+          </div>
+        </template>
       </div>
     </template>
 
@@ -301,21 +308,21 @@
                             ></lightning-spinner>
                           </template>
                           <template if:false={cust.isEditContentLoading}>
-                          <lightning-input
-                            label="Subject"
-                            value={cust.displaySubject}
-                            data-customer-id={cust.customerId}
-                            onchange={handleCustomerSubjectChange}
-                            class="slds-m-bottom_small"
-                          >
-                          </lightning-input>
-                          <label class="slds-form-element__label">Body</label>
-                          <lightning-input-rich-text
-                            value={cust.displayBody}
-                            data-customer-id={cust.customerId}
-                            onchange={handleCustomerBodyChange}
-                          >
-                          </lightning-input-rich-text>
+                            <lightning-input
+                              label="Subject"
+                              value={cust.displaySubject}
+                              data-customer-id={cust.customerId}
+                              onchange={handleCustomerSubjectChange}
+                              class="slds-m-bottom_small"
+                            >
+                            </lightning-input>
+                            <label class="slds-form-element__label">Body</label>
+                            <lightning-input-rich-text
+                              value={cust.displayBody}
+                              data-customer-id={cust.customerId}
+                              onchange={handleCustomerBodyChange}
+                            >
+                            </lightning-input-rich-text>
                           </template>
                         </div>
                       </template>
@@ -491,7 +498,9 @@
           <template if:false={customers.length}>
             <template if:false={showNoResultsWithFilters}>
               <div class="slds-text-body_small slds-text-color_weak">
-                <template if:true={isSimpleMode}> No customers found. </template>
+                <template if:true={isSimpleMode}>
+                  No customers found.
+                </template>
                 <template if:true={isContractsMode}>
                   No customers/contracts found.
                 </template>

@@ -120,7 +120,11 @@ public with sharing class MassSendOpportunityService {
 
   /** Customer on the Proposal. Account and Customer are the same record. */
   public static String customerName(Opportunity opp) {
-    if (opp != null && opp.Account != null && String.isNotBlank(opp.Account.Name)) {
+    if (
+      opp != null &&
+      opp.Account != null &&
+      String.isNotBlank(opp.Account.Name)
+    ) {
       return opp.Account.Name;
     }
     if (opp != null && String.isNotBlank(opp.Name)) {

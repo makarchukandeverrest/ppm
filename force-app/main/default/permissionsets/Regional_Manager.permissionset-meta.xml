@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
     <classAccesses>
         <apexClass>AccountFilesController</apexClass>
@@ -29,6 +29,10 @@
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
+        <apexClass>CompletedContractBidResolver</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
         <apexClass>ContractBidStatusUpdater</apexClass>
         <enabled>true</enabled>
     </classAccesses>
@@ -37,15 +41,19 @@
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
-        <apexClass>MassSendEmailBuilder</apexClass>
+        <apexClass>DocuSignBouncePollBatch</apexClass>
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
-        <apexClass>MassSendOpportunityService</apexClass>
+        <apexClass>DocuSignBouncePollScheduler</apexClass>
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
-        <apexClass>CompletedContractBidResolver</apexClass>
+        <apexClass>DocuSignBouncePollService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>DocuSignBouncePollServiceTest</apexClass>
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
@@ -54,10 +62,6 @@
     </classAccesses>
     <classAccesses>
         <apexClass>DocuSignCompletedEmailJob</apexClass>
-        <enabled>true</enabled>
-    </classAccesses>
-    <classAccesses>
-        <apexClass>SignedContractRecipientResolver</apexClass>
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
@@ -94,22 +98,6 @@
     </classAccesses>
     <classAccesses>
         <apexClass>DocuSignWebhookHandler</apexClass>
-        <enabled>true</enabled>
-    </classAccesses>
-    <classAccesses>
-        <apexClass>DocuSignBouncePollService</apexClass>
-        <enabled>true</enabled>
-    </classAccesses>
-    <classAccesses>
-        <apexClass>DocuSignBouncePollBatch</apexClass>
-        <enabled>true</enabled>
-    </classAccesses>
-    <classAccesses>
-        <apexClass>DocuSignBouncePollScheduler</apexClass>
-        <enabled>true</enabled>
-    </classAccesses>
-    <classAccesses>
-        <apexClass>DocuSignBouncePollServiceTest</apexClass>
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
@@ -177,6 +165,14 @@
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
+        <apexClass>MassSendEmailBuilder</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>MassSendOpportunityService</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
         <apexClass>ProposalCustomerAssigner</apexClass>
         <enabled>true</enabled>
     </classAccesses>
@@ -202,6 +198,10 @@
     </classAccesses>
     <classAccesses>
         <apexClass>QuickBooksWOLineIntem</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>SignedContractRecipientResolver</apexClass>
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
@@ -252,6 +252,25 @@
         <enabled>true</enabled>
         <name>Document_Link__mdt</name>
     </customMetadataTypeAccesses>
+    <customPermissions>
+        <enabled>true</enabled>
+        <name>Mass_Contract_Send</name>
+    </customPermissions>
+    <externalCredentialPrincipalAccesses>
+        <enabled>true</enabled>
+        <externalCredentialPrincipal
+    >ArtemDocusign-Artem Docusign Principal</externalCredentialPrincipal>
+    </externalCredentialPrincipalAccesses>
+    <externalCredentialPrincipalAccesses>
+        <enabled>true</enabled>
+        <externalCredentialPrincipal
+    >DocuSign-DocuSign</externalCredentialPrincipal>
+    </externalCredentialPrincipalAccesses>
+    <externalCredentialPrincipalAccesses>
+        <enabled>true</enabled>
+        <externalCredentialPrincipal
+    >SharePoint-sharePoint</externalCredentialPrincipal>
+    </externalCredentialPrincipalAccesses>
     <fieldPermissions>
         <editable>true</editable>
         <field>Account.AccountNumber</field>
@@ -293,7 +312,7 @@
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
-        <editable>true</editable>
+        <editable>false</editable>
         <field>Account.Contract_Creator__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -363,7 +382,7 @@
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
-        <editable>true</editable>
+        <editable>false</editable>
         <field>Account.Lead_Generator__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -548,7 +567,7 @@
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
-        <editable>true</editable>
+        <editable>false</editable>
         <field>Account.Regional_Manager__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -728,7 +747,7 @@
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
-        <editable>false</editable>
+        <editable>true</editable>
         <field>Contract_Bid__c.Bid_Number__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -983,12 +1002,12 @@
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
-        <editable>true</editable>
+        <editable>false</editable>
         <field>Contract_Bid__c.Lead_Generator__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
-        <editable>true</editable>
+        <editable>false</editable>
         <field>Contract_Bid__c.Lead_Owner__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -1203,7 +1222,7 @@
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
-        <editable>true</editable>
+        <editable>false</editable>
         <field>Contract_Bid__c.Record_Manager__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -1449,6 +1468,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
+        <field>Invoice__c.Class_Name__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
         <field>Invoice__c.Customer_Quickbooks_Id__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -1612,18 +1636,6 @@
         <field>Supervisor__c.Title_Position__c</field>
         <readable>true</readable>
     </fieldPermissions>
-    <externalCredentialPrincipalAccesses>
-        <enabled>true</enabled>
-        <externalCredentialPrincipal>ArtemDocusign-Artem Docusign Principal</externalCredentialPrincipal>
-    </externalCredentialPrincipalAccesses>
-    <externalCredentialPrincipalAccesses>
-        <enabled>true</enabled>
-        <externalCredentialPrincipal>DocuSign-DocuSign</externalCredentialPrincipal>
-    </externalCredentialPrincipalAccesses>
-    <externalCredentialPrincipalAccesses>
-        <enabled>true</enabled>
-        <externalCredentialPrincipal>SharePoint-sharePoint</externalCredentialPrincipal>
-    </externalCredentialPrincipalAccesses>
     <hasActivationRequired>false</hasActivationRequired>
     <label>Regional Manager</label>
     <objectPermissions>
@@ -1665,6 +1677,16 @@
         <object>Supervisor__c</object>
         <viewAllFields>false</viewAllFields>
         <viewAllRecords>false</viewAllRecords>
+    </objectPermissions>
+    <objectPermissions>
+        <allowCreate>false</allowCreate>
+        <allowDelete>true</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>true</modifyAllRecords>
+        <object>dfsle__Envelope__c</object>
+        <viewAllFields>true</viewAllFields>
+        <viewAllRecords>true</viewAllRecords>
     </objectPermissions>
     <tabSettings>
         <tab>Contract_Bid__c</tab>
