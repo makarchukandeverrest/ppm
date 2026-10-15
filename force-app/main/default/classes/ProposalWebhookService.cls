@@ -4,16 +4,17 @@ public without sharing class ProposalWebhookService {
   private static final String WEBHOOK_URL_UPDATE = 'https://webhooks.skyvia.com/webhooks/qp2dd4n4/salesforce_proposal_update';
 
   public static void sendProposalInserts(Set<Id> proposalIds) {
-    enqueueProposalWebhook(proposalIds, WEBHOOK_URL_INSERT);
+    enqueueProposalWebhook(proposalIds, WEBHOOK_URL_INSERT, true);
   }
 
   public static void sendProposalUpdates(Set<Id> proposalIds) {
-    enqueueProposalWebhook(proposalIds, WEBHOOK_URL_UPDATE);
+    enqueueProposalWebhook(proposalIds, WEBHOOK_URL_UPDATE, false);
   }
 
   private static void enqueueProposalWebhook(
     Set<Id> proposalIds,
-    String webhookUrl
+    String webhookUrl,
+    Boolean addEmptyItemIfMissing
   ) {
     if (
       proposalIds == null ||
@@ -39,6 +40,8 @@ public without sharing class ProposalWebhookService {
         Start_Date__c,
         Subtotal__c,
         Account_QuickBooks_Id__c,
+        Account.Name,
+        Account.QuickBooks_Id__c,
         FOB__c,
         QuickBooks_Id__c,
         Reference_Number__c,
@@ -77,7 +80,7 @@ public without sharing class ProposalWebhookService {
       List<Deal_Line_Item__c> items = itemsByProposalId.containsKey(proposal.Id)
         ? itemsByProposalId.get(proposal.Id)
         : new List<Deal_Line_Item__c>();
-      payloads.add(buildPayload(proposal, items));
+      payloads.add(buildPayload(proposal, items, addEmptyItemIfMissing));
     }
 
     ProposalWebhookRequest body = new ProposalWebhookRequest();
@@ -92,6 +95,15 @@ public without sharing class ProposalWebhookService {
   private static ProposalWebhookPayload buildPayload(
     Opportunity proposal,
     List<Deal_Line_Item__c> lineItems
+  ) {
+    return buildPayload(proposal, lineItems, false);
+  }
+
+  @TestVisible
+  private static ProposalWebhookPayload buildPayload(
+    Opportunity proposal,
+    List<Deal_Line_Item__c> lineItems,
+    Boolean addEmptyItemIfMissing
   ) {
     ProposalWebhookPayload payload = new ProposalWebhookPayload();
     payload.id = proposal.Id;
@@ -109,7 +121,12 @@ public without sharing class ProposalWebhookService {
     payload.salesTax = proposal.Sales_Tax__c;
     payload.startDate = proposal.Start_Date__c;
     payload.subtotal = proposal.Subtotal__c;
-    payload.accountQuickBooksId = proposal.Account_QuickBooks_Id__c;
+    payload.accountQuickBooksId = proposal.Account == null
+      ? null
+      : proposal.Account.QuickBooks_Id__c;
+    payload.customerName = proposal.Account == null
+      ? null
+      : proposal.Account.Name;
     payload.fob = proposal.FOB__c;
     payload.quickBooksId = proposal.QuickBooks_Id__c;
     payload.referenceNumber = proposal.Reference_Number__c;
@@ -122,6 +139,21 @@ public without sharing class ProposalWebhookService {
       for (Deal_Line_Item__c lineItem : lineItems) {
         payload.items.add(buildItem(lineItem));
       }
+    }
+
+    if (
+      addEmptyItemIfMissing == true &&
+      (payload.items == null || payload.items.isEmpty())
+    ) {
+      // QB EstimateAdd rejects empty LineItems and null ItemRef.
+      // Send a minimal valid placeholder item for insert.
+      ProposalWebhookItem placeholder = new ProposalWebhookItem();
+      placeholder.name = 'SERVICE WORK:SERVICES:F105';
+      placeholder.description = '';
+      placeholder.quantity = 1;
+      placeholder.unitCost = 0;
+      placeholder.total = 0;
+      payload.items.add(placeholder);
     }
     return payload;
   }
@@ -194,6 +226,7 @@ public without sharing class ProposalWebhookService {
     public Date startDate;
     public Decimal subtotal;
     public String accountQuickBooksId;
+    public String customerName;
     public String fob;
     public String quickBooksId;
     public String referenceNumber;

@@ -28,6 +28,11 @@ private class ProposalWebhookServiceTest {
 
   @isTest
   static void sendProposalInserts_postsToInsertWebhook() {
+    Test.setMock(
+      HttpCalloutMock.class,
+      new WebhookMock('salesforce_proposal_insert')
+    );
+
     Account account = new Account(Name = 'Webhook Account Insert');
     insert account;
 
@@ -41,10 +46,6 @@ private class ProposalWebhookServiceTest {
     );
     insert proposal;
 
-    Test.setMock(
-      HttpCalloutMock.class,
-      new WebhookMock('salesforce_proposal_insert')
-    );
     Test.startTest();
     ProposalWebhookService.sendProposalInserts(new Set<Id>{ proposal.Id });
     Test.stopTest();
@@ -52,6 +53,8 @@ private class ProposalWebhookServiceTest {
 
   @isTest
   static void sendProposalUpdates_postsToUpdateWebhook() {
+    Test.setMock(HttpCalloutMock.class, new WebhookMock('salesforce_proposal'));
+
     Account account = new Account(Name = 'Webhook Account');
     insert account;
 
@@ -75,10 +78,6 @@ private class ProposalWebhookServiceTest {
       Deal__c = proposal.Id
     );
 
-    Test.setMock(
-      HttpCalloutMock.class,
-      new WebhookMock('salesforce_proposal_update')
-    );
     Test.startTest();
     ProposalWebhookService.sendProposalUpdates(new Set<Id>{ proposal.Id });
     Test.stopTest();
@@ -86,12 +85,16 @@ private class ProposalWebhookServiceTest {
 
   @isTest
   static void buildPayload_includesCreditCardFee() {
+    Account account = new Account(
+      Name = 'Payload Customer',
+      QuickBooks_Id__c = 'QB-ACC-FROM-CUSTOMER'
+    );
     Opportunity proposal = new Opportunity(
       Name = 'Payload Proposal',
       Description = 'Memo',
       CloseDate = Date.today(),
       Is_Active__c = true,
-      Account_QuickBooks_Id__c = 'QB-ACC',
+      Account_QuickBooks_Id__c = 'QB-ACC-ON-PROPOSAL-IGNORED',
       Reference_Number__c = 'R1',
       Project_Order_No__c = 'PO1',
       Terms__c = 'Net 15',
@@ -99,6 +102,7 @@ private class ProposalWebhookServiceTest {
       FOB__c = 'Origin',
       Date_Ordered__c = Date.today()
     );
+    proposal.putSObject(Opportunity.AccountId, account);
 
     Deal_Line_Item__c lineItem = new Deal_Line_Item__c(
       Name = 'Fee Item',
@@ -114,9 +118,39 @@ private class ProposalWebhookServiceTest {
       new List<Deal_Line_Item__c>{ lineItem }
     );
 
-    System.assertEquals('QB-ACC', payload.accountQuickBooksId);
+    System.assertEquals(
+      'QB-ACC-FROM-CUSTOMER',
+      payload.accountQuickBooksId,
+      'Should take QuickBooks Id from Customer Account, not Proposal field'
+    );
+    System.assertEquals('Payload Customer', payload.customerName);
     System.assertEquals(1, payload.items.size());
     System.assertEquals('3.00', payload.items[0].creditCardFee);
     System.assertEquals('Fee Item', payload.items[0].name);
+  }
+
+  @isTest
+  static void buildPayload_insertAddsOneEmptyItemWhenNoLineItems() {
+    Opportunity proposal = new Opportunity(
+      Name = 'Empty Items Proposal',
+      CloseDate = Date.today(),
+      Is_Active__c = true
+    );
+
+    ProposalWebhookService.ProposalWebhookPayload payload = ProposalWebhookService.buildPayload(
+      proposal,
+      new List<Deal_Line_Item__c>(),
+      true
+    );
+
+    System.assertEquals(
+      1,
+      payload.items.size(),
+      'Insert should send one placeholder item when Proposal has no line items'
+    );
+    System.assertEquals('SERVICE WORK:SERVICES:F105', payload.items[0].name);
+    System.assertEquals(1, payload.items[0].quantity);
+    System.assertEquals(0, payload.items[0].unitCost);
+    System.assertEquals(0, payload.items[0].total);
   }
 }
