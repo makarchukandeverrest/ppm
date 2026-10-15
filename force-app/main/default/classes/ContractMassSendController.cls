@@ -544,8 +544,9 @@ public with sharing class ContractMassSendController {
   }
 
   /**
-   * File rules aligned with AccountFilesController.getAccountsWithFiles when
-   * applyContractFileFilters is true (year, exclude signed/completed/welcome/bid).
+   * File rules for email/PDF mass send when applyContractFileFilters is true:
+   * PDF only, year match, exclude signed/completed/welcome/bid.
+   * (DocuSign selector may still allow doc/docx via AccountFilesController.)
    */
   private static List<ContentVersion> queryContractVersions(
     Set<Id> docIds,
@@ -579,7 +580,7 @@ public with sharing class ContractMassSendController {
         WHERE
           ContentDocumentId IN :docIds
           AND IsLatest = TRUE
-          AND FileExtension IN ('pdf', 'doc', 'docx')
+          AND FileExtension = 'pdf'
           AND Title LIKE '%Contract%'
           AND Title LIKE :contractYearLike
           AND (NOT Title LIKE '%Signed Contract%')
