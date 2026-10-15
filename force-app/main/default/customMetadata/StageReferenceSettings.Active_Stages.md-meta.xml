@@ -10,6 +10,6 @@
         <field>Stage_Names__c</field>
         <value
       xsi:type="xsd:string"
-    >Contact Made,Information Verified,Contract Bid Package Sent,Client Showed Interest,Need Contact Verification,Contact Verified and Updated,Contract Sent via DocuSign,Proposal/Review,First Follow Up (Follow up sent in PD),First Follow Up,Second Follow Up,Third Follow Up,Negotiation Started,Contract Under Review,Contact Verified,Conversation Started,Negotiations Started,Qualified</value>
+    >Contact Made,Information Verified,Contract Bid Package Sent,Need Contact Verification,Contact Verified and Updated,Contract Sent via DocuSign,Proposal/Review,First Follow Up (Follow up sent in PD),Second Follow Up,Third Follow Up,Negotiation Started</value>
     </values>
 </CustomMetadata>
