@@ -148,6 +148,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(
       { label: "Calls", value: "Call" },
       { label: "Events", value: "Event" },
       { label: "Emails", value: "EmailMessage" },
+      { label: "Notes", value: "ContentNote" },
       { label: "Chatter", value: "FeedItem" }
     ];
   }
@@ -258,6 +259,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(
       );
       const hasDisplayBody = contentParts.length > 0 || hasDescription;
       const isEmail = item.type === "EmailMessage";
+      const isNote = item.type === "ContentNote";
 
       return {
         ...item,
@@ -272,6 +274,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(
         isCall: item.type === "Call",
         isEvent: item.type === "Event",
         isEmail,
+        isNote,
         isFeed: item.type === "FeedItem",
         isCollapsibleBody: isEmail && hasDisplayBody,
         bodyPreview: isEmail
