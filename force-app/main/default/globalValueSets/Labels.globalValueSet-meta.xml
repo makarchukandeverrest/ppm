@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <GlobalValueSet xmlns="http://soap.sforce.com/2006/04/metadata">
     <customValue>
         <fullName>Hot Lead</fullName>
@@ -94,6 +94,11 @@
         <fullName>Resend Bid</fullName>
         <default>false</default>
         <label>Resend Bid</label>
+    </customValue>
+    <customValue>
+        <fullName>Contract Extended</fullName>
+        <default>false</default>
+        <label>Contract Extended</label>
     </customValue>
     <customValue>
         <fullName>Assumptive Lead</fullName>
