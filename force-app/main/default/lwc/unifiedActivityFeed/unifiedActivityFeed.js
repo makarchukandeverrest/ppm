@@ -36,6 +36,8 @@ export default class UnifiedActivityFeed extends NavigationMixin(
   @api emailField = "";
   @api locationFields = "";
   @api relatedRecordLocationFields = "";
+  @api newEventLabel = "";
+  @api newEventIcon = "";
 
   _recordId;
   _sortDirection = "DESC";
