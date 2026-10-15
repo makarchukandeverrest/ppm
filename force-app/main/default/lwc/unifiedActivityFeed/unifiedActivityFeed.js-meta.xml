@@ -68,6 +68,20 @@
         description="Deprecated. Address is read from the current record using locationFields."
         default=""
       />
+      <property
+        name="newEventLabel"
+        type="String"
+        label="New Event Button Label"
+        description="Label for the New Event button. Defaults to New Event."
+        default=""
+      />
+      <property
+        name="newEventIcon"
+        type="String"
+        label="New Event Button Icon"
+        description="Icon for the New Event button. Defaults to utility:event."
+        default=""
+      />
       <objects>
         <object>Account</object>
         <object>Contact</object>
