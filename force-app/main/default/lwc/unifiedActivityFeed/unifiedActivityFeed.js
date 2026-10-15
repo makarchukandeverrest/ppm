@@ -16,17 +16,13 @@ const DEFAULT_CONFIG = {
     primaryContactField: "Primary_Contact__c",
     emailField: "Email__c",
     locationFields:
-      "BillingStreet,BillingCity,BillingState,BillingPostalCode,BillingCountry",
-    newEventLabel: "New Visit",
-    newEventIcon: "utility:checkin"
+      "BillingStreet,BillingCity,BillingState,BillingPostalCode,BillingCountry"
   },
   Contract_Bid__c: {
     primaryContactField: "Customer__r.Primary_Contact__c",
     emailField: "Customer__r.Email__c",
     locationFields:
-      "Customer__r.BillingStreet,Customer__r.BillingCity,Customer__r.BillingState,Customer__r.BillingPostalCode,Customer__r.BillingCountry",
-    newEventLabel: "New Event",
-    newEventIcon: "utility:event"
+      "Customer__r.BillingStreet,Customer__r.BillingCity,Customer__r.BillingState,Customer__r.BillingPostalCode,Customer__r.BillingCountry"
   }
 };
 
@@ -94,11 +90,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(
       primaryContactField:
         this.primaryContactField || defaults.primaryContactField || "",
       emailField: this.emailField || defaults.emailField || "",
-      locationFields: this.locationFields || defaults.locationFields || "",
-      newEventLabel:
-        this.newEventLabel || defaults.newEventLabel || "New Event",
-      newEventIcon:
-        this.newEventIcon || defaults.newEventIcon || "utility:event"
+      locationFields: this.locationFields || defaults.locationFields || ""
     };
   }
 
@@ -147,14 +139,6 @@ export default class UnifiedActivityFeed extends NavigationMixin(
 
   get sortLabel() {
     return this.isAscending ? "Oldest first" : "Newest first";
-  }
-
-  get effectiveNewEventLabel() {
-    return this.effectiveConfig.newEventLabel;
-  }
-
-  get effectiveNewEventIcon() {
-    return this.effectiveConfig.newEventIcon;
   }
 
   get typeOptions() {

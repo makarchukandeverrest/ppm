@@ -1,35 +1,39 @@
-import { LightningElement, api } from 'lwc';
+import { LightningElement, api } from "lwc";
 
 export default class UnifiedActivityFeedHeader extends LightningElement {
-    @api countLabel;
-    @api sortIcon;
-    @api sortLabel;
+  @api countLabel;
+  @api sortIcon;
+  @api sortLabel;
 
-    handleNewTask() {
-        this.dispatchEvent(new CustomEvent('newtask'));
-    }
+  handleNewTask() {
+    this.dispatchEvent(new CustomEvent("newtask"));
+  }
 
-    handleNewEvent() {
-        this.dispatchEvent(new CustomEvent('newevent'));
-    }
+  handleNewEvent() {
+    this.dispatchEvent(new CustomEvent("newevent"));
+  }
 
-    handleLogACall() {
-        this.dispatchEvent(new CustomEvent('logacall'));
-    }
+  handleLogACall() {
+    this.dispatchEvent(new CustomEvent("logacall"));
+  }
 
-    handleNewEmail() {
-        this.dispatchEvent(new CustomEvent('newemail'));
-    }
+  handleLogAVisit() {
+    this.dispatchEvent(new CustomEvent("logavisit"));
+  }
 
-    handleNewPost() {
-        this.dispatchEvent(new CustomEvent('newpost'));
-    }
+  handleNewEmail() {
+    this.dispatchEvent(new CustomEvent("newemail"));
+  }
 
-    handleRefresh() {
-        this.dispatchEvent(new CustomEvent('refresh'));
-    }
+  handleNewPost() {
+    this.dispatchEvent(new CustomEvent("newpost"));
+  }
 
-    handleSortToggle() {
-        this.dispatchEvent(new CustomEvent('sorttoggle'));
-    }
+  handleRefresh() {
+    this.dispatchEvent(new CustomEvent("refresh"));
+  }
+
+  handleSortToggle() {
+    this.dispatchEvent(new CustomEvent("sorttoggle"));
+  }
 }

@@ -1936,8 +1936,21 @@
                     <value>Contract Bid</value>
                 </componentInstanceProperties>
                 <componentInstanceProperties>
+                    <name>emailField</name>
+                    <value>Customer__r.Email__c</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>locationFields</name>
+                    <value
+          >Customer__r.BillingStreet,Customer__r.BillingCity,Customer__r.BillingState,Customer__r.BillingPostalCode,Customer__r.BillingCountry</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
                     <name>maxItems</name>
                     <value>20</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
+                    <name>primaryContactField</name>
+                    <value>Customer__r.Primary_Contact__c</value>
                 </componentInstanceProperties>
                 <componentInstanceProperties>
                     <name>relatedRecordConfig</name>

@@ -72,14 +72,14 @@
         name="newEventLabel"
         type="String"
         label="New Event Button Label"
-        description="Label for the New Event button. Defaults to New Event, or New Visit on Account."
+        description="Label for the New Event button. Defaults to New Event."
         default=""
       />
       <property
         name="newEventIcon"
         type="String"
         label="New Event Button Icon"
-        description="Icon for the New Event button. Defaults to utility:event, or utility:checkin on Account."
+        description="Icon for the New Event button. Defaults to utility:event."
         default=""
       />
       <objects>
