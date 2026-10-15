@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
     <actionCalls>
         <name>Copy_2_of_Send_Alert_Email</name>
@@ -12,7 +12,8 @@
             <name>recipientAddresses</name>
             <value>
                 <collectionElements>
-                    <elementReference>Get_Contract_Bid_5.Lead_Owner__r.Email</elementReference>
+                    <elementReference
+          >Get_Contract_Bid_5.Lead_Owner__r.Email</elementReference>
                 </collectionElements>
             </value>
         </inputParameters>
@@ -67,7 +68,8 @@
         <inputParameters>
             <name>customNotifTypeId</name>
             <value>
-                <elementReference>Copy_1_of_Get_Custom_Notification.Id</elementReference>
+                <elementReference
+        >Copy_1_of_Get_Custom_Notification.Id</elementReference>
             </value>
         </inputParameters>
         <inputParameters>
@@ -102,37 +104,33 @@
         <label>Visit Property Action</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <actionName>NewTask</actionName>
-        <actionType>quickAction</actionType>
+        <actionName>AutomationTaskCreator</actionName>
+        <actionType>apex</actionType>
         <connector>
-            <targetReference>Copy_2_of_Send_Custom_Notification_Action_1</targetReference>
+            <targetReference
+      >Copy_2_of_Send_Custom_Notification_Action_1</targetReference>
         </connector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
         <inputParameters>
-            <name>contextId</name>
+            <name>ownerId</name>
             <value>
-                <elementReference>Get_Contract_Bid_5.Id</elementReference>
+                <elementReference
+        >Get_Contract_Bid_5.Lead_Owner__r.Id</elementReference>
             </value>
         </inputParameters>
         <inputParameters>
-            <name>Subject</name>
+            <name>subject</name>
             <value>
                 <elementReference>VisitSubject</elementReference>
             </value>
         </inputParameters>
         <inputParameters>
-            <name>OwnerId</name>
-            <value>
-                <elementReference>Get_Contract_Bid_5.Lead_Owner__r.Id</elementReference>
-            </value>
-        </inputParameters>
-        <inputParameters>
-            <name>WhatId</name>
+            <name>whatId</name>
             <value>
                 <elementReference>Get_Contract_Bid_5.Id</elementReference>
             </value>
         </inputParameters>
-        <nameSegment>NewTask</nameSegment>
+        <nameSegment>AutomationTaskCreator</nameSegment>
         <offset>0</offset>
     </actionCalls>
     <actionCalls>
@@ -140,37 +138,32 @@
         <label>Phone Call Task</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <actionName>NewTask</actionName>
-        <actionType>quickAction</actionType>
+        <actionName>AutomationTaskCreator</actionName>
+        <actionType>apex</actionType>
         <connector>
             <targetReference>Get_Custom_Notification</targetReference>
         </connector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
         <inputParameters>
-            <name>contextId</name>
+            <name>ownerId</name>
             <value>
-                <elementReference>Get_Contract_Bid_4.Id</elementReference>
+                <elementReference
+        >Get_Contract_Bid_4.Lead_Owner__r.Id</elementReference>
             </value>
         </inputParameters>
         <inputParameters>
-            <name>Subject</name>
+            <name>subject</name>
             <value>
                 <elementReference>PhoneCallSubject</elementReference>
             </value>
         </inputParameters>
         <inputParameters>
-            <name>OwnerId</name>
-            <value>
-                <elementReference>Get_Contract_Bid_4.Lead_Owner__r.Id</elementReference>
-            </value>
-        </inputParameters>
-        <inputParameters>
-            <name>WhatId</name>
+            <name>whatId</name>
             <value>
                 <elementReference>Get_Contract_Bid_4.Id</elementReference>
             </value>
         </inputParameters>
-        <nameSegment>NewTask</nameSegment>
+        <nameSegment>AutomationTaskCreator</nameSegment>
         <offset>0</offset>
     </actionCalls>
     <actionCalls>
@@ -185,7 +178,8 @@
             <name>recipientAddresses</name>
             <value>
                 <collectionElements>
-                    <elementReference>Get_Contract_Bid_4.Lead_Owner__r.Email</elementReference>
+                    <elementReference
+          >Get_Contract_Bid_4.Lead_Owner__r.Email</elementReference>
                 </collectionElements>
             </value>
         </inputParameters>
@@ -241,7 +235,8 @@
             <name>recipientAddresses</name>
             <value>
                 <collectionElements>
-                    <elementReference>Get_Recipients_Sent.dfsle__Email__c</elementReference>
+                    <elementReference
+          >Get_Recipients_Sent.dfsle__Email__c</elementReference>
                 </collectionElements>
             </value>
         </inputParameters>
@@ -341,7 +336,8 @@
             <name>recipientAddresses</name>
             <value>
                 <collectionElements>
-                    <elementReference>Get_Recipients.dfsle__Email__c</elementReference>
+                    <elementReference
+          >Get_Recipients.dfsle__Email__c</elementReference>
                 </collectionElements>
             </value>
         </inputParameters>
@@ -349,7 +345,8 @@
             <name>ccAddresses</name>
             <value>
                 <collectionElements>
-                    <elementReference>Get_Contract_Bid.Lead_Owner__r.Email</elementReference>
+                    <elementReference
+          >Get_Contract_Bid.Lead_Owner__r.Email</elementReference>
                 </collectionElements>
             </value>
         </inputParameters>
@@ -405,7 +402,8 @@
             <name>recipientAddresses</name>
             <value>
                 <collectionElements>
-                    <elementReference>Get_Recipients_2.dfsle__Email__c</elementReference>
+                    <elementReference
+          >Get_Recipients_2.dfsle__Email__c</elementReference>
                 </collectionElements>
             </value>
         </inputParameters>
@@ -413,7 +411,8 @@
             <name>ccAddresses</name>
             <value>
                 <collectionElements>
-                    <elementReference>Get_Contract_Bid_2.Lead_Owner__r.Email</elementReference>
+                    <elementReference
+          >Get_Contract_Bid_2.Lead_Owner__r.Email</elementReference>
                 </collectionElements>
             </value>
         </inputParameters>
@@ -469,7 +468,8 @@
             <name>recipientAddresses</name>
             <value>
                 <collectionElements>
-                    <elementReference>Get_Recipients_3.dfsle__Email__c</elementReference>
+                    <elementReference
+          >Get_Recipients_3.dfsle__Email__c</elementReference>
                 </collectionElements>
             </value>
         </inputParameters>
@@ -477,7 +477,8 @@
             <name>ccAddresses</name>
             <value>
                 <collectionElements>
-                    <elementReference>Get_Contract_Bid_3.Lead_Owner__r.Email</elementReference>
+                    <elementReference
+          >Get_Contract_Bid_3.Lead_Owner__r.Email</elementReference>
                 </collectionElements>
             </value>
         </inputParameters>
@@ -529,7 +530,8 @@
             <assignToReference>NotificationRecipients</assignToReference>
             <operator>Add</operator>
             <value>
-                <elementReference>Get_Contract_Bid_5.Lead_Owner__r.Id</elementReference>
+                <elementReference
+        >Get_Contract_Bid_5.Lead_Owner__r.Id</elementReference>
             </value>
         </assignmentItems>
         <connector>
@@ -545,7 +547,8 @@
             <assignToReference>NotificationRecipients</assignToReference>
             <operator>Add</operator>
             <value>
-                <elementReference>Get_Contract_Bid_4.Lead_Owner__r.Id</elementReference>
+                <elementReference
+        >Get_Contract_Bid_4.Lead_Owner__r.Id</elementReference>
             </value>
         </assignmentItems>
         <connector>
@@ -569,14 +572,16 @@
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>Get_Contract_Bid_3.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference
+        >Get_Contract_Bid_3.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>Get_Customer_3.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference
+        >Get_Customer_3.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
@@ -605,14 +610,16 @@
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>Get_Contract_Bid_2.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference
+        >Get_Contract_Bid_2.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>Get_Customer_2.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference
+        >Get_Customer_2.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
@@ -641,14 +648,16 @@
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>Get_Contract_Bid.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference
+        >Get_Contract_Bid.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>Get_Customer_1.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference
+        >Get_Customer_1.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
@@ -670,14 +679,16 @@
             <name>Reminders_Allowed_Sent_Continue</name>
             <conditionLogic>and</conditionLogic>
             <conditions>
-                <leftValueReference>Get_Contract_Bid_Sent.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference
+        >Get_Contract_Bid_Sent.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>Get_Customer_Sent.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference
+        >Get_Customer_Sent.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
@@ -699,14 +710,16 @@
             <name>Reminders_Allowed_4_Continue</name>
             <conditionLogic>and</conditionLogic>
             <conditions>
-                <leftValueReference>Get_Contract_Bid_4.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference
+        >Get_Contract_Bid_4.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>Get_Customer_4.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference
+        >Get_Customer_4.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
@@ -728,71 +741,84 @@
             <name>Reminders_Allowed_5_Continue</name>
             <conditionLogic>and</conditionLogic>
             <conditions>
-                <leftValueReference>Get_Contract_Bid_5.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference
+        >Get_Contract_Bid_5.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>Get_Customer_5.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference
+        >Get_Customer_5.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
                 </rightValue>
             </conditions>
             <connector>
-                <targetReference>Copy_1_of_Get_Custom_Notification</targetReference>
+                <targetReference
+        >Copy_1_of_Get_Custom_Notification</targetReference>
             </connector>
             <label>Continue</label>
         </rules>
     </decisions>
-    <description>Contract Bid version of custom DocuSign reminders. Triggers on envelopes where dfsle__SourceId__c is a Contract Bid (a0b prefix).</description>
+    <description
+  >Contract Bid version of custom DocuSign reminders. Triggers on envelopes where dfsle__SourceId__c is a Contract Bid (a0b prefix).</description>
     <environments>Default</environments>
     <formulas>
         <name>AgreementYearLabel_1</name>
         <dataType>String</dataType>
-        <expression>IF(ISBLANK(TEXT({!Get_Contract_Bid.Contract_Year__c})), &quot;Pool Management Agreement&quot;, RIGHT(TEXT({!Get_Contract_Bid.Contract_Year__c}), 4) &amp; &quot; Pool Management Agreement&quot;)</expression>
+        <expression
+    >IF(ISBLANK(TEXT({!Get_Contract_Bid.Contract_Year__c})), &quot;Pool Management Agreement&quot;, RIGHT(TEXT({!Get_Contract_Bid.Contract_Year__c}), 4) &amp; &quot; Pool Management Agreement&quot;)</expression>
     </formulas>
     <formulas>
         <name>AgreementYearLabel_2</name>
         <dataType>String</dataType>
-        <expression>IF(ISBLANK(TEXT({!Get_Contract_Bid_2.Contract_Year__c})), &quot;Pool Management Agreement&quot;, RIGHT(TEXT({!Get_Contract_Bid_2.Contract_Year__c}), 4) &amp; &quot; Pool Management Agreement&quot;)</expression>
+        <expression
+    >IF(ISBLANK(TEXT({!Get_Contract_Bid_2.Contract_Year__c})), &quot;Pool Management Agreement&quot;, RIGHT(TEXT({!Get_Contract_Bid_2.Contract_Year__c}), 4) &amp; &quot; Pool Management Agreement&quot;)</expression>
     </formulas>
     <formulas>
         <name>AgreementYearLabel_3</name>
         <dataType>String</dataType>
-        <expression>IF(ISBLANK(TEXT({!Get_Contract_Bid_3.Contract_Year__c})), &quot;Pool Management Agreement&quot;, RIGHT(TEXT({!Get_Contract_Bid_3.Contract_Year__c}), 4) &amp; &quot; Pool Management Agreement&quot;)</expression>
+        <expression
+    >IF(ISBLANK(TEXT({!Get_Contract_Bid_3.Contract_Year__c})), &quot;Pool Management Agreement&quot;, RIGHT(TEXT({!Get_Contract_Bid_3.Contract_Year__c}), 4) &amp; &quot; Pool Management Agreement&quot;)</expression>
     </formulas>
     <formulas>
         <name>AgreementYearLabel_Sent</name>
         <dataType>String</dataType>
-        <expression>IF(ISBLANK(TEXT({!Get_Contract_Bid_Sent.Contract_Year__c})), &quot;Pool Management Agreement&quot;, RIGHT(TEXT({!Get_Contract_Bid_Sent.Contract_Year__c}), 4) &amp; &quot; Pool Management Agreement&quot;)</expression>
+        <expression
+    >IF(ISBLANK(TEXT({!Get_Contract_Bid_Sent.Contract_Year__c})), &quot;Pool Management Agreement&quot;, RIGHT(TEXT({!Get_Contract_Bid_Sent.Contract_Year__c}), 4) &amp; &quot; Pool Management Agreement&quot;)</expression>
     </formulas>
     <formulas>
         <name>ContractSeasonYear_2</name>
         <dataType>String</dataType>
-        <expression>RIGHT(TEXT({!Get_Contract_Bid_2.Contract_Year__c}), 4)</expression>
+        <expression
+    >RIGHT(TEXT({!Get_Contract_Bid_2.Contract_Year__c}), 4)</expression>
     </formulas>
     <formulas>
         <name>GreetingLine_Sent</name>
         <dataType>String</dataType>
-        <expression>IF(NOT(ISBLANK({!Get_Primary_Contact_Sent.FirstName})), &quot;Hello &quot; &amp; {!Get_Primary_Contact_Sent.FirstName} &amp; &quot;,&quot;, IF(NOT(ISBLANK({!Get_Primary_Contact_Sent.Name})), &quot;Hello &quot; &amp; {!Get_Primary_Contact_Sent.Name} &amp; &quot;,&quot;, &quot;Hello,&quot;))</expression>
+        <expression
+    >IF(NOT(ISBLANK({!Get_Primary_Contact_Sent.FirstName})), &quot;Hello &quot; &amp; {!Get_Primary_Contact_Sent.FirstName} &amp; &quot;,&quot;, IF(NOT(ISBLANK({!Get_Primary_Contact_Sent.Name})), &quot;Hello &quot; &amp; {!Get_Primary_Contact_Sent.Name} &amp; &quot;,&quot;, &quot;Hello,&quot;))</expression>
     </formulas>
     <formulas>
         <name>GreetingLine_1</name>
         <dataType>String</dataType>
-        <expression>IF(NOT(ISBLANK({!Get_Primary_Contact_1.FirstName})), &quot;Hi &quot; &amp; {!Get_Primary_Contact_1.FirstName} &amp; &quot;,&quot;, IF(NOT(ISBLANK({!Get_Primary_Contact_1.Name})), &quot;Hi &quot; &amp; {!Get_Primary_Contact_1.Name} &amp; &quot;,&quot;, &quot;Hi,&quot;))</expression>
+        <expression
+    >IF(NOT(ISBLANK({!Get_Primary_Contact_1.FirstName})), &quot;Hi &quot; &amp; {!Get_Primary_Contact_1.FirstName} &amp; &quot;,&quot;, IF(NOT(ISBLANK({!Get_Primary_Contact_1.Name})), &quot;Hi &quot; &amp; {!Get_Primary_Contact_1.Name} &amp; &quot;,&quot;, &quot;Hi,&quot;))</expression>
     </formulas>
     <formulas>
         <name>GreetingLine_2</name>
         <dataType>String</dataType>
-        <expression>IF(NOT(ISBLANK({!Get_Primary_Contact_2.FirstName})), &quot;Hi &quot; &amp; {!Get_Primary_Contact_2.FirstName} &amp; &quot;,&quot;, IF(NOT(ISBLANK({!Get_Primary_Contact_2.Name})), &quot;Hi &quot; &amp; {!Get_Primary_Contact_2.Name} &amp; &quot;,&quot;, &quot;Hi,&quot;))</expression>
+        <expression
+    >IF(NOT(ISBLANK({!Get_Primary_Contact_2.FirstName})), &quot;Hi &quot; &amp; {!Get_Primary_Contact_2.FirstName} &amp; &quot;,&quot;, IF(NOT(ISBLANK({!Get_Primary_Contact_2.Name})), &quot;Hi &quot; &amp; {!Get_Primary_Contact_2.Name} &amp; &quot;,&quot;, &quot;Hi,&quot;))</expression>
     </formulas>
     <formulas>
         <name>GreetingLine_3</name>
         <dataType>String</dataType>
-        <expression>IF(NOT(ISBLANK({!Get_Primary_Contact_3.FirstName})), &quot;Hi &quot; &amp; {!Get_Primary_Contact_3.FirstName} &amp; &quot;,&quot;, IF(NOT(ISBLANK({!Get_Primary_Contact_3.Name})), &quot;Hi &quot; &amp; {!Get_Primary_Contact_3.Name} &amp; &quot;,&quot;, &quot;Hi,&quot;))</expression>
+        <expression
+    >IF(NOT(ISBLANK({!Get_Primary_Contact_3.FirstName})), &quot;Hi &quot; &amp; {!Get_Primary_Contact_3.FirstName} &amp; &quot;,&quot;, IF(NOT(ISBLANK({!Get_Primary_Contact_3.Name})), &quot;Hi &quot; &amp; {!Get_Primary_Contact_3.Name} &amp; &quot;,&quot;, &quot;Hi,&quot;))</expression>
     </formulas>
     <formulas>
         <name>PhoneCallSubject</name>
@@ -807,7 +833,8 @@
 {!Get_Contract_Bid_5.Customer__r.Name} &amp;
 &quot; – Contract not signed&quot;</expression>
     </formulas>
-    <interviewLabel>Contract Bid DocuSign Custom Reminders {!$Flow.CurrentDateTime}</interviewLabel>
+    <interviewLabel
+  >Contract Bid DocuSign Custom Reminders {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Contract Bid DocuSign Custom Reminders</label>
     <processMetadataValues>
         <name>BuilderType</name>
@@ -854,7 +881,8 @@
         <inputAssignments>
             <field>ToAddress</field>
             <value>
-                <elementReference>Get_Recipients_Sent.dfsle__Email__c</elementReference>
+                <elementReference
+        >Get_Recipients_Sent.dfsle__Email__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
@@ -904,13 +932,15 @@
         <inputAssignments>
             <field>ToAddress</field>
             <value>
-                <elementReference>Get_Recipients.dfsle__Email__c</elementReference>
+                <elementReference
+        >Get_Recipients.dfsle__Email__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>CcAddress</field>
             <value>
-                <elementReference>Get_Contract_Bid.Lead_Owner__r.Email</elementReference>
+                <elementReference
+        >Get_Contract_Bid.Lead_Owner__r.Email</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
@@ -960,13 +990,15 @@
         <inputAssignments>
             <field>ToAddress</field>
             <value>
-                <elementReference>Get_Recipients_2.dfsle__Email__c</elementReference>
+                <elementReference
+        >Get_Recipients_2.dfsle__Email__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>CcAddress</field>
             <value>
-                <elementReference>Get_Contract_Bid_2.Lead_Owner__r.Email</elementReference>
+                <elementReference
+        >Get_Contract_Bid_2.Lead_Owner__r.Email</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
@@ -1016,13 +1048,15 @@
         <inputAssignments>
             <field>ToAddress</field>
             <value>
-                <elementReference>Get_Recipients_3.dfsle__Email__c</elementReference>
+                <elementReference
+        >Get_Recipients_3.dfsle__Email__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>CcAddress</field>
             <value>
-                <elementReference>Get_Contract_Bid_3.Lead_Owner__r.Email</elementReference>
+                <elementReference
+        >Get_Contract_Bid_3.Lead_Owner__r.Email</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
@@ -1051,7 +1085,8 @@
         <label>Copy 1 of Get Custom Notification</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Copy_1_of_Fill_Recipients</targetReference>
         </connector>
@@ -1072,7 +1107,8 @@
         <label>Get Contract Bid</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Get_Customer_1</targetReference>
         </connector>
@@ -1093,7 +1129,8 @@
         <label>Get Customer 1</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Get_Primary_Contact_1</targetReference>
         </connector>
@@ -1102,7 +1139,8 @@
             <field>Id</field>
             <operator>EqualTo</operator>
             <value>
-                <elementReference>Get_Contract_Bid.Customer__c</elementReference>
+                <elementReference
+        >Get_Contract_Bid.Customer__c</elementReference>
             </value>
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
@@ -1114,7 +1152,8 @@
         <label>Get Primary Contact 1</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Status_Check</targetReference>
         </connector>
@@ -1123,7 +1162,8 @@
             <field>Id</field>
             <operator>EqualTo</operator>
             <value>
-                <elementReference>Get_Customer_1.Primary_Contact__c</elementReference>
+                <elementReference
+        >Get_Customer_1.Primary_Contact__c</elementReference>
             </value>
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
@@ -1135,7 +1175,8 @@
         <label>Get Contract Bid 2</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Get_Customer_2</targetReference>
         </connector>
@@ -1156,7 +1197,8 @@
         <label>Get Customer 2</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Get_Primary_Contact_2</targetReference>
         </connector>
@@ -1165,7 +1207,8 @@
             <field>Id</field>
             <operator>EqualTo</operator>
             <value>
-                <elementReference>Get_Contract_Bid_2.Customer__c</elementReference>
+                <elementReference
+        >Get_Contract_Bid_2.Customer__c</elementReference>
             </value>
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
@@ -1177,7 +1220,8 @@
         <label>Get Primary Contact 2</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Copy_1_of_Status_Check</targetReference>
         </connector>
@@ -1186,7 +1230,8 @@
             <field>Id</field>
             <operator>EqualTo</operator>
             <value>
-                <elementReference>Get_Customer_2.Primary_Contact__c</elementReference>
+                <elementReference
+        >Get_Customer_2.Primary_Contact__c</elementReference>
             </value>
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
@@ -1198,7 +1243,8 @@
         <label>Get Contract Bid 3</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Get_Customer_3</targetReference>
         </connector>
@@ -1219,7 +1265,8 @@
         <label>Get Customer 3</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Get_Primary_Contact_3</targetReference>
         </connector>
@@ -1228,7 +1275,8 @@
             <field>Id</field>
             <operator>EqualTo</operator>
             <value>
-                <elementReference>Get_Contract_Bid_3.Customer__c</elementReference>
+                <elementReference
+        >Get_Contract_Bid_3.Customer__c</elementReference>
             </value>
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
@@ -1240,7 +1288,8 @@
         <label>Get Primary Contact 3</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Copy_1_of_Copy_1_of_Status_Check</targetReference>
         </connector>
@@ -1249,7 +1298,8 @@
             <field>Id</field>
             <operator>EqualTo</operator>
             <value>
-                <elementReference>Get_Customer_3.Primary_Contact__c</elementReference>
+                <elementReference
+        >Get_Customer_3.Primary_Contact__c</elementReference>
             </value>
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
@@ -1261,7 +1311,8 @@
         <label>Get Contract Bid 4</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Get_Customer_4</targetReference>
         </connector>
@@ -1282,7 +1333,8 @@
         <label>Get Customer 4</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Reminders_Allowed_4</targetReference>
         </connector>
@@ -1291,7 +1343,8 @@
             <field>Id</field>
             <operator>EqualTo</operator>
             <value>
-                <elementReference>Get_Contract_Bid_4.Customer__c</elementReference>
+                <elementReference
+        >Get_Contract_Bid_4.Customer__c</elementReference>
             </value>
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
@@ -1303,7 +1356,8 @@
         <label>Get Contract Bid 5</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Get_Customer_5</targetReference>
         </connector>
@@ -1324,7 +1378,8 @@
         <label>Get Customer 5</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Reminders_Allowed_5</targetReference>
         </connector>
@@ -1333,7 +1388,8 @@
             <field>Id</field>
             <operator>EqualTo</operator>
             <value>
-                <elementReference>Get_Contract_Bid_5.Customer__c</elementReference>
+                <elementReference
+        >Get_Contract_Bid_5.Customer__c</elementReference>
             </value>
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
@@ -1345,7 +1401,8 @@
         <label>Get Contract Bid Sent</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Get_Customer_Sent</targetReference>
         </connector>
@@ -1366,7 +1423,8 @@
         <label>Get Customer Sent</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Reminders_Allowed_Sent</targetReference>
         </connector>
@@ -1375,7 +1433,8 @@
             <field>Id</field>
             <operator>EqualTo</operator>
             <value>
-                <elementReference>Get_Contract_Bid_Sent.Customer__c</elementReference>
+                <elementReference
+        >Get_Contract_Bid_Sent.Customer__c</elementReference>
             </value>
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
@@ -1387,7 +1446,8 @@
         <label>Get Primary Contact Sent</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Get_Recipients_Sent</targetReference>
         </connector>
@@ -1396,7 +1456,8 @@
             <field>Id</field>
             <operator>EqualTo</operator>
             <value>
-                <elementReference>Get_Customer_Sent.Primary_Contact__c</elementReference>
+                <elementReference
+        >Get_Customer_Sent.Primary_Contact__c</elementReference>
             </value>
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
@@ -1408,7 +1469,8 @@
         <label>Get Custom Notification</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Fill_Recipients</targetReference>
         </connector>
@@ -1429,7 +1491,8 @@
         <label>Get Recipients</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Send_Reminder_1</targetReference>
         </connector>
@@ -1457,7 +1520,8 @@
         <label>Get Recipients 2</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Send_Reminder_2</targetReference>
         </connector>
@@ -1485,7 +1549,8 @@
         <label>Get Recipients 3</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Send_Reminder_3</targetReference>
         </connector>
@@ -1513,7 +1578,8 @@
         <label>Get Recipients Sent</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Send_Contract_Sent_Email</targetReference>
         </connector>
@@ -1542,7 +1608,8 @@
         <connector>
             <targetReference>Get_Contract_Bid_Sent</targetReference>
         </connector>
-        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <doesRequireRecordChangedToMeetCriteria
+    >true</doesRequireRecordChangedToMeetCriteria>
         <filterLogic>and</filterLogic>
         <filters>
             <field>Status__c</field>
@@ -1635,7 +1702,8 @@ Premier Pool Management Contracts Team</text>
     <textTemplates>
         <name>ContractSentSubject</name>
         <isViewedAsPlainText>true</isViewedAsPlainText>
-        <text>{!Get_Contract_Bid_Sent.Customer__r.Name} – {!AgreementYearLabel_Sent}</text>
+        <text
+    >{!Get_Contract_Bid_Sent.Customer__r.Name} – {!AgreementYearLabel_Sent}</text>
     </textTemplates>
     <textTemplates>
         <name>NotificaionBody2</name>
@@ -1695,17 +1763,20 @@ Premier Pool Management Contracts Team</text>
     <textTemplates>
         <name>ReminderSubject_1</name>
         <isViewedAsPlainText>true</isViewedAsPlainText>
-        <text>{!Get_Contract_Bid.Customer__r.Name} – {!AgreementYearLabel_1}</text>
+        <text
+    >{!Get_Contract_Bid.Customer__r.Name} – {!AgreementYearLabel_1}</text>
     </textTemplates>
     <textTemplates>
         <name>ReminderSubject_2</name>
         <isViewedAsPlainText>true</isViewedAsPlainText>
-        <text>{!Get_Contract_Bid_2.Customer__r.Name} – {!AgreementYearLabel_2}</text>
+        <text
+    >{!Get_Contract_Bid_2.Customer__r.Name} – {!AgreementYearLabel_2}</text>
     </textTemplates>
     <textTemplates>
         <name>ReminderSubject_3</name>
         <isViewedAsPlainText>true</isViewedAsPlainText>
-        <text>{!Get_Contract_Bid_3.Customer__r.Name} – {!AgreementYearLabel_3}</text>
+        <text
+    >{!Get_Contract_Bid_3.Customer__r.Name} – {!AgreementYearLabel_3}</text>
     </textTemplates>
     <variables>
         <name>NotificationRecipients</name>
