@@ -1,0 +1,387 @@
+/*
+ * Styles for customersMapMobile.html (Small form factor).
+ * LWC binds a stylesheet to a template by file name, so this file must be
+ * named after the mobile template; customersMap.css is desktop-only.
+ */
+
+/* ---------- Shared visual tokens (legend, badges, stage flow) ---------- */
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.legend-dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  border: 1px solid #080707;
+  flex: 0 0 auto;
+}
+
+.legend-dot_current {
+  background-color: #09a711;
+}
+
+.legend-dot_contract-sent {
+  background-color: #fcc003;
+}
+
+.legend-dot_opportunity {
+  background-color: #1b96ff;
+  border-color: #032d60;
+}
+
+.legend-dot_closed-lost {
+  background-color: #ea001e;
+}
+
+.legend-dot_active-bid {
+  background-color: #ff7a00;
+}
+
+.legend-dot_multi {
+  background-color: #032d60;
+  border-color: #ffffff;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.status-badge_current {
+  background-color: #d9f0da;
+  color: #056764;
+}
+
+.status-badge_contract-sent {
+  background-color: #fef3c8;
+  color: #8c6b00;
+}
+
+.status-badge_opportunity {
+  background-color: #d8e6fe;
+  color: #014486;
+}
+
+.status-badge_closed-lost {
+  background-color: #feded8;
+  color: #ba0517;
+}
+
+.status-badge_active-bid {
+  background-color: #ffe6cc;
+  color: #8a4b00;
+}
+
+.stage-flow {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.stage-flow__current {
+  font-weight: 700;
+  color: #080707;
+}
+
+.stage-flow__arrow {
+  color: #706e6b;
+  font-size: 1.125rem;
+  line-height: 1;
+}
+
+.stage-flow__next {
+  font-weight: 600;
+  color: #0176d3;
+}
+
+/* ---------- Root / Shell ---------- */
+
+.mobile-root {
+  /* Transparent layout wrapper; overlays are siblings of the shell */
+  display: block;
+  position: relative;
+}
+
+.mobile-shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  /* Fallback until JS measures the real available height */
+  height: 75vh;
+  min-height: 360px;
+  overflow: hidden;
+  background: #ffffff;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+/*
+ * Landscape mode while the phone is still held in portrait:
+ * size the shell as a landscape rectangle (width = viewport height,
+ * height = viewport width), then rotate 90° so it fills the screen.
+ * Sheets/backdrop are descendants, so they rotate with the shell
+ * (fixed + transform ancestor → containing block is the shell).
+ */
+.mobile-shell_landscape {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 100vh;
+  width: 100dvh;
+  height: 100vw;
+  height: 100dvw;
+  min-height: 0;
+  border-radius: 0;
+  box-shadow: none;
+  z-index: 8000;
+  transform: translate(-50%, -50%) rotate(90deg);
+  transform-origin: center center;
+}
+
+/* Phone already in landscape: just cover the viewport, no extra rotate */
+.mobile-shell_landscape.mobile-shell_landscape-native {
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  height: auto;
+  transform: none;
+}
+
+/*
+ * Inside a rotated shell, `position: fixed` + `vh` sizes against the real
+ * portrait viewport and get clipped by the short landscape shell height.
+ * Anchor sheets to the shell with % heights so the body can scroll.
+ */
+.mobile-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #e5e5e5;
+  flex: 0 0 auto;
+}
+
+.mobile-toolbar__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  font-weight: 700;
+  color: #080707;
+}
+
+.mobile-toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 0 0 auto;
+}
+
+.mobile-filter-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2.5rem;
+  padding: 0 0.75rem;
+  border: 1px solid #c9c9c9;
+  border-radius: 1.25rem;
+  background: #ffffff;
+  color: #0176d3;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.mobile-filter-button:active {
+  background: #f3f3f3;
+}
+
+.mobile-legend {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.375rem 0.75rem;
+  overflow-x: auto;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: #3e3e3c;
+  border-bottom: 1px solid #e5e5e5;
+  flex: 0 0 auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.mobile-legend::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-legend .legend-item {
+  flex: 0 0 auto;
+}
+
+/* ---------- Map ---------- */
+
+.mobile-map {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 240px;
+}
+
+.mobile-map lightning-map {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.mobile-empty {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  text-align: center;
+  color: #3e3e3c;
+}
+
+/* ---------- Filters page (replaces map; normal document scroll) ---------- */
+
+.mobile-filters-page {
+  background: #ffffff;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  /* Tall enough that Salesforce Mobile scrolls the page itself */
+  padding-bottom: 2rem;
+}
+
+.mobile-filters-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.mobile-filters-page__title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #080707;
+}
+
+.mobile-filters-page__content {
+  padding: 1rem;
+}
+
+.mobile-filters-page__actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e5e5;
+}
+
+.mobile-filters-page__actions lightning-button:last-child {
+  flex: 1 1 auto;
+}
+
+/* ---------- Customer detail blocks (details page) ---------- */
+
+.mobile-detail + .mobile-detail {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e5e5;
+}
+
+.mobile-detail__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.mobile-detail__name,
+.mobile-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #0176d3;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mobile-detail__name {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.mobile-detail__address {
+  margin-bottom: 0.5rem;
+}
+
+.mobile-detail__list {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, auto) 1fr;
+  gap: 0.5rem 0.75rem;
+  margin: 0.5rem 0;
+}
+
+.mobile-detail__row {
+  display: contents;
+}
+
+.mobile-detail__list dt {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #706e6b;
+  padding-top: 0.125rem;
+}
+
+.mobile-detail__list dd {
+  margin: 0;
+  min-width: 0;
+  color: #080707;
+  word-break: break-word;
+}
+
+.mobile-detail__notes {
+  margin: 0.5rem 0;
+  padding: 0.5rem 0.75rem;
+  background: #f3f3f3;
+  border-radius: 0.25rem;
+}
+
+.mobile-detail__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.mobile-detail__actions lightning-button:only-child {
+  grid-column: 1 / -1;
+}
