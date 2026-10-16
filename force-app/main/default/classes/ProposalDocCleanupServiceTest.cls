@@ -247,6 +247,94 @@ private class ProposalDocCleanupServiceTest {
   }
 
   @IsTest
+  static void cleanupKeepLatest_KeepsNewestWithoutCompleted() {
+    Opportunity proposal = insertProposal('Cleanup Keep Latest');
+    Id olderDocId = insertLinkedPdf(
+      proposal.Id,
+      'Premier Proposal Older',
+      'Premier Proposal Older.pdf',
+      null,
+      null,
+      'Proposal Older.pdf',
+      'PDF'
+    );
+    Id newerDocId = insertLinkedPdf(
+      proposal.Id,
+      'Premier Proposal Newer',
+      'Premier Proposal Newer.pdf',
+      null,
+      null,
+      'Proposal Newer.pdf',
+      'PDF'
+    );
+    Id supportingDocId = insertLinkedPdf(
+      proposal.Id,
+      'Supporting Attachment',
+      'Supporting Attachment.pdf',
+      null,
+      null,
+      null,
+      null
+    );
+
+    Test.startTest();
+    ProposalDocCleanupService.cleanupKeepLatest(new Set<Id>{ proposal.Id });
+    Test.stopTest();
+
+    System.assertEquals(
+      0,
+      [SELECT COUNT() FROM ContentDocument WHERE Id = :olderDocId],
+      'Older generated draft should be deleted'
+    );
+    System.assertEquals(
+      1,
+      [SELECT COUNT() FROM ContentDocument WHERE Id = :newerDocId],
+      'Newest generated draft should remain even without completed marker'
+    );
+    System.assertEquals(
+      1,
+      [SELECT COUNT() FROM ContentDocument WHERE Id = :supportingDocId],
+      'Supporting attachment should remain'
+    );
+  }
+
+  @IsTest
+  static void cleanupKeepLatestBatch_RunsForBackfillStages() {
+    Opportunity proposal = insertProposal('Cleanup Batch Proposal');
+    proposal.StageName = 'Closed Won';
+    update proposal;
+
+    Id olderDocId = insertLinkedPdf(
+      proposal.Id,
+      'Premier Proposal Older',
+      'Premier Proposal Older.pdf',
+      null,
+      null,
+      'Proposal Older.pdf',
+      'PDF'
+    );
+    insertLinkedPdf(
+      proposal.Id,
+      'Premier Proposal Newer',
+      'Premier Proposal Newer.pdf',
+      null,
+      null,
+      'Proposal Newer.pdf',
+      'PDF'
+    );
+
+    Test.startTest();
+    Database.executeBatch(new ProposalDocCleanupBatch(), 50);
+    Test.stopTest();
+
+    System.assertEquals(
+      0,
+      [SELECT COUNT() FROM ContentDocument WHERE Id = :olderDocId],
+      'Batch keepLatest should delete older generated drafts'
+    );
+  }
+
+  @IsTest
   static void queueableJob_RunsCleanup() {
     Opportunity proposal = insertProposal('Cleanup Queueable');
     Id draftDocId = insertLinkedPdf(
