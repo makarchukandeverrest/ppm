@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Info_Verified_for_Contract_Requested</fullName>
+    <active>true</active>
+    <description
+  >Blocks moving Stage to Contract Requested until Customer, Primary Contact, Management Company, and Info Verified are filled.</description>
+    <errorConditionFormula>AND(
+  ISPICKVAL(Stage__c, &quot;Contract Requested&quot;),
+  OR(
+    ISNEW(),
+    ISCHANGED(Stage__c)
+  ),
+  OR(
+    NOT(Info_Verified__c),
+    ISBLANK(Customer__c),
+    ISBLANK(Management_Company__c),
+    ISBLANK(Customer__r.Primary_Contact__c)
+  )
+)</errorConditionFormula>
+    <errorMessage
+  >Before Contract Requested, fill Customer, Primary Contact, Management Company, and check Info Verified.</errorMessage>
+</ValidationRule>
