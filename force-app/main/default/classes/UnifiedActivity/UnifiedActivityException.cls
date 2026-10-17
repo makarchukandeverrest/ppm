@@ -1,1 +1,2 @@
-public class UnifiedActivityException extends Exception {}
+public class UnifiedActivityException extends Exception {
+}
