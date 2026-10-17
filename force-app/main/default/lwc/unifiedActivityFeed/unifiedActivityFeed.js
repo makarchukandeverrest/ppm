@@ -6,10 +6,12 @@ import {
   registerRefreshHandler,
   unregisterRefreshHandler
 } from "lightning/refresh";
-import { getRecord, getFieldValue } from "lightning/uiRecordApi";
+import { getRecord, getFieldValue, updateRecord } from "lightning/uiRecordApi";
 import getUnifiedActivities from "@salesforce/apex/UnifiedActivityController.getUnifiedActivities";
 
 const WHO_ID_OBJECTS = new Set(["Contact", "Lead"]);
+const BID_STAGE_BID_QUALIFIED = "Contact Made";
+const BID_STAGE_CONTRACT_REQUESTED = "Contract Requested";
 
 const DEFAULT_CONFIG = {
   Account: {
@@ -47,6 +49,8 @@ export default class UnifiedActivityFeed extends NavigationMixin(
   primaryContactId;
   primaryContactEmail = "";
   accountAddress = "";
+  currentStage;
+  isRequestingContract = false;
   refreshHandlerId;
   activities = [];
   totalCount = 0;
@@ -82,6 +86,14 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     this.primaryContactId = this.resolvePrimaryContactId(data);
     this.primaryContactEmail = this.resolvePrimaryContactEmail(data);
     this.accountAddress = this.resolveAccountAddress(data);
+    this.currentStage = this.resolveCurrentStage(data);
+  }
+
+  get showRequestContract() {
+    return (
+      this.objectApiName === "Contract_Bid__c" &&
+      this.currentStage === BID_STAGE_BID_QUALIFIED
+    );
   }
 
   get effectiveConfig() {
@@ -108,6 +120,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(
       this.primaryContactEmail = "";
       this.accountAddress = "";
       this.relatedRecordId = undefined;
+      this.currentStage = undefined;
       if (value) {
         this.loadActivities(true);
       } else {
@@ -374,6 +387,41 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     this.loadActivities(false);
   }
 
+  async handleRequestContract() {
+    if (!this.recordId || this.isRequestingContract) {
+      return;
+    }
+
+    this.isRequestingContract = true;
+    try {
+      await updateRecord({
+        fields: {
+          Id: this.recordId,
+          Stage__c: BID_STAGE_CONTRACT_REQUESTED
+        }
+      });
+      this.currentStage = BID_STAGE_CONTRACT_REQUESTED;
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: "Contract requested",
+          message: "Bid moved to Contract Requested.",
+          variant: "success"
+        })
+      );
+    } catch (error) {
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: "Unable to request contract",
+          message: this.extractErrorMessage(error),
+          variant: "error",
+          mode: "sticky"
+        })
+      );
+    } finally {
+      this.isRequestingContract = false;
+    }
+  }
+
   handleNewTask() {
     this.openNewActivityRecord("Task", this.getActivityDefaults());
   }
@@ -430,10 +478,21 @@ export default class UnifiedActivityFeed extends NavigationMixin(
         .forEach((field) => fields.add(`${record.apiName}.${field}`));
     }
 
+    if (record.apiName === "Contract_Bid__c") {
+      fields.add(`${record.apiName}.Stage__c`);
+    }
+
     if (fields.size === 0) {
       return undefined;
     }
     return Array.from(fields);
+  }
+
+  resolveCurrentStage(record) {
+    if (record.apiName !== "Contract_Bid__c") {
+      return undefined;
+    }
+    return getFieldValue(record, `${record.apiName}.Stage__c`);
   }
 
   parseRelatedRecordConfig() {
@@ -622,6 +681,29 @@ export default class UnifiedActivityFeed extends NavigationMixin(
   }
 
   extractErrorMessage(error) {
+    const outputErrors = error.body?.output?.errors;
+    if (Array.isArray(outputErrors) && outputErrors.length > 0) {
+      return outputErrors
+        .map((item) => item.message)
+        .filter((message) => !!message)
+        .join(" ");
+    }
+
+    const fieldErrors = error.body?.output?.fieldErrors;
+    if (fieldErrors) {
+      const messages = [];
+      Object.keys(fieldErrors).forEach((field) => {
+        (fieldErrors[field] || []).forEach((item) => {
+          if (item.message) {
+            messages.push(item.message);
+          }
+        });
+      });
+      if (messages.length > 0) {
+        return messages.join(" ");
+      }
+    }
+
     if (error.body?.message) return error.body.message;
     if (typeof error.body === "string") return error.body;
     if (error.message) return error.message;
