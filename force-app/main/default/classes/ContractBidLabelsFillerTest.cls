@@ -17,35 +17,35 @@ private class ContractBidLabelsFillerTest {
       new Contract_Bid__c(
         Name = 'Previous Year Bid',
         Customer__c = labelsCustomer.Id,
-        Stage__c = 'Contact Verified and Updated',
+        Stage__c = 'Contact Made',
         Contract_Year__c = '2025-2026',
         Label__c = 'Hot Lead'
       ),
       new Contract_Bid__c(
         Name = 'Previous Year',
         Customer__c = targetCustomer.Id,
-        Stage__c = 'Contact Verified and Updated',
+        Stage__c = 'Contact Made',
         Contract_Year__c = '2025-2026',
         Label__c = 'Warm Lead'
       ),
       new Contract_Bid__c(
         Name = 'Older Year',
         Customer__c = targetCustomer.Id,
-        Stage__c = 'Contact Verified and Updated',
+        Stage__c = 'Contact Made',
         Contract_Year__c = '2024-2025',
         Label__c = 'Cold Lead'
       ),
       new Contract_Bid__c(
         Name = 'Other Previous Year',
         Customer__c = otherCustomer.Id,
-        Stage__c = 'Contact Verified and Updated',
+        Stage__c = 'Contact Made',
         Contract_Year__c = '2025-2026',
         Label__c = 'Hot Lead'
       ),
       new Contract_Bid__c(
         Name = 'Oak Pool 2025 - 2026',
         Customer__c = nameYearCustomer.Id,
-        Stage__c = 'Contact Verified and Updated',
+        Stage__c = 'Contact Made',
         Label__c = 'Hot Lead'
       )
     };
@@ -59,7 +59,7 @@ private class ContractBidLabelsFillerTest {
     Contract_Bid__c bid = new Contract_Bid__c(
       Name = 'New Bid',
       Customer__c = customer.Id,
-      Stage__c = 'Contact Verified and Updated',
+      Stage__c = 'Contact Made',
       Contract_Year__c = '2026-2027'
     );
     insert bid;
@@ -78,7 +78,7 @@ private class ContractBidLabelsFillerTest {
     Contract_Bid__c bid = new Contract_Bid__c(
       Name = 'New Bid',
       Customer__c = customer.Id,
-      Stage__c = 'Contact Verified and Updated',
+      Stage__c = 'Contact Made',
       Contract_Year__c = '2026-2027',
       Label__c = 'Hot Lead'
     );
@@ -104,7 +104,7 @@ private class ContractBidLabelsFillerTest {
     insert new Contract_Bid__c(
       Name = 'Current Year Bid',
       Customer__c = customer.Id,
-      Stage__c = 'Contact Verified and Updated',
+      Stage__c = 'Contact Made',
       Contract_Year__c = '2026-2027'
     );
     Test.stopTest();
@@ -140,7 +140,7 @@ private class ContractBidLabelsFillerTest {
     insert new Contract_Bid__c(
       Name = 'Current Year',
       Customer__c = customer.Id,
-      Stage__c = 'Contact Verified and Updated',
+      Stage__c = 'Contact Made',
       Contract_Year__c = '2026-2027'
     );
     Test.stopTest();
@@ -173,6 +173,38 @@ private class ContractBidLabelsFillerTest {
   }
 
   @IsTest
+  static void applyInfoVerifiedLabelOnTaskComplete_appendsWithoutDuplicates() {
+    Contract_Bid__c bid = [
+      SELECT Id, Label__c
+      FROM Contract_Bid__c
+      WHERE Name = 'Previous Year Bid'
+    ];
+
+    Task verifyTask = new Task(
+      Subject = 'Verify contact info',
+      Status = 'Not Started',
+      Priority = 'Normal',
+      WhatId = bid.Id
+    );
+    insert verifyTask;
+
+    Test.startTest();
+    verifyTask.Status = 'Completed';
+    update verifyTask;
+    ContractBidLabelsFiller.addLabel(new Set<Id>{ bid.Id }, 'info verified');
+    Test.stopTest();
+
+    bid = [SELECT Label__c FROM Contract_Bid__c WHERE Id = :bid.Id];
+    System.assert(bid.Label__c.contains('Hot Lead'));
+    System.assert(bid.Label__c.contains('info verified'));
+    System.assertEquals(
+      1,
+      bid.Label__c.split('info verified', -1).size() - 1,
+      'Label should be added only once'
+    );
+  }
+
+  @IsTest
   static void insert_usesYearFromNameWhenFieldBlank() {
     Account customer = [
       SELECT Id
@@ -189,7 +221,7 @@ private class ContractBidLabelsFillerTest {
     insert new Contract_Bid__c(
       Name = 'Oak Pool 2026 - 2027',
       Customer__c = customer.Id,
-      Stage__c = 'Contact Verified and Updated'
+      Stage__c = 'Contact Made'
     );
     Test.stopTest();
 
