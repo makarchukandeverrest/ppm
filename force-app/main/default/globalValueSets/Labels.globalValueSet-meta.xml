@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <GlobalValueSet xmlns="http://soap.sforce.com/2006/04/metadata">
     <customValue>
         <fullName>Hot Lead</fullName>
@@ -91,15 +91,15 @@
         <label>MISSING FILE/CONTACT INFO</label>
     </customValue>
     <customValue>
-        <fullName>Resend Bid</fullName>
+        <fullName>info verified</fullName>
         <default>false</default>
-        <label>Resend Bid</label>
+        <label>Info Verified</label>
     </customValue>
     <customValue>
-        <fullName>Assumptive Lead</fullName>
+        <fullName>New Lead</fullName>
         <default>false</default>
         <isActive>false</isActive>
-        <label>Assumptive Lead</label>
+        <label>New Lead</label>
     </customValue>
     <customValue>
         <fullName>Goran to do</fullName>
@@ -136,6 +136,12 @@
         <default>false</default>
         <isActive>false</isActive>
         <label>Check Information</label>
+    </customValue>
+    <customValue>
+        <fullName>Assumptive Lead</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>Assumptive Lead</label>
     </customValue>
     <customValue>
         <fullName>Verified</fullName>
