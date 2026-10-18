@@ -6,12 +6,15 @@ import {
   registerRefreshHandler,
   unregisterRefreshHandler
 } from "lightning/refresh";
-import { getRecord, getFieldValue, updateRecord } from "lightning/uiRecordApi";
+import { getRecord, getFieldValue } from "lightning/uiRecordApi";
+import { getObjectInfo } from "lightning/uiObjectInfoApi";
+import TASK_OBJECT from "@salesforce/schema/Task";
 import getUnifiedActivities from "@salesforce/apex/UnifiedActivityController.getUnifiedActivities";
 
 const WHO_ID_OBJECTS = new Set(["Contact", "Lead"]);
 const BID_STAGE_BID_QUALIFIED = "Contact Made";
-const BID_STAGE_CONTRACT_REQUESTED = "Contract Requested";
+const RM_REQUEST_RECORD_TYPE_LABEL = "Regional Manager Request";
+const REQUEST_CONTRACT_SUBJECT = "Request a Contract Bid";
 
 const DEFAULT_CONFIG = {
   Account: {
@@ -50,7 +53,8 @@ export default class UnifiedActivityFeed extends NavigationMixin(
   primaryContactEmail = "";
   accountAddress = "";
   currentStage;
-  isRequestingContract = false;
+  contractCreatorId;
+  rmRequestRecordTypeId;
   refreshHandlerId;
   activities = [];
   totalCount = 0;
@@ -70,6 +74,17 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     }
   }
 
+  @wire(getObjectInfo, { objectApiName: TASK_OBJECT })
+  wiredTaskObjectInfo({ data }) {
+    if (!data?.recordTypeInfos) {
+      return;
+    }
+    const match = Object.values(data.recordTypeInfos).find(
+      (rt) => rt.name === RM_REQUEST_RECORD_TYPE_LABEL && rt.available
+    );
+    this.rmRequestRecordTypeId = match?.recordTypeId;
+  }
+
   @wire(getRecord, {
     recordId: "$recordId",
     fields: "$activityDefaultFields"
@@ -87,6 +102,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     this.primaryContactEmail = this.resolvePrimaryContactEmail(data);
     this.accountAddress = this.resolveAccountAddress(data);
     this.currentStage = this.resolveCurrentStage(data);
+    this.contractCreatorId = this.resolveContractCreatorId(data);
   }
 
   get showRequestContract() {
@@ -121,6 +137,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(
       this.accountAddress = "";
       this.relatedRecordId = undefined;
       this.currentStage = undefined;
+      this.contractCreatorId = undefined;
       if (value) {
         this.loadActivities(true);
       } else {
@@ -387,39 +404,22 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     this.loadActivities(false);
   }
 
-  async handleRequestContract() {
-    if (!this.recordId || this.isRequestingContract) {
+  handleRequestContract() {
+    if (!this.recordId) {
       return;
     }
 
-    this.isRequestingContract = true;
-    try {
-      await updateRecord({
-        fields: {
-          Id: this.recordId,
-          Stage__c: BID_STAGE_CONTRACT_REQUESTED
-        }
-      });
-      this.currentStage = BID_STAGE_CONTRACT_REQUESTED;
-      this.dispatchEvent(
-        new ShowToastEvent({
-          title: "Contract requested",
-          message: "Bid moved to Contract Requested.",
-          variant: "success"
-        })
-      );
-    } catch (error) {
-      this.dispatchEvent(
-        new ShowToastEvent({
-          title: "Unable to request contract",
-          message: this.extractErrorMessage(error),
-          variant: "error",
-          mode: "sticky"
-        })
-      );
-    } finally {
-      this.isRequestingContract = false;
+    const defaults = {
+      ...this.getActivityDefaults(),
+      Subject: REQUEST_CONTRACT_SUBJECT
+    };
+    if (this.rmRequestRecordTypeId) {
+      defaults.RecordTypeId = this.rmRequestRecordTypeId;
     }
+    if (this.contractCreatorId) {
+      defaults.OwnerId = this.contractCreatorId;
+    }
+    this.openNewActivityRecord("Task", defaults, this.rmRequestRecordTypeId);
   }
 
   handleNewTask() {
@@ -480,6 +480,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(
 
     if (record.apiName === "Contract_Bid__c") {
       fields.add(`${record.apiName}.Stage__c`);
+      fields.add(`${record.apiName}.Record_Manager__c`);
     }
 
     if (fields.size === 0) {
@@ -493,6 +494,13 @@ export default class UnifiedActivityFeed extends NavigationMixin(
       return undefined;
     }
     return getFieldValue(record, `${record.apiName}.Stage__c`);
+  }
+
+  resolveContractCreatorId(record) {
+    if (record.apiName !== "Contract_Bid__c") {
+      return undefined;
+    }
+    return getFieldValue(record, `${record.apiName}.Record_Manager__c`);
   }
 
   parseRelatedRecordConfig() {
@@ -609,12 +617,19 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     });
   }
 
-  openNewActivityRecord(objectApiName, defaults) {
+  openNewActivityRecord(objectApiName, defaults, recordTypeId) {
     if (!this.recordId) {
       return;
     }
 
     const fieldDefaults = defaults || this.getActivityDefaults();
+    const state = {
+      defaultFieldValues: encodeDefaultFieldValues(fieldDefaults),
+      navigationLocation: "RELATED_LIST"
+    };
+    if (recordTypeId) {
+      state.recordTypeId = recordTypeId;
+    }
 
     this[NavigationMixin.Navigate]({
       type: "standard__objectPage",
@@ -622,10 +637,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(
         objectApiName,
         actionName: "new"
       },
-      state: {
-        defaultFieldValues: encodeDefaultFieldValues(fieldDefaults),
-        navigationLocation: "RELATED_LIST"
-      }
+      state
     });
   }
 
