@@ -249,7 +249,7 @@ public with sharing class UnifiedActivitySelector {
       return new List<ContentVersion>();
     }
     return [
-      SELECT Id, FileType, Title, ContentDocumentId
+      SELECT Id, FileType, Title, FileExtension, ContentDocumentId
       FROM ContentVersion
       WHERE Id IN :versionIds
       WITH USER_MODE

@@ -427,6 +427,11 @@ public with sharing class UnifiedActivityMapper {
       Id partDocumentId = contentDocumentId != null
         ? contentDocumentId
         : fi.RelatedRecordId;
+      if (version != null && !isImageFileType(version.FileType)) {
+        return new List<UnifiedActivityModels.ActivityContentPart>{
+          buildFilePart(partDocumentId, buildAttachmentFileName(version))
+        };
+      }
       String imageUrl = contentDocumentId != null
         ? '/sfc/servlet.shepherd/document/download/' + contentDocumentId
         : '/sfc/servlet.shepherd/version/download/' + fi.RelatedRecordId;
@@ -497,6 +502,48 @@ public with sharing class UnifiedActivityMapper {
       }
     }
     return buildFeedItemTitle(fi);
+  }
+
+  private static final Set<String> IMAGE_FILE_TYPES = new Set<String>{
+    'PNG',
+    'JPG',
+    'JPEG',
+    'GIF',
+    'BMP',
+    'TIFF',
+    'TIF',
+    'WEBP'
+  };
+
+  private Boolean isImageFileType(String fileType) {
+    return String.isNotBlank(fileType) &&
+      IMAGE_FILE_TYPES.contains(fileType.toUpperCase());
+  }
+
+  private String buildAttachmentFileName(ContentVersion version) {
+    String title = String.isNotBlank(version.Title)
+      ? version.Title.trim()
+      : 'Attachment';
+    if (String.isBlank(version.FileExtension)) {
+      return title;
+    }
+    String extension = '.' + version.FileExtension.toLowerCase();
+    if (title.toLowerCase().endsWith(extension)) {
+      return title;
+    }
+    return title + extension;
+  }
+
+  private UnifiedActivityModels.ActivityContentPart buildFilePart(
+    Id contentDocumentId,
+    String fileName
+  ) {
+    UnifiedActivityModels.ActivityContentPart part = new UnifiedActivityModels.ActivityContentPart();
+    part.partType = 'file';
+    part.contentDocumentId = contentDocumentId;
+    part.fileName = fileName;
+    part.altText = fileName;
+    return part;
   }
 
   private UnifiedActivityModels.ActivityContentPart buildImagePart(

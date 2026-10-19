@@ -11,6 +11,27 @@ import getUnifiedActivities from "@salesforce/apex/UnifiedActivityController.get
 
 const WHO_ID_OBJECTS = new Set(["Contact", "Lead"]);
 
+const FILE_ICONS = {
+  pdf: "doctype:pdf",
+  doc: "doctype:word",
+  docx: "doctype:word",
+  xls: "doctype:excel",
+  xlsx: "doctype:excel",
+  ppt: "doctype:ppt",
+  pptx: "doctype:ppt",
+  txt: "doctype:txt",
+  csv: "doctype:csv",
+  zip: "doctype:zip"
+};
+
+function fileIconName(fileName) {
+  const extension = String(fileName || "")
+    .split(".")
+    .pop()
+    .toLowerCase();
+  return FILE_ICONS[extension] || "doctype:attachment";
+}
+
 const DEFAULT_CONFIG = {
   Account: {
     primaryContactField: "Primary_Contact__c",
@@ -252,7 +273,11 @@ export default class UnifiedActivityFeed extends NavigationMixin(
         key: `${item.id}-${index}`,
         isText: part.partType === "text",
         isImage: part.partType === "image",
-        isClickable: part.partType === "image" && !!part.contentDocumentId
+        isFile: part.partType === "file",
+        fileIcon: fileIconName(part.fileName),
+        isClickable:
+          (part.partType === "image" || part.partType === "file") &&
+          !!part.contentDocumentId
       }));
       const hasDescription = !!(
         item.description && String(item.description).trim()

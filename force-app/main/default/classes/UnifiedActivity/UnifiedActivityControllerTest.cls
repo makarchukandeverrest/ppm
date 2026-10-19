@@ -754,9 +754,9 @@ public class UnifiedActivityControllerTest {
     System.assertEquals('Test File', result.items[0].title);
     System.assert(
       !result.items[0].contentParts.isEmpty(),
-      'ContentPost should have image part'
+      'ContentPost should have file part'
     );
-    System.assertEquals('image', result.items[0].contentParts[0].partType);
+    System.assertEquals('file', result.items[0].contentParts[0].partType);
   }
 
   @IsTest

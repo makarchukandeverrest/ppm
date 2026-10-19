@@ -138,6 +138,27 @@
                             </lightning-formatted-rich-text>
                           </p>
                         </template>
+                        <template if:true={part.isFile}>
+                          <button
+                            key={part.key}
+                            type="button"
+                            class="slds-button activity-file"
+                            data-id={part.contentDocumentId}
+                            onclick={handleImageClick}
+                            title="Open file preview"
+                          >
+                            <lightning-icon
+                              icon-name={part.fileIcon}
+                              size="small"
+                              alternative-text={part.fileName}
+                              class="slds-m-right_x-small"
+                            >
+                            </lightning-icon>
+                            <span class="activity-file-name"
+                              >{part.fileName}</span
+                            >
+                          </button>
+                        </template>
                         <template if:true={part.isImage}>
                           <template if:true={part.isClickable}>
                             <img

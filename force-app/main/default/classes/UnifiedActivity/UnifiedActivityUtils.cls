@@ -247,7 +247,10 @@ public class UnifiedActivityUtils {
     for (UnifiedActivityModels.ActivityContentPart part : parts) {
       if (part.partType == 'text' && String.isNotBlank(part.text)) {
         values.add(part.text);
-      } else if (part.partType == 'image' && String.isNotBlank(part.altText)) {
+      } else if (
+        (part.partType == 'image' || part.partType == 'file') &&
+        String.isNotBlank(part.altText)
+      ) {
         values.add(part.altText);
       }
     }
