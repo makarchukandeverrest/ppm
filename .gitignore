@@ -42,8 +42,12 @@ $RECYCLE.BIN/
 # Local environment variables
 .env
 
-# Local temp / scratch deploy folders (never commit)
-/tmp-*/
+# Local temp / scratch deploy folders and files (never commit)
+/tmp/
+/tmp-*
+/.tmp-*
+tmp-*
+.tmp-*
 
 # Python Salesforce Functions
 **/__pycache__/
