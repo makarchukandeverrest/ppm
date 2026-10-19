@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Restrict_Contract_Bid_Stage_Change</fullName>
+    <active>true</active>
+    <description
+  >Enforces role-based Contract Bid stage changes per access matrix. Automation/DocuSign target stages allowed without manual stage permission. Bypass for integration users.</description>
+    <errorConditionFormula>AND(
+  ISCHANGED(Stage__c),
+  NOT($Permission.Bypass_Bid_Stage_Validation),
+  NOT($Permission.Change_Bid_Stage_All),
+  OR(
+    AND(
+      $Permission.Change_Bid_Stage_Lead,
+      NOT($Permission.Change_Bid_Stage_RM),
+      NOT(
+        OR(
+          AND(
+            OR(
+              ISPICKVAL(PRIORVALUE(Stage__c), &quot;Contact Made&quot;),
+              ISPICKVAL(PRIORVALUE(Stage__c), &quot;Information Verified&quot;)
+            ),
+            OR(
+              ISPICKVAL(Stage__c, &quot;Contract Requested&quot;),
+              ISPICKVAL(Stage__c, &quot;Information Verified&quot;)
+            )
+          ),
+          AND(
+            ISPICKVAL(Stage__c, &quot;Closed - LOST&quot;),
+            NOT(ISBLANK(Lost_Reason__c))
+          )
+        )
+      )
+    ),
+    AND(
+      NOT($Permission.Change_Bid_Stage_Lead),
+      NOT($Permission.Change_Bid_Stage_RM),
+      NOT(
+        OR(
+          ISPICKVAL(Stage__c, &quot;Contract Sent via DocuSign&quot;),
+          ISPICKVAL(Stage__c, &quot;Proposal/Review&quot;),
+          ISPICKVAL(Stage__c, &quot;Closed - WON&quot;),
+          ISPICKVAL(Stage__c, &quot;Closed - LOST&quot;)
+        )
+      )
+    )
+  )
+)</errorConditionFormula>
+    <errorDisplayField>Stage__c</errorDisplayField>
+    <errorMessage
+  >You cannot change Contract Bid Stage for your role. Leads: Contact Made → Contract Requested / Information Verified, or Closed Lost with a reason. Contract Team: stage is updated by DocuSign/automation only. Contact an admin if this is unexpected.</errorMessage>
+</ValidationRule>

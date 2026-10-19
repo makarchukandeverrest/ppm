@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <classAccesses>
+        <apexClass>ContractMassSendController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <customPermissions>
+        <enabled>true</enabled>
+        <name>Mass_Contract_Send</name>
+    </customPermissions>
+    <description
+  >Mass Contract Send custom permission + Apex without Account View All. Safe for RM Team PSG.</description>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>Mass Contract Send Access</label>
+</PermissionSet>

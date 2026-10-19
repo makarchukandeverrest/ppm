@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customPermissions>
+        <enabled>true</enabled>
+        <name>Change_Bid_Stage_All</name>
+    </customPermissions>
+    <description
+  >Custom permission: change Contract Bid Stage to any value.</description>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>Change Bid Stage All</label>
+</PermissionSet>

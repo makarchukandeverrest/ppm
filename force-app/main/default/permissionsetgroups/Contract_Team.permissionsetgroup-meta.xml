@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<PermissionSetGroup xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description
+  >Contract Team: pricing edit, DocuSign/mass send, no manual stage (automation stages only via VR). Assign with Role Contract Team only.</description>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>Contract Team</label>
+    <permissionSets>Contract_Team_Access</permissionSets>
+    <permissionSets>Contract_Send_Access</permissionSets>
+    <permissionSets>Contract_Mass_Send</permissionSets>
+    <permissionSets>Bid_Pricing_Edit</permissionSets>
+    <permissionSets>DocuSign_JWT</permissionSets>
+    <permissionSets>dfsle__DocuSign_Sender</permissionSets>
+    <permissionSets>dfsle__DocuSign_User</permissionSets>
+    <permissionSets>dfsle__DocuSign_Login</permissionSets>
+    <permissionSets>dfsle__DocuSign_Generator</permissionSets>
+    <status>Updated</status>
+</PermissionSetGroup>

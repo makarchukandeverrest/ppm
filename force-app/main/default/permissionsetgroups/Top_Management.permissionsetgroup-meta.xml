@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<PermissionSetGroup xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description
+  >Top Management: full edit across objects, pricing, DocuSign send, all stage changes, change Regional Manager. Assign with Role Top Management only.</description>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>Top Management</label>
+    <permissionSets>Top_Management_Access</permissionSets>
+    <permissionSets>Bid_Pricing_Edit</permissionSets>
+    <permissionSets>Contract_Send_Access</permissionSets>
+    <permissionSets>Contract_Mass_Send</permissionSets>
+    <permissionSets>Change_Bid_Stage_All</permissionSets>
+    <permissionSets>Change_Customer_Regional_Manager</permissionSets>
+    <permissionSets>Regional_Manager</permissionSets>
+    <permissionSets>Service_Manager</permissionSets>
+    <permissionSets>DocuSign_JWT</permissionSets>
+    <permissionSets>dfsle__DocuSign_Sender</permissionSets>
+    <permissionSets>dfsle__DocuSign_User</permissionSets>
+    <permissionSets>dfsle__DocuSign_Login</permissionSets>
+    <permissionSets>dfsle__DocuSign_Generator</permissionSets>
+    <status>Updated</status>
+</PermissionSetGroup>

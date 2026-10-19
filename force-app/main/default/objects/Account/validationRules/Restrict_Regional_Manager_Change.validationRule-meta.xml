@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Restrict_Regional_Manager_Change</fullName>
+    <active>true</active>
+    <description
+  >Only Top Management (Change Customer Regional Manager) or integration Bypass may change Regional Manager on Customer.</description>
+    <errorConditionFormula>AND(
+  ISCHANGED(Regional_Manager__c),
+  NOT($Permission.Change_Customer_Regional_Manager),
+  NOT($Permission.Bypass_Bid_Stage_Validation)
+)</errorConditionFormula>
+    <errorDisplayField>Regional_Manager__c</errorDisplayField>
+    <errorMessage
+  >Only Top Management can change the Regional Manager on a Customer.</errorMessage>
+</ValidationRule>

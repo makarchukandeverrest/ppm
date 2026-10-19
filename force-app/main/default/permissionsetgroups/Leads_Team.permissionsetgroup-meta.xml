@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<PermissionSetGroup xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description
+  >Leads Team: own bids, customer/contact edit, pricing read-only, limited stage, no DocuSign send. Assign with Role Leads Team only.</description>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>Leads Team</label>
+    <permissionSets>Lead_perm_set</permissionSets>
+    <permissionSets>Change_Bid_Stage_Lead</permissionSets>
+    <status>Updated</status>
+</PermissionSetGroup>

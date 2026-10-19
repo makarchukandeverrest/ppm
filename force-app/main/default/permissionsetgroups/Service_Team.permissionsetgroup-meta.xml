@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<PermissionSetGroup xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description
+  >Service Team: Work Orders, Invoices, Service Team Members. No Contract Bid. Assign with Role Service Team only.</description>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>Service Team</label>
+    <permissionSets>Service_Manager</permissionSets>
+    <permissionSets>Service_Team_Access</permissionSets>
+    <status>Updated</status>
+</PermissionSetGroup>

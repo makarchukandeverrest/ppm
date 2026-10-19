@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customPermissions>
+        <enabled>true</enabled>
+        <name>Change_Bid_Stage_Lead</name>
+    </customPermissions>
+    <description
+  >Custom permission: Leads Team limited Contract Bid Stage changes.</description>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>Change Bid Stage Lead</label>
+</PermissionSet>

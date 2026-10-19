@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<PermissionSetGroup xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description
+  >RM Team: own-region edit, pricing read-only, DocuSign/PDF send, stage changes. No Bid_Pricing_Edit. Assign with Role RM Team only.</description>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>RM Team</label>
+    <permissionSets>Regional_Manager</permissionSets>
+    <permissionSets>Contract_Send_Access</permissionSets>
+    <permissionSets>Mass_Contract_Send_Access</permissionSets>
+    <permissionSets>Change_Bid_Stage_RM</permissionSets>
+    <permissionSets>DocuSign_JWT</permissionSets>
+    <permissionSets>dfsle__DocuSign_Sender</permissionSets>
+    <permissionSets>dfsle__DocuSign_User</permissionSets>
+    <permissionSets>dfsle__DocuSign_Login</permissionSets>
+    <status>Updated</status>
+</PermissionSetGroup>
