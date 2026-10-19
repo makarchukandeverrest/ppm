@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
     <classAccesses>
         <apexClass>AccountFilesController</apexClass>
@@ -58,10 +58,6 @@
     </classAccesses>
     <classAccesses>
         <apexClass>FileWrapper</apexClass>
-        <enabled>true</enabled>
-    </classAccesses>
-    <classAccesses>
-        <apexClass>InsertEmailMessagesJob</apexClass>
         <enabled>true</enabled>
     </classAccesses>
     <customPermissions>

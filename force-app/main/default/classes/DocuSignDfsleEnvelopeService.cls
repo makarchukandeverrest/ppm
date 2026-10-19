@@ -43,9 +43,6 @@ public with sharing class DocuSignDfsleEnvelopeService {
   private static final String STAGE_NEGOTIATION_STARTED = 'Negotiation Started';
   private static final String STAGE_CLOSED_WON = 'Closed - WON';
   private static final String STAGE_REFERENCE_ACTIVE_STAGES = 'Active_Stages';
-  private static final String STATUS_EMAIL_DRAFT = '0';
-  private static final String EMAIL_SUBJECT_TEMPLATE = 'Sent Contracts for {0}';
-  private static final String EMAIL_TO_IDS_KEY = 'ToIds';
   @TestVisible
   private static final String ROLE_CARBON_COPY = 'Carbon Copy';
   @TestVisible
@@ -177,16 +174,11 @@ public with sharing class DocuSignDfsleEnvelopeService {
           context.contractIds.add(acc.contract.Id);
           context.contractsToUpdate.add(acc.contract);
         }
-
-        context.emailMessages.add(buildEmailMessage(acc, file));
       }
     }
 
     if (!context.sendRequests.isEmpty()) {
       Database.executeBatch(new BatchHttpSender(context.sendRequests), 1);
-    }
-    if (!context.emailMessages.isEmpty()) {
-      System.enqueueJob(new InsertEmailMessagesJob(context.emailMessages));
     }
     if (!context.contractsToUpdate.isEmpty()) {
       update context.contractsToUpdate;
@@ -198,7 +190,6 @@ public with sharing class DocuSignDfsleEnvelopeService {
     private Set<Id> mainContentVersionIds = new Set<Id>();
     private List<Contract_Bid__c> contractsToUpdate = new List<Contract_Bid__c>();
     private Set<Id> contractIds = new Set<Id>();
-    private List<EmailMessage> emailMessages = new List<EmailMessage>();
     private List<DfsleEnvelopeSendRequest> sendRequests = new List<DfsleEnvelopeSendRequest>();
     private Map<Id, ContentVersion> cvById = new Map<Id, ContentVersion>();
 
@@ -227,25 +218,6 @@ public with sharing class DocuSignDfsleEnvelopeService {
         );
       }
     }
-  }
-
-  private static EmailMessage buildEmailMessage(
-    AccountWithFiles acc,
-    FileWrapper file
-  ) {
-    EmailMessage emailMessage = new EmailMessage();
-    emailMessage.Status = STATUS_EMAIL_DRAFT;
-    emailMessage.RelatedToId = acc.contract.Id;
-    emailMessage.FromAddress = UserInfo.getUserEmail();
-    emailMessage.FromName = UserInfo.getName();
-    emailMessage.Subject = String.format(
-      EMAIL_SUBJECT_TEMPLATE,
-      new List<String>{ acc.accountName }
-    );
-    emailMessage.ToIds = new List<String>{ acc.accountId };
-    emailMessage.ToAddress = acc.email;
-    emailMessage.TextBody = String.valueOf(file.ContentDocumentId);
-    return emailMessage;
   }
 
   public static String sendEnvelope(
