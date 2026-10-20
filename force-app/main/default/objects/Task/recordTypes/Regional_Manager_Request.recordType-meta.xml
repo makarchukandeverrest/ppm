@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <RecordType xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Regional_Manager_Request</fullName>
     <active>true</active>
@@ -34,6 +34,10 @@
         <picklist>Subject</picklist>
         <values>
             <fullName>Request a Contract Bid</fullName>
+            <default>false</default>
+        </values>
+        <values>
+            <fullName>Request New Version</fullName>
             <default>false</default>
         </values>
         <values>

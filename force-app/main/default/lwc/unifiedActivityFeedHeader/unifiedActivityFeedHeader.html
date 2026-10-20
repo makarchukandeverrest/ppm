@@ -12,6 +12,16 @@
       <div
         class="slds-grid slds-grid_align-end slds-wrap slds-grid_vertical-align-end"
       >
+        <template if:true={showRequestContract}>
+          <lightning-button
+            class="slds-m-right_xx-small"
+            label="Request Contract"
+            title="Request Contract"
+            variant="brand"
+            onclick={handleRequestContract}
+          >
+          </lightning-button>
+        </template>
         <lightning-button-group>
           <lightning-button-icon
             icon-name="utility:add"
@@ -21,9 +31,9 @@
           >
           </lightning-button-icon>
           <lightning-button-icon
-            icon-name="utility:event"
-            alternative-text="New Event"
-            title="New Event"
+            icon-name={newEventIcon}
+            alternative-text={newEventLabel}
+            title={newEventLabel}
             onclick={handleNewEvent}
           >
           </lightning-button-icon>

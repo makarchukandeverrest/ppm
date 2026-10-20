@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <StandardValueSet xmlns="http://soap.sforce.com/2006/04/metadata">
     <sorted>false</sorted>
     <standardValue>
@@ -40,5 +40,10 @@
         <fullName>Request a Contract Bid</fullName>
         <default>false</default>
         <label>Request a Contract Bid</label>
+    </standardValue>
+    <standardValue>
+        <fullName>Request New Version</fullName>
+        <default>false</default>
+        <label>Request New Version</label>
     </standardValue>
 </StandardValueSet>
