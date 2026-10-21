@@ -10,6 +10,7 @@ import { getRecord, getFieldValue } from "lightning/uiRecordApi";
 import { getObjectInfo } from "lightning/uiObjectInfoApi";
 import TASK_OBJECT from "@salesforce/schema/Task";
 import getUnifiedActivities from "@salesforce/apex/UnifiedActivityController.getUnifiedActivities";
+import resolveContractCreatorUserId from "@salesforce/apex/ContractCreatorUserResolver.resolveUserId";
 
 const WHO_ID_OBJECTS = new Set(["Contact", "Lead"]);
 const BID_STAGE_BID_QUALIFIED = "Contact Made";
@@ -80,7 +81,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(
   primaryContactEmail = "";
   accountAddress = "";
   currentStage;
-  contractCreatorId;
+  contractCreatorPicklist;
   rmRequestRecordTypeId;
   refreshHandlerId;
   activities = [];
@@ -129,7 +130,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     this.primaryContactEmail = this.resolvePrimaryContactEmail(data);
     this.accountAddress = this.resolveAccountAddress(data);
     this.currentStage = this.resolveCurrentStage(data);
-    this.contractCreatorId = this.resolveContractCreatorId(data);
+    this.contractCreatorPicklist = this.resolveContractCreatorPicklist(data);
   }
 
   get isNegotiationStage() {
@@ -174,7 +175,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(
       this.accountAddress = "";
       this.relatedRecordId = undefined;
       this.currentStage = undefined;
-      this.contractCreatorId = undefined;
+      this.contractCreatorPicklist = undefined;
       if (value) {
         this.loadActivities(true);
       } else {
@@ -445,7 +446,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     this.loadActivities(false);
   }
 
-  handleRequestContract() {
+  async handleRequestContract() {
     if (!this.recordId) {
       return;
     }
@@ -457,8 +458,9 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     if (this.rmRequestRecordTypeId) {
       defaults.RecordTypeId = this.rmRequestRecordTypeId;
     }
-    if (this.contractCreatorId) {
-      defaults.OwnerId = this.contractCreatorId;
+    const ownerId = await this.resolveContractCreatorOwnerId();
+    if (ownerId) {
+      defaults.OwnerId = ownerId;
     }
     this.openNewActivityRecord("Task", defaults, this.rmRequestRecordTypeId);
   }
@@ -530,7 +532,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(
 
     if (record.apiName === "Contract_Bid__c") {
       fields.add(`${record.apiName}.Stage__c`);
-      fields.add(`${record.apiName}.Record_Manager__c`);
+      fields.add(`${record.apiName}.Contract_Creator_Picklist__c`);
     }
 
     if (fields.size === 0) {
@@ -546,11 +548,28 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     return getFieldValue(record, `${record.apiName}.Stage__c`);
   }
 
-  resolveContractCreatorId(record) {
+  resolveContractCreatorPicklist(record) {
     if (record.apiName !== "Contract_Bid__c") {
       return undefined;
     }
-    return getFieldValue(record, `${record.apiName}.Record_Manager__c`);
+    return getFieldValue(
+      record,
+      `${record.apiName}.Contract_Creator_Picklist__c`
+    );
+  }
+
+  async resolveContractCreatorOwnerId() {
+    if (!this.contractCreatorPicklist) {
+      return undefined;
+    }
+    try {
+      return await resolveContractCreatorUserId({
+        picklistValue: this.contractCreatorPicklist
+      });
+    } catch (error) {
+      this.showError(error);
+      return undefined;
+    }
   }
 
   parseRelatedRecordConfig() {
