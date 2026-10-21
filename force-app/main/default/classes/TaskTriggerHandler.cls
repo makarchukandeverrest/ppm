@@ -23,6 +23,10 @@ public with sharing class TaskTriggerHandler extends TriggerHandler {
 
   protected override void afterUpdate() {
     TaskQueueNotificationService.notifyQueueMembers(this.newList, this.oldMap);
+    ContractBidLabelsFiller.applyInfoVerifiedLabelOnTaskComplete(
+      this.newList,
+      this.oldMap
+    );
 
     List<Task> changedTasks = new List<Task>();
     for (Task t : this.newList) {
