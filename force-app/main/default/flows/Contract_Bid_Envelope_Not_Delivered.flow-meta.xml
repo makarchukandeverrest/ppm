@@ -1,5 +1,60 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Create_Follow_Up_Task</name>
+        <label>Create Follow Up Task</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>AutomationTaskCreator</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>activityDate</name>
+            <value>
+                <elementReference>TaskDueDate</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>description</name>
+            <value>
+                <elementReference>TaskDescription</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>ownerId</name>
+            <value>
+                <elementReference
+        >Get_Customer.Regional_Manager__c</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>priority</name>
+            <value>
+                <stringValue>Normal</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>status</name>
+            <value>
+                <stringValue>Open</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>subject</name>
+            <value>
+                <elementReference>TaskSubject</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>whatId</name>
+            <value>
+                <elementReference>Get_Contract_Bid.Id</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>AutomationTaskCreator</nameSegment>
+        <offset>0</offset>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
     <apiVersion>66.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
     <decisions>
@@ -178,57 +233,6 @@
         </value>
     </processMetadataValues>
     <processType>AutoLaunchedFlow</processType>
-    <recordCreates>
-        <name>Create_Follow_Up_Task</name>
-        <label>Create Follow Up Task</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <inputAssignments>
-            <field>ActivityDate</field>
-            <value>
-                <elementReference>TaskDueDate</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Description</field>
-            <value>
-                <elementReference>TaskDescription</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>OwnerId</field>
-            <value>
-                <elementReference
-        >Get_Customer.Regional_Manager__c</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Priority</field>
-            <value>
-                <stringValue>Normal</stringValue>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Status</field>
-            <value>
-                <stringValue>Open</stringValue>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Subject</field>
-            <value>
-                <elementReference>TaskSubject</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>WhatId</field>
-            <value>
-                <elementReference>Get_Contract_Bid.Id</elementReference>
-            </value>
-        </inputAssignments>
-        <object>Task</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
-    </recordCreates>
     <recordLookups>
         <name>Get_Envelope_Status</name>
         <label>Get Envelope Status</label>

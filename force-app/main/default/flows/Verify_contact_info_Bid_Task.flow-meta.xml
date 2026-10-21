@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionCalls>
+        <name>Create_Verify_Contact_Info_Task</name>
+        <label>Create Verify Contact Info Task</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <actionName>AutomationTaskCreator</actionName>
+        <actionType>apex</actionType>
+        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
+        <inputParameters>
+            <name>ownerId</name>
+            <value>
+                <elementReference>$Record.Lead_Generator__c</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>subject</name>
+            <value>
+                <elementReference>TaskSubject</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>whatId</name>
+            <value>
+                <elementReference>$Record.Id</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>whoId</name>
+            <value>
+                <elementReference
+        >$Record.Customer__r.Primary_Contact__c</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>description</name>
+            <value>
+                <elementReference>TaskDescription</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>activityDate</name>
+            <value>
+                <elementReference>TaskDueDate</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>AutomationTaskCreator</nameSegment>
+        <offset>0</offset>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </actionCalls>
+    <apiVersion>68.0</apiVersion>
+    <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
+    <decisions>
+        <name>Has_Lead_Generator</name>
+        <label>Has Lead Generator?</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>No</defaultConnectorLabel>
+        <rules>
+            <name>Yes_Lead_Generator</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference
+        >$Record.Lead_Generator__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference
+        >$Record.Lead_Generator__r.IsActive</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference
+        >Create_Verify_Contact_Info_Task</targetReference>
+            </connector>
+            <label>Yes</label>
+        </rules>
+    </decisions>
+    <description
+  >On Bid create, assigns a Verify contact info task to the Lead Generator (Created By = Premier Pool Management), due in 2 days.</description>
+    <environments>Default</environments>
+    <formulas>
+        <name>TaskDueDate</name>
+        <dataType>Date</dataType>
+        <expression>{!$Flow.CurrentDate} + 2</expression>
+    </formulas>
+    <formulas>
+        <name>TaskSubject</name>
+        <dataType>String</dataType>
+        <expression>&quot;Verify contact info&quot;</expression>
+    </formulas>
+    <interviewLabel
+  >Verify contact info Bid Task {!$Flow.CurrentDateTime}</interviewLabel>
+    <label>Verify contact info Bid Task</label>
+    <processMetadataValues>
+        <name>BuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>CanvasMode</name>
+        <value>
+            <stringValue>AUTO_LAYOUT_CANVAS</stringValue>
+        </value>
+    </processMetadataValues>
+    <processMetadataValues>
+        <name>OriginBuilderType</name>
+        <value>
+            <stringValue>LightningFlowBuilder</stringValue>
+        </value>
+    </processMetadataValues>
+    <processType>AutoLaunchedFlow</processType>
+    <start>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Has_Lead_Generator</targetReference>
+        </connector>
+        <object>Contract_Bid__c</object>
+        <recordTriggerType>Create</recordTriggerType>
+        <triggerType>RecordAfterSave</triggerType>
+    </start>
+    <status>Active</status>
+    <textTemplates>
+        <name>TaskDescription</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text>Verify contact information before requesting the contract.
+
+Confirm and complete:
+- Customer
+- Primary Contact
+- Management Company
+- Info Verified checkbox
+
+Once Info Verified is ticked, use Request Contract to move the bid to Contract Requested.</text>
+    </textTemplates>
+</Flow>
