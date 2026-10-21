@@ -714,6 +714,11 @@
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
+        <editable>true</editable>
+        <field>Contract_Bid__c.Contract_Creator_Picklist__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
         <editable>false</editable>
         <field>Contract_Bid__c.Contract_End_Date__c</field>
         <readable>true</readable>
