@@ -329,8 +329,8 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.Options__c</fieldItem>
-                <identifier>RecordOptions_cField</identifier>
+                <fieldItem>Record.Bid_Type__c</fieldItem>
+                <identifier>RecordBid_Type_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <name>overviewOptionsLeft</name>
@@ -451,7 +451,7 @@
                 </componentInstanceProperties>
                 <componentInstanceProperties>
                     <name>label</name>
-                    <value>Bid Options</value>
+                    <value>Bid Type</value>
                 </componentInstanceProperties>
                 <componentName>flexipage:fieldSection</componentName>
                 <identifier>overviewOptionsSection</identifier>

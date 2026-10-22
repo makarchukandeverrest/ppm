@@ -373,7 +373,7 @@
         </columns>
         <columns>
             <checkedByDefault>false</checkedByDefault>
-            <field>Options__c</field>
+            <field>Bid_Type__c</field>
             <table>Contract_Bid__c</table>
         </columns>
         <masterLabel>Contract Bids</masterLabel>

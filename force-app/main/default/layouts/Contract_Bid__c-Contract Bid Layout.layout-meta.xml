@@ -64,7 +64,7 @@
             </layoutItems>
             <layoutItems>
                 <behavior>Edit</behavior>
-                <field>Options__c</field>
+                <field>Bid_Type__c</field>
             </layoutItems>
         </layoutColumns>
         <layoutColumns>
