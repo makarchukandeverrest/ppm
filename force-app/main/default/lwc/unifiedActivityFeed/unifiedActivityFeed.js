@@ -412,7 +412,16 @@ export default class UnifiedActivityFeed extends NavigationMixin(
   }
 
   handleLogAVisit() {
-    this.openNewActivityRecord("Event", this.getVisitDefaults());
+    const accountId =
+      this.objectApiName === "Account" ? this.recordId : this.relatedRecordId;
+    if (!accountId) {
+      return;
+    }
+    this.openGlobalQuickAction(
+      "Account.New_Visit",
+      this.getVisitDefaults(accountId),
+      accountId
+    );
   }
 
   handleNewPost() {
@@ -546,24 +555,31 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     return defaults;
   }
 
-  getVisitDefaults() {
+  getVisitDefaults(accountId) {
     const start = new Date();
     const end = new Date(start.getTime() + 60 * 60 * 1000);
-    return {
-      ...this.getActivityDefaults(this.relatedRecordId),
+    const defaults = {
+      WhatId: accountId,
       Subject: "Site Visit",
       StartDateTime: start.toISOString().slice(0, 19) + "Z",
-      EndDateTime: end.toISOString().slice(0, 19) + "Z",
-      ...(this.accountAddress ? { Location: this.accountAddress } : {})
+      EndDateTime: end.toISOString().slice(0, 19) + "Z"
     };
+    if (this.primaryContactId) {
+      defaults.WhoId = this.primaryContactId;
+    }
+    if (this.accountAddress) {
+      defaults.Location = this.accountAddress;
+    }
+    return defaults;
   }
 
-  openGlobalQuickAction(apiName, defaults) {
-    if (!this.recordId) {
+  openGlobalQuickAction(apiName, defaults, contextRecordId) {
+    const recordId = contextRecordId || this.recordId;
+    if (!recordId) {
       return;
     }
 
-    const state = { recordId: this.recordId };
+    const state = { recordId };
     if (defaults) {
       state.defaultFieldValues = encodeDefaultFieldValues(defaults);
     }
