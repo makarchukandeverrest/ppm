@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <GlobalValueSet xmlns="http://soap.sforce.com/2006/04/metadata">
     <customValue>
         <fullName>Hot Lead</fullName>
@@ -41,11 +41,6 @@
         <label>Revision Needed</label>
     </customValue>
     <customValue>
-        <fullName>Keep Same Info</fullName>
-        <default>false</default>
-        <label>Keep Same Info</label>
-    </customValue>
-    <customValue>
         <fullName>Contract Approved</fullName>
         <default>false</default>
         <label>Contract Approved</label>
@@ -56,98 +51,62 @@
         <label>Sales Form Lead</label>
     </customValue>
     <customValue>
-        <fullName>Marijana to Complete</fullName>
-        <default>false</default>
-        <label>Marijana to Complete</label>
-    </customValue>
-    <customValue>
-        <fullName>Natasa to Complete</fullName>
-        <default>false</default>
-        <label>Natasa to Complete</label>
-    </customValue>
-    <customValue>
-        <fullName>Goran to Complete</fullName>
-        <default>false</default>
-        <label>Goran to Complete</label>
-    </customValue>
-    <customValue>
-        <fullName>Rania to Complete</fullName>
-        <default>false</default>
-        <label>Rania to Complete</label>
-    </customValue>
-    <customValue>
         <fullName>New record created</fullName>
         <default>false</default>
         <label>New record created</label>
     </customValue>
     <customValue>
+        <fullName>info verified</fullName>
+        <default>false</default>
+        <label>Info Verified</label>
+    </customValue>
+    <customValue>
+        <fullName>Marijana to Complete</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>Marijana to Complete</label>
+    </customValue>
+    <customValue>
+        <fullName>Natasa to Complete</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>Natasa to Complete</label>
+    </customValue>
+    <customValue>
+        <fullName>Goran to Complete</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>Goran to Complete</label>
+    </customValue>
+    <customValue>
+        <fullName>Marijana to do</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>Marijana to do</label>
+    </customValue>
+    <customValue>
+        <fullName>New Lead</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>New Lead</label>
+    </customValue>
+    <customValue>
         <fullName>Mass Created</fullName>
         <default>false</default>
+        <isActive>false</isActive>
         <label>Mass Created</label>
     </customValue>
     <customValue>
         <fullName>MISSING FILE/CONTACT INFO</fullName>
         <default>false</default>
+        <isActive>false</isActive>
         <label>MISSING FILE/CONTACT INFO</label>
     </customValue>
     <customValue>
-        <fullName>Resend Bid</fullName>
-        <default>false</default>
-        <label>Resend Bid</label>
-    </customValue>
-    <customValue>
-        <fullName>Assumptive Lead</fullName>
+        <fullName>Rania to Complete</fullName>
         <default>false</default>
         <isActive>false</isActive>
-        <label>Assumptive Lead</label>
-    </customValue>
-    <customValue>
-        <fullName>Goran to do</fullName>
-        <default>false</default>
-        <isActive>false</isActive>
-        <label>Goran to do</label>
-    </customValue>
-    <customValue>
-        <fullName>Rania to do</fullName>
-        <default>false</default>
-        <isActive>false</isActive>
-        <label>Rania to do</label>
-    </customValue>
-    <customValue>
-        <fullName>Natasa to do</fullName>
-        <default>false</default>
-        <isActive>false</isActive>
-        <label>Natasa to do</label>
-    </customValue>
-    <customValue>
-        <fullName>No Updates</fullName>
-        <default>false</default>
-        <isActive>false</isActive>
-        <label>No Updates</label>
-    </customValue>
-    <customValue>
-        <fullName>Details Page</fullName>
-        <default>false</default>
-        <isActive>false</isActive>
-        <label>Details Page</label>
-    </customValue>
-    <customValue>
-        <fullName>Check Information</fullName>
-        <default>false</default>
-        <isActive>false</isActive>
-        <label>Check Information</label>
-    </customValue>
-    <customValue>
-        <fullName>Verified</fullName>
-        <default>false</default>
-        <isActive>false</isActive>
-        <label>Verified</label>
-    </customValue>
-    <customValue>
-        <fullName>Value 6</fullName>
-        <default>false</default>
-        <isActive>false</isActive>
-        <label>Value 6</label>
+        <label>Rania to Complete</label>
     </customValue>
     <customValue>
         <fullName>Value 5</fullName>
@@ -156,10 +115,64 @@
         <label>Value 5</label>
     </customValue>
     <customValue>
-        <fullName>Marijana to do</fullName>
+        <fullName>Value 6</fullName>
         <default>false</default>
         <isActive>false</isActive>
-        <label>Marijana to do</label>
+        <label>Value 6</label>
+    </customValue>
+    <customValue>
+        <fullName>Verified</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>Verified</label>
+    </customValue>
+    <customValue>
+        <fullName>Assumptive Lead</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>Assumptive Lead</label>
+    </customValue>
+    <customValue>
+        <fullName>Check Information</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>Check Information</label>
+    </customValue>
+    <customValue>
+        <fullName>Details Page</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>Details Page</label>
+    </customValue>
+    <customValue>
+        <fullName>No Updates</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>No Updates</label>
+    </customValue>
+    <customValue>
+        <fullName>Keep Same Info</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>Keep Same Info</label>
+    </customValue>
+    <customValue>
+        <fullName>Natasa to do</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>Natasa to do</label>
+    </customValue>
+    <customValue>
+        <fullName>Rania to do</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>Rania to do</label>
+    </customValue>
+    <customValue>
+        <fullName>Goran to do</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>Goran to do</label>
     </customValue>
     <description>Labels to comment</description>
     <masterLabel>Labels</masterLabel>
