@@ -105,6 +105,47 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     this.accountAddress = this.resolveAccountAddress(data);
   }
 
+  // Nested Customer__r.Primary_Contact__c can fail on the parent wire; load from Account.
+  @wire(getRecord, {
+    recordId: "$relatedRecordId",
+    fields: [
+      "Account.Primary_Contact__c",
+      "Account.Primary_Contact__r.Email",
+      "Account.Email__c",
+      "Account.BillingStreet",
+      "Account.BillingCity",
+      "Account.BillingState",
+      "Account.BillingPostalCode",
+      "Account.BillingCountry"
+    ]
+  })
+  wiredRelatedAccountDefaults({ data }) {
+    if (!data || this.objectApiName === "Account") {
+      return;
+    }
+    const contactId = getFieldValue(data, "Account.Primary_Contact__c");
+    if (contactId) {
+      this.primaryContactId = contactId;
+    }
+    const contactEmail = getFieldValue(
+      data,
+      "Account.Primary_Contact__r.Email"
+    );
+    const accountEmail = getFieldValue(data, "Account.Email__c");
+    if (contactEmail || accountEmail) {
+      this.primaryContactEmail = contactEmail || accountEmail || "";
+    }
+    if (!this.accountAddress) {
+      this.accountAddress = this.formatAddress([
+        getFieldValue(data, "Account.BillingStreet"),
+        getFieldValue(data, "Account.BillingCity"),
+        getFieldValue(data, "Account.BillingState"),
+        getFieldValue(data, "Account.BillingPostalCode"),
+        getFieldValue(data, "Account.BillingCountry")
+      ]);
+    }
+  }
+
   get effectiveConfig() {
     const defaults = DEFAULT_CONFIG[this.objectApiName] || {};
     return {
@@ -408,20 +449,22 @@ export default class UnifiedActivityFeed extends NavigationMixin(
   }
 
   handleLogACall() {
+    // Global.LogACall uses state.recordId as Related To. Opening from Contract Bid
+    // forces WhatId=Contract Bid and ignores WhoId defaults — open on Contact instead.
+    const contactId = this.getCallContactId();
+    if (contactId) {
+      this.openGlobalQuickAction(
+        "Global.LogACall",
+        { WhoId: contactId },
+        contactId
+      );
+      return;
+    }
     this.openGlobalQuickAction("Global.LogACall");
   }
 
   handleLogAVisit() {
-    const accountId =
-      this.objectApiName === "Account" ? this.recordId : this.relatedRecordId;
-    if (!accountId) {
-      return;
-    }
-    this.openGlobalQuickAction(
-      "Account.New_Visit",
-      this.getVisitDefaults(accountId),
-      accountId
-    );
+    this.openNewActivityRecord("Event", this.getVisitDefaults());
   }
 
   handleNewPost() {
@@ -555,11 +598,17 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     return defaults;
   }
 
-  getVisitDefaults(accountId) {
+  getCallContactId() {
+    if (WHO_ID_OBJECTS.has(this.objectApiName)) {
+      return this.recordId;
+    }
+    return this.primaryContactId;
+  }
+
+  getVisitDefaults() {
     const start = new Date();
     const end = new Date(start.getTime() + 60 * 60 * 1000);
     const defaults = {
-      WhatId: accountId,
       Subject: "Site Visit",
       StartDateTime: start.toISOString().slice(0, 19) + "Z",
       EndDateTime: end.toISOString().slice(0, 19) + "Z"
