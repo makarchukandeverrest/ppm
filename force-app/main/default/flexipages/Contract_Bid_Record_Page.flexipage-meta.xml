@@ -278,6 +278,16 @@
                 </visibilityRule>
             </fieldInstance>
         </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
+                <fieldItem>Record.Info_Verified__c</fieldItem>
+                <identifier>RecordInfo_Verified_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
         <name>overviewSummaryRight</name>
         <type>Facet</type>
     </flexiPageRegions>
@@ -322,8 +332,8 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
-                <fieldItem>Record.Record_Manager__c</fieldItem>
-                <identifier>RecordRecord_Manager_cField</identifier>
+                <fieldItem>Record.Contract_Creator_Picklist__c</fieldItem>
+                <identifier>RecordContract_Creator_Picklist_cField</identifier>
             </fieldInstance>
         </itemInstances>
         <itemInstances>
