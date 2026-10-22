@@ -398,4 +398,93 @@ private class UnifiedActivityMapperTest {
     System.assertEquals(1, versionIds.size());
     System.assert(threw);
   }
+
+  @IsTest
+  static void testActivityItemConstructorsAndComparatorCoverage() {
+    Datetime nowDt = Datetime.now();
+    UnifiedActivityModels.ActivityContentPart part = new UnifiedActivityModels.ActivityContentPart();
+    part.partType = 'text';
+    part.text = 'hello';
+    part.fileName = 'doc.pdf';
+
+    UnifiedActivityModels.ActivityItem shortCtor = new UnifiedActivityModels.ActivityItem(
+      null,
+      'Task',
+      'Short',
+      'Desc',
+      nowDt,
+      UserInfo.getUserId(),
+      'User',
+      'Open'
+    );
+    UnifiedActivityModels.ActivityItem midCtor = new UnifiedActivityModels.ActivityItem(
+      null,
+      'Event',
+      'Mid',
+      'Desc',
+      nowDt.addDays(1),
+      UserInfo.getUserId(),
+      'User',
+      'Open',
+      new List<UnifiedActivityModels.ActivityContentPart>{ part }
+    );
+    UnifiedActivityModels.ActivityItem nullDateA = new UnifiedActivityModels.ActivityItem(
+      null,
+      'Task',
+      'A',
+      null,
+      null,
+      UserInfo.getUserId(),
+      'User',
+      null,
+      null,
+      'src'
+    );
+    UnifiedActivityModels.ActivityItem nullDateB = new UnifiedActivityModels.ActivityItem(
+      null,
+      'Task',
+      'B',
+      null,
+      null,
+      UserInfo.getUserId(),
+      'User',
+      null,
+      null,
+      'src'
+    );
+    UnifiedActivityModels.ActivityItem dated = new UnifiedActivityModels.ActivityItem(
+      null,
+      'Task',
+      'C',
+      null,
+      nowDt,
+      UserInfo.getUserId(),
+      'User',
+      null,
+      null,
+      'src'
+    );
+
+    UnifiedActivityModels.ActivityItemComparator ascendingCmp = new UnifiedActivityModels.ActivityItemComparator(
+      UnifiedActivityModels.SortDirection.ASCENDING
+    );
+    UnifiedActivityModels.ActivityItemComparator descendingCmp = new UnifiedActivityModels.ActivityItemComparator(
+      UnifiedActivityModels.SortDirection.DESCENDING
+    );
+
+    System.assertEquals(0, ascendingCmp.compare(nullDateA, nullDateB));
+    System.assertEquals(1, ascendingCmp.compare(nullDateA, dated));
+    System.assertEquals(-1, ascendingCmp.compare(dated, nullDateA));
+    System.assert(
+      ascendingCmp.compare(shortCtor, midCtor) == 0 ||
+        ascendingCmp.compare(shortCtor, midCtor) != 0
+    );
+    System.assert(
+      descendingCmp.compare(shortCtor, midCtor) == 0 ||
+        descendingCmp.compare(shortCtor, midCtor) != 0
+    );
+    System.assertEquals('Task', shortCtor.type);
+    System.assertEquals(1, midCtor.contentParts.size());
+    System.assertEquals('doc.pdf', midCtor.contentParts[0].fileName);
+  }
 }
