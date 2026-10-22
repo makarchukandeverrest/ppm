@@ -940,6 +940,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>Contract_Bid__c.Health__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>Contract_Bid__c.Last_Years_Price__c</field>
         <readable>true</readable>
     </fieldPermissions>
