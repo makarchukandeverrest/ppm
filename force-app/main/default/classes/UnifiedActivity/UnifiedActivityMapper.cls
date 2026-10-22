@@ -210,6 +210,92 @@ public with sharing class UnifiedActivityMapper {
     return notesById;
   }
 
+  public List<UnifiedActivityModels.ActivityItem> mapLinkedContentNotes(
+    List<ContentDocumentLink> links,
+    Map<Id, String> recordLabels,
+    Set<Id> excludeNoteIds
+  ) {
+    List<UnifiedActivityModels.ActivityItem> result = new List<UnifiedActivityModels.ActivityItem>();
+    if (links == null || links.isEmpty()) {
+      return result;
+    }
+
+    Map<Id, ContentDocumentLink> linkByNoteId = new Map<Id, ContentDocumentLink>();
+    for (ContentDocumentLink link : links) {
+      Id noteId = link.ContentDocumentId;
+      if (
+        noteId == null ||
+        (excludeNoteIds != null && excludeNoteIds.contains(noteId)) ||
+        linkByNoteId.containsKey(noteId)
+      ) {
+        continue;
+      }
+      linkByNoteId.put(noteId, link);
+    }
+    if (linkByNoteId.isEmpty()) {
+      return result;
+    }
+
+    Map<Id, ContentNote> notesById = new Map<Id, ContentNote>();
+    for (
+      ContentNote note : selector.queryContentNotesByIds(linkByNoteId.keySet())
+    ) {
+      notesById.put(note.Id, note);
+    }
+
+    for (Id noteId : linkByNoteId.keySet()) {
+      ContentDocumentLink link = linkByNoteId.get(noteId);
+      ContentNote note = notesById.get(noteId);
+      result.add(mapLinkedContentNote(link, note, recordLabels));
+    }
+    return result;
+  }
+
+  private UnifiedActivityModels.ActivityItem mapLinkedContentNote(
+    ContentDocumentLink link,
+    ContentNote note,
+    Map<Id, String> recordLabels
+  ) {
+    String htmlBody = note != null &&
+      note.Content != null
+      ? note.Content.toString()
+      : '';
+    List<UnifiedActivityModels.ActivityContentPart> contentParts = buildNoteContentParts(
+      htmlBody
+    );
+    String title = note != null && String.isNotBlank(note.Title)
+      ? note.Title
+      : (link.ContentDocument != null &&
+          String.isNotBlank(link.ContentDocument.Title)
+          ? link.ContentDocument.Title
+          : 'Untitled Note');
+    Datetime createdDate = note != null &&
+      note.CreatedDate != null
+      ? note.CreatedDate
+      : link.ContentDocument?.CreatedDate;
+    Id createdById = note != null &&
+      note.CreatedById != null
+      ? note.CreatedById
+      : link.ContentDocument?.CreatedById;
+    String createdByName = note != null &&
+      note.CreatedBy != null
+      ? note.CreatedBy.Name
+      : link.ContentDocument?.CreatedBy?.Name;
+
+    return new UnifiedActivityModels.ActivityItem(
+      link.ContentDocumentId,
+      TYPE_NOTE,
+      title,
+      UnifiedActivityUtils.buildPlainTextFromParts(contentParts, htmlBody),
+      createdDate,
+      createdById,
+      createdByName,
+      null,
+      contentParts,
+      recordLabels.get(link.LinkedEntityId)
+    );
+  }
+
   private UnifiedActivityModels.ActivityItem mapNoteFeedItem(
     FeedItem fi,
     ContentVersion version,
@@ -282,7 +368,7 @@ public with sharing class UnifiedActivityMapper {
       imagePart.contentDocumentId = contentDocumentId;
       imagePart.imageUrl = contentDocumentId != null
         ? '/sfc/servlet.shepherd/document/download/' + contentDocumentId
-        : imageUrl;
+        : normalizeNoteImageUrl(imageUrl);
       imagePart.altText = 'Image';
       parts.add(imagePart);
       lastEnd = matcher.end();
@@ -315,6 +401,11 @@ public with sharing class UnifiedActivityMapper {
     if (String.isBlank(imageUrl)) {
       return null;
     }
+    // Enhanced Notes store inline images as RTA refs; eid points at the Note
+    // version itself and must not be rewritten to a document download URL.
+    if (imageUrl.toLowerCase().contains('rtaimage')) {
+      return null;
+    }
     Matcher documentMatcher = Pattern.compile(
         '/document/download/([a-zA-Z0-9]{15,18})'
       )
@@ -338,6 +429,21 @@ public with sharing class UnifiedActivityMapper {
       return null;
     }
     return resolveContentDocumentIdFromVersionId(versionId);
+  }
+
+  @TestVisible
+  private String normalizeNoteImageUrl(String imageUrl) {
+    if (String.isBlank(imageUrl)) {
+      return imageUrl;
+    }
+    Matcher rtaMatcher = Pattern.compile(
+        '(?i)^https?://[^/]+(/servlet/rtaImage\\?.*)$'
+      )
+      .matcher(imageUrl);
+    if (rtaMatcher.find()) {
+      return rtaMatcher.group(1);
+    }
+    return imageUrl;
   }
 
   private Boolean isCallTask(Task taskRecord) {

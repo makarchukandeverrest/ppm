@@ -1075,6 +1075,50 @@ public class UnifiedActivityControllerTest {
     System.assert(foundImage, 'Note embedded image should be mapped');
   }
 
+  @IsTest
+  static void testGetUnifiedActivities_includesLinkedNotesWithoutFeedItem() {
+    User u = createTestUser();
+    Account customer;
+    ContentNote note;
+    System.runAs(u) {
+      customer = createTestAccount();
+      note = new ContentNote(
+        Title = 'Customer Linked Note',
+        Content = Blob.valueOf('<p>Linked note body</p>')
+      );
+      insert note;
+      insert new ContentDocumentLink(
+        ContentDocumentId = note.Id,
+        LinkedEntityId = customer.Id,
+        ShareType = 'V',
+        Visibility = 'AllUsers'
+      );
+    }
+
+    Test.startTest();
+    UnifiedActivityModels.ActivityPageResult result;
+    System.runAs(u) {
+      result = getActivities(
+        customer.Id,
+        'DESC',
+        20,
+        0,
+        UnifiedActivityMapper.TYPE_NOTE,
+        null
+      );
+    }
+    Test.stopTest();
+
+    System.assertEquals(
+      1,
+      result.totalCount,
+      'Feed should include ContentNotes linked via ContentDocumentLink without FeedItem'
+    );
+    System.assertEquals(note.Id, result.items[0].id);
+    System.assertEquals(UnifiedActivityMapper.TYPE_NOTE, result.items[0].type);
+    System.assertEquals('Customer Linked Note', result.items[0].title);
+  }
+
   private static void ensureEmailMessageRelation(
     Id emailMessageId,
     Id relationId

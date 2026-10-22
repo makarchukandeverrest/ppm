@@ -354,6 +354,35 @@ private class UnifiedActivityMapperTest {
       null,
       mapper.resolveNoteImageDocumentId('https://example.com/no-id')
     );
+    System.assertEquals(
+      null,
+      mapper.resolveNoteImageDocumentId(
+        'https://example.file.force.com/servlet/rtaImage?eid=' +
+          cv.Id +
+          '&feoid=ContentBody&refid=0EM000000000001'
+      )
+    );
+    System.assertEquals(
+      '/servlet/rtaImage?eid=' +
+        cv.Id +
+        '&feoid=ContentBody&refid=0EM000000000001',
+      mapper.normalizeNoteImageUrl(
+        'https://example.file.force.com/servlet/rtaImage?eid=' +
+          cv.Id +
+          '&feoid=ContentBody&refid=0EM000000000001'
+      )
+    );
+    List<UnifiedActivityModels.ActivityContentPart> rtaParts = mapper.buildNoteContentParts(
+      '<p><img src="https://example.file.force.com/servlet/rtaImage?eid=' +
+        cv.Id +
+        '&amp;feoid=ContentBody&amp;refid=0EM000000000001"></p>'
+    );
+    System.assertEquals(1, rtaParts.size());
+    System.assertEquals('image', rtaParts[0].partType);
+    System.assert(
+      rtaParts[0].imageUrl.startsWith('/servlet/rtaImage?'),
+      'RTA Note image should keep relative servlet URL'
+    );
 
     System.assertEquals(
       2,

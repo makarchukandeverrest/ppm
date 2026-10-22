@@ -256,6 +256,34 @@ public with sharing class UnifiedActivitySelector {
     ];
   }
 
+  public List<ContentDocumentLink> queryContentNoteLinksByEntityIds(
+    Set<Id> entityIds
+  ) {
+    if (
+      entityIds == null ||
+      entityIds.isEmpty() ||
+      !Schema.sObjectType.ContentDocumentLink.isAccessible() ||
+      !Schema.sObjectType.ContentDocument.isAccessible()
+    ) {
+      return new List<ContentDocumentLink>();
+    }
+    return [
+      SELECT
+        ContentDocumentId,
+        LinkedEntityId,
+        ContentDocument.Title,
+        ContentDocument.FileType,
+        ContentDocument.CreatedDate,
+        ContentDocument.CreatedById,
+        ContentDocument.CreatedBy.Name
+      FROM ContentDocumentLink
+      WHERE LinkedEntityId IN :entityIds AND ContentDocument.FileType = 'SNOTE'
+      WITH USER_MODE
+      ORDER BY ContentDocument.CreatedDate DESC
+      LIMIT :MAX_AGGREGATE_ITEMS
+    ];
+  }
+
   public List<ContentNote> queryContentNotesByIds(Set<Id> noteIds) {
     if (
       noteIds == null ||
@@ -265,7 +293,7 @@ public with sharing class UnifiedActivitySelector {
       return new List<ContentNote>();
     }
     return [
-      SELECT Id, Title, Content
+      SELECT Id, Title, Content, CreatedDate, CreatedById, CreatedBy.Name
       FROM ContentNote
       WHERE Id IN :noteIds
       WITH USER_MODE
