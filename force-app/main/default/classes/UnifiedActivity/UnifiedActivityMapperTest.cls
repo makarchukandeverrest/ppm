@@ -428,6 +428,40 @@ private class UnifiedActivityMapperTest {
       'Open',
       new List<UnifiedActivityModels.ActivityContentPart>{ part }
     );
+    UnifiedActivityModels.ActivityItem visitCtor = new UnifiedActivityModels.ActivityItem(
+      null,
+      'Event',
+      'Site Visit',
+      'Visit notes',
+      nowDt.addDays(2),
+      UserInfo.getUserId(),
+      'User',
+      'Open',
+      null,
+      'src'
+    );
+    System.assertEquals('standard:visits', visitCtor.iconName);
+    System.assertEquals('Visit', visitCtor.formattedType);
+    System.assertEquals(
+      'standard:visits',
+      UnifiedActivityUtils.iconNameFor('Event', 'Site Visit')
+    );
+    System.assertEquals(
+      'standard:visits',
+      UnifiedActivityUtils.iconNameFor('Event', 'Visit')
+    );
+    System.assertEquals(
+      'standard:visits',
+      UnifiedActivityUtils.iconNameFor('Event', 'customer visit today')
+    );
+    System.assertEquals(
+      'standard:event',
+      UnifiedActivityUtils.iconNameFor('Event', 'Meeting')
+    );
+    System.assertEquals(
+      'Visit',
+      UnifiedActivityUtils.formattedTypeFor('Event', 'Visit')
+    );
     UnifiedActivityModels.ActivityItem nullDateA = new UnifiedActivityModels.ActivityItem(
       null,
       'Task',

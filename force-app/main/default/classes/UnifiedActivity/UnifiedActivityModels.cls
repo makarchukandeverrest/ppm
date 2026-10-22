@@ -132,8 +132,8 @@ public class UnifiedActivityModels {
       this.status = status;
       this.sourceLabel = sourceLabel;
       this.attachmentCount = 0;
-      this.iconName = UnifiedActivityUtils.iconNameFor(type);
-      this.formattedType = UnifiedActivityUtils.formattedTypeFor(type);
+      this.iconName = UnifiedActivityUtils.iconNameFor(type, title);
+      this.formattedType = UnifiedActivityUtils.formattedTypeFor(type, title);
     }
   }
 

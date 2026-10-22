@@ -2,6 +2,13 @@ public class UnifiedActivityUtils {
   private static final Integer DEFAULT_PAGE_SIZE = 20;
 
   public static String iconNameFor(String type) {
+    return iconNameFor(type, null);
+  }
+
+  public static String iconNameFor(String type, String title) {
+    if (type == 'Event' && isSiteVisit(title)) {
+      return 'standard:visits';
+    }
     switch on type {
       when 'Task' {
         return 'standard:task';
@@ -28,6 +35,13 @@ public class UnifiedActivityUtils {
   }
 
   public static String formattedTypeFor(String type) {
+    return formattedTypeFor(type, null);
+  }
+
+  public static String formattedTypeFor(String type, String title) {
+    if (type == 'Event' && isSiteVisit(title)) {
+      return 'Visit';
+    }
     switch on type {
       when 'Task' {
         return 'Task';
@@ -51,6 +65,13 @@ public class UnifiedActivityUtils {
         return type;
       }
     }
+  }
+
+  private static Boolean isSiteVisit(String title) {
+    if (String.isBlank(title)) {
+      return false;
+    }
+    return Pattern.compile('(?i).*\\bvisit\\b.*').matcher(title).matches();
   }
 
   public static UnifiedActivityModels.SortDirection parseSortDirection(
