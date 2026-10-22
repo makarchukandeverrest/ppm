@@ -1,8 +1,13 @@
 @IsTest
 private class ContractBidActivityStampServiceTest {
+  @TestSetup
+  static void setupAccess() {
+    AccessModelTestHelper.ensureAutomationUser();
+  }
+
   @IsTest
   static void stampsBidEmailsCallsEventsAndIgnoresDraftsAndEmailTasks() {
-    Contract_Bid__c bid = insertBid('Information Verified');
+    Contract_Bid__c bid = insertBid('Proposal/Review');
     Datetime sentAt = clock(-4);
     Datetime sentLaterAt = clock(-1);
     Datetime receivedAt = clock(-2);
@@ -40,11 +45,7 @@ private class ContractBidActivityStampServiceTest {
   static void accountActivityCountsOnlyWhileBidIsOpen() {
     Account customer = new Account(Name = 'Activity Customer');
     insert customer;
-    Contract_Bid__c openBid = bid(
-      customer.Id,
-      'Information Verified',
-      'Open Bid'
-    );
+    Contract_Bid__c openBid = bid(customer.Id, 'Proposal/Review', 'Open Bid');
     Contract_Bid__c closedBid = bid(customer.Id, 'Closed - LOST', 'Closed Bid');
     insert new List<Contract_Bid__c>{ openBid, closedBid };
 
@@ -79,7 +80,7 @@ private class ContractBidActivityStampServiceTest {
 
   @IsTest
   static void movingAndRemovingActivityMovesTheStamp() {
-    Contract_Bid__c source = insertBid('Information Verified');
+    Contract_Bid__c source = insertBid('Proposal/Review');
     Contract_Bid__c target = insertBid('Contact Made');
     Datetime sentAt = clock(-1);
 
@@ -116,7 +117,7 @@ private class ContractBidActivityStampServiceTest {
 
   @IsTest
   static void deleteAndUndeleteRestoresEmailAndClearsPost() {
-    Contract_Bid__c bid = insertBid('Information Verified');
+    Contract_Bid__c bid = insertBid('Proposal/Review');
     EmailMessage message = email(bid.Id, false, clock(-1), '3');
     insert message;
     FeedItem post = new FeedItem(
@@ -144,7 +145,7 @@ private class ContractBidActivityStampServiceTest {
 
   @IsTest
   static void deleteAndUndeleteTaskAndEvent() {
-    Contract_Bid__c bid = insertBid('Information Verified');
+    Contract_Bid__c bid = insertBid('Proposal/Review');
     Task call = task(bid.Id, 'Call', 'Delete me');
     insert call;
     Event meeting = event(bid.Id);
@@ -162,28 +163,37 @@ private class ContractBidActivityStampServiceTest {
 
   @IsTest
   static void stageChangeStampsPreviousStageWithoutRecalculatingOnRename() {
-    Contract_Bid__c bid = insertBid('Information Verified');
+    User actor = [
+      SELECT Id
+      FROM User
+      WHERE Alias = :AccessModelTestHelper.AUTOMATION_ALIAS
+      ORDER BY CreatedDate DESC
+      LIMIT 1
+    ];
+    Contract_Bid__c bid = insertBid('Proposal/Review');
 
-    Test.startTest();
-    bid.Stage__c = 'Contact Made';
-    update bid;
-    Contract_Bid__c stamped = reload(bid.Id);
-    System.assertEquals('Information Verified', stamped.Previous_Stage__c);
-    System.assertNotEquals(null, stamped.Last_Stage_Change__c);
+    System.runAs(actor) {
+      Test.startTest();
+      bid.Stage__c = 'Contact Made';
+      update bid;
+      Contract_Bid__c stamped = reload(bid.Id);
+      System.assertEquals('Proposal/Review', stamped.Previous_Stage__c);
+      System.assertNotEquals(null, stamped.Last_Stage_Change__c);
 
-    Datetime stampedAt = stamped.Last_Stage_Change__c;
-    bid.Name = 'Renamed Bid';
-    update bid;
-    Test.stopTest();
+      Datetime stampedAt = stamped.Last_Stage_Change__c;
+      bid.Name = 'Renamed Bid';
+      update bid;
+      Test.stopTest();
 
-    stamped = reload(bid.Id);
-    System.assertEquals('Information Verified', stamped.Previous_Stage__c);
-    System.assertEquals(stampedAt, stamped.Last_Stage_Change__c);
+      stamped = reload(bid.Id);
+      System.assertEquals('Proposal/Review', stamped.Previous_Stage__c);
+      System.assertEquals(stampedAt, stamped.Last_Stage_Change__c);
+    }
   }
 
   @IsTest
   static void unrelatedRecordsDoNotStampTheBid() {
-    Contract_Bid__c bid = insertBid('Information Verified');
+    Contract_Bid__c bid = insertBid('Proposal/Review');
     Account customer = [SELECT Id FROM Account WHERE Id = :bid.Customer__c];
     Opportunity proposal = new Opportunity(
       Name = 'Unrelated Proposal',

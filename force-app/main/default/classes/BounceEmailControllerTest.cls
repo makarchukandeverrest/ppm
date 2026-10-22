@@ -2,6 +2,8 @@
 private class BounceEmailControllerTest {
   @TestSetup
   static void setupTestData() {
+    AccessModelTestHelper.ensureAutomationUser();
+
     // Create test Account
     Account testAccount = new Account(Name = 'Test Account');
     insert testAccount;
@@ -19,9 +21,22 @@ private class BounceEmailControllerTest {
     Contract_Bid__c testContract = new Contract_Bid__c(
       Name = 'Test Contract Bid',
       Customer__c = testAccount.Id,
-      Stage__c = 'Information Verified'
+      Stage__c = 'Proposal/Review'
     );
     insert testContract;
+  }
+
+  private static void handleAsAutomation(List<EmailMessage> emails) {
+    User actor = [
+      SELECT Id
+      FROM User
+      WHERE Alias = :AccessModelTestHelper.AUTOMATION_ALIAS
+      ORDER BY CreatedDate DESC
+      LIMIT 1
+    ];
+    System.runAs(actor) {
+      BounceEmailFromEmailMessageHandler.handle(emails);
+    }
   }
 
   // Helper method to create unique test user for Regional Manager
@@ -77,9 +92,7 @@ private class BounceEmailControllerTest {
     insert bouncedEmail;
 
     // Call handler method
-    BounceEmailFromEmailMessageHandler.handle(
-      new List<EmailMessage>{ bouncedEmail }
-    );
+    handleAsAutomation(new List<EmailMessage>{ bouncedEmail });
 
     Test.stopTest();
 
@@ -91,9 +104,9 @@ private class BounceEmailControllerTest {
       LIMIT 1
     ];
     System.assertEquals(
-      'Need Contact Verification',
+      'Contact Made',
       updatedContract.Stage__c,
-      'Contract Bid stage should be updated to "Need Contact Verification"'
+      'Contract Bid stage should be updated to "Contact Made"'
     );
   }
 
@@ -101,7 +114,7 @@ private class BounceEmailControllerTest {
   static void testHandleBouncedContractBidPackage_EmptyList() {
     Test.startTest();
     // Test with empty list
-    BounceEmailFromEmailMessageHandler.handle(new List<EmailMessage>());
+    handleAsAutomation(new List<EmailMessage>());
     Test.stopTest();
 
     // No assertions needed, just making sure no errors occur
@@ -118,12 +131,12 @@ private class BounceEmailControllerTest {
       LIMIT 1
     ];
 
-    // Create Contract_Bid__c with stage that is already 'Need Contact Verification'
-    // Handler only updates contracts where Stage__c != 'Need Contact Verification'
+    // Create Contract_Bid__c with stage that is already 'Contact Made'
+    // Handler only updates contracts where Stage__c != 'Contact Made'
     Contract_Bid__c nonMatchingContract = new Contract_Bid__c(
       Name = 'Non-Matching Contract',
       Customer__c = testAcc.Id,
-      Stage__c = 'Need Contact Verification'
+      Stage__c = 'Contact Made'
     );
     insert nonMatchingContract;
 
@@ -136,13 +149,11 @@ private class BounceEmailControllerTest {
     );
     insert bouncedEmail;
 
-    BounceEmailFromEmailMessageHandler.handle(
-      new List<EmailMessage>{ bouncedEmail }
-    );
+    handleAsAutomation(new List<EmailMessage>{ bouncedEmail });
 
     Test.stopTest();
 
-    // Verify contract with 'Need Contact Verification' stage was NOT updated
+    // Verify contract with 'Contact Made' stage was NOT updated
     Contract_Bid__c unchangedContract = [
       SELECT Id, Stage__c
       FROM Contract_Bid__c
@@ -150,9 +161,9 @@ private class BounceEmailControllerTest {
       LIMIT 1
     ];
     System.assertEquals(
-      'Need Contact Verification',
+      'Contact Made',
       unchangedContract.Stage__c,
-      'Contract Bid with "Need Contact Verification" stage should not be updated again'
+      'Contract Bid with "Contact Made" stage should not be updated again'
     );
   }
 
@@ -174,7 +185,7 @@ private class BounceEmailControllerTest {
     Contract_Bid__c anotherContract = new Contract_Bid__c(
       Name = 'Another Contract',
       Customer__c = anotherAccount.Id,
-      Stage__c = 'Information Verified'
+      Stage__c = 'Proposal/Review'
     );
     insert anotherContract;
 
@@ -191,9 +202,7 @@ private class BounceEmailControllerTest {
     );
     insert new List<EmailMessage>{ bouncedEmail1, bouncedEmail2 };
 
-    BounceEmailFromEmailMessageHandler.handle(
-      new List<EmailMessage>{ bouncedEmail1, bouncedEmail2 }
-    );
+    handleAsAutomation(new List<EmailMessage>{ bouncedEmail1, bouncedEmail2 });
 
     Test.stopTest();
 
@@ -201,7 +210,7 @@ private class BounceEmailControllerTest {
     List<Contract_Bid__c> updatedContracts = [
       SELECT Id, Stage__c, Name
       FROM Contract_Bid__c
-      WHERE Stage__c = 'Need Contact Verification'
+      WHERE Stage__c = 'Contact Made'
     ];
     System.assert(
       updatedContracts.size() >= 2,
@@ -217,9 +226,7 @@ private class BounceEmailControllerTest {
     EmailMessage bouncedEmail = createEmailMessage(null, 'orphan@example.com');
     insert bouncedEmail;
 
-    BounceEmailFromEmailMessageHandler.handle(
-      new List<EmailMessage>{ bouncedEmail }
-    );
+    handleAsAutomation(new List<EmailMessage>{ bouncedEmail });
 
     Test.stopTest();
 
@@ -227,7 +234,7 @@ private class BounceEmailControllerTest {
     List<Contract_Bid__c> updatedContracts = [
       SELECT Id, Stage__c
       FROM Contract_Bid__c
-      WHERE Stage__c = 'Need Contact Verification'
+      WHERE Stage__c = 'Contact Made'
     ];
     // Should be 0 since handler returns early when no AccountIds resolved
     System.assertEquals(
@@ -254,9 +261,7 @@ private class BounceEmailControllerTest {
     EmailMessage bouncedEmail = createEmailMessage(testAcc.Id, null);
     insert bouncedEmail;
 
-    BounceEmailFromEmailMessageHandler.handle(
-      new List<EmailMessage>{ bouncedEmail }
-    );
+    handleAsAutomation(new List<EmailMessage>{ bouncedEmail });
 
     Test.stopTest();
 
@@ -268,7 +273,7 @@ private class BounceEmailControllerTest {
       LIMIT 1
     ];
     System.assertEquals(
-      'Need Contact Verification',
+      'Contact Made',
       updatedContract.Stage__c,
       'Contract Bid should be updated when RelatedToId points to Account'
     );
@@ -285,9 +290,7 @@ private class BounceEmailControllerTest {
     );
     insert bouncedEmail;
 
-    BounceEmailFromEmailMessageHandler.handle(
-      new List<EmailMessage>{ bouncedEmail }
-    );
+    handleAsAutomation(new List<EmailMessage>{ bouncedEmail });
 
     Test.stopTest();
 
@@ -303,6 +306,13 @@ private class BounceEmailControllerTest {
     // Create test user for Regional Manager
     User regionalManager = createTestUser();
     insert regionalManager;
+    User actor = [
+      SELECT Id
+      FROM User
+      WHERE Alias = :AccessModelTestHelper.AUTOMATION_ALIAS
+      ORDER BY CreatedDate DESC
+      LIMIT 1
+    ];
 
     // Get test account and set Regional Manager
     Account testAcc = [
@@ -311,8 +321,10 @@ private class BounceEmailControllerTest {
       WHERE Name = 'Test Account'
       LIMIT 1
     ];
-    testAcc.Regional_Manager__c = regionalManager.Id;
-    update testAcc;
+    System.runAs(actor) {
+      testAcc.Regional_Manager__c = regionalManager.Id;
+      update testAcc;
+    }
 
     // Note: CustomNotificationType cannot be created via DML in test classes
     // The method will handle its absence gracefully
@@ -328,9 +340,7 @@ private class BounceEmailControllerTest {
     );
     insert bouncedEmail;
 
-    BounceEmailFromEmailMessageHandler.handle(
-      new List<EmailMessage>{ bouncedEmail }
-    );
+    handleAsAutomation(new List<EmailMessage>{ bouncedEmail });
 
     Test.stopTest();
 
@@ -342,7 +352,7 @@ private class BounceEmailControllerTest {
       LIMIT 1
     ];
     System.assertEquals(
-      'Need Contact Verification',
+      'Contact Made',
       updatedContract.Stage__c,
       'Contract Bid stage should be updated'
     );
@@ -350,6 +360,13 @@ private class BounceEmailControllerTest {
 
   @IsTest
   static void testHandleBouncedContractBidPackage_AccountWithoutRegionalManager() {
+    User actor = [
+      SELECT Id
+      FROM User
+      WHERE Alias = :AccessModelTestHelper.AUTOMATION_ALIAS
+      ORDER BY CreatedDate DESC
+      LIMIT 1
+    ];
     // Get test account (should not have Regional Manager)
     Account testAcc = [
       SELECT Id, Regional_Manager__c
@@ -358,8 +375,10 @@ private class BounceEmailControllerTest {
       LIMIT 1
     ];
     // Ensure no Regional Manager
-    testAcc.Regional_Manager__c = null;
-    update testAcc;
+    System.runAs(actor) {
+      testAcc.Regional_Manager__c = null;
+      update testAcc;
+    }
 
     Test.startTest();
 
@@ -370,9 +389,7 @@ private class BounceEmailControllerTest {
     );
     insert bouncedEmail;
 
-    BounceEmailFromEmailMessageHandler.handle(
-      new List<EmailMessage>{ bouncedEmail }
-    );
+    handleAsAutomation(new List<EmailMessage>{ bouncedEmail });
 
     Test.stopTest();
 
@@ -384,7 +401,7 @@ private class BounceEmailControllerTest {
       LIMIT 1
     ];
     System.assertEquals(
-      'Need Contact Verification',
+      'Contact Made',
       updatedContract.Stage__c,
       'Contract Bid stage should be updated even without Regional Manager'
     );
@@ -404,7 +421,7 @@ private class BounceEmailControllerTest {
     Contract_Bid__c testContract = new Contract_Bid__c(
       Name = 'Contract Bid RelatedTo Test',
       Customer__c = testAcc.Id,
-      Stage__c = 'Information Verified'
+      Stage__c = 'Proposal/Review'
     );
     insert testContract;
 
@@ -417,9 +434,7 @@ private class BounceEmailControllerTest {
     );
     insert bouncedEmail;
 
-    BounceEmailFromEmailMessageHandler.handle(
-      new List<EmailMessage>{ bouncedEmail }
-    );
+    handleAsAutomation(new List<EmailMessage>{ bouncedEmail });
 
     Test.stopTest();
 
@@ -431,7 +446,7 @@ private class BounceEmailControllerTest {
       LIMIT 1
     ];
     System.assertEquals(
-      'Need Contact Verification',
+      'Contact Made',
       updatedContract.Stage__c,
       'Contract Bid should be updated when RelatedToId points to Contract_Bid__c'
     );
@@ -458,7 +473,7 @@ private class BounceEmailControllerTest {
     Contract_Bid__c testContract = new Contract_Bid__c(
       Name = 'Fallback Email Test Contract',
       Customer__c = testAcc.Id,
-      Stage__c = 'Information Verified'
+      Stage__c = 'Proposal/Review'
     );
     insert testContract;
 
@@ -468,9 +483,7 @@ private class BounceEmailControllerTest {
     EmailMessage bouncedEmail = createEmailMessage(null, testContact.Email);
     insert bouncedEmail;
 
-    BounceEmailFromEmailMessageHandler.handle(
-      new List<EmailMessage>{ bouncedEmail }
-    );
+    handleAsAutomation(new List<EmailMessage>{ bouncedEmail });
 
     Test.stopTest();
 
@@ -482,7 +495,7 @@ private class BounceEmailControllerTest {
       LIMIT 1
     ];
     System.assertEquals(
-      'Need Contact Verification',
+      'Contact Made',
       updatedContract.Stage__c,
       'Contract Bid should be updated via fallback when RelatedToId is null but ToAddress matches Contact.Email'
     );

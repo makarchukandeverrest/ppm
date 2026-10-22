@@ -2,6 +2,8 @@
 private class ContractMassSendControllerTest {
   @TestSetup
   static void setupTestData() {
+    AccessModelTestHelper.ensureAutomationPerms();
+
     // EmailTemplate requires a FolderId; Folder cannot be inserted via Apex DML (not allowed).
     // Use any existing Email folder from the org when present.
     List<Folder> emailFolders = [

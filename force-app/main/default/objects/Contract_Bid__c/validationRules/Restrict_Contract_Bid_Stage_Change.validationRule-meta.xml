@@ -15,14 +15,8 @@
       NOT(
         OR(
           AND(
-            OR(
-              ISPICKVAL(PRIORVALUE(Stage__c), &quot;Contact Made&quot;),
-              ISPICKVAL(PRIORVALUE(Stage__c), &quot;Information Verified&quot;)
-            ),
-            OR(
-              ISPICKVAL(Stage__c, &quot;Contract Requested&quot;),
-              ISPICKVAL(Stage__c, &quot;Information Verified&quot;)
-            )
+            ISPICKVAL(PRIORVALUE(Stage__c), &quot;Contact Made&quot;),
+            ISPICKVAL(Stage__c, &quot;Contract Requested&quot;)
           ),
           AND(
             ISPICKVAL(Stage__c, &quot;Closed - LOST&quot;),
@@ -47,5 +41,5 @@
 )</errorConditionFormula>
     <errorDisplayField>Stage__c</errorDisplayField>
     <errorMessage
-  >You cannot change Contract Bid Stage for your role. Leads: Contact Made → Contract Requested / Information Verified, or Closed Lost with a reason. Contract Team: stage is updated by DocuSign/automation only. Contact an admin if this is unexpected.</errorMessage>
+  >You cannot change Contract Bid Stage for your role. Leads: Contact Made → Contract Requested, or Closed Lost with a reason. Contract Team: stage is updated by DocuSign/automation only. Contact an admin if this is unexpected.</errorMessage>
 </ValidationRule>
