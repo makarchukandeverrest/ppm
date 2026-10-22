@@ -17,7 +17,7 @@ public with sharing class MassSendEmailBuilder {
     'Jessica Floyd'
   };
 
-  private static final String WORK_ORDER_ORG_WIDE_EMAIL_ADDRESS = 'sfalert@ppsfalerts.com';
+  private static final String WORK_ORDER_ORG_WIDE_EMAIL_ADDRESS = 'sf_workorders@premierswim.com';
 
   public class BuildRequest {
     public Id targetWhoId;

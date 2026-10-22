@@ -754,32 +754,63 @@ export default class EmailMassSendBase extends NavigationMixin(
       // Template merge during sendEmail runs SOQL inside Email_Platform.
       // A 10-email batch hit 101 queries around recipient 5; keep this tiny.
       const BATCH_SIZE = 2;
+      const nameByCustomerId = new Map(
+        (this.customers || []).map((c) => [c.customerId, c.customerName])
+      );
+
       const allLogs = [];
+      let failedBatches = 0;
+
       for (let i = 0; i < payload.length; i += BATCH_SIZE) {
         const batch = payload.slice(i, i + BATCH_SIZE);
         const from = i + 1;
         const to = Math.min(i + BATCH_SIZE, payload.length);
         this.sendProgressText = `Sending ${from}–${to} of ${payload.length}...`;
 
-        // Sequential on purpose: each batch runs template SOQL, parallel batches blow the query limit.
-        // eslint-disable-next-line no-await-in-loop
-        const res = await sendContracts({
-          inputIds: this.inputIds,
-          emailTemplateId: this.selectedTemplateId,
-          requestJson: JSON.stringify(batch),
-          subject: this.hasEditedGlobalEmail ? this.subject : null,
-          body: this.hasEditedGlobalEmail ? this.body : null
-        });
-        allLogs.push(...(res.logs || []));
-        this.sendLog = [...allLogs];
+        try {
+          // Sequential on purpose: each batch runs template SOQL, parallel batches blow the query limit.
+          // eslint-disable-next-line no-await-in-loop
+          const res = await sendContracts({
+            inputIds: this.inputIds,
+            emailTemplateId: this.selectedTemplateId,
+            requestJson: JSON.stringify(batch),
+            subject: this.hasEditedGlobalEmail ? this.subject : null,
+            body: this.hasEditedGlobalEmail ? this.body : null
+          });
+          allLogs.push(...(res.logs || []));
+        } catch (e) {
+          // Keep going: one failed batch must not drop the remaining recipients.
+          failedBatches++;
+          const message = this.normalizeError(e);
+          batch.forEach((row) => {
+            allLogs.push({
+              customerName: nameByCustomerId.get(row.customerId) || "Unknown",
+              status: "Failed",
+              message
+            });
+          });
+        }
+
+        this.sendLog = allLogs.map((log, index) => ({
+          ...log,
+          logId: `${index}`
+        }));
       }
 
-      this.sendProgressText = undefined;
-      this.toast(
-        "Sent",
-        `${allLogs.length} emails were processed. See Send History for details.`,
-        "success"
-      );
+      const sentCount = allLogs.filter((log) => log.status === "Sent").length;
+      if (failedBatches > 0) {
+        this.toast(
+          "Partially sent",
+          `${sentCount} of ${allLogs.length} emails were sent. See Send History for the failures.`,
+          "warning"
+        );
+      } else {
+        this.toast(
+          "Sent",
+          `${allLogs.length} emails were processed. See Send History for details.`,
+          "success"
+        );
+      }
     } catch (e) {
       this.sendError = this.normalizeError(e);
       this.toast("Error", this.sendError, "error");
