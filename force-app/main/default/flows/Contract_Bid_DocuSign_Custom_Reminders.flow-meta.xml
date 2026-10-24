@@ -727,7 +727,7 @@
             <conditions>
                 <leftValueReference
         >Get_Contract_Bid_2.Viewed__c</leftValueReference>
-                <operator>equalTo</operator>
+                <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
                 </rightValue>
@@ -765,7 +765,7 @@
             <conditions>
                 <leftValueReference
         >Get_Customer_1.Stop_Sending_Reminders__c</leftValueReference>
-                <operator>equalTo</operator>
+                <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
                 </rightValue>
@@ -773,7 +773,7 @@
             <conditions>
                 <leftValueReference
         >Get_Contract_Bid.Viewed__c</leftValueReference>
-                <operator>equalTo</operator>
+                <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
                 </rightValue>
@@ -843,7 +843,7 @@
             <conditions>
                 <leftValueReference
         >Get_Contract_Bid_4.Viewed__c</leftValueReference>
-                <operator>equalTo</operator>
+                <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
                 </rightValue>
@@ -1617,115 +1617,6 @@
         <object>Contract_Bid__c</object>
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordLookups>
-    <recordUpdates>
-        <name>Reset_Follow_Up_Timers</name>
-        <label>Reset Follow-Up Timers</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <connector>
-            <targetReference>Get_Customer_Sent</targetReference>
-        </connector>
-        <filterLogic>and</filterLogic>
-        <filters>
-            <field>Id</field>
-            <operator>EqualTo</operator>
-            <value>
-                <elementReference>$Record.dfsle__SourceId__c</elementReference>
-            </value>
-        </filters>
-        <inputAssignments>
-            <field>Follow_Up_Count__c</field>
-            <value>
-                <numberValue>0.0</numberValue>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Viewed__c</field>
-            <value>
-                <booleanValue>false</booleanValue>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Expired_No_Response__c</field>
-            <value>
-                <booleanValue>false</booleanValue>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Opened_Follow_Up_Task_Created__c</field>
-            <value>
-                <booleanValue>false</booleanValue>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Next_Follow_up_Date__c</field>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Opened_Date__c</field>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Sent_Contract_Date__c</field>
-            <value>
-                <elementReference>$Record.dfsle__Sent__c</elementReference>
-            </value>
-        </inputAssignments>
-
-        <inputAssignments>
-            <field>Contract_Status__c</field>
-            <value>
-                <stringValue>Active</stringValue>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Stop_Sending_Reminders__c</field>
-            <value>
-                <booleanValue>false</booleanValue>
-            </value>
-        </inputAssignments>
-        <object>Contract_Bid__c</object>
-    </recordUpdates>
-    <recordUpdates>
-        <name>Set_Follow_Up_Count_1</name>
-        <label>Set Follow-Up Count 1</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <filterLogic>and</filterLogic>
-        <filters>
-            <field>Id</field>
-            <operator>EqualTo</operator>
-            <value>
-                <elementReference>Get_Contract_Bid.Id</elementReference>
-            </value>
-        </filters>
-        <inputAssignments>
-            <field>Follow_Up_Count__c</field>
-            <value>
-                <numberValue>1.0</numberValue>
-            </value>
-        </inputAssignments>
-        <object>Contract_Bid__c</object>
-    </recordUpdates>
-    <recordUpdates>
-        <name>Set_Follow_Up_Count_2</name>
-        <label>Set Follow-Up Count 2</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <filterLogic>and</filterLogic>
-        <filters>
-            <field>Id</field>
-            <operator>EqualTo</operator>
-            <value>
-                <elementReference>Get_Contract_Bid_2.Id</elementReference>
-            </value>
-        </filters>
-        <inputAssignments>
-            <field>Follow_Up_Count__c</field>
-            <value>
-                <numberValue>2.0</numberValue>
-            </value>
-        </inputAssignments>
-        <object>Contract_Bid__c</object>
-    </recordUpdates>
     <recordLookups>
         <name>Get_Customer_Sent</name>
         <label>Get Customer Sent</label>
@@ -1910,6 +1801,115 @@
         <object>dfsle__Recipient__c</object>
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordLookups>
+    <recordUpdates>
+        <name>Reset_Follow_Up_Timers</name>
+        <label>Reset Follow-Up Timers</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Get_Customer_Sent</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.dfsle__SourceId__c</elementReference>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>Follow_Up_Count__c</field>
+            <value>
+                <numberValue>0.0</numberValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Viewed__c</field>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Expired_No_Response__c</field>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Opened_Follow_Up_Task_Created__c</field>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Next_Follow_up_Date__c</field>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Opened_Date__c</field>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Sent_Contract_Date__c</field>
+            <value>
+                <elementReference>$Record.dfsle__Sent__c</elementReference>
+            </value>
+        </inputAssignments>
+
+        <inputAssignments>
+            <field>Contract_Status__c</field>
+            <value>
+                <stringValue>Active</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Stop_Sending_Reminders__c</field>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </inputAssignments>
+        <object>Contract_Bid__c</object>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Set_Follow_Up_Count_1</name>
+        <label>Set Follow-Up Count 1</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Get_Contract_Bid.Id</elementReference>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>Follow_Up_Count__c</field>
+            <value>
+                <numberValue>1.0</numberValue>
+            </value>
+        </inputAssignments>
+        <object>Contract_Bid__c</object>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Set_Follow_Up_Count_2</name>
+        <label>Set Follow-Up Count 2</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Get_Contract_Bid_2.Id</elementReference>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>Follow_Up_Count__c</field>
+            <value>
+                <numberValue>2.0</numberValue>
+            </value>
+        </inputAssignments>
+        <object>Contract_Bid__c</object>
+    </recordUpdates>
     <start>
         <locationX>0</locationX>
         <locationY>0</locationY>

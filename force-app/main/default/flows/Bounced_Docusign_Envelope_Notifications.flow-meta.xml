@@ -70,7 +70,10 @@
             <name>recipientAddresses</name>
             <value>
                 <collectionElements>
-                    <elementReference>RecipientEmails</elementReference>
+                    <stringValue>artem@premierswim.com</stringValue>
+                </collectionElements>
+                <collectionElements>
+                    <stringValue>Rania@premierswim.com</stringValue>
                 </collectionElements>
             </value>
         </inputParameters>
@@ -85,7 +88,7 @@
             <name>senderAddress</name>
             <value>
                 <inputConfiguratorMode>Custom</inputConfiguratorMode>
-                <stringValue>sfalert@ppsfalerts.com</stringValue>
+                <stringValue>office@premierswim.com</stringValue>
             </value>
         </inputParameters>
         <inputParameters>
@@ -110,8 +113,7 @@
         <inputParameters>
             <name>relatedRecordId</name>
             <value>
-                <elementReference
-        >$Record.dfsle__EnvelopeStatus__r.dfsle__SourceId__c</elementReference>
+                <elementReference>Get_original_Envelope.Id</elementReference>
             </value>
         </inputParameters>
         <nameSegment>emailSimple</nameSegment>
@@ -204,14 +206,6 @@
                 <operator>IsBlank</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
-                </rightValue>
-            </conditions>
-            <conditions>
-                <leftValueReference
-        >Loop_CC_Recipients.dfsle__Email__c</leftValueReference>
-                <operator>NotEqualTo</operator>
-                <rightValue>
-                    <stringValue>roman@premierswim.com</stringValue>
                 </rightValue>
             </conditions>
             <connector>
@@ -389,13 +383,6 @@
             <operator>NotEqualTo</operator>
             <value>
                 <stringValue>Signer</stringValue>
-            </value>
-        </filters>
-        <filters>
-            <field>dfsle__Email__c</field>
-            <operator>NotEqualTo</operator>
-            <value>
-                <stringValue>roman@premierswim.com</stringValue>
             </value>
         </filters>
         <getFirstRecordOnly>false</getFirstRecordOnly>

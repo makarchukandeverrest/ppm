@@ -54,7 +54,7 @@
         <nameSegment>AutomationTaskCreator</nameSegment>
         <offset>0</offset>
     </actionCalls>
-    <apiVersion>62.0</apiVersion>
+    <apiVersion>67.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
     <assignments>
         <name>Set_Lead_Team_Owner</name>

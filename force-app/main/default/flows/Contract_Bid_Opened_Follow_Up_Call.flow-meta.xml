@@ -57,7 +57,7 @@
         <nameSegment>AutomationTaskCreator</nameSegment>
         <offset>0</offset>
     </actionCalls>
-    <apiVersion>62.0</apiVersion>
+    <apiVersion>67.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
     <decisions>
         <name>Still_Needs_Call</name>
