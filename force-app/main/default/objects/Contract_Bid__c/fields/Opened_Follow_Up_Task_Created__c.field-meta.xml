@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Opened_Follow_Up_Task_Created__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description
+  >True after the opened-but-unsigned 10 business day RM call task has been created.</description>
+    <label>Opened Follow-Up Task Created</label>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

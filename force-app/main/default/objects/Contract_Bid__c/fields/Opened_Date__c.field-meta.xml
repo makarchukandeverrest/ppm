@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Opened_Date__c</fullName>
+    <description
+  >Date the client first opened the current DocuSign envelope.</description>
+    <inlineHelpText
+  >Used for Viewed follow-up (open + 2 BD, then call at +10 BD).</inlineHelpText>
+    <label>Opened Date</label>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Date</type>
+</CustomField>

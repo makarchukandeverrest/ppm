@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Action_Needed__c</fullName>
+    <description
+  >True when bid needs sales action: Viewed unsigned, Expired, or Expired–No Response.</description>
+    <formula>OR(
+  AND(Viewed__c = TRUE, TEXT(Contract_Status__c) &lt;&gt; &quot;Signed&quot;, TEXT(Stage__c) &lt;&gt; &quot;Closed - WON&quot;, TEXT(Stage__c) &lt;&gt; &quot;Closed - LOST&quot;),
+  TEXT(Contract_Status__c) = &quot;Expired&quot;,
+  Expired_No_Response__c = TRUE
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <label>Action Needed</label>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

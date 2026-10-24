@@ -754,7 +754,7 @@ public with sharing class DocuSignDfsleEnvelopeService {
     String reminderValue,
     String daysBeforeExpires
   ) {
-    Integer expireAfterDays = parsePositiveDays(daysBeforeExpires, 120);
+    Integer expireAfterDays = parsePositiveDays(daysBeforeExpires, 30);
     Integer expireWarnDays = expireAfterDays > 10
       ? 10
       : Math.max(1, expireAfterDays - 1);

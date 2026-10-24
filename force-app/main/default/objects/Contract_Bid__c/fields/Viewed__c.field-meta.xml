@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Viewed__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description
+  >True when the client has opened/viewed the DocuSign contract.</description>
+    <inlineHelpText
+  >Set automatically when the envelope is opened. Reminder emails stop once Viewed.</inlineHelpText>
+    <label>Viewed</label>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Checkbox</type>
+</CustomField>

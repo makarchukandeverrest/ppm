@@ -144,38 +144,50 @@
         <label>Phone Call Task</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <actionName>NewTask</actionName>
-        <actionType>quickAction</actionType>
+        <actionName>AutomationTaskCreator</actionName>
+        <actionType>apex</actionType>
         <connector>
             <targetReference>Get_Custom_Notification</targetReference>
         </connector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
         <inputParameters>
-            <name>contextId</name>
-            <value>
-                <elementReference>Get_Contract_Bid_4.Id</elementReference>
-            </value>
-        </inputParameters>
-        <inputParameters>
-            <name>Subject</name>
-            <value>
-                <elementReference>PhoneCallSubject</elementReference>
-            </value>
-        </inputParameters>
-        <inputParameters>
-            <name>OwnerId</name>
+            <name>ownerId</name>
             <value>
                 <elementReference
         >Get_Contract_Bid_4.Lead_Owner__r.Id</elementReference>
             </value>
         </inputParameters>
         <inputParameters>
-            <name>WhatId</name>
+            <name>subject</name>
+            <value>
+                <elementReference>PhoneCallSubject</elementReference>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>whatId</name>
             <value>
                 <elementReference>Get_Contract_Bid_4.Id</elementReference>
             </value>
         </inputParameters>
-        <nameSegment>NewTask</nameSegment>
+        <inputParameters>
+            <name>taskKey</name>
+            <value>
+                <stringValue>CB_FOLLOW_UP_CALL</stringValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>upsertOpenTask</name>
+            <value>
+                <booleanValue>true</booleanValue>
+            </value>
+        </inputParameters>
+        <inputParameters>
+            <name>activityDate</name>
+            <value>
+                <elementReference>$Flow.CurrentDate</elementReference>
+            </value>
+        </inputParameters>
+        <nameSegment>AutomationTaskCreator</nameSegment>
         <offset>0</offset>
     </actionCalls>
     <actionCalls>
@@ -712,6 +724,14 @@
                     <booleanValue>false</booleanValue>
                 </rightValue>
             </conditions>
+            <conditions>
+                <leftValueReference
+        >Get_Contract_Bid_2.Viewed__c</leftValueReference>
+                <operator>equalTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
             <connector>
                 <targetReference>Get_Recipients_2</targetReference>
             </connector>
@@ -745,7 +765,15 @@
             <conditions>
                 <leftValueReference
         >Get_Customer_1.Stop_Sending_Reminders__c</leftValueReference>
-                <operator>EqualTo</operator>
+                <operator>equalTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference
+        >Get_Contract_Bid.Viewed__c</leftValueReference>
+                <operator>equalTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
                 </rightValue>
@@ -812,6 +840,14 @@
                     <booleanValue>false</booleanValue>
                 </rightValue>
             </conditions>
+            <conditions>
+                <leftValueReference
+        >Get_Contract_Bid_4.Viewed__c</leftValueReference>
+                <operator>equalTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
             <connector>
                 <targetReference>Phone_Call_Task</targetReference>
             </connector>
@@ -851,8 +887,9 @@
         </rules>
     </decisions>
     <description
-  >Contract Bid version of custom DocuSign reminders. Triggers on envelopes where dfsle__SourceId__c is a Contract Bid (a0b prefix). The sent-contract Chatter log is a separate flow.</description>
+  >Contract Bid DocuSign reminders: Day 0 sent email + reset timers; Day 7 Reminder 1; Day 14 Reminder 2; Day 21 RM call task (upsert). Stops when Viewed, Stop Sending Reminders, or envelope leaves Sent. Reminder 3 and visit removed.</description>
     <environments>Default</environments>
+
     <formulas>
         <name>AgreementYearLabel_1</name>
         <dataType>String</dataType>
@@ -947,6 +984,9 @@
         <label>Log Reminder 1 Post</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
+        <connector>
+            <targetReference>Set_Follow_Up_Count_1</targetReference>
+        </connector>
         <inputAssignments>
             <field>Body</field>
             <value>
@@ -980,6 +1020,9 @@
         <label>Log Reminder 1 Text Post</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
+        <connector>
+            <targetReference>Set_Follow_Up_Count_1</targetReference>
+        </connector>
         <inputAssignments>
             <field>Body</field>
             <value>
@@ -1012,6 +1055,9 @@
         <label>Log Reminder 2 Post</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
+        <connector>
+            <targetReference>Set_Follow_Up_Count_2</targetReference>
+        </connector>
         <inputAssignments>
             <field>Body</field>
             <value>
@@ -1045,6 +1091,9 @@
         <label>Log Reminder 2 Text Post</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
+        <connector>
+            <targetReference>Set_Follow_Up_Count_2</targetReference>
+        </connector>
         <inputAssignments>
             <field>Body</field>
             <value>
@@ -1554,7 +1603,7 @@
         <assignNullValuesIfNoRecordsFound
     >false</assignNullValuesIfNoRecordsFound>
         <connector>
-            <targetReference>Get_Customer_Sent</targetReference>
+            <targetReference>Reset_Follow_Up_Timers</targetReference>
         </connector>
         <filterLogic>and</filterLogic>
         <filters>
@@ -1568,6 +1617,115 @@
         <object>Contract_Bid__c</object>
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordLookups>
+    <recordUpdates>
+        <name>Reset_Follow_Up_Timers</name>
+        <label>Reset Follow-Up Timers</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Get_Customer_Sent</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.dfsle__SourceId__c</elementReference>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>Follow_Up_Count__c</field>
+            <value>
+                <numberValue>0.0</numberValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Viewed__c</field>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Expired_No_Response__c</field>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Opened_Follow_Up_Task_Created__c</field>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Next_Follow_up_Date__c</field>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Opened_Date__c</field>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Sent_Contract_Date__c</field>
+            <value>
+                <elementReference>$Record.dfsle__Sent__c</elementReference>
+            </value>
+        </inputAssignments>
+
+        <inputAssignments>
+            <field>Contract_Status__c</field>
+            <value>
+                <stringValue>Active</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Stop_Sending_Reminders__c</field>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </inputAssignments>
+        <object>Contract_Bid__c</object>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Set_Follow_Up_Count_1</name>
+        <label>Set Follow-Up Count 1</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Get_Contract_Bid.Id</elementReference>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>Follow_Up_Count__c</field>
+            <value>
+                <numberValue>1.0</numberValue>
+            </value>
+        </inputAssignments>
+        <object>Contract_Bid__c</object>
+    </recordUpdates>
+    <recordUpdates>
+        <name>Set_Follow_Up_Count_2</name>
+        <label>Set Follow-Up Count 2</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Get_Contract_Bid_2.Id</elementReference>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>Follow_Up_Count__c</field>
+            <value>
+                <numberValue>2.0</numberValue>
+            </value>
+        </inputAssignments>
+        <object>Contract_Bid__c</object>
+    </recordUpdates>
     <recordLookups>
         <name>Get_Customer_Sent</name>
         <label>Get Customer Sent</label>
@@ -1778,56 +1936,34 @@
         <object>dfsle__Envelope__c</object>
         <recordTriggerType>CreateAndUpdate</recordTriggerType>
         <scheduledPaths>
-            <name>X3_Days_after_Contract_Sent</name>
+            <name>X7_Days_Reminder_1</name>
             <connector>
                 <targetReference>Get_Contract_Bid</targetReference>
             </connector>
-            <label>3 Days After Contract Sent</label>
-            <offsetNumber>3</offsetNumber>
-            <offsetUnit>Days</offsetUnit>
-            <recordField>dfsle__Sent__c</recordField>
-            <timeSource>RecordField</timeSource>
-        </scheduledPaths>
-        <scheduledPaths>
-            <name>X4_Days_After_Reminder_1</name>
-            <connector>
-                <targetReference>Get_Contract_Bid_2</targetReference>
-            </connector>
-            <label>4 Days After Reminder 1</label>
+            <label>7 Days Reminder 1</label>
             <offsetNumber>7</offsetNumber>
             <offsetUnit>Days</offsetUnit>
             <recordField>dfsle__Sent__c</recordField>
             <timeSource>RecordField</timeSource>
         </scheduledPaths>
         <scheduledPaths>
-            <name>X3_Days_After_Reminder_2</name>
+            <name>X14_Days_Reminder_2</name>
             <connector>
-                <targetReference>Get_Contract_Bid_3</targetReference>
+                <targetReference>Get_Contract_Bid_2</targetReference>
             </connector>
-            <label>3 Days After Reminder 2</label>
-            <offsetNumber>10</offsetNumber>
-            <offsetUnit>Days</offsetUnit>
-            <recordField>dfsle__Sent__c</recordField>
-            <timeSource>RecordField</timeSource>
-        </scheduledPaths>
-        <scheduledPaths>
-            <name>X4_Days_After_Reminder_3</name>
-            <connector>
-                <targetReference>Get_Contract_Bid_4</targetReference>
-            </connector>
-            <label>4 Days After Reminder 3</label>
+            <label>14 Days Reminder 2</label>
             <offsetNumber>14</offsetNumber>
             <offsetUnit>Days</offsetUnit>
             <recordField>dfsle__Sent__c</recordField>
             <timeSource>RecordField</timeSource>
         </scheduledPaths>
         <scheduledPaths>
-            <name>X1_Day_After_Phone_Call</name>
+            <name>X21_Days_Call_Task</name>
             <connector>
-                <targetReference>Get_Contract_Bid_5</targetReference>
+                <targetReference>Get_Contract_Bid_4</targetReference>
             </connector>
-            <label>1 Day After Phone Call Task</label>
-            <offsetNumber>15</offsetNumber>
+            <label>21 Days Call Task</label>
+            <offsetNumber>21</offsetNumber>
             <offsetUnit>Days</offsetUnit>
             <recordField>dfsle__Sent__c</recordField>
             <timeSource>RecordField</timeSource>
