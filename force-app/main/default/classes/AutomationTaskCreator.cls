@@ -37,7 +37,7 @@ public without sharing class AutomationTaskCreator {
 
     @InvocableVariable(
       label='Task Key'
-      description='Stable key stored in Description as [KEY:...]. Defaults to Subject.'
+      description='Stable key stored on Automation_Key__c. Defaults to Subject.'
     )
     public String taskKey;
   }
@@ -94,6 +94,11 @@ public without sharing class AutomationTaskCreator {
         if (request.ownerId != null) {
           existing.OwnerId = request.ownerId;
         }
+        if (
+          String.isBlank(existing.Automation_Key__c) && !String.isBlank(key)
+        ) {
+          existing.Automation_Key__c = key;
+        }
         toUpdate.add(existing);
         result.taskId = existing.Id;
         result.updatedExisting = true;
@@ -103,7 +108,8 @@ public without sharing class AutomationTaskCreator {
           Subject = request.subject,
           WhatId = request.whatId,
           WhoId = request.whoId,
-          Description = buildDescription(request, key),
+          Description = sanitizeDescription(request.description),
+          Automation_Key__c = key,
           ActivityDate = request.activityDate,
           Status = String.isBlank(request.status)
             ? 'Not Started'
@@ -145,6 +151,7 @@ public without sharing class AutomationTaskCreator {
         WhatId,
         Subject,
         Description,
+        Automation_Key__c,
         ActivityDate,
         OwnerId,
         Status,
@@ -174,15 +181,22 @@ public without sharing class AutomationTaskCreator {
   }
 
   @TestVisible
-  private static String buildDescription(Request request, String key) {
-    String prefix = '[KEY:' + key + ']\n';
-    if (String.isBlank(request.description)) {
-      return prefix;
+  private static String sanitizeDescription(String description) {
+    if (String.isBlank(description)) {
+      return null;
     }
-    if (request.description.startsWith('[KEY:')) {
-      return request.description;
+    if (description.startsWith('[KEY:')) {
+      Integer endIdx = description.indexOf(']');
+      if (endIdx >= 0 && endIdx + 1 < description.length()) {
+        String rest = description.substring(endIdx + 1);
+        if (rest.startsWith('\n')) {
+          rest = rest.substring(1);
+        }
+        return String.isBlank(rest) ? null : rest;
+      }
+      return null;
     }
-    return prefix + request.description;
+    return description;
   }
 
   @TestVisible
@@ -190,6 +204,10 @@ public without sharing class AutomationTaskCreator {
     if (t == null) {
       return null;
     }
+    if (!String.isBlank(t.Automation_Key__c)) {
+      return t.Automation_Key__c.trim();
+    }
+    // Legacy: older tasks stored key in Description as [KEY:...]
     if (!String.isBlank(t.Description) && t.Description.startsWith('[KEY:')) {
       Integer endIdx = t.Description.indexOf(']');
       if (endIdx > 5) {

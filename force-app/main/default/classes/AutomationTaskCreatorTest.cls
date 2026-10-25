@@ -80,7 +80,14 @@ private class AutomationTaskCreatorTest {
     Test.stopTest();
 
     Task created = [
-      SELECT OwnerId, Subject, WhatId, Status, Priority
+      SELECT
+        OwnerId,
+        Subject,
+        WhatId,
+        Status,
+        Priority,
+        Description,
+        Automation_Key__c
       FROM Task
       WHERE Id = :results[0].taskId
     ];
@@ -89,6 +96,8 @@ private class AutomationTaskCreatorTest {
     System.assertEquals(accountRecord.Id, created.WhatId);
     System.assertEquals('Not Started', created.Status);
     System.assertEquals('Normal', created.Priority);
+    System.assertEquals('Follow up', created.Description);
+    System.assertEquals(request.subject, created.Automation_Key__c);
   }
 
   @IsTest
@@ -151,10 +160,15 @@ private class AutomationTaskCreatorTest {
       ]
     );
     Task updated = [
-      SELECT ActivityDate
+      SELECT ActivityDate, Description, Automation_Key__c
       FROM Task
       WHERE Id = :secondResults[0].taskId
     ];
     System.assertEquals(Date.today().addDays(3), updated.ActivityDate);
+    System.assertEquals('CB_FOLLOW_UP_CALL', updated.Automation_Key__c);
+    System.assert(
+      updated.Description == null || !updated.Description.startsWith('[KEY:'),
+      'Description must not expose automation key'
+    );
   }
 }
