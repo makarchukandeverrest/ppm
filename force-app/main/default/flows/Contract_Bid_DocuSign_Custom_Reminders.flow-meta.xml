@@ -886,6 +886,45 @@
             <label>Continue</label>
         </rules>
     </decisions>
+    <decisions>
+        <name>Is_New_Envelope_Sent</name>
+        <label>Is New Envelope Sent</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Same Send</defaultConnectorLabel>
+        <rules>
+            <name>New_Send</name>
+            <conditionLogic>1 AND (2 OR 3)</conditionLogic>
+            <conditions>
+                <leftValueReference>$Record.dfsle__Sent__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference
+        >Get_Contract_Bid_Sent.Sent_Contract_Date__c</leftValueReference>
+                <operator>IsNull</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference>$Record.dfsle__Sent__c</leftValueReference>
+                <operator>NotEqualTo</operator>
+                <rightValue>
+                    <elementReference
+          >Get_Contract_Bid_Sent.Sent_Contract_Date__c</elementReference>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Reset_Follow_Up_Timers</targetReference>
+            </connector>
+            <label>New Send</label>
+        </rules>
+    </decisions>
+
     <description
   >Contract Bid DocuSign reminders: Day 0 sent email + reset timers; Day 7 Reminder 1; Day 14 Reminder 2; Day 21 RM call task (upsert). Stops when Viewed, Stop Sending Reminders, or envelope leaves Sent. Reminder 3 and visit removed.</description>
     <environments>Default</environments>
@@ -1603,7 +1642,7 @@
         <assignNullValuesIfNoRecordsFound
     >false</assignNullValuesIfNoRecordsFound>
         <connector>
-            <targetReference>Reset_Follow_Up_Timers</targetReference>
+            <targetReference>Is_New_Envelope_Sent</targetReference>
         </connector>
         <filterLogic>and</filterLogic>
         <filters>

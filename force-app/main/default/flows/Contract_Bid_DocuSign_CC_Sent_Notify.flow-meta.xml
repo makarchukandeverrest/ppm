@@ -209,7 +209,7 @@
                 </rightValue>
             </conditions>
             <connector>
-                <targetReference>Update_Contract_Bid</targetReference>
+                <targetReference>Get_CC_Recipients</targetReference>
             </connector>
             <label>Contract Bid Found</label>
         </rules>
@@ -489,30 +489,6 @@
         <queriedFields>Email</queriedFields>
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordLookups>
-    <recordUpdates>
-        <name>Update_Contract_Bid</name>
-        <label>Update Contract Bid</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <connector>
-            <targetReference>Get_CC_Recipients</targetReference>
-        </connector>
-        <filterLogic>and</filterLogic>
-        <filters>
-            <field>Id</field>
-            <operator>EqualTo</operator>
-            <value>
-                <elementReference>Get_Contract_Bid.Id</elementReference>
-            </value>
-        </filters>
-        <inputAssignments>
-            <field>Sent_Contract_Date__c</field>
-            <value>
-                <elementReference>Now_Date_TIME</elementReference>
-            </value>
-        </inputAssignments>
-        <object>Contract_Bid__c</object>
-    </recordUpdates>
     <start>
         <locationX>0</locationX>
         <locationY>0</locationY>
