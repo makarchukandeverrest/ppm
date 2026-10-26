@@ -1,235 +1,235 @@
 /* Mobile-first responsive styling for Customer Map component */
 
 .map-container {
-    min-height: 300px;
-    height: 400px;
-    width: 100%;
-    position: relative;
-    z-index: 1;
-    margin-bottom: 1rem;
+  min-height: 300px;
+  height: 400px;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+  margin-bottom: 1rem;
 }
 
 .map-layout {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    margin-bottom: 1rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .map-layout__details {
-    min-width: 0;
-    position: relative;
-    z-index: 2;
+  min-width: 0;
+  position: relative;
+  z-index: 2;
 }
 
 .details-actions {
-    display: flex;
-    justify-content: flex-end;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .map-header {
-    gap: 0.75rem;
+  gap: 0.75rem;
 }
 
 .map-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    color: #3e3e3c;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  color: #3e3e3c;
 }
 
 .legend-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
 }
 
 .legend-dot {
-    width: 0.75rem;
-    height: 0.75rem;
-    border-radius: 50%;
-    border: 1px solid #080707;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  border: 1px solid #080707;
 }
 
 .legend-dot_current {
-    background-color: #09A711;
+  background-color: #09a711;
 }
 
 .legend-dot_contract-sent {
-    background-color: #FCC003;
+  background-color: #fcc003;
 }
 
 .legend-dot_opportunity {
-    background-color: #1B96FF;
-    border-color: #032D60;
+  background-color: #1b96ff;
+  border-color: #032d60;
 }
 
 .legend-dot_closed-lost {
-    background-color: #EA001E;
+  background-color: #ea001e;
 }
 
 .legend-dot_active-bid {
-    background-color: #FF7A00;
+  background-color: #ff7a00;
 }
 
 .legend-dot_multi {
-    background-color: #032D60;
-    border-color: #FFFFFF;
+  background-color: #032d60;
+  border-color: #ffffff;
 }
 
 .customer-detail {
-    margin-top: 0;
+  margin-top: 0;
 }
 
 .customer-detail_placeholder {
-    border-style: dashed;
+  border-style: dashed;
 }
 
 .status-badge {
-    display: inline-block;
-    padding: 0.125rem 0.5rem;
-    border-radius: 0.25rem;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .status-badge_current {
-    background-color: #d9f0da;
-    color: #056764;
+  background-color: #d9f0da;
+  color: #056764;
 }
 
 .status-badge_contract-sent {
-    background-color: #fef3c8;
-    color: #8c6b00;
+  background-color: #fef3c8;
+  color: #8c6b00;
 }
 
 .status-badge_opportunity {
-    background-color: #d8e6fe;
-    color: #014486;
+  background-color: #d8e6fe;
+  color: #014486;
 }
 
 .status-badge_closed-lost {
-    background-color: #feded8;
-    color: #ba0517;
+  background-color: #feded8;
+  color: #ba0517;
 }
 
 .status-badge_active-bid {
-    background-color: #ffe6cc;
-    color: #8a4b00;
+  background-color: #ffe6cc;
+  color: #8a4b00;
 }
 
 .detail-list {
-    display: grid;
-    grid-template-columns: minmax(7rem, auto) 1fr;
-    gap: 0.5rem 1rem;
+  display: grid;
+  grid-template-columns: minmax(7rem, auto) 1fr;
+  gap: 0.5rem 1rem;
 }
 
 .detail-list__row {
-    display: contents;
+  display: contents;
 }
 
 .detail-list dt {
-    font-weight: 700;
-    color: #3e3e3c;
+  font-weight: 700;
+  color: #3e3e3c;
 }
 
 .detail-list dd {
-    margin: 0;
-    color: #080707;
+  margin: 0;
+  color: #080707;
 }
 
 .stage-flow {
-    display: inline-flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .stage-flow__current {
-    font-weight: 700;
-    color: #080707;
+  font-weight: 700;
+  color: #080707;
 }
 
 .stage-flow__arrow {
-    color: #706e6b;
-    font-size: 1.125rem;
-    line-height: 1;
+  color: #706e6b;
+  font-size: 1.125rem;
+  line-height: 1;
 }
 
 .stage-flow__next {
-    font-weight: 600;
-    color: #0176d3;
+  font-weight: 600;
+  color: #0176d3;
 }
 
 .location-customer-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .location-customer-list__item + .location-customer-list__item {
-    margin-top: 0.5rem;
+  margin-top: 0.5rem;
 }
 
 .location-customer-list__button {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    padding: 0.75rem;
-    border: 1px solid #dddbda;
-    border-radius: 0.25rem;
-    background: #ffffff;
-    cursor: pointer;
-    text-align: left;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #dddbda;
+  border-radius: 0.25rem;
+  background: #ffffff;
+  cursor: pointer;
+  text-align: left;
 }
 
 .location-customer-list__button:hover,
 .location-customer-list__button:focus {
-    background: #f3f3f3;
-    border-color: #0176d3;
+  background: #f3f3f3;
+  border-color: #0176d3;
 }
 
 .location-customer-list__name {
-    font-weight: 600;
-    color: #080707;
+  font-weight: 600;
+  color: #080707;
 }
 
 .location-customer-list__name-link {
-    flex: 1 1 auto;
+  flex: 1 1 auto;
 }
 
 .clear-button-container {
-    text-align: center;
+  text-align: center;
 }
 
 @media (max-width: 767px) {
-    .map-container {
-        min-height: 250px;
-        height: 300px;
-    }
+  .map-container {
+    min-height: 250px;
+    height: 300px;
+  }
 
-    lightning-button {
-        min-height: 44px;
-    }
+  lightning-button {
+    min-height: 44px;
+  }
 }
 
 @media (min-width: 768px) {
-    .map-container {
-        min-height: 400px;
-        height: 500px;
-    }
+  .map-container {
+    min-height: 400px;
+    height: 500px;
+  }
 
-    .clear-button-container {
-        text-align: right;
-    }
+  .clear-button-container {
+    text-align: right;
+  }
 }
 
 @media (min-width: 1024px) {
-    .map-container {
-        min-height: 500px;
-        height: 600px;
-    }
+  .map-container {
+    min-height: 500px;
+    height: 600px;
+  }
 }

@@ -82,7 +82,7 @@
         </div>
 
         <div class="mobile-map">
-          <template if:true={hasFilteredMarkers}>
+          <template if:true={shouldRenderMobileMap}>
             <lightning-map
               map-markers={filteredMapMarkers}
               markers-title="Customers"

@@ -35,16 +35,28 @@ const MARKER_COLOR_ACTIVE_BID = "#FF7A00";
 const MARKER_COLOR_MULTI = "#032D60";
 const IS_MOBILE = FORM_FACTOR === "Small";
 const MOBILE_MIN_SHELL_HEIGHT = 360;
+const MOBILE_MIN_MAP_HEIGHT = 200;
 const MOBILE_BOTTOM_GAP = 8;
+// iOS / Salesforce Mobile WKWebView needs longer than 50ms before Google Maps
+// measures a container that already has real pixels.
+const MOBILE_MAP_REMOUNT_DELAY_MS = 300;
+const MOBILE_MAP_HEIGHT_RECHECK_MS = 50;
 
 export default class CustomersMap extends NavigationMixin(LightningElement) {
   isMobile = IS_MOBILE;
   @track isFiltersOpen = false;
   @track isLandscapeMode = false;
+  // Delay first lightning-map mount until the pane has a real pixel height
+  // (avoids blank Google Maps on iOS / Salesforce Mobile WKWebView).
+  @track isMobileMapMounted = false;
   _restoreLandscapeAfterOverlay = false;
   _mobileResizeHandler;
   _mobileHeightInitialized = false;
-  _scrollDetailsPending = false;
+  _lastMobileMapHeightPx = 0;
+  _lastConfirmedMapHeightPx = 0;
+  _mobileHeightConfirmFrame;
+  _mobileHeightRecheckTimer;
+  _mobileMapRemountTimer;
 
   allCustomers = [];
   filteredCustomers = [];
@@ -105,6 +117,18 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
   }
 
   disconnectedCallback() {
+    if (this._mobileMapRemountTimer) {
+      clearTimeout(this._mobileMapRemountTimer);
+      this._mobileMapRemountTimer = null;
+    }
+    if (this._mobileHeightConfirmFrame) {
+      cancelAnimationFrame(this._mobileHeightConfirmFrame);
+      this._mobileHeightConfirmFrame = null;
+    }
+    if (this._mobileHeightRecheckTimer) {
+      clearTimeout(this._mobileHeightRecheckTimer);
+      this._mobileHeightRecheckTimer = null;
+    }
     if (!this._mobileResizeHandler) {
       return;
     }
@@ -118,14 +142,6 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
       // Cheap (one getBoundingClientRect); re-measure on every render so late
       // layout of the Salesforce mobile header is picked up.
       this.updateMobileShellHeight();
-    }
-
-    if (this._scrollDetailsPending) {
-      this._scrollDetailsPending = false;
-      const anchor = this.template.querySelector('[data-id="detailsAnchor"]');
-      if (anchor && typeof anchor.scrollIntoView === "function") {
-        anchor.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
     }
   }
 
@@ -143,6 +159,7 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
       if (shell.style.height) {
         shell.style.height = "";
       }
+      this.applyMobileMapPixelHeight();
       return;
     }
     const top = Math.max(shell.getBoundingClientRect().top, 0);
@@ -151,6 +168,131 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
     if (shell.style.height !== height) {
       shell.style.height = height;
     }
+    this.applyMobileMapPixelHeight();
+  }
+
+  /**
+   * Give lightning-map an explicit px height and mount only after layout is
+   * known. Google Maps (inside lightning-map) often paints white on iOS when
+   * it first measures a %/absolute container with no resolved pixels.
+   */
+  applyMobileMapPixelHeight() {
+    const mapPane = this.template.querySelector(".mobile-map");
+    if (!mapPane) {
+      return;
+    }
+
+    const heightPx = Math.floor(mapPane.getBoundingClientRect().height);
+    if (heightPx >= MOBILE_MIN_MAP_HEIGHT) {
+      this.writeMobileMapPixelHeight(heightPx);
+    }
+
+    // This box was already confirmed after paint. Mount if markers arrived later.
+    if (
+      heightPx >= MOBILE_MIN_MAP_HEIGHT &&
+      heightPx === this._lastConfirmedMapHeightPx
+    ) {
+      this.mountMobileMapIfReady();
+      return;
+    }
+
+    this.confirmMobileMapPixelHeight();
+  }
+
+  writeMobileMapPixelHeight(heightPx) {
+    this._lastMobileMapHeightPx = heightPx;
+    const heightStyle = `${heightPx}px`;
+    const map = this.template.querySelector("lightning-map");
+    if (map) {
+      if (map.style.height !== heightStyle) {
+        map.style.height = heightStyle;
+        map.style.minHeight = heightStyle;
+      }
+      map.style.width = "100%";
+    }
+  }
+
+  mountMobileMapIfReady() {
+    if (!this.hasFilteredMarkers || !this.showMapView) {
+      return;
+    }
+    // Mount only once the pane has a real pixel box (Google Maps init size).
+    if (!this.isMobileMapMounted) {
+      this.isMobileMapMounted = true;
+      this._mobileHeightInitialized = true;
+    }
+  }
+
+  /**
+   * Re-read the pane after paint. iOS can report a height before the
+   * container has actually received those pixels.
+   */
+  confirmMobileMapPixelHeight() {
+    if (this._mobileHeightConfirmFrame || this._mobileHeightRecheckTimer) {
+      return;
+    }
+    // eslint-disable-next-line @lwc/lwc/no-async-operation
+    this._mobileHeightConfirmFrame = requestAnimationFrame(() => {
+      this._mobileHeightConfirmFrame = null;
+      if (this.readAndConfirmMobileMapHeight()) {
+        return;
+      }
+      // eslint-disable-next-line @lwc/lwc/no-async-operation
+      this._mobileHeightRecheckTimer = setTimeout(() => {
+        this._mobileHeightRecheckTimer = null;
+        this.readAndConfirmMobileMapHeight();
+      }, MOBILE_MAP_HEIGHT_RECHECK_MS);
+    });
+  }
+
+  readAndConfirmMobileMapHeight() {
+    const mapPane = this.template.querySelector(".mobile-map");
+    if (!mapPane) {
+      return false;
+    }
+    const heightPx = Math.floor(mapPane.getBoundingClientRect().height);
+    if (heightPx < MOBILE_MIN_MAP_HEIGHT) {
+      return false;
+    }
+    this.writeMobileMapPixelHeight(heightPx);
+    this._lastConfirmedMapHeightPx = heightPx;
+    this.mountMobileMapIfReady();
+    return true;
+  }
+
+  /**
+   * Unmount and remount lightning-map after the next layout pass so Maps
+   * re-initializes with the current pixel size (landscape / back-to-map).
+   */
+  scheduleMobileMapRemount() {
+    if (!IS_MOBILE) {
+      return;
+    }
+    if (this._mobileMapRemountTimer) {
+      clearTimeout(this._mobileMapRemountTimer);
+    }
+    if (this._mobileHeightConfirmFrame) {
+      cancelAnimationFrame(this._mobileHeightConfirmFrame);
+      this._mobileHeightConfirmFrame = null;
+    }
+    if (this._mobileHeightRecheckTimer) {
+      clearTimeout(this._mobileHeightRecheckTimer);
+      this._mobileHeightRecheckTimer = null;
+    }
+    this.isMobileMapMounted = false;
+    this._lastMobileMapHeightPx = 0;
+    this._lastConfirmedMapHeightPx = 0;
+    // eslint-disable-next-line @lwc/lwc/no-async-operation
+    this._mobileMapRemountTimer = setTimeout(() => {
+      this._mobileMapRemountTimer = null;
+      // renderedCallback + applyMobileMapPixelHeight will mount when ready
+      this.updateMobileShellHeight();
+    }, MOBILE_MAP_REMOUNT_DELAY_MS);
+  }
+
+  get shouldRenderMobileMap() {
+    return this.hasFilteredMarkers;
+    // временно убрали && this.isMobileMapMounted для диагностики
   }
 
   toggleFilters() {
@@ -166,6 +308,8 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
     this.isLandscapeMode = !this.isLandscapeMode;
     // Manual toggle cancels any pending auto-restore
     this._restoreLandscapeAfterOverlay = false;
+    // Shell size changes; remount so Maps picks up the new pixel box
+    this.scheduleMobileMapRemount();
   }
 
   /**
@@ -234,6 +378,8 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
   closeFilters() {
     this.isFiltersOpen = false;
     this.maybeRestoreLandscape();
+    // Map shell was torn down while filters were open — remount with fresh px height
+    this.scheduleMobileMapRemount();
   }
 
   get activeFilterCount() {
@@ -334,6 +480,7 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
       this.updateFilteredMapMarkers(this.filteredCustomers);
     } else if (error) {
       // Show error in UI (wire errors are otherwise invisible)
+      // eslint-disable-next-line no-console
       console.error("Error loading customers:", error);
       this.loadErrorMessage =
         this.normalizeErrorMessage(error) || "Error loading customers.";
@@ -551,6 +698,8 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
     this.selectedMarkerValue = "";
     this.clearLocationSelection();
     this.maybeRestoreLandscape();
+    // Details view replaced the map shell — remount with fresh px height
+    this.scheduleMobileMapRemount();
   }
 
   get hasAnySelection() {
@@ -1148,11 +1297,17 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
   }
 
   scrollToDetails() {
-    // Mobile uses a full-page details view; desktop scrolls after the next render.
+    // Mobile uses a full-page details view; desktop scrolls to the side panel.
     if (IS_MOBILE) {
       return;
     }
-    this._scrollDetailsPending = true;
+    // eslint-disable-next-line @lwc/lwc/no-async-operation
+    requestAnimationFrame(() => {
+      const anchor = this.template.querySelector('[data-id="detailsAnchor"]');
+      if (anchor && typeof anchor.scrollIntoView === "function") {
+        anchor.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
   }
 
   navigateToAccount(recordId) {
