@@ -69,8 +69,6 @@ public with sharing class MapCustomersController {
     @AuraEnabled
     public String managementCompanyName;
     @AuraEnabled
-    public String contractBidLabel; // multi-select picklist raw value
-    @AuraEnabled
     public String contractBidColoredLabels; // formula HTML from Colored_Labels__c
     @AuraEnabled
     public String contractBidDescription; // using Additional_Comments__c for notes
@@ -135,7 +133,6 @@ public with sharing class MapCustomersController {
       row.managementCompanyName = (bid.Management_Company__r != null)
         ? bid.Management_Company__r.Name
         : null;
-      row.contractBidLabel = bid.Label__c;
       row.contractBidColoredLabels = bid.Colored_Labels__c;
       row.contractBidDescription = bid.Additional_Comments__c;
     }
@@ -305,7 +302,6 @@ public with sharing class MapCustomersController {
         Recent_Contract_Bid__r.Total__c,
         Recent_Contract_Bid__r.Management_Company__c,
         Recent_Contract_Bid__r.Management_Company__r.Name,
-        Recent_Contract_Bid__r.Label__c,
         Recent_Contract_Bid__r.Colored_Labels__c,
         Recent_Contract_Bid__r.Additional_Comments__c
       FROM Account
@@ -319,71 +315,6 @@ public with sharing class MapCustomersController {
     List<CustomerMapRow> rows = new List<CustomerMapRow>();
     for (Account a : accounts) {
       rows.add(toRow(a, a.Recent_Contract_Bid__r));
-    }
-    populateHasCurrentYearBid(rows);
-    populateLatestActivity(rows);
-    return rows;
-  }
-
-  @AuraEnabled(cacheable=true)
-  public static List<CustomerMapRow> getCustomersWithLatestContractBid() {
-    List<Account> accounts = [
-      SELECT
-        Id,
-        Name,
-        BillingStreet,
-        BillingCity,
-        BillingState,
-        BillingPostalCode,
-        BillingCountry,
-        BillingLatitude,
-        BillingLongitude,
-        Map_Latitude__c,
-        Map_Longitude__c,
-        Contract_Periods__c,
-        County__c,
-        Regional_Manager__r.Name,
-        Email__c,
-        Current_Customer__c,
-        Contract_End_Date__c,
-        Primary_Contact__c,
-        Primary_Contact__r.Name,
-        Primary_Contact__r.Phone,
-        Primary_Contact__r.Email,
-        (
-          SELECT
-            Id,
-            Name,
-            Stage__c,
-            Contract_Start_Date__c,
-            Contract_End_Date__c,
-            Due_Date__c,
-            Contract_Year__c,
-            Total__c,
-            Management_Company__c,
-            Management_Company__r.Name,
-            Label__c,
-            Colored_Labels__c,
-            Additional_Comments__c
-          FROM Contract_Bids__r
-          ORDER BY Contract_Start_Date__c DESC NULLS LAST, CreatedDate DESC
-          LIMIT 1
-        )
-      FROM Account
-      WHERE
-        BillingPostalCode != NULL
-        OR (BillingLatitude != NULL
-        AND BillingLongitude != NULL)
-      ORDER BY Name ASC
-    ];
-
-    List<CustomerMapRow> rows = new List<CustomerMapRow>();
-    for (Account a : accounts) {
-      Contract_Bid__c latestBid = (a.Contract_Bids__r != null &&
-        !a.Contract_Bids__r.isEmpty())
-        ? a.Contract_Bids__r[0]
-        : null;
-      rows.add(toRow(a, latestBid));
     }
     populateHasCurrentYearBid(rows);
     populateLatestActivity(rows);
