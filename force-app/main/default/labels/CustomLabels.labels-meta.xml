@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
     <labels>
         <fullName>Docusign_Automation_Template_Name</fullName>
@@ -8,20 +8,13 @@
         <value>Estimate Template</value>
     </labels>
     <labels>
-        <fullName>Signed_Contract_Email_Subject</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Subject for signed contract copy email</shortDescription>
-        <value>Signed Contract: {0}</value>
-    </labels>
-    <labels>
         <fullName>Signed_Contract_Email_Body</fullName>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Body for signed contract copy email</shortDescription>
         <value>Hello,
 
-The signed DocuSign contract for "{0}" is attached.
+The signed DocuSign contract for &quot;{0}&quot; is attached.
 
 Customer: {1}
 Document: {2}
@@ -29,11 +22,12 @@ Document: {2}
 This email was sent automatically when the completed contract was received from DocuSign.</value>
     </labels>
     <labels>
-        <fullName>Signed_Proposal_Email_Subject</fullName>
+        <fullName>Signed_Contract_Email_Subject</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Subject for signed proposal copy email</shortDescription>
-        <value>Signed Proposal: {0}</value>
+        <shortDescription
+    >Subject for signed contract copy email</shortDescription>
+        <value>Signed Contract: {0}</value>
     </labels>
     <labels>
         <fullName>Signed_Proposal_Email_Body</fullName>
@@ -42,11 +36,26 @@ This email was sent automatically when the completed contract was received from 
         <shortDescription>Body for signed proposal copy email</shortDescription>
         <value>Hello,
 
-The signed DocuSign proposal for "{0}" is attached.
+The signed DocuSign proposal for &quot;{0}&quot; is attached.
 
 Customer: {1}
 Document: {2}
 
 This email was sent automatically when the completed proposal was received from DocuSign.</value>
+    </labels>
+    <labels>
+        <fullName>Signed_Proposal_Email_Subject</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Subject for signed proposal copy email</shortDescription>
+        <value>Signed Proposal: {0}</value>
+    </labels>
+    <labels>
+        <fullName>MapTiler_Api_Key</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>MapTiler key for the customer map</shortDescription>
+        <value>DOuDMObAFIxUxt9msNF7</value>
     </labels>
 </CustomLabels>
