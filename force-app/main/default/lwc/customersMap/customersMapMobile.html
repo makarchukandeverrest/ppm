@@ -82,20 +82,16 @@
         </div>
 
         <div class="mobile-map">
-          <template if:true={shouldRenderMobileMap}>
-            <lightning-map
-              map-markers={filteredMapMarkers}
-              markers-title="Customers"
-              onmarkerselect={handleMarkerSelect}
-              selected-marker-value={selectedMarkerValue}
-              list-view="hidden"
-              zoom-level={zoomLevel}
-              center={center}
-              options={mapOptions}
-            >
-            </lightning-map>
+          <template if:true={hasMapCandidates}>
+            <div class="map-root" lwc:dom="manual"></div>
+            <template if:true={locatingMessage}>
+              <p class="mobile-locating">{locatingMessage}</p>
+            </template>
+            <template if:true={mapError}>
+              <p class="mobile-locating mobile-locating_error">{mapError}</p>
+            </template>
           </template>
-          <template if:false={hasFilteredMarkers}>
+          <template if:false={hasMapCandidates}>
             <div class="mobile-empty">
               <lightning-icon
                 icon-name="utility:location"

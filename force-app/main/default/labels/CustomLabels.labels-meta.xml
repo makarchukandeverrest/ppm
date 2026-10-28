@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
     <labels>
         <fullName>Docusign_Automation_Template_Name</fullName>
@@ -11,7 +11,8 @@
         <fullName>Signed_Contract_Email_Subject</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Subject for signed contract copy email</shortDescription>
+        <shortDescription
+    >Subject for signed contract copy email</shortDescription>
         <value>Signed Contract: {0}</value>
     </labels>
     <labels>
@@ -32,7 +33,8 @@ This email was sent automatically when the completed contract was received from 
         <fullName>Signed_Proposal_Email_Subject</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>Subject for signed proposal copy email</shortDescription>
+        <shortDescription
+    >Subject for signed proposal copy email</shortDescription>
         <value>Signed Proposal: {0}</value>
     </labels>
     <labels>
@@ -48,5 +50,12 @@ Customer: {1}
 Document: {2}
 
 This email was sent automatically when the completed proposal was received from DocuSign.</value>
+    </labels>
+    <labels>
+        <fullName>MapTiler_Api_Key</fullName>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>MapTiler key for the customer map</shortDescription>
+        <value>DOuDMObAFIxUxt9msNF7</value>
     </labels>
 </CustomLabels>

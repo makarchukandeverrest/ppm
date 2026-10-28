@@ -2,9 +2,13 @@ import { LightningElement, wire, track } from "lwc";
 import { NavigationMixin } from "lightning/navigation";
 import { getPicklistValues, getObjectInfo } from "lightning/uiObjectInfoApi";
 import FORM_FACTOR from "@salesforce/client/formFactor";
+import { loadScript, loadStyle } from "lightning/platformResourceLoader";
+import LEAFLET from "@salesforce/resourceUrl/leaflet";
+import MAPTILER_API_KEY from "@salesforce/label/c.MapTiler_Api_Key";
 import desktopTemplate from "./customersMap.html";
 import mobileTemplate from "./customersMapMobile.html";
 import getCustomers from "@salesforce/apex/MapCustomersController.getCustomers";
+import saveMapCoordinates from "@salesforce/apex/MapCustomersController.saveMapCoordinates";
 import ACCOUNT_OBJECT from "@salesforce/schema/Account";
 import CONTRACT_BID_OBJECT from "@salesforce/schema/Contract_Bid__c";
 import CONTRACT_PERIODS_FIELD from "@salesforce/schema/Account.Contract_Periods__c";
@@ -35,28 +39,34 @@ const MARKER_COLOR_ACTIVE_BID = "#FF7A00";
 const MARKER_COLOR_MULTI = "#032D60";
 const IS_MOBILE = FORM_FACTOR === "Small";
 const MOBILE_MIN_SHELL_HEIGHT = 360;
-const MOBILE_MIN_MAP_HEIGHT = 200;
 const MOBILE_BOTTOM_GAP = 8;
-// iOS / Salesforce Mobile WKWebView needs longer than 50ms before Google Maps
-// measures a container that already has real pixels.
-const MOBILE_MAP_REMOUNT_DELAY_MS = 300;
-const MOBILE_MAP_HEIGHT_RECHECK_MS = 50;
+const MAP_TILE_URL =
+  "https://api.maptiler.com/maps/streets-v2/256/{z}/{x}/{y}.png?key=";
+const MAP_ATTRIBUTION =
+  '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+const GEOCODE_CACHE_KEY = "ppmCustomersMapGeocodes";
+const GEOCODE_MAX_BATCH = 8;
+const GEOCODE_MAX_PATH = 1400;
+const DEFAULT_MAP_CENTER = [39.8283, -98.5795];
+const DEFAULT_MAP_ZOOM = 4;
 
 export default class CustomersMap extends NavigationMixin(LightningElement) {
   isMobile = IS_MOBILE;
   @track isFiltersOpen = false;
   @track isLandscapeMode = false;
-  // Delay first lightning-map mount until the pane has a real pixel height
-  // (avoids blank Google Maps on iOS / Salesforce Mobile WKWebView).
-  @track isMobileMapMounted = false;
+  locatingMessage = "";
+  mapError = "";
   _restoreLandscapeAfterOverlay = false;
-  _mobileResizeHandler;
-  _mobileHeightInitialized = false;
-  _lastMobileMapHeightPx = 0;
-  _lastConfirmedMapHeightPx = 0;
-  _mobileHeightConfirmFrame;
-  _mobileHeightRecheckTimer;
-  _mobileMapRemountTimer;
+  _map;
+  _markerLayer;
+  _leafletLoading = false;
+  _leafletReady = false;
+  _leafletFailed = false;
+  _markerSignature = "";
+  _geocodeCache = {};
+  _geocodeRunning = false;
+  _geocodeDone = false;
+  _onResize;
 
   allCustomers = [];
   filteredCustomers = [];
@@ -89,60 +99,51 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
   contractBidRecordTypeId;
   stageOrder = [];
 
-  mapOptions = IS_MOBILE
-    ? {
-        // Pinch-to-zoom covers zooming on touch devices; hide Google's desktop controls
-        disableDefaultUI: true,
-        zoomControl: false,
-        draggable: true,
-        scrollwheel: true
-      }
-    : {
-        disableDefaultUI: false,
-        draggable: true,
-        scrollwheel: true
-      };
-
   render() {
     return IS_MOBILE ? mobileTemplate : desktopTemplate;
   }
 
   connectedCallback() {
-    if (!IS_MOBILE) {
-      return;
-    }
-    this._mobileResizeHandler = () => this.updateMobileShellHeight();
-    window.addEventListener("resize", this._mobileResizeHandler);
-    window.addEventListener("orientationchange", this._mobileResizeHandler);
+    this._geocodeCache = this.readGeocodeCache();
+    this._onResize = () => {
+      if (IS_MOBILE) {
+        this.updateMobileShellHeight();
+      }
+      this.refreshMapSize();
+    };
+    window.addEventListener("resize", this._onResize);
+    window.addEventListener("orientationchange", this._onResize);
   }
 
   disconnectedCallback() {
-    if (this._mobileMapRemountTimer) {
-      clearTimeout(this._mobileMapRemountTimer);
-      this._mobileMapRemountTimer = null;
+    if (this._onResize) {
+      window.removeEventListener("resize", this._onResize);
+      window.removeEventListener("orientationchange", this._onResize);
+      this._onResize = null;
     }
-    if (this._mobileHeightConfirmFrame) {
-      cancelAnimationFrame(this._mobileHeightConfirmFrame);
-      this._mobileHeightConfirmFrame = null;
-    }
-    if (this._mobileHeightRecheckTimer) {
-      clearTimeout(this._mobileHeightRecheckTimer);
-      this._mobileHeightRecheckTimer = null;
-    }
-    if (!this._mobileResizeHandler) {
-      return;
-    }
-    window.removeEventListener("resize", this._mobileResizeHandler);
-    window.removeEventListener("orientationchange", this._mobileResizeHandler);
-    this._mobileResizeHandler = null;
+    this.destroyMap();
   }
 
   renderedCallback() {
     if (IS_MOBILE) {
-      // Cheap (one getBoundingClientRect); re-measure on every render so late
-      // layout of the Salesforce mobile header is picked up.
       this.updateMobileShellHeight();
     }
+    const mapInDom = !IS_MOBILE || this.showMapView;
+    if (!mapInDom || !this.hasMapCandidates) {
+      this.destroyMap();
+      return;
+    }
+    if (this._leafletFailed) {
+      return;
+    }
+    if (!this._leafletReady) {
+      if (!this._leafletLoading) {
+        this.loadLeaflet();
+      }
+      return;
+    }
+    this.ensureMap();
+    this.renderMarkers();
   }
 
   /**
@@ -159,7 +160,7 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
       if (shell.style.height) {
         shell.style.height = "";
       }
-      this.applyMobileMapPixelHeight();
+      this.refreshMapSize();
       return;
     }
     const top = Math.max(shell.getBoundingClientRect().top, 0);
@@ -168,131 +169,182 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
     if (shell.style.height !== height) {
       shell.style.height = height;
     }
-    this.applyMobileMapPixelHeight();
+    this.refreshMapSize();
   }
 
-  /**
-   * Give lightning-map an explicit px height and mount only after layout is
-   * known. Google Maps (inside lightning-map) often paints white on iOS when
-   * it first measures a %/absolute container with no resolved pixels.
-   */
-  applyMobileMapPixelHeight() {
-    const mapPane = this.template.querySelector(".mobile-map");
-    if (!mapPane) {
+  loadLeaflet() {
+    this._leafletLoading = true;
+    Promise.all([
+      loadScript(this, LEAFLET + "/leaflet.js"),
+      loadStyle(this, LEAFLET + "/leaflet.css")
+    ])
+      .then(() => {
+        this._leafletReady = true;
+        this._leafletLoading = false;
+        this.ensureMap();
+        this.renderMarkers();
+      })
+      .catch((error) => {
+        this._leafletLoading = false;
+        this._leafletFailed = true;
+        this.mapError = error?.message || "Map failed to load.";
+      });
+  }
+
+  ensureMap() {
+    if (this._map || !window.L) {
+      return;
+    }
+    const root = this.template.querySelector(".map-root");
+    if (!root) {
       return;
     }
 
-    const heightPx = Math.floor(mapPane.getBoundingClientRect().height);
-    if (heightPx >= MOBILE_MIN_MAP_HEIGHT) {
-      this.writeMobileMapPixelHeight(heightPx);
-    }
-
-    // This box was already confirmed after paint. Mount if markers arrived later.
-    if (
-      heightPx >= MOBILE_MIN_MAP_HEIGHT &&
-      heightPx === this._lastConfirmedMapHeightPx
-    ) {
-      this.mountMobileMapIfReady();
-      return;
-    }
-
-    this.confirmMobileMapPixelHeight();
-  }
-
-  writeMobileMapPixelHeight(heightPx) {
-    this._lastMobileMapHeightPx = heightPx;
-    const heightStyle = `${heightPx}px`;
-    const map = this.template.querySelector("lightning-map");
-    if (map) {
-      if (map.style.height !== heightStyle) {
-        map.style.height = heightStyle;
-        map.style.minHeight = heightStyle;
-      }
-      map.style.width = "100%";
-    }
-  }
-
-  mountMobileMapIfReady() {
-    if (!this.hasFilteredMarkers || !this.showMapView) {
-      return;
-    }
-    // Mount only once the pane has a real pixel box (Google Maps init size).
-    if (!this.isMobileMapMounted) {
-      this.isMobileMapMounted = true;
-      this._mobileHeightInitialized = true;
-    }
-  }
-
-  /**
-   * Re-read the pane after paint. iOS can report a height before the
-   * container has actually received those pixels.
-   */
-  confirmMobileMapPixelHeight() {
-    if (this._mobileHeightConfirmFrame || this._mobileHeightRecheckTimer) {
-      return;
-    }
-    // eslint-disable-next-line @lwc/lwc/no-async-operation
-    this._mobileHeightConfirmFrame = requestAnimationFrame(() => {
-      this._mobileHeightConfirmFrame = null;
-      if (this.readAndConfirmMobileMapHeight()) {
+    const map = window.L.map(root, {
+      zoomControl: !IS_MOBILE,
+      attributionControl: true
+    }).setView(DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM);
+    window.L.tileLayer(MAP_TILE_URL + MAPTILER_API_KEY, {
+      attribution: MAP_ATTRIBUTION,
+      maxZoom: 20,
+      tileSize: 256
+    }).addTo(map);
+    this._map = map;
+    this._markerLayer = window.L.featureGroup().addTo(map);
+    map.on("moveend", () => {
+      if (this._ignoreMove) {
         return;
       }
-      // eslint-disable-next-line @lwc/lwc/no-async-operation
-      this._mobileHeightRecheckTimer = setTimeout(() => {
-        this._mobileHeightRecheckTimer = null;
-        this.readAndConfirmMobileMapHeight();
-      }, MOBILE_MAP_HEIGHT_RECHECK_MS);
+      this.rememberMapView();
+    });
+    this.refreshMapSize();
+  }
+
+  rememberMapView() {
+    if (!this._map) {
+      return;
+    }
+    const center = this._map.getCenter();
+    if (!center) {
+      return;
+    }
+    this._savedView = {
+      lat: center.lat,
+      lng: center.lng,
+      zoom: this._map.getZoom()
+    };
+  }
+
+  applySavedView() {
+    if (!this._map || !this._savedView) {
+      return;
+    }
+    this._ignoreMove = true;
+    this._map.setView(
+      [this._savedView.lat, this._savedView.lng],
+      this._savedView.zoom,
+      {
+        animate: false
+      }
+    );
+    this._ignoreMove = false;
+  }
+
+  destroyMap() {
+    if (this._map) {
+      this.rememberMapView();
+      this._map.remove();
+    }
+    this._map = null;
+    this._markerLayer = null;
+    this._markerSignature = "";
+  }
+
+  renderMarkers() {
+    if (!this._map || !this._markerLayer) {
+      return;
+    }
+
+    const markers = this.filteredMapMarkers || [];
+    const signature = markers
+      .map((marker) => `${marker.value}:${marker.mapIcon?.fillColor}`)
+      .join("|");
+    if (signature === this._markerSignature) {
+      return;
+    }
+
+    this._markerSignature = signature;
+    this._markerLayer.clearLayers();
+    markers.forEach((pin) => {
+      const latitude = pin.location?.Latitude;
+      const longitude = pin.location?.Longitude;
+      if (latitude == null || longitude == null) {
+        return;
+      }
+      const marker = window.L.marker([latitude, longitude], {
+        icon: this.createPinIcon(pin.mapIcon),
+        title: pin.title
+      });
+      marker.on("click", () => this.selectMarker(pin.value));
+      marker.addTo(this._markerLayer);
+    });
+    if (this._savedView) {
+      this.applySavedView();
+      this._restoreAfterSize = true;
+    } else {
+      this.fitMapToMarkers();
+    }
+    this.refreshMapSize();
+  }
+
+  createPinIcon(mapIcon) {
+    const scale = mapIcon?.scale || 1;
+    const width = Math.round(24 * scale);
+    const height = Math.round(36 * scale);
+    const fill = mapIcon?.fillColor || MARKER_COLOR_ACTIVE_BID;
+    const stroke = mapIcon?.strokeColor || "#FFFFFF";
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="-12 -34 24 36"><path d="${MAP_MARKER_PATH}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/></svg>`;
+    return window.L.divIcon({
+      className: "customer-pin",
+      html: svg,
+      iconSize: [width, height],
+      iconAnchor: [Math.round(width / 2), Math.round((height * 34) / 36)]
     });
   }
 
-  readAndConfirmMobileMapHeight() {
-    const mapPane = this.template.querySelector(".mobile-map");
-    if (!mapPane) {
-      return false;
-    }
-    const heightPx = Math.floor(mapPane.getBoundingClientRect().height);
-    if (heightPx < MOBILE_MIN_MAP_HEIGHT) {
-      return false;
-    }
-    this.writeMobileMapPixelHeight(heightPx);
-    this._lastConfirmedMapHeightPx = heightPx;
-    this.mountMobileMapIfReady();
-    return true;
-  }
-
-  /**
-   * Unmount and remount lightning-map after the next layout pass so Maps
-   * re-initializes with the current pixel size (landscape / back-to-map).
-   */
-  scheduleMobileMapRemount() {
-    if (!IS_MOBILE) {
+  fitMapToMarkers() {
+    if (
+      !this._map ||
+      !this._markerLayer ||
+      !this._markerLayer.getLayers().length
+    ) {
       return;
     }
-    if (this._mobileMapRemountTimer) {
-      clearTimeout(this._mobileMapRemountTimer);
-    }
-    if (this._mobileHeightConfirmFrame) {
-      cancelAnimationFrame(this._mobileHeightConfirmFrame);
-      this._mobileHeightConfirmFrame = null;
-    }
-    if (this._mobileHeightRecheckTimer) {
-      clearTimeout(this._mobileHeightRecheckTimer);
-      this._mobileHeightRecheckTimer = null;
-    }
-    this.isMobileMapMounted = false;
-    this._lastMobileMapHeightPx = 0;
-    this._lastConfirmedMapHeightPx = 0;
-    // eslint-disable-next-line @lwc/lwc/no-async-operation
-    this._mobileMapRemountTimer = setTimeout(() => {
-      this._mobileMapRemountTimer = null;
-      // renderedCallback + applyMobileMapPixelHeight will mount when ready
-      this.updateMobileShellHeight();
-    }, MOBILE_MAP_REMOUNT_DELAY_MS);
+    this._ignoreMove = true;
+    this._map.fitBounds(this._markerLayer.getBounds().pad(0.15), {
+      animate: false,
+      maxZoom: 15,
+      padding: [24, 24]
+    });
+    this._ignoreMove = false;
   }
 
-  get shouldRenderMobileMap() {
-    return this.hasFilteredMarkers;
-    // временно убрали && this.isMobileMapMounted для диагностики
+  refreshMapSize() {
+    if (!this._map) {
+      return;
+    }
+    this._map.invalidateSize();
+    // eslint-disable-next-line @lwc/lwc/no-async-operation
+    window.setTimeout(() => {
+      if (!this._map) {
+        return;
+      }
+      this._map.invalidateSize();
+      if (this._restoreAfterSize && this._savedView) {
+        this.applySavedView();
+        this._restoreAfterSize = false;
+      }
+    }, 250);
   }
 
   toggleFilters() {
@@ -308,8 +360,7 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
     this.isLandscapeMode = !this.isLandscapeMode;
     // Manual toggle cancels any pending auto-restore
     this._restoreLandscapeAfterOverlay = false;
-    // Shell size changes; remount so Maps picks up the new pixel box
-    this.scheduleMobileMapRemount();
+    this.refreshMapSize();
   }
 
   /**
@@ -378,8 +429,6 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
   closeFilters() {
     this.isFiltersOpen = false;
     this.maybeRestoreLandscape();
-    // Map shell was torn down while filters were open — remount with fresh px height
-    this.scheduleMobileMapRemount();
   }
 
   get activeFilterCount() {
@@ -467,20 +516,10 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
       this.allCustomers = data;
       this.filteredCustomers = data;
       this.cardTitle = `Customer Locations (${data.length})`;
-
-      const firstMappableCustomer = data.find((customer) =>
-        this.getCustomerMapLocation(customer)
-      );
-      if (firstMappableCustomer) {
-        const location = this.getCustomerMapLocation(firstMappableCustomer);
-        this.center = { location };
-        this.defaultCenter = { location };
-      }
-
       this.updateFilteredMapMarkers(this.filteredCustomers);
+      this.scheduleGeocoding();
     } else if (error) {
       // Show error in UI (wire errors are otherwise invisible)
-      // eslint-disable-next-line no-console
       console.error("Error loading customers:", error);
       this.loadErrorMessage =
         this.normalizeErrorMessage(error) || "Error loading customers.";
@@ -625,8 +664,8 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
   }
 
   resetZoomToDefault() {
-    this.zoomLevel = this.defaultZoomLevel;
-    this.center = { ...this.defaultCenter };
+    this._savedView = null;
+    this.fitMapToMarkers();
   }
 
   filterCustomers() {
@@ -698,8 +737,6 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
     this.selectedMarkerValue = "";
     this.clearLocationSelection();
     this.maybeRestoreLandscape();
-    // Details view replaced the map shell — remount with fresh px height
-    this.scheduleMobileMapRemount();
   }
 
   get hasAnySelection() {
@@ -934,43 +971,8 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
       : "Address not available";
   }
 
-  hasCoordinates(customer) {
-    return (
-      customer.billingLatitude != null && customer.billingLongitude != null
-    );
-  }
-
-  hasPostalCode(customer) {
-    return Boolean(customer.billingPostalCode);
-  }
-
   getCustomerMapLocation(customer) {
-    if (this.hasCoordinates(customer)) {
-      return {
-        Latitude: customer.billingLatitude,
-        Longitude: customer.billingLongitude
-      };
-    }
-
-    if (
-      customer.billingStreet ||
-      customer.billingCity ||
-      customer.billingState
-    ) {
-      return {
-        Street: customer.billingStreet,
-        City: customer.billingCity,
-        State: customer.billingState,
-        PostalCode: customer.billingPostalCode,
-        Country: customer.billingCountry
-      };
-    }
-
-    if (this.hasPostalCode(customer)) {
-      return { PostalCode: customer.billingPostalCode };
-    }
-
-    return null;
+    return this.getResolvedCoordinates(customer);
   }
 
   getCustomerMapIcon(customer) {
@@ -1239,23 +1241,205 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
     return this.filteredMapMarkers && this.filteredMapMarkers.length > 0;
   }
 
-  zoomToCustomer(customer) {
-    const location = this.getCustomerMapLocation(customer);
-    if (!location) {
-      return;
-    }
-
-    this.zoomLevel = 15;
-    this.center = { location };
+  get hasMapCandidates() {
+    return (this.filteredCustomers || []).some(
+      (customer) =>
+        this.getResolvedCoordinates(customer) ||
+        this.buildGeocodeQuery(customer)
+    );
   }
 
-  handleMarkerSelect(event) {
+  getResolvedCoordinates(customer) {
+    const cached = this._geocodeCache?.[customer.accountId];
+    if (cached && cached.lat != null && cached.lng != null) {
+      return {
+        Latitude: Number(cached.lat),
+        Longitude: Number(cached.lng)
+      };
+    }
+    if (customer.billingLatitude != null && customer.billingLongitude != null) {
+      return {
+        Latitude: Number(customer.billingLatitude),
+        Longitude: Number(customer.billingLongitude)
+      };
+    }
+    return null;
+  }
+
+  buildGeocodeQuery(customer) {
+    return [
+      customer.billingStreet,
+      customer.billingCity,
+      customer.billingState,
+      customer.billingPostalCode,
+      customer.billingCountry
+    ]
+      .filter((part) => part)
+      .join(", ")
+      .replace(/;/g, " ")
+      .trim();
+  }
+
+  readGeocodeCache() {
     try {
-      if (!event.target?.selectedMarkerValue) {
+      const raw = window.sessionStorage.getItem(GEOCODE_CACHE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  }
+
+  writeGeocodeCache() {
+    try {
+      window.sessionStorage.setItem(
+        GEOCODE_CACHE_KEY,
+        JSON.stringify(this._geocodeCache)
+      );
+    } catch {
+      // The map still renders if the browser refuses to store the cache.
+    }
+  }
+
+  scheduleGeocoding() {
+    if (this._geocodeRunning || this._geocodeDone) {
+      return;
+    }
+    const pending = (this.allCustomers || []).filter(
+      (customer) =>
+        !this.getResolvedCoordinates(customer) &&
+        this.buildGeocodeQuery(customer)
+    );
+    if (!pending.length) {
+      this._geocodeDone = true;
+      return;
+    }
+    this._geocodeRunning = true;
+    this.geocodeCustomers(pending);
+  }
+
+  packGeocodeBatches(customers) {
+    const batches = [];
+    let batch = [];
+    let pathLength = 0;
+    customers.forEach((customer) => {
+      const encoded = encodeURIComponent(
+        this.buildGeocodeQuery(customer).slice(0, 160)
+      );
+      const nextLength = pathLength + encoded.length + (batch.length ? 1 : 0);
+      if (
+        batch.length &&
+        (batch.length >= GEOCODE_MAX_BATCH || nextLength > GEOCODE_MAX_PATH)
+      ) {
+        batches.push(batch);
+        batch = [];
+        pathLength = 0;
+      }
+      batch.push(customer);
+      pathLength += encoded.length + (batch.length > 1 ? 1 : 0);
+    });
+    if (batch.length) {
+      batches.push(batch);
+    }
+    return batches;
+  }
+
+  async geocodeCustomers(pending) {
+    const located = [];
+    let finished = 0;
+    const batches = this.packGeocodeBatches(pending);
+    try {
+      for (const batch of batches) {
+        // eslint-disable-next-line no-await-in-loop
+        const found = await this.geocodeBatch(batch);
+        found.forEach((item) => {
+          this._geocodeCache[item.accountId] = {
+            lat: item.latitude,
+            lng: item.longitude
+          };
+          located.push(item);
+        });
+        this.writeGeocodeCache();
+        finished += batch.length;
+        this.locatingMessage = `Locating addresses ${Math.min(finished, pending.length)} of ${pending.length}`;
+        this.updateFilteredMapMarkers(this.filteredCustomers);
+      }
+    } catch (error) {
+      this.mapError = error?.message || "Addresses could not be located.";
+    } finally {
+      this.locatingMessage = "";
+      this._geocodeRunning = false;
+      this._geocodeDone = true;
+    }
+    if (located.length) {
+      this.mapError = "";
+      this.saveResolvedCoordinates(located);
+    } else if (!this.hasFilteredMarkers) {
+      this.mapError = "Addresses could not be located.";
+    }
+  }
+
+  async geocodeBatch(customers) {
+    const path = customers
+      .map((customer) =>
+        encodeURIComponent(this.buildGeocodeQuery(customer).slice(0, 160))
+      )
+      .join(";");
+    const response = await fetch(
+      `https://api.maptiler.com/geocoding/${path}.json?key=${MAPTILER_API_KEY}&limit=1`
+    );
+    if (response.status === 414 && customers.length > 1) {
+      const middle = Math.ceil(customers.length / 2);
+      const left = await this.geocodeBatch(customers.slice(0, middle));
+      const right = await this.geocodeBatch(customers.slice(middle));
+      return left.concat(right);
+    }
+    if (!response.ok) {
+      console.error("Geocoding failed", response.status);
+      return [];
+    }
+    const payload = await response.json();
+    const collections = Array.isArray(payload) ? payload : [payload];
+    const found = [];
+    collections.forEach((collection, index) => {
+      const coordinates = collection?.features?.[0]?.geometry?.coordinates;
+      const customer = customers[index];
+      if (!customer || !coordinates || coordinates.length < 2) {
         return;
       }
+      found.push({
+        accountId: customer.accountId,
+        latitude: coordinates[1],
+        longitude: coordinates[0]
+      });
+    });
+    return found;
+  }
 
-      const markerValue = event.target.selectedMarkerValue;
+  async saveResolvedCoordinates(rows) {
+    for (let index = 0; index < rows.length; index += 200) {
+      const updates = rows.slice(index, index + 200);
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        await saveMapCoordinates({ updates });
+      } catch (error) {
+        console.error("Error saving map coordinates:", error);
+      }
+    }
+  }
+
+  zoomToCustomer(customer) {
+    const location = this.getCustomerMapLocation(customer);
+    if (!this._map || !location) {
+      return;
+    }
+    this._map.setView([location.Latitude, location.Longitude], 15);
+  }
+
+  selectMarker(markerValue) {
+    if (!markerValue) {
+      return;
+    }
+    try {
       this.selectedMarkerValue = markerValue;
       this.suspendLandscapeForOverlay();
 
@@ -1266,9 +1450,8 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
         this.selectedCustomerDetails = customers.map((customer) =>
           this.buildCustomerDetailView(customer)
         );
-
         const firstCustomer = customers[0];
-        if (firstCustomer) {
+        if (firstCustomer && !IS_MOBILE) {
           this.zoomToCustomer(firstCustomer);
         }
         this.scrollToDetails();
@@ -1276,19 +1459,22 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
       }
 
       this.clearLocationSelection();
-
       const selectedCustomer = this.allCustomers.find(
         (customer) => customer.accountId === markerValue
       );
-      if (selectedCustomer) {
+      if (selectedCustomer && !IS_MOBILE) {
         this.selectedCustomerDetails = [
           this.buildCustomerDetailView(selectedCustomer)
         ];
         this.zoomToCustomer(selectedCustomer);
+      } else if (selectedCustomer) {
+        this.selectedCustomerDetails = [
+          this.buildCustomerDetailView(selectedCustomer)
+        ];
       }
       this.scrollToDetails();
     } catch (error) {
-      console.error("Error in handleMarkerSelect:", error);
+      console.error("Error in selectMarker:", error);
     }
   }
 
