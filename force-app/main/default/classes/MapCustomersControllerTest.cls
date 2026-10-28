@@ -255,6 +255,74 @@ private class MapCustomersControllerTest {
     }
   }
 
+  @IsTest
+  static void testSaveMapCoordinatesAndLatestActivity() {
+    Account saved = new Account(
+      Name = 'Map Coordinate Customer',
+      BillingPostalCode = '21201',
+      BillingCity = 'Baltimore',
+      BillingState = 'MD'
+    );
+    Account fallback = new Account(
+      Name = 'Fallback Coordinate Customer',
+      BillingPostalCode = '21202',
+      Map_Latitude__c = 39.2904000,
+      Map_Longitude__c = -76.6122000
+    );
+    insert new List<Account>{ saved, fallback };
+
+    MapCustomersController.saveMapCoordinates(null);
+    MapCustomersController.saveMapCoordinates(
+      new List<MapCustomersController.MapCoordinate>()
+    );
+
+    MapCustomersController.MapCoordinate missing = new MapCustomersController.MapCoordinate();
+    MapCustomersController.MapCoordinate valid = new MapCustomersController.MapCoordinate();
+    valid.accountId = saved.Id;
+    valid.latitude = 39.2904000;
+    valid.longitude = -76.6122000;
+    MapCustomersController.saveMapCoordinates(
+      new List<MapCustomersController.MapCoordinate>{ null, missing, valid }
+    );
+
+    saved = [
+      SELECT Map_Latitude__c, Map_Longitude__c
+      FROM Account
+      WHERE Id = :saved.Id
+    ];
+    System.assertEquals(39.2904000, saved.Map_Latitude__c);
+    System.assertEquals(-76.6122000, saved.Map_Longitude__c);
+
+    insert new Task(
+      WhatId = saved.Id,
+      Subject = 'Older visit',
+      ActivityDate = Date.today().addDays(-1)
+    );
+    insert new Event(
+      WhatId = saved.Id,
+      Subject = 'Latest visit',
+      StartDateTime = System.now(),
+      EndDateTime = System.now().addHours(1)
+    );
+    insert new Task(WhatId = fallback.Id, Subject = 'Task only');
+
+    Test.startTest();
+    List<MapCustomersController.CustomerMapRow> results = MapCustomersController.getCustomers();
+    Test.stopTest();
+
+    Map<Id, MapCustomersController.CustomerMapRow> byId = new Map<Id, MapCustomersController.CustomerMapRow>();
+    for (MapCustomersController.CustomerMapRow row : results) {
+      byId.put(row.accountId, row);
+    }
+
+    System.assertEquals('Latest visit', byId.get(saved.Id).lastActivitySubject);
+    System.assertEquals('Event', byId.get(saved.Id).lastActivityType);
+    System.assertEquals(39.2904000, byId.get(fallback.Id).billingLatitude);
+    System.assertEquals(-76.6122000, byId.get(fallback.Id).billingLongitude);
+    System.assertEquals('Task only', byId.get(fallback.Id).lastActivitySubject);
+    System.assertEquals('Task', byId.get(fallback.Id).lastActivityType);
+  }
+
   // Helper comparator class for sorting CustomerMapRow by Name
   private class CustomerMapRowNameComparator implements System.Comparator<MapCustomersController.CustomerMapRow> {
     public Integer compare(
