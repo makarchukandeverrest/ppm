@@ -1,6 +1,7 @@
 public with sharing class ContractCreatorUserResolver {
   private static Map<String, Id> cache;
 
+  @AuraEnabled(cacheable=true)
   public static Id resolveUserId(String picklistValue) {
     return String.isBlank(picklistValue)
       ? null

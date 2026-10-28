@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <ReportType xmlns="http://soap.sforce.com/2006/04/metadata">
     <baseObject>Contract_Bid__c</baseObject>
     <category>busop</category>
@@ -63,22 +63,12 @@
         </columns>
         <columns>
             <checkedByDefault>false</checkedByDefault>
-            <field>Go_through_Corporate__c</field>
-            <table>Contract_Bid__c</table>
-        </columns>
-        <columns>
-            <checkedByDefault>false</checkedByDefault>
             <field>RFP__c</field>
             <table>Contract_Bid__c</table>
         </columns>
         <columns>
             <checkedByDefault>false</checkedByDefault>
             <field>Connexus__c</field>
-            <table>Contract_Bid__c</table>
-        </columns>
-        <columns>
-            <checkedByDefault>false</checkedByDefault>
-            <field>Current_Vendor_Object__c</field>
             <table>Contract_Bid__c</table>
         </columns>
         <columns>
@@ -188,7 +178,202 @@
         </columns>
         <columns>
             <checkedByDefault>false</checkedByDefault>
+            <field>Bid_Number__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>County__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Pool_Type__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Property_Name__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>How_Many_Peak_Lifeguards__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Peak_Season_End_Date__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Peak_Season_of_Weeks__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Total_Weekly_School_Hours__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Lifeguard_Hourly_Wage__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Season_End_Date__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Total_Weeks_in_Season__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Holiday_Start__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Holiday_End__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>How_many_school_lifeguards__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>School_Season_Last_Date__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Season_Start_Date__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>School_Season_First_Date__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Drain_Clean__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Chem_Chlorine__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Commissions__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Insurance__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>EBD_Adjustment__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Total_After_EBD_Adjustment__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Payments_1_of_X__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>First_Day_Of_Payment__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Additional_Comments__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Total_Weekly_Peak_Hours_All_Guards__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Total_Season_Peak_Hours_All_Guards__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Total_Weekly_School_Hours_All_Guards__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Total_Season_School_Hours_All_Guards__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Total_Guard_Hours__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Increased_Percent__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Cost_Per_Lifeguard_Hour__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Worksheet_Integration_Key__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
             <field>Sent_Contract_Date__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Total_Season_School_Guard_Hours__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Primary_Contact_Info__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Info_Verified__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Contract_Creator_Picklist__c</field>
+            <table>Contract_Bid__c</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Bid_Type__c</field>
             <table>Contract_Bid__c</table>
         </columns>
         <masterLabel>Contract Bids</masterLabel>

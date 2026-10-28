@@ -4,6 +4,13 @@ export default class UnifiedActivityFeedHeader extends LightningElement {
   @api countLabel;
   @api sortIcon;
   @api sortLabel;
+  @api newEventLabel = "New Event";
+  @api newEventIcon = "utility:event";
+  @api showRequestContract = false;
+
+  handleRequestContract() {
+    this.dispatchEvent(new CustomEvent("requestcontract"));
+  }
 
   handleNewTask() {
     this.dispatchEvent(new CustomEvent("newtask"));

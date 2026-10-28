@@ -7,9 +7,42 @@ import {
   unregisterRefreshHandler
 } from "lightning/refresh";
 import { getRecord, getFieldValue } from "lightning/uiRecordApi";
+import { getObjectInfo } from "lightning/uiObjectInfoApi";
+import TASK_OBJECT from "@salesforce/schema/Task";
 import getUnifiedActivities from "@salesforce/apex/UnifiedActivityController.getUnifiedActivities";
+import resolveContractCreatorUserId from "@salesforce/apex/ContractCreatorUserResolver.resolveUserId";
 
 const WHO_ID_OBJECTS = new Set(["Contact", "Lead"]);
+const BID_STAGE_BID_QUALIFIED = "Contact Made";
+// Negotiation Started = current API; Proposal/Review = label "Negotiation" on stage-update branch
+const BID_STAGES_NEGOTIATION = new Set([
+  "Negotiation Started",
+  "Proposal/Review"
+]);
+const RM_REQUEST_RECORD_TYPE_LABEL = "Regional Manager Request";
+const REQUEST_CONTRACT_SUBJECT = "Request a Contract Bid";
+const REQUEST_NEW_VERSION_SUBJECT = "Request New Version";
+
+const FILE_ICONS = {
+  pdf: "doctype:pdf",
+  doc: "doctype:word",
+  docx: "doctype:word",
+  xls: "doctype:excel",
+  xlsx: "doctype:excel",
+  ppt: "doctype:ppt",
+  pptx: "doctype:ppt",
+  txt: "doctype:txt",
+  csv: "doctype:csv",
+  zip: "doctype:zip"
+};
+
+function fileIconName(fileName) {
+  const extension = String(fileName || "")
+    .split(".")
+    .pop()
+    .toLowerCase();
+  return FILE_ICONS[extension] || "doctype:attachment";
+}
 
 const DEFAULT_CONFIG = {
   Account: {
@@ -47,6 +80,9 @@ export default class UnifiedActivityFeed extends NavigationMixin(
   primaryContactId;
   primaryContactEmail = "";
   accountAddress = "";
+  currentStage;
+  contractCreatorPicklist;
+  rmRequestRecordTypeId;
   refreshHandlerId;
   activities = [];
   totalCount = 0;
@@ -66,6 +102,17 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     }
   }
 
+  @wire(getObjectInfo, { objectApiName: TASK_OBJECT })
+  wiredTaskObjectInfo({ data }) {
+    if (!data?.recordTypeInfos) {
+      return;
+    }
+    const match = Object.values(data.recordTypeInfos).find(
+      (rt) => rt.name === RM_REQUEST_RECORD_TYPE_LABEL && rt.available
+    );
+    this.rmRequestRecordTypeId = match?.recordTypeId;
+  }
+
   @wire(getRecord, {
     recordId: "$recordId",
     fields: "$activityDefaultFields"
@@ -82,6 +129,25 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     this.primaryContactId = this.resolvePrimaryContactId(data);
     this.primaryContactEmail = this.resolvePrimaryContactEmail(data);
     this.accountAddress = this.resolveAccountAddress(data);
+    this.currentStage = this.resolveCurrentStage(data);
+    this.contractCreatorPicklist = this.resolveContractCreatorPicklist(data);
+  }
+
+  get isNegotiationStage() {
+    return BID_STAGES_NEGOTIATION.has(this.currentStage);
+  }
+
+  get showRequestContract() {
+    return (
+      this.objectApiName === "Contract_Bid__c" &&
+      (this.currentStage === BID_STAGE_BID_QUALIFIED || this.isNegotiationStage)
+    );
+  }
+
+  get requestContractSubject() {
+    return this.isNegotiationStage
+      ? REQUEST_NEW_VERSION_SUBJECT
+      : REQUEST_CONTRACT_SUBJECT;
   }
 
   get effectiveConfig() {
@@ -108,6 +174,8 @@ export default class UnifiedActivityFeed extends NavigationMixin(
       this.primaryContactEmail = "";
       this.accountAddress = "";
       this.relatedRecordId = undefined;
+      this.currentStage = undefined;
+      this.contractCreatorPicklist = undefined;
       if (value) {
         this.loadActivities(true);
       } else {
@@ -148,6 +216,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(
       { label: "Calls", value: "Call" },
       { label: "Events", value: "Event" },
       { label: "Emails", value: "EmailMessage" },
+      { label: "Notes", value: "ContentNote" },
       { label: "Chatter", value: "FeedItem" }
     ];
   }
@@ -251,13 +320,18 @@ export default class UnifiedActivityFeed extends NavigationMixin(
         key: `${item.id}-${index}`,
         isText: part.partType === "text",
         isImage: part.partType === "image",
-        isClickable: part.partType === "image" && !!part.contentDocumentId
+        isFile: part.partType === "file",
+        fileIcon: fileIconName(part.fileName),
+        isClickable:
+          (part.partType === "image" || part.partType === "file") &&
+          !!part.contentDocumentId
       }));
       const hasDescription = !!(
         item.description && String(item.description).trim()
       );
       const hasDisplayBody = contentParts.length > 0 || hasDescription;
       const isEmail = item.type === "EmailMessage";
+      const isNote = item.type === "ContentNote";
 
       return {
         ...item,
@@ -272,6 +346,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(
         isCall: item.type === "Call",
         isEvent: item.type === "Event",
         isEmail,
+        isNote,
         isFeed: item.type === "FeedItem",
         isCollapsibleBody: isEmail && hasDisplayBody,
         bodyPreview: isEmail
@@ -371,6 +446,25 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     this.loadActivities(false);
   }
 
+  async handleRequestContract() {
+    if (!this.recordId) {
+      return;
+    }
+
+    const defaults = {
+      ...this.getActivityDefaults(),
+      Subject: this.requestContractSubject
+    };
+    if (this.rmRequestRecordTypeId) {
+      defaults.RecordTypeId = this.rmRequestRecordTypeId;
+    }
+    const ownerId = await this.resolveContractCreatorOwnerId();
+    if (ownerId) {
+      defaults.OwnerId = ownerId;
+    }
+    this.openNewActivityRecord("Task", defaults, this.rmRequestRecordTypeId);
+  }
+
   handleNewTask() {
     this.openNewActivityRecord("Task", this.getActivityDefaults());
   }
@@ -384,7 +478,16 @@ export default class UnifiedActivityFeed extends NavigationMixin(
   }
 
   handleLogAVisit() {
-    this.openNewActivityRecord("Event", this.getVisitDefaults());
+    const accountId =
+      this.objectApiName === "Account" ? this.recordId : this.relatedRecordId;
+    if (!accountId) {
+      return;
+    }
+    this.openGlobalQuickAction(
+      "Account.New_Visit",
+      this.getVisitDefaults(accountId),
+      accountId
+    );
   }
 
   handleNewPost() {
@@ -427,10 +530,46 @@ export default class UnifiedActivityFeed extends NavigationMixin(
         .forEach((field) => fields.add(`${record.apiName}.${field}`));
     }
 
+    if (record.apiName === "Contract_Bid__c") {
+      fields.add(`${record.apiName}.Stage__c`);
+      fields.add(`${record.apiName}.Contract_Creator_Picklist__c`);
+    }
+
     if (fields.size === 0) {
       return undefined;
     }
     return Array.from(fields);
+  }
+
+  resolveCurrentStage(record) {
+    if (record.apiName !== "Contract_Bid__c") {
+      return undefined;
+    }
+    return getFieldValue(record, `${record.apiName}.Stage__c`);
+  }
+
+  resolveContractCreatorPicklist(record) {
+    if (record.apiName !== "Contract_Bid__c") {
+      return undefined;
+    }
+    return getFieldValue(
+      record,
+      `${record.apiName}.Contract_Creator_Picklist__c`
+    );
+  }
+
+  async resolveContractCreatorOwnerId() {
+    if (!this.contractCreatorPicklist) {
+      return undefined;
+    }
+    try {
+      return await resolveContractCreatorUserId({
+        picklistValue: this.contractCreatorPicklist
+      });
+    } catch (error) {
+      this.showError(error);
+      return undefined;
+    }
   }
 
   parseRelatedRecordConfig() {
@@ -518,24 +657,31 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     return defaults;
   }
 
-  getVisitDefaults() {
+  getVisitDefaults(accountId) {
     const start = new Date();
     const end = new Date(start.getTime() + 60 * 60 * 1000);
-    return {
-      ...this.getActivityDefaults(this.relatedRecordId),
+    const defaults = {
+      WhatId: accountId,
       Subject: "Site Visit",
       StartDateTime: start.toISOString().slice(0, 19) + "Z",
-      EndDateTime: end.toISOString().slice(0, 19) + "Z",
-      ...(this.accountAddress ? { Location: this.accountAddress } : {})
+      EndDateTime: end.toISOString().slice(0, 19) + "Z"
     };
+    if (this.primaryContactId) {
+      defaults.WhoId = this.primaryContactId;
+    }
+    if (this.accountAddress) {
+      defaults.Location = this.accountAddress;
+    }
+    return defaults;
   }
 
-  openGlobalQuickAction(apiName, defaults) {
-    if (!this.recordId) {
+  openGlobalQuickAction(apiName, defaults, contextRecordId) {
+    const recordId = contextRecordId || this.recordId;
+    if (!recordId) {
       return;
     }
 
-    const state = { recordId: this.recordId };
+    const state = { recordId };
     if (defaults) {
       state.defaultFieldValues = encodeDefaultFieldValues(defaults);
     }
@@ -547,12 +693,19 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     });
   }
 
-  openNewActivityRecord(objectApiName, defaults) {
+  openNewActivityRecord(objectApiName, defaults, recordTypeId) {
     if (!this.recordId) {
       return;
     }
 
     const fieldDefaults = defaults || this.getActivityDefaults();
+    const state = {
+      defaultFieldValues: encodeDefaultFieldValues(fieldDefaults),
+      navigationLocation: "RELATED_LIST"
+    };
+    if (recordTypeId) {
+      state.recordTypeId = recordTypeId;
+    }
 
     this[NavigationMixin.Navigate]({
       type: "standard__objectPage",
@@ -560,10 +713,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(
         objectApiName,
         actionName: "new"
       },
-      state: {
-        defaultFieldValues: encodeDefaultFieldValues(fieldDefaults),
-        navigationLocation: "RELATED_LIST"
-      }
+      state
     });
   }
 
@@ -619,6 +769,29 @@ export default class UnifiedActivityFeed extends NavigationMixin(
   }
 
   extractErrorMessage(error) {
+    const outputErrors = error.body?.output?.errors;
+    if (Array.isArray(outputErrors) && outputErrors.length > 0) {
+      return outputErrors
+        .map((item) => item.message)
+        .filter((message) => !!message)
+        .join(" ");
+    }
+
+    const fieldErrors = error.body?.output?.fieldErrors;
+    if (fieldErrors) {
+      const messages = [];
+      Object.keys(fieldErrors).forEach((field) => {
+        (fieldErrors[field] || []).forEach((item) => {
+          if (item.message) {
+            messages.push(item.message);
+          }
+        });
+      });
+      if (messages.length > 0) {
+        return messages.join(" ");
+      }
+    }
+
     if (error.body?.message) return error.body.message;
     if (typeof error.body === "string") return error.body;
     if (error.message) return error.message;

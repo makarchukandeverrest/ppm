@@ -125,14 +125,6 @@
         <enabled>true</enabled>
     </classAccesses>
     <classAccesses>
-        <apexClass>InsertContentDocumentLinksJob</apexClass>
-        <enabled>true</enabled>
-    </classAccesses>
-    <classAccesses>
-        <apexClass>InsertEmailMessagesJob</apexClass>
-        <enabled>true</enabled>
-    </classAccesses>
-    <classAccesses>
         <apexClass>InvoiceQuickBooksProposalLinker</apexClass>
         <enabled>true</enabled>
     </classAccesses>
@@ -994,6 +986,11 @@
     <fieldPermissions>
         <editable>true</editable>
         <field>Contract_Bid__c.Label__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Contract_Bid__c.Bid_Type__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
