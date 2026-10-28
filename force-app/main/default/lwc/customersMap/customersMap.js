@@ -912,6 +912,7 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
       statusLabel: status.label,
       statusClass: status.badgeClass,
       address: this.formatCustomerAddress(customer),
+      mapsUrl: this.buildMapsUrl(customer),
       accountUrl: `/lightning/r/Account/${customer.accountId}/view`,
       managementCompanyId: customer.managementCompanyId,
       managementCompanyName: customer.managementCompanyName,
@@ -961,6 +962,21 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
     }
 
     return this.stageOrder[currentIndex + 1];
+  }
+
+  buildMapsUrl(customer) {
+    if (!customer) {
+      return "";
+    }
+    const coords = this.getResolvedCoordinates(customer);
+    if (coords) {
+      return `https://www.google.com/maps/search/?api=1&query=${coords.Latitude},${coords.Longitude}`;
+    }
+    const address = this.formatCustomerAddress(customer);
+    if (!address || address === "Address not available") {
+      return "";
+    }
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
   }
 
   formatCustomerAddress(customer) {
@@ -1237,6 +1253,14 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
     return this.formatCustomerAddress(
       this.locationGroupMap[this.selectedLocationKey][0]
     );
+  }
+
+  get selectedLocationMapsUrl() {
+    const customers = this.locationGroupMap[this.selectedLocationKey];
+    if (!customers?.length) {
+      return "";
+    }
+    return this.buildMapsUrl(customers[0]);
   }
 
   get selectedLocationCountLabel() {

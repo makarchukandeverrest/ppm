@@ -202,7 +202,19 @@
                   Shared Address
                 </h3>
                 <p class="slds-text-body_regular slds-m-bottom_x-small">
-                  <strong>Address:</strong> {selectedLocationAddress}
+                  <strong>Address:</strong>
+                  <template if:true={selectedLocationMapsUrl}>
+                    <a
+                      href={selectedLocationMapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {selectedLocationAddress}
+                    </a>
+                  </template>
+                  <template if:false={selectedLocationMapsUrl}>
+                    {selectedLocationAddress}
+                  </template>
                 </p>
                 <p class="slds-text-body_small slds-text-color_weak">
                   {selectedLocationCountLabel}
@@ -230,7 +242,19 @@
                 </div>
 
                 <p class="slds-text-body_regular slds-m-bottom_small">
-                  <strong>Address:</strong> {detail.address}
+                  <strong>Address:</strong>
+                  <template if:true={detail.mapsUrl}>
+                    <a
+                      href={detail.mapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {detail.address}
+                    </a>
+                  </template>
+                  <template if:false={detail.mapsUrl}
+                    >{detail.address}</template
+                  >
                 </p>
 
                 <dl class="detail-list slds-m-bottom_small">

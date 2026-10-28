@@ -140,7 +140,19 @@
             <p
               class="slds-text-body_small slds-text-color_weak slds-m-bottom_small"
             >
-              {selectedLocationAddress}
+              <template if:true={selectedLocationMapsUrl}>
+                <a
+                  class="mobile-link"
+                  href={selectedLocationMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {selectedLocationAddress}
+                </a>
+              </template>
+              <template if:false={selectedLocationMapsUrl}>
+                {selectedLocationAddress}
+              </template>
             </p>
           </template>
 
@@ -163,7 +175,19 @@
                 <p
                   class="slds-text-body_small slds-text-color_weak mobile-detail__address"
                 >
-                  {detail.address}
+                  <template if:true={detail.mapsUrl}>
+                    <a
+                      class="mobile-link"
+                      href={detail.mapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {detail.address}
+                    </a>
+                  </template>
+                  <template if:false={detail.mapsUrl}>
+                    {detail.address}
+                  </template>
                 </p>
               </template>
 
