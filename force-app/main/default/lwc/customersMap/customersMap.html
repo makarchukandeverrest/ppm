@@ -281,13 +281,19 @@
                           target="_blank"
                         >
                         </lightning-formatted-url>
-                        <template if:true={detail.primaryContactPhone}>
+                        <template if:true={detail.callHref}>
                           <div
                             class="slds-text-body_small slds-text-color_weak"
                           >
-                            <lightning-formatted-phone
-                              value={detail.primaryContactPhone}
-                            ></lightning-formatted-phone>
+                            <a
+                              href={detail.callHref}
+                              data-account-id={detail.accountId}
+                              data-contact-id={detail.primaryContactId}
+                              data-phone={detail.primaryContactPhone}
+                              onclick={handleCall}
+                            >
+                              {detail.primaryContactPhone}
+                            </a>
                           </div>
                         </template>
                         <template if:true={detail.primaryContactEmail}>

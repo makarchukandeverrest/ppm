@@ -323,6 +323,38 @@ private class MapCustomersControllerTest {
     System.assertEquals('Task', byId.get(fallback.Id).lastActivityType);
   }
 
+  @IsTest
+  static void testLogMapCall_createsCompletedCall() {
+    Account account = [
+      SELECT Id
+      FROM Account
+      WHERE Name = 'Test Customer 0'
+      LIMIT 1
+    ];
+    Contact contact = [
+      SELECT Id
+      FROM Contact
+      WHERE LastName = 'Primary Contact'
+      LIMIT 1
+    ];
+
+    Test.startTest();
+    MapCustomersController.logMapCall(null, null, null);
+    MapCustomersController.logMapCall(account.Id, contact.Id, '555-0100');
+    Test.stopTest();
+
+    Task callTask = [
+      SELECT Subject, Status, TaskSubtype, WhatId, WhoId, CallType
+      FROM Task
+      WHERE WhatId = :account.Id AND TaskSubtype = 'Call'
+      LIMIT 1
+    ];
+    System.assertEquals('Call 555-0100', callTask.Subject);
+    System.assertEquals('Completed', callTask.Status);
+    System.assertEquals('Outbound', callTask.CallType);
+    System.assertEquals(contact.Id, callTask.WhoId);
+  }
+
   // Helper comparator class for sorting CustomerMapRow by Name
   private class CustomerMapRowNameComparator implements System.Comparator<MapCustomersController.CustomerMapRow> {
     public Integer compare(

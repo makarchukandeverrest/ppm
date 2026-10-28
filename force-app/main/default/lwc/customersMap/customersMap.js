@@ -9,6 +9,7 @@ import desktopTemplate from "./customersMap.html";
 import mobileTemplate from "./customersMapMobile.html";
 import getCustomers from "@salesforce/apex/MapCustomersController.getCustomers";
 import saveMapCoordinates from "@salesforce/apex/MapCustomersController.saveMapCoordinates";
+import logMapCall from "@salesforce/apex/MapCustomersController.logMapCall";
 import ACCOUNT_OBJECT from "@salesforce/schema/Account";
 import CONTRACT_BID_OBJECT from "@salesforce/schema/Contract_Bid__c";
 import CONTRACT_PERIODS_FIELD from "@salesforce/schema/Account.Contract_Periods__c";
@@ -926,6 +927,7 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
         ? `/lightning/r/Contact/${customer.primaryContactId}/view`
         : "",
       primaryContactPhone: customer.primaryContactPhone,
+      callHref: this.buildCallHref(customer.primaryContactPhone),
       primaryContactEmail: customer.primaryContactEmail,
       hasPrimaryContact: Boolean(customer.primaryContactId),
       regionalManagerName: customer.regionalManagerName,
@@ -962,6 +964,30 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
     }
 
     return this.stageOrder[currentIndex + 1];
+  }
+
+  buildCallHref(phone) {
+    if (!phone) {
+      return "";
+    }
+    const dial = String(phone).replace(/[^\d+]/g, "");
+    return dial ? `tel:${dial}` : "";
+  }
+
+  handleCall(event) {
+    const accountId = event.currentTarget.dataset.accountId;
+    const contactId = event.currentTarget.dataset.contactId;
+    const phone = event.currentTarget.dataset.phone;
+    if (!accountId) {
+      return;
+    }
+    logMapCall({
+      accountId,
+      contactId: contactId || null,
+      phone
+    }).catch((error) => {
+      console.error("Error logging call:", error);
+    });
   }
 
   buildMapsUrl(customer) {

@@ -350,6 +350,25 @@ public with sharing class MapCustomersController {
     }
   }
 
+  @AuraEnabled
+  public static void logMapCall(Id accountId, Id contactId, String phone) {
+    if (accountId == null) {
+      return;
+    }
+
+    String subject = String.isNotBlank(phone) ? 'Call ' + phone.trim() : 'Call';
+    insert new Task(
+      WhatId = accountId,
+      WhoId = contactId,
+      Subject = subject.left(255),
+      Status = 'Completed',
+      TaskSubtype = 'Call',
+      CallType = 'Outbound',
+      ActivityDate = Date.today(),
+      Description = 'Started from Customer Map'
+    );
+  }
+
   public class MapCoordinate {
     @AuraEnabled
     public Id accountId { get; set; }

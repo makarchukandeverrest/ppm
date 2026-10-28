@@ -205,11 +205,18 @@
                       >
                         {detail.primaryContactName}
                       </button>
-                      <template if:true={detail.primaryContactPhone}>
+                      <template if:true={detail.callHref}>
                         <div>
-                          <lightning-formatted-phone
-                            value={detail.primaryContactPhone}
-                          ></lightning-formatted-phone>
+                          <a
+                            class="mobile-link"
+                            href={detail.callHref}
+                            data-account-id={detail.accountId}
+                            data-contact-id={detail.primaryContactId}
+                            data-phone={detail.primaryContactPhone}
+                            onclick={handleCall}
+                          >
+                            {detail.primaryContactPhone}
+                          </a>
                         </div>
                       </template>
                       <template if:true={detail.primaryContactEmail}>
