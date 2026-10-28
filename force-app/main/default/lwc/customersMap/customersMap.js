@@ -28,6 +28,9 @@ const REGIONAL_MANAGER_OPTIONS = [
 
 const MAP_MARKER_PATH =
   "M 0,0 C -2,-20 -10,-22 -10,-30 A 10,10 0 1,1 10,-30 C 10,-22 2,-20 0,0 z";
+// Path tip is y=0; the pin head reaches y=-40, plus the stroke. The box must
+// include that head or the SVG viewport slices the top of every marker.
+const PIN_VIEW = { minX: -13, minY: -42, width: 26, height: 44 };
 const STAGE_CLOSED_LOST = "Closed - LOST";
 const STAGE_CONTRACT_SENT = "Contract Sent via DocuSign";
 const CLOSED_STAGES = new Set(["Closed - WON", STAGE_CLOSED_LOST]);
@@ -299,16 +302,17 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
 
   createPinIcon(mapIcon) {
     const scale = mapIcon?.scale || 1;
-    const width = Math.round(24 * scale);
-    const height = Math.round(36 * scale);
+    const width = Math.round(PIN_VIEW.width * scale);
+    const height = Math.round(PIN_VIEW.height * scale);
     const fill = mapIcon?.fillColor || MARKER_COLOR_ACTIVE_BID;
     const stroke = mapIcon?.strokeColor || "#FFFFFF";
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="-12 -34 24 36"><path d="${MAP_MARKER_PATH}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/></svg>`;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${PIN_VIEW.minX} ${PIN_VIEW.minY} ${PIN_VIEW.width} ${PIN_VIEW.height}"><path d="${MAP_MARKER_PATH}" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/></svg>`;
+    const tipOffset = Math.round((-PIN_VIEW.minY / PIN_VIEW.height) * height);
     return window.L.divIcon({
       className: "customer-pin",
       html: svg,
       iconSize: [width, height],
-      iconAnchor: [Math.round(width / 2), Math.round((height * 34) / 36)]
+      iconAnchor: [Math.round(width / 2), tipOffset]
     });
   }
 
@@ -321,10 +325,12 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
       return;
     }
     this._ignoreMove = true;
+    const pinHeight = Math.round(PIN_VIEW.height * 1.25);
     this._map.fitBounds(this._markerLayer.getBounds().pad(0.15), {
       animate: false,
       maxZoom: 15,
-      padding: [24, 24]
+      paddingTopLeft: [28, pinHeight],
+      paddingBottomRight: [28, 20]
     });
     this._ignoreMove = false;
   }
