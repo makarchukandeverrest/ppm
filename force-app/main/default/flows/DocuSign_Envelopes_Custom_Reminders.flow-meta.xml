@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
     <actionCalls>
         <name>Copy_2_of_Send_Alert_Email</name>
@@ -12,7 +12,8 @@
             <name>recipientAddresses</name>
             <value>
                 <collectionElements>
-                    <elementReference>$Record.Deal__r.Regional_Manager__r.Email</elementReference>
+                    <elementReference
+          >$Record.Deal__r.Regional_Manager__r.Email</elementReference>
                 </collectionElements>
             </value>
         </inputParameters>
@@ -67,7 +68,8 @@
         <inputParameters>
             <name>customNotifTypeId</name>
             <value>
-                <elementReference>Copy_1_of_Get_Custom_Notification.Id</elementReference>
+                <elementReference
+        >Copy_1_of_Get_Custom_Notification.Id</elementReference>
             </value>
         </inputParameters>
         <inputParameters>
@@ -102,37 +104,33 @@
         <label>Visit Property Action</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <actionName>NewTask</actionName>
-        <actionType>quickAction</actionType>
+        <actionName>AutomationTaskCreator</actionName>
+        <actionType>apex</actionType>
         <connector>
-            <targetReference>Copy_2_of_Send_Custom_Notification_Action_1</targetReference>
+            <targetReference
+      >Copy_2_of_Send_Custom_Notification_Action_1</targetReference>
         </connector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
         <inputParameters>
-            <name>contextId</name>
+            <name>ownerId</name>
             <value>
-                <elementReference>$Record.Deal__r.Id</elementReference>
+                <elementReference
+        >$Record.Deal__r.Regional_Manager__r.Id</elementReference>
             </value>
         </inputParameters>
         <inputParameters>
-            <name>Subject</name>
+            <name>subject</name>
             <value>
                 <elementReference>VisitSubject</elementReference>
             </value>
         </inputParameters>
         <inputParameters>
-            <name>OwnerId</name>
-            <value>
-                <elementReference>$Record.Deal__r.Regional_Manager__r.Id</elementReference>
-            </value>
-        </inputParameters>
-        <inputParameters>
-            <name>WhatId</name>
+            <name>whatId</name>
             <value>
                 <elementReference>$Record.Deal__r.Id</elementReference>
             </value>
         </inputParameters>
-        <nameSegment>NewTask</nameSegment>
+        <nameSegment>AutomationTaskCreator</nameSegment>
         <offset>0</offset>
     </actionCalls>
     <actionCalls>
@@ -140,37 +138,32 @@
         <label>Phone Call Task</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <actionName>NewTask</actionName>
-        <actionType>quickAction</actionType>
+        <actionName>AutomationTaskCreator</actionName>
+        <actionType>apex</actionType>
         <connector>
             <targetReference>Get_Custom_Notification</targetReference>
         </connector>
         <flowTransactionModel>CurrentTransaction</flowTransactionModel>
         <inputParameters>
-            <name>contextId</name>
+            <name>ownerId</name>
             <value>
-                <elementReference>$Record.Deal__r.Id</elementReference>
+                <elementReference
+        >$Record.Deal__r.Regional_Manager__r.Id</elementReference>
             </value>
         </inputParameters>
         <inputParameters>
-            <name>Subject</name>
+            <name>subject</name>
             <value>
                 <elementReference>PhoneCallSubject</elementReference>
             </value>
         </inputParameters>
         <inputParameters>
-            <name>OwnerId</name>
-            <value>
-                <elementReference>$Record.Deal__r.Regional_Manager__r.Id</elementReference>
-            </value>
-        </inputParameters>
-        <inputParameters>
-            <name>WhatId</name>
+            <name>whatId</name>
             <value>
                 <elementReference>$Record.Deal__r.Id</elementReference>
             </value>
         </inputParameters>
-        <nameSegment>NewTask</nameSegment>
+        <nameSegment>AutomationTaskCreator</nameSegment>
         <offset>0</offset>
     </actionCalls>
     <actionCalls>
@@ -185,7 +178,8 @@
             <name>recipientAddresses</name>
             <value>
                 <collectionElements>
-                    <elementReference>$Record.Deal__r.Regional_Manager__r.Email</elementReference>
+                    <elementReference
+          >$Record.Deal__r.Regional_Manager__r.Email</elementReference>
                 </collectionElements>
             </value>
         </inputParameters>
@@ -282,7 +276,8 @@
             <name>recipientAddresses</name>
             <value>
                 <collectionElements>
-                    <elementReference>Get_Recipients.dfsle__Email__c</elementReference>
+                    <elementReference
+          >Get_Recipients.dfsle__Email__c</elementReference>
                 </collectionElements>
             </value>
         </inputParameters>
@@ -290,7 +285,8 @@
             <name>ccAddresses</name>
             <value>
                 <collectionElements>
-                    <elementReference>$Record.Deal__r.Regional_Manager__r.Email</elementReference>
+                    <elementReference
+          >$Record.Deal__r.Regional_Manager__r.Email</elementReference>
                 </collectionElements>
             </value>
         </inputParameters>
@@ -343,7 +339,8 @@
             <name>recipientAddresses</name>
             <value>
                 <collectionElements>
-                    <elementReference>Get_Recipients_2.dfsle__Email__c</elementReference>
+                    <elementReference
+          >Get_Recipients_2.dfsle__Email__c</elementReference>
                 </collectionElements>
             </value>
         </inputParameters>
@@ -351,7 +348,8 @@
             <name>ccAddresses</name>
             <value>
                 <collectionElements>
-                    <elementReference>$Record.Deal__r.Regional_Manager__r.Email</elementReference>
+                    <elementReference
+          >$Record.Deal__r.Regional_Manager__r.Email</elementReference>
                 </collectionElements>
             </value>
         </inputParameters>
@@ -404,7 +402,8 @@
             <name>recipientAddresses</name>
             <value>
                 <collectionElements>
-                    <elementReference>Get_Recipients_3.dfsle__Email__c</elementReference>
+                    <elementReference
+          >Get_Recipients_3.dfsle__Email__c</elementReference>
                 </collectionElements>
             </value>
         </inputParameters>
@@ -412,7 +411,8 @@
             <name>ccAddresses</name>
             <value>
                 <collectionElements>
-                    <elementReference>$Record.Deal__r.Regional_Manager__r.Email</elementReference>
+                    <elementReference
+          >$Record.Deal__r.Regional_Manager__r.Email</elementReference>
                 </collectionElements>
             </value>
         </inputParameters>
@@ -464,7 +464,8 @@
             <assignToReference>NotificationRecipients</assignToReference>
             <operator>Add</operator>
             <value>
-                <elementReference>$Record.Deal__r.Regional_Manager__r.Id</elementReference>
+                <elementReference
+        >$Record.Deal__r.Regional_Manager__r.Id</elementReference>
             </value>
         </assignmentItems>
         <connector>
@@ -480,7 +481,8 @@
             <assignToReference>NotificationRecipients</assignToReference>
             <operator>Add</operator>
             <value>
-                <elementReference>$Record.Deal__r.Regional_Manager__r.Id</elementReference>
+                <elementReference
+        >$Record.Deal__r.Regional_Manager__r.Id</elementReference>
             </value>
         </assignmentItems>
         <connector>
@@ -504,14 +506,16 @@
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>$Record.Deal__r.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference
+        >$Record.Deal__r.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>$Record.Deal__r.Account.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference
+        >$Record.Deal__r.Account.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
@@ -540,14 +544,16 @@
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>$Record.Deal__r.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference
+        >$Record.Deal__r.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>$Record.Deal__r.Account.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference
+        >$Record.Deal__r.Account.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
@@ -576,14 +582,16 @@
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>$Record.Deal__r.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference
+        >$Record.Deal__r.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>$Record.Deal__r.Account.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference
+        >$Record.Deal__r.Account.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
@@ -605,14 +613,16 @@
             <name>Reminders_Allowed_Phone_Continue</name>
             <conditionLogic>and</conditionLogic>
             <conditions>
-                <leftValueReference>$Record.Deal__r.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference
+        >$Record.Deal__r.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>$Record.Deal__r.Account.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference
+        >$Record.Deal__r.Account.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
@@ -634,21 +644,24 @@
             <name>Reminders_Allowed_Visit_Continue</name>
             <conditionLogic>and</conditionLogic>
             <conditions>
-                <leftValueReference>$Record.Deal__r.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference
+        >$Record.Deal__r.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
                 </rightValue>
             </conditions>
             <conditions>
-                <leftValueReference>$Record.Deal__r.Account.Stop_Sending_Reminders__c</leftValueReference>
+                <leftValueReference
+        >$Record.Deal__r.Account.Stop_Sending_Reminders__c</leftValueReference>
                 <operator>EqualTo</operator>
                 <rightValue>
                     <booleanValue>false</booleanValue>
                 </rightValue>
             </conditions>
             <connector>
-                <targetReference>Copy_1_of_Get_Custom_Notification</targetReference>
+                <targetReference
+        >Copy_1_of_Get_Custom_Notification</targetReference>
             </connector>
             <label>Continue</label>
         </rules>
@@ -668,7 +681,8 @@ $Record.Deal__r.Name</expression>
 $Record.Deal__r.Name &amp;
 &quot; – Proposal not signed&quot;</expression>
     </formulas>
-    <interviewLabel>DocuSign Envelopes Custom Reminders {!$Flow.CurrentDateTime}</interviewLabel>
+    <interviewLabel
+  >DocuSign Envelopes Custom Reminders {!$Flow.CurrentDateTime}</interviewLabel>
     <label>DocuSign Envelopes Custom Reminders</label>
     <processMetadataValues>
         <name>BuilderType</name>
@@ -694,7 +708,8 @@ $Record.Deal__r.Name &amp;
         <label>Copy 1 of Get Custom Notification</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Copy_1_of_Fill_Recipients</targetReference>
         </connector>
@@ -715,7 +730,8 @@ $Record.Deal__r.Name &amp;
         <label>Get Custom Notification</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Fill_Recipients</targetReference>
         </connector>
@@ -736,7 +752,8 @@ $Record.Deal__r.Name &amp;
         <label>Get Recipients</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Send_Reminder_1</targetReference>
         </connector>
@@ -764,7 +781,8 @@ $Record.Deal__r.Name &amp;
         <label>Get Recipients 2</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Send_Reminder_2</targetReference>
         </connector>
@@ -792,7 +810,8 @@ $Record.Deal__r.Name &amp;
         <label>Get Recipients 3</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Send_Reminder_3</targetReference>
         </connector>
@@ -820,7 +839,8 @@ $Record.Deal__r.Name &amp;
         <label>Get Regional Manager</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Get_Recipients</targetReference>
         </connector>
@@ -829,7 +849,8 @@ $Record.Deal__r.Name &amp;
             <field>Id</field>
             <operator>EqualTo</operator>
             <value>
-                <elementReference>$Record.Deal__r.Regional_Manager__c</elementReference>
+                <elementReference
+        >$Record.Deal__r.Regional_Manager__c</elementReference>
             </value>
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
@@ -841,7 +862,8 @@ $Record.Deal__r.Name &amp;
         <label>Get Regional Manager 2</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Get_Recipients_2</targetReference>
         </connector>
@@ -850,7 +872,8 @@ $Record.Deal__r.Name &amp;
             <field>Id</field>
             <operator>EqualTo</operator>
             <value>
-                <elementReference>$Record.Deal__r.Regional_Manager__c</elementReference>
+                <elementReference
+        >$Record.Deal__r.Regional_Manager__c</elementReference>
             </value>
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
@@ -862,7 +885,8 @@ $Record.Deal__r.Name &amp;
         <label>Regional Manager 3</label>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound>false</assignNullValuesIfNoRecordsFound>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
         <connector>
             <targetReference>Get_Recipients_3</targetReference>
         </connector>
@@ -871,7 +895,8 @@ $Record.Deal__r.Name &amp;
             <field>Id</field>
             <operator>EqualTo</operator>
             <value>
-                <elementReference>$Record.Deal__r.Regional_Manager__c</elementReference>
+                <elementReference
+        >$Record.Deal__r.Regional_Manager__c</elementReference>
             </value>
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
@@ -881,7 +906,8 @@ $Record.Deal__r.Name &amp;
     <start>
         <locationX>0</locationX>
         <locationY>0</locationY>
-        <doesRequireRecordChangedToMeetCriteria>true</doesRequireRecordChangedToMeetCriteria>
+        <doesRequireRecordChangedToMeetCriteria
+    >true</doesRequireRecordChangedToMeetCriteria>
         <filterLogic>and</filterLogic>
         <filters>
             <field>Status__c</field>
@@ -924,7 +950,8 @@ $Record.Deal__r.Name &amp;
         <scheduledPaths>
             <name>X3_Days_After_Reminder_1</name>
             <connector>
-                <targetReference>Copy_1_of_Copy_1_of_Status_Check</targetReference>
+                <targetReference
+        >Copy_1_of_Copy_1_of_Status_Check</targetReference>
             </connector>
             <label>3 Days After Reminder 2</label>
             <offsetNumber>5</offsetNumber>
@@ -1021,7 +1048,8 @@ Thank you,
     <textTemplates>
         <name>ReminderSubject</name>
         <isViewedAsPlainText>true</isViewedAsPlainText>
-        <text>{!$Record.Account__r.Name} – {!$Record.Deal__r.Name} – {!$Record.Deal__r.Reference_Number__c}</text>
+        <text
+    >{!$Record.Account__r.Name} – {!$Record.Deal__r.Name} – {!$Record.Deal__r.Reference_Number__c}</text>
     </textTemplates>
     <variables>
         <name>NotificationRecipients</name>
