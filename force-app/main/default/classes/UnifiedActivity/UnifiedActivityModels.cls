@@ -30,6 +30,12 @@ public class UnifiedActivityModels {
     public Integer nextOffset;
   }
 
+  public class PinnedActivityInfo {
+    public Id activityId;
+    public String pinnedByName;
+    public Datetime pinnedAt;
+  }
+
   public class ActivityItem {
     @AuraEnabled
     public Id id;
@@ -57,6 +63,12 @@ public class UnifiedActivityModels {
     public String sourceLabel;
     @AuraEnabled
     public Integer attachmentCount;
+    @AuraEnabled
+    public Boolean isPinned;
+    @AuraEnabled
+    public String pinnedByName;
+    @AuraEnabled
+    public Datetime pinnedAt;
 
     public ActivityItem(
       Id id,
@@ -132,6 +144,7 @@ public class UnifiedActivityModels {
       this.status = status;
       this.sourceLabel = sourceLabel;
       this.attachmentCount = 0;
+      this.isPinned = false;
       this.iconName = UnifiedActivityUtils.iconNameFor(type, title);
       this.formattedType = UnifiedActivityUtils.formattedTypeFor(type, title);
     }
@@ -145,6 +158,15 @@ public class UnifiedActivityModels {
     }
 
     public Integer compare(ActivityItem a, ActivityItem b) {
+      Boolean aPinned = a != null && a.isPinned == true;
+      Boolean bPinned = b != null && b.isPinned == true;
+      if (aPinned != bPinned) {
+        return aPinned ? -1 : 1;
+      }
+
+      if (a == null || b == null) {
+        return 0;
+      }
       if (a.createdDate == null && b.createdDate == null) {
         return 0;
       }

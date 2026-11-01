@@ -1102,4 +1102,208 @@ public class UnifiedActivityControllerTest {
       RelationType = 'ToAddress'
     );
   }
+
+  @IsTest
+  static void testPinAndUnpinActivity_marksPinnedAndSortsFirst() {
+    Account acc = createTestAccount();
+    FeedItem olderPost = new FeedItem(
+      ParentId = acc.Id,
+      Body = 'Older chatter post',
+      IsRichText = false
+    );
+    insert olderPost;
+    FeedItem newerPost = new FeedItem(
+      ParentId = acc.Id,
+      Body = 'Newer chatter post',
+      IsRichText = false
+    );
+    insert newerPost;
+    Test.setCreatedDate(olderPost.Id, Datetime.now().addDays(-2));
+    Test.setCreatedDate(newerPost.Id, Datetime.now().addDays(-1));
+
+    Test.startTest();
+    UnifiedActivityController.pinActivity(olderPost.Id, acc.Id);
+    UnifiedActivityModels.ActivityPageResult pinnedResult = getActivities(
+      acc.Id,
+      'DESC',
+      20,
+      0,
+      UnifiedActivityConstants.TYPE_FEED,
+      null
+    );
+    UnifiedActivityController.unpinActivity(olderPost.Id, acc.Id);
+    UnifiedActivityModels.ActivityPageResult unpinnedResult = getActivities(
+      acc.Id,
+      'DESC',
+      20,
+      0,
+      UnifiedActivityConstants.TYPE_FEED,
+      null
+    );
+    Test.stopTest();
+
+    System.assertEquals(2, pinnedResult.totalCount);
+    System.assertEquals(olderPost.Id, pinnedResult.items[0].id);
+    System.assertEquals(true, pinnedResult.items[0].isPinned);
+    System.assertEquals(UserInfo.getName(), pinnedResult.items[0].pinnedByName);
+    System.assertNotEquals(null, pinnedResult.items[0].pinnedAt);
+    System.assertEquals(newerPost.Id, pinnedResult.items[1].id);
+    System.assertEquals(false, pinnedResult.items[1].isPinned == true);
+
+    System.assertEquals(newerPost.Id, unpinnedResult.items[0].id);
+    System.assertEquals(false, unpinnedResult.items[0].isPinned == true);
+    System.assertEquals(
+      0,
+      [
+        SELECT COUNT()
+        FROM Pinned_Feed_Item__c
+        WHERE Activity_Id__c = :String.valueOf(olderPost.Id)
+      ],
+      'Unpin should remove registry row'
+    );
+  }
+
+  @IsTest
+  static void testPinActivity_supportsAnyTypeAndOrdersByCreatedDate() {
+    Account acc = createTestAccount();
+    Task olderTask = new Task(
+      Subject = 'Older task',
+      Status = 'Completed',
+      Priority = 'Normal',
+      WhatId = acc.Id,
+      ActivityDate = Date.today().addDays(-2)
+    );
+    insert olderTask;
+    FeedItem newerPost = new FeedItem(
+      ParentId = acc.Id,
+      Body = 'Newer chatter post',
+      IsRichText = false
+    );
+    insert newerPost;
+    Test.setCreatedDate(olderTask.Id, Datetime.now().addDays(-2));
+    Test.setCreatedDate(newerPost.Id, Datetime.now().addDays(-1));
+
+    UnifiedActivityController.pinActivity(olderTask.Id, acc.Id);
+    UnifiedActivityController.pinActivity(newerPost.Id, acc.Id);
+
+    UnifiedActivityModels.ActivityPageResult result = getActivities(
+      acc.Id,
+      'DESC',
+      20,
+      0,
+      null,
+      null
+    );
+
+    System.assert(result.totalCount >= 2);
+    System.assertEquals(true, result.items[0].isPinned);
+    System.assertEquals(newerPost.Id, result.items[0].id);
+    System.assertEquals(true, result.items[1].isPinned);
+    System.assertEquals(olderTask.Id, result.items[1].id);
+    System.assertEquals(
+      2,
+      [
+        SELECT COUNT()
+        FROM Pinned_Feed_Item__c
+        WHERE Parent_Id__c = :String.valueOf(acc.Id)
+      ]
+    );
+  }
+
+  @IsTest
+  static void testGetPinnedActivities_handlesEmptyInputAndRegistry() {
+    UnifiedActivityPinService service = new UnifiedActivityPinService();
+
+    System.assertEquals(0, service.getPinnedActivities(null).size());
+    System.assertEquals(0, service.getPinnedActivities(new Set<Id>()).size());
+
+    Account acc = createTestAccount();
+    Task taskRec = new Task(
+      Subject = 'Registry pin task',
+      Status = 'Completed',
+      Priority = 'Normal',
+      WhatId = acc.Id
+    );
+    insert taskRec;
+    insert new Pinned_Feed_Item__c(
+      Activity_Id__c = String.valueOf(taskRec.Id),
+      Parent_Id__c = String.valueOf(acc.Id)
+    );
+
+    Map<Id, UnifiedActivityModels.PinnedActivityInfo> pinned = service.getPinnedActivities(
+      new Set<Id>{ acc.Id }
+    );
+    System.assertEquals(1, pinned.size());
+    System.assertEquals(true, pinned.containsKey(taskRec.Id));
+    System.assertEquals(
+      UserInfo.getName(),
+      pinned.get(taskRec.Id).pinnedByName
+    );
+    System.assertNotEquals(null, pinned.get(taskRec.Id).pinnedAt);
+  }
+
+  @IsTest
+  static void testPinnedActivityInfo_fieldsAssignable() {
+    UnifiedActivityModels.PinnedActivityInfo info = new UnifiedActivityModels.PinnedActivityInfo();
+    info.activityId = UserInfo.getUserId();
+    info.pinnedByName = 'Pin User';
+    info.pinnedAt = Datetime.now();
+
+    UnifiedActivityModels.ActivityItem item = new UnifiedActivityModels.ActivityItem(
+      UserInfo.getUserId(),
+      UnifiedActivityConstants.TYPE_TASK,
+      'Task',
+      'body',
+      Datetime.now(),
+      UserInfo.getUserId(),
+      'User',
+      null
+    );
+    item.isPinned = true;
+    item.pinnedByName = info.pinnedByName;
+    item.pinnedAt = info.pinnedAt;
+
+    System.assertEquals(info.activityId, UserInfo.getUserId());
+    System.assertEquals('Pin User', item.pinnedByName);
+    System.assertEquals(info.pinnedAt, item.pinnedAt);
+  }
+
+  @IsTest
+  static void testActivityItemComparator_pinnedFirst() {
+    UnifiedActivityModels.ActivityItem pinned = new UnifiedActivityModels.ActivityItem(
+      UserInfo.getUserId(),
+      UnifiedActivityConstants.TYPE_FEED,
+      'Pinned',
+      'body',
+      Datetime.now().addDays(-5),
+      UserInfo.getUserId(),
+      'User',
+      null
+    );
+    pinned.isPinned = true;
+    pinned.pinnedByName = 'Pin User';
+    pinned.pinnedAt = Datetime.now().addDays(-1);
+    UnifiedActivityModels.ActivityItem recent = new UnifiedActivityModels.ActivityItem(
+      UserInfo.getUserId(),
+      UnifiedActivityConstants.TYPE_FEED,
+      'Recent',
+      'body',
+      Datetime.now(),
+      UserInfo.getUserId(),
+      'User',
+      null
+    );
+    recent.isPinned = false;
+
+    List<UnifiedActivityModels.ActivityItem> items = new List<UnifiedActivityModels.ActivityItem>{
+      recent,
+      pinned
+    };
+    UnifiedActivityUtils.sortItems(
+      items,
+      UnifiedActivityModels.SortDirection.DESCENDING
+    );
+    System.assertEquals('Pinned', items[0].title);
+    System.assertEquals('Recent', items[1].title);
+  }
 }
