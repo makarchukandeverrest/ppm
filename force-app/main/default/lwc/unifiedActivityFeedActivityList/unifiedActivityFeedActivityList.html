@@ -77,6 +77,22 @@
                     >
                     </lightning-button>
                   </template>
+                  <template if:true={item.showPinMenu}>
+                    <lightning-button-menu
+                      class="slds-m-left_xx-small activity-pin-menu"
+                      alternative-text="Pin or unpin activity"
+                      icon-size="x-small"
+                      menu-alignment="right"
+                      onselect={handlePinMenuSelect}
+                      data-id={item.id}
+                    >
+                      <lightning-menu-item
+                        value={item.pinMenuValue}
+                        label={item.pinMenuLabel}
+                      >
+                      </lightning-menu-item>
+                    </lightning-button-menu>
+                  </template>
                   <div class="slds-timeline__date">
                     <p class="slds-text-body_small slds-text-color_weak">
                       {item.displayDate}
@@ -84,6 +100,19 @@
                   </div>
                 </div>
               </div>
+              <template if:true={item.isPinned}>
+                <p
+                  class="slds-m-top_xx-small slds-m-left_xx-large pinned-status"
+                >
+                  <span class="slds-badge pinned-badge">Pinned</span>
+                  <template if:true={item.pinnedMeta}>
+                    <span
+                      class="pinned-meta slds-text-body_small slds-text-color_weak"
+                      >{item.pinnedMeta}</span
+                    >
+                  </template>
+                </p>
+              </template>
 
               <template if:true={item.hasDisplayBody}>
                 <template if:true={item.isCollapsibleBody}>

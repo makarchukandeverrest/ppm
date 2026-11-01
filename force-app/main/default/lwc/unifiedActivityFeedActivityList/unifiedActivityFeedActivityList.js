@@ -36,6 +36,23 @@ export default class UnifiedActivityFeedActivityList extends LightningElement {
     });
   }
 
+  handlePinMenuSelect(event) {
+    event.stopPropagation();
+    const action = event.detail.value;
+    const activityId = event.currentTarget.dataset.id;
+    if (!activityId || (action !== "pin" && action !== "unpin")) {
+      return;
+    }
+    this.dispatchEvent(
+      new CustomEvent("pintoggle", {
+        detail: {
+          activityId,
+          pin: action === "pin"
+        }
+      })
+    );
+  }
+
   handleToggleBody(event) {
     event.stopPropagation();
     const recordId = event.currentTarget.dataset.id;

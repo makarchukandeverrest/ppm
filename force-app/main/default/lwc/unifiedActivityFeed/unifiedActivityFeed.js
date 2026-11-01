@@ -9,8 +9,17 @@ import {
 import { getRecord, getFieldValue } from "lightning/uiRecordApi";
 import { getObjectInfo } from "lightning/uiObjectInfoApi";
 import TASK_OBJECT from "@salesforce/schema/Task";
-import getUnifiedActivities from "@salesforce/apex/UnifiedActivityController.getUnifiedActivities";
 import resolveContractCreatorUserId from "@salesforce/apex/ContractCreatorUserResolver.resolveUserId";
+import { PIN_TOAST } from "./unifiedActivityFeedConstants";
+import {
+  enrichActivities,
+  extractErrorMessage
+} from "./unifiedActivityFeedUtils";
+import {
+  fetchUnifiedActivities,
+  pinActivity,
+  unpinActivity
+} from "./unifiedActivityFeedService";
 
 const WHO_ID_OBJECTS = new Set(["Contact", "Lead"]);
 const BID_STAGE_BID_QUALIFIED = "Contact Made";
@@ -22,27 +31,6 @@ const BID_STAGES_NEGOTIATION = new Set([
 const RM_REQUEST_RECORD_TYPE_LABEL = "Regional Manager Request";
 const REQUEST_CONTRACT_SUBJECT = "Request a Contract Bid";
 const REQUEST_NEW_VERSION_SUBJECT = "Request New Version";
-
-const FILE_ICONS = {
-  pdf: "doctype:pdf",
-  doc: "doctype:word",
-  docx: "doctype:word",
-  xls: "doctype:excel",
-  xlsx: "doctype:excel",
-  ppt: "doctype:ppt",
-  pptx: "doctype:ppt",
-  txt: "doctype:txt",
-  csv: "doctype:csv",
-  zip: "doctype:zip"
-};
-
-function fileIconName(fileName) {
-  const extension = String(fileName || "")
-    .split(".")
-    .pop()
-    .toLowerCase();
-  return FILE_ICONS[extension] || "doctype:attachment";
-}
 
 const DEFAULT_CONFIG = {
   Account: {
@@ -289,7 +277,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     }
 
     try {
-      const result = await getUnifiedActivities({
+      const result = await fetchUnifiedActivities({
         recordId: this.recordId,
         sortDirection: this.sortDirection,
         pageSize: this.maxItems,
@@ -300,7 +288,9 @@ export default class UnifiedActivityFeed extends NavigationMixin(
         currentRecordLabel: this.currentRecordLabel
       });
 
-      const enriched = this.enrichActivities(result.items || []);
+      const enriched = enrichActivities(result.items || [], {
+        showSourceLabels: this.showSourceLabels
+      });
       this.activities = reset ? enriched : [...this.activities, ...enriched];
       this.totalCount = result.totalCount || 0;
       this.hasMore = result.hasMore || false;
@@ -313,111 +303,10 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     }
   }
 
-  enrichActivities(data) {
-    return data.map((item) => {
-      const contentParts = (item.contentParts || []).map((part, index) => ({
-        ...part,
-        key: `${item.id}-${index}`,
-        isText: part.partType === "text",
-        isImage: part.partType === "image",
-        isFile: part.partType === "file",
-        fileIcon: fileIconName(part.fileName),
-        isClickable:
-          (part.partType === "image" || part.partType === "file") &&
-          !!part.contentDocumentId
-      }));
-      const hasDescription = !!(
-        item.description && String(item.description).trim()
-      );
-      const hasDisplayBody = contentParts.length > 0 || hasDescription;
-      const isEmail = item.type === "EmailMessage";
-      const isNote = item.type === "ContentNote";
-
-      return {
-        ...item,
-        contentParts,
-        hasContentParts: contentParts.length > 0,
-        hasDescription,
-        hasDisplayBody,
-        showSourceLabel: this.showSourceLabels && !!item.sourceLabel,
-        displayDate: this.formatDate(item.createdDate),
-        timelineClass: `slds-timeline__item_expandable ${this.timelineItemClass(item.type)}`,
-        isTask: item.type === "Task",
-        isCall: item.type === "Call",
-        isEvent: item.type === "Event",
-        isEmail,
-        isNote,
-        isFeed: item.type === "FeedItem",
-        isCollapsibleBody: isEmail && hasDisplayBody,
-        bodyPreview: isEmail
-          ? this.buildPlainTextPreview(item.description)
-          : "",
-        attachmentCount: item.attachmentCount || 0,
-        hasAttachments: isEmail && (item.attachmentCount || 0) > 0,
-        attachmentLabel:
-          isEmail && (item.attachmentCount || 0) > 0
-            ? item.attachmentCount === 1
-              ? "1 attachment"
-              : `${item.attachmentCount} attachments`
-            : ""
-      };
-    });
-  }
-
-  buildPlainTextPreview(value) {
-    if (!value) {
-      return "";
-    }
-    const text = String(value)
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<br\s*\/?>/gi, " ")
-      .replace(/<\/p>/gi, " ")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/&nbsp;/gi, " ")
-      .replace(/&amp;/gi, "&")
-      .replace(/&lt;/gi, "<")
-      .replace(/&gt;/gi, ">")
-      .replace(/&quot;/gi, '"')
-      .replace(/&#39;/gi, "'")
-      .replace(/\s+/g, " ")
-      .trim();
-    const maxLength = 160;
-    if (text.length <= maxLength) {
-      return text;
-    }
-    return `${text.slice(0, maxLength).trim()}…`;
-  }
-
-  timelineItemClass(type) {
-    switch (type) {
-      case "Call":
-        return "slds-timeline__item_call";
-      case "Event":
-        return "slds-timeline__item_event";
-      case "EmailMessage":
-        return "slds-timeline__item_email";
-      default:
-        return "slds-timeline__item_task";
-    }
-  }
-
   get showSourceLabels() {
     return (
       !!this.relatedRecordConfig && this.relatedRecordConfig.trim().length > 0
     );
-  }
-
-  formatDate(value) {
-    if (!value) return "";
-    const date = new Date(value);
-    return date.toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit"
-    });
   }
 
   handleSortToggle() {
@@ -758,44 +647,54 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     this.loadActivities(true);
   }
 
+  async handlePinToggle(event) {
+    const activityId = event.detail?.activityId;
+    const shouldPin = event.detail?.pin === true;
+    if (!activityId || !this.recordId) {
+      return;
+    }
+
+    try {
+      if (shouldPin) {
+        await pinActivity(activityId, this.recordId);
+        this.dispatchEvent(
+          new ShowToastEvent({
+            title: PIN_TOAST.pinnedTitle,
+            message: PIN_TOAST.pinnedMessage,
+            variant: "success"
+          })
+        );
+      } else {
+        await unpinActivity(activityId, this.recordId);
+        this.dispatchEvent(
+          new ShowToastEvent({
+            title: PIN_TOAST.unpinnedTitle,
+            message: PIN_TOAST.unpinnedMessage,
+            variant: "success"
+          })
+        );
+      }
+      await this.loadActivities(true);
+    } catch (error) {
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: shouldPin
+            ? PIN_TOAST.pinErrorTitle
+            : PIN_TOAST.unpinErrorTitle,
+          message: extractErrorMessage(error),
+          variant: "error"
+        })
+      );
+    }
+  }
+
   showError(error) {
-    const message = this.extractErrorMessage(error);
     this.dispatchEvent(
       new ShowToastEvent({
         title: "Error loading activities",
-        message: message,
+        message: extractErrorMessage(error),
         variant: "error"
       })
     );
-  }
-
-  extractErrorMessage(error) {
-    const outputErrors = error.body?.output?.errors;
-    if (Array.isArray(outputErrors) && outputErrors.length > 0) {
-      return outputErrors
-        .map((item) => item.message)
-        .filter((message) => !!message)
-        .join(" ");
-    }
-
-    const fieldErrors = error.body?.output?.fieldErrors;
-    if (fieldErrors) {
-      const messages = [];
-      Object.keys(fieldErrors).forEach((field) => {
-        (fieldErrors[field] || []).forEach((item) => {
-          if (item.message) {
-            messages.push(item.message);
-          }
-        });
-      });
-      if (messages.length > 0) {
-        return messages.join(" ");
-      }
-    }
-
-    if (error.body?.message) return error.body.message;
-    if (typeof error.body === "string") return error.body;
-    if (error.message) return error.message;
-    return "An unknown error occurred";
   }
 }

@@ -42,6 +42,28 @@
   padding-top: 0.75rem;
 }
 
+.pinned-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.pinned-badge {
+  background-color: var(--lwc-colorBackgroundHighlight, #f3f2f2);
+  color: var(--lwc-colorTextDefault, #181818);
+  font-weight: 600;
+}
+
+.pinned-meta {
+  line-height: 1.25;
+}
+
+.activity-pin-menu {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
 .email-body-toggle {
   display: inline-flex;
   align-items: center;
