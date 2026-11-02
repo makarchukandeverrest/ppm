@@ -100,73 +100,6 @@
         <offset>0</offset>
     </actionCalls>
     <actionCalls>
-        <name>New_Task_Action_1</name>
-        <label>Visit Property Action</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <actionName>AutomationTaskCreator</actionName>
-        <actionType>apex</actionType>
-        <connector>
-            <targetReference
-      >Copy_2_of_Send_Custom_Notification_Action_1</targetReference>
-        </connector>
-        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
-        <inputParameters>
-            <name>ownerId</name>
-            <value>
-                <elementReference
-        >Get_Contract_Bid_5.Lead_Owner__r.Id</elementReference>
-            </value>
-        </inputParameters>
-        <inputParameters>
-            <name>subject</name>
-            <value>
-                <elementReference>VisitSubject</elementReference>
-            </value>
-        </inputParameters>
-        <inputParameters>
-            <name>whatId</name>
-            <value>
-                <elementReference>Get_Contract_Bid_5.Id</elementReference>
-            </value>
-        </inputParameters>
-        <nameSegment>AutomationTaskCreator</nameSegment>
-        <offset>0</offset>
-    </actionCalls>
-    <actionCalls>
-        <name>Phone_Call_Task</name>
-        <label>Phone Call Task</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <actionName>AutomationTaskCreator</actionName>
-        <actionType>apex</actionType>
-        <connector>
-            <targetReference>Get_Custom_Notification</targetReference>
-        </connector>
-        <flowTransactionModel>CurrentTransaction</flowTransactionModel>
-        <inputParameters>
-            <name>ownerId</name>
-            <value>
-                <elementReference
-        >Get_Contract_Bid_4.Lead_Owner__r.Id</elementReference>
-            </value>
-        </inputParameters>
-        <inputParameters>
-            <name>subject</name>
-            <value>
-                <elementReference>PhoneCallSubject</elementReference>
-            </value>
-        </inputParameters>
-        <inputParameters>
-            <name>whatId</name>
-            <value>
-                <elementReference>Get_Contract_Bid_4.Id</elementReference>
-            </value>
-        </inputParameters>
-        <nameSegment>AutomationTaskCreator</nameSegment>
-        <offset>0</offset>
-    </actionCalls>
-    <actionCalls>
         <name>Send_Alert_Email</name>
         <label>Send Alert Email</label>
         <locationX>0</locationX>
@@ -855,6 +788,91 @@
         </value>
     </processMetadataValues>
     <processType>AutoLaunchedFlow</processType>
+    <recordCreates>
+        <name>New_Task_Action_1</name>
+        <label>Visit Property Action</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference
+      >Copy_2_of_Send_Custom_Notification_Action_1</targetReference>
+        </connector>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <elementReference
+        >Get_Contract_Bid_5.Lead_Owner__r.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Priority</field>
+            <value>
+                <stringValue>Normal</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Status</field>
+            <value>
+                <stringValue>Not Started</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Subject</field>
+            <value>
+                <elementReference>VisitSubject</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>WhatId</field>
+            <value>
+                <elementReference>Get_Contract_Bid_5.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <object>Task</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordCreates>
+    <recordCreates>
+        <name>Phone_Call_Task</name>
+        <label>Phone Call Task</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Get_Custom_Notification</targetReference>
+        </connector>
+        <inputAssignments>
+            <field>OwnerId</field>
+            <value>
+                <elementReference
+        >Get_Contract_Bid_4.Lead_Owner__r.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Priority</field>
+            <value>
+                <stringValue>Normal</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Status</field>
+            <value>
+                <stringValue>Not Started</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Subject</field>
+            <value>
+                <elementReference>PhoneCallSubject</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>WhatId</field>
+            <value>
+                <elementReference>Get_Contract_Bid_4.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <object>Task</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordCreates>
     <recordCreates>
         <name>Log_Contract_Sent_Email</name>
         <label>Log Contract Sent Email</label>
