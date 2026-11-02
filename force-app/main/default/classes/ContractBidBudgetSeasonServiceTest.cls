@@ -140,6 +140,40 @@ private class ContractBidBudgetSeasonServiceTest {
   }
 
   @IsTest
+  static void createTasks_skipsBidsThatAlreadyHaveTaskThisMonth() {
+    User automationUser = [
+      SELECT Id
+      FROM User
+      WHERE Email = 'budget.season.ppm@example.com'
+      LIMIT 1
+    ];
+    AutomationTaskCreator.automationUserIdOverride = automationUser.Id;
+
+    ContractBidBudgetSeasonService.createTasks();
+
+    Test.startTest();
+    ContractBidBudgetSeasonService.createTasks();
+    Test.stopTest();
+
+    List<Task> tasks = [
+      SELECT Id
+      FROM Task
+      WHERE
+        WhatId IN (
+          SELECT Id
+          FROM Contract_Bid__c
+          WHERE Name = 'Current Month Bid'
+        )
+        AND Subject = :ContractBidBudgetSeasonService.TASK_SUBJECT
+    ];
+    System.assertEquals(
+      1,
+      tasks.size(),
+      'Second run in the same month must not create duplicate Tasks'
+    );
+  }
+
+  @IsTest
   static void scheduler_executesCreateTasks() {
     User automationUser = [
       SELECT Id
@@ -150,11 +184,7 @@ private class ContractBidBudgetSeasonServiceTest {
     AutomationTaskCreator.automationUserIdOverride = automationUser.Id;
 
     Test.startTest();
-    System.schedule(
-      'ContractBidBudgetSeasonSchedulerTest',
-      '0 0 0 1 1 ? 2099',
-      new ContractBidBudgetSeasonScheduler()
-    );
+    ContractBidBudgetSeasonScheduler.scheduleMonthly();
     Test.stopTest();
 
     List<Task> tasks = [
@@ -172,5 +202,37 @@ private class ContractBidBudgetSeasonServiceTest {
       tasks.size(),
       'Scheduler should create the Regional Manager Task'
     );
+
+    List<CronTrigger> jobs = [
+      SELECT Id, CronExpression
+      FROM CronTrigger
+      WHERE CronJobDetail.Name = :ContractBidBudgetSeasonScheduler.JOB_NAME
+    ];
+    System.assertEquals(1, jobs.size(), 'Exactly one named monthly job');
+    System.assertEquals(
+      ContractBidBudgetSeasonScheduler.CRON_MONTHLY,
+      jobs[0].CronExpression
+    );
+  }
+
+  @IsTest
+  static void scheduleMonthly_replacesExistingJob() {
+    Test.startTest();
+    Id firstJobId = ContractBidBudgetSeasonScheduler.scheduleMonthly();
+    Id secondJobId = ContractBidBudgetSeasonScheduler.scheduleMonthly();
+    Test.stopTest();
+
+    System.assertNotEquals(
+      firstJobId,
+      secondJobId,
+      'Reschedule should replace the previous CronTrigger'
+    );
+    List<CronTrigger> jobs = [
+      SELECT Id
+      FROM CronTrigger
+      WHERE CronJobDetail.Name = :ContractBidBudgetSeasonScheduler.JOB_NAME
+    ];
+    System.assertEquals(1, jobs.size());
+    System.assertEquals(secondJobId, jobs[0].Id);
   }
 }

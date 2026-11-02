@@ -1,4 +1,5 @@
 public with sharing class ContractBidBudgetSeasonService {
+  @TestVisible
   private static final String TASK_SUBJECT = 'Time to Follow up';
   private static final String TASK_DESCRIPTION =
     'Hi there!\n\n' +
@@ -33,8 +34,26 @@ public with sharing class ContractBidBudgetSeasonService {
       return;
     }
 
+    Set<Id> bidIds = new Map<Id, Contract_Bid__c>(contractBids).keySet();
+    Set<Id> bidsWithTaskThisMonth = new Set<Id>();
+    for (Task existing : [
+      SELECT WhatId
+      FROM Task
+      WHERE
+        WhatId IN :bidIds
+        AND Subject = :TASK_SUBJECT
+        AND CreatedDate = THIS_MONTH
+    ]) {
+      if (existing.WhatId != null) {
+        bidsWithTaskThisMonth.add(existing.WhatId);
+      }
+    }
+
     List<AutomationTaskCreator.Request> requests = new List<AutomationTaskCreator.Request>();
     for (Contract_Bid__c bid : contractBids) {
+      if (bidsWithTaskThisMonth.contains(bid.Id)) {
+        continue;
+      }
       AutomationTaskCreator.Request request = new AutomationTaskCreator.Request();
       request.ownerId = bid.Lead_Owner__c;
       request.whatId = bid.Id;
@@ -42,6 +61,10 @@ public with sharing class ContractBidBudgetSeasonService {
       request.description = TASK_DESCRIPTION;
       request.activityDate = Date.today();
       requests.add(request);
+    }
+
+    if (requests.isEmpty()) {
+      return;
     }
 
     AutomationTaskCreator.createTasks(requests);
