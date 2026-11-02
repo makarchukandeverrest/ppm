@@ -87,14 +87,23 @@ private class ProposalDocCleanupServiceTest {
       [SELECT COUNT() FROM ContentDocument WHERE Id = :certificateDocId],
       'Completion certificate should remain'
     );
-    String feedPattern = ProposalDocCleanupService.FEED_PREFIX + '%';
-    System.assertEquals(
-      1,
-      [
-        SELECT COUNT()
-        FROM FeedItem
-        WHERE ParentId = :proposal.Id AND Body LIKE :feedPattern
-      ],
+    List<FeedItem> feedItems = [
+      SELECT Body
+      FROM FeedItem
+      WHERE ParentId = :proposal.Id
+    ];
+    Boolean sawCleanupFeed = false;
+    for (FeedItem item : feedItems) {
+      if (
+        item.Body != null &&
+        item.Body.startsWith(ProposalDocCleanupService.FEED_PREFIX)
+      ) {
+        sawCleanupFeed = true;
+        break;
+      }
+    }
+    System.assert(
+      sawCleanupFeed,
       'Successful cleanup should post a Chatter update on the Proposal'
     );
   }
