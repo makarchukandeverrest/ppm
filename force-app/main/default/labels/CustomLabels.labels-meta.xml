@@ -55,7 +55,8 @@ This email was sent automatically when the completed proposal was received from 
         <fullName>MapTiler_Api_Key</fullName>
         <language>en_US</language>
         <protected>false</protected>
-        <shortDescription>MapTiler key for the customer map</shortDescription>
-        <value>DOuDMObAFIxUxt9msNF7</value>
+        <shortDescription
+    >MapTiler key for the customer map — set value in the org only, do not commit</shortDescription>
+        <value />
     </labels>
 </CustomLabels>
