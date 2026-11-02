@@ -26,6 +26,15 @@ private class ProposalDocCleanupServiceTest {
       null,
       null
     );
+    Id manualProposalNamedDocId = insertLinkedPdf(
+      proposal.Id,
+      'Client Proposal Notes',
+      'Client Proposal Notes.pdf',
+      null,
+      null,
+      null,
+      null
+    );
     Id certificateDocId = insertLinkedPdf(
       proposal.Id,
       'Certificate of Completion',
@@ -66,8 +75,27 @@ private class ProposalDocCleanupServiceTest {
     );
     System.assertEquals(
       1,
+      [
+        SELECT COUNT()
+        FROM ContentDocument
+        WHERE Id = :manualProposalNamedDocId
+      ],
+      'Hand-uploaded PDF with proposal in the title must not be deleted'
+    );
+    System.assertEquals(
+      1,
       [SELECT COUNT() FROM ContentDocument WHERE Id = :certificateDocId],
       'Completion certificate should remain'
+    );
+    String feedPattern = ProposalDocCleanupService.FEED_PREFIX + '%';
+    System.assertEquals(
+      1,
+      [
+        SELECT COUNT()
+        FROM FeedItem
+        WHERE ParentId = :proposal.Id AND Body LIKE :feedPattern
+      ],
+      'Successful cleanup should post a Chatter update on the Proposal'
     );
   }
 

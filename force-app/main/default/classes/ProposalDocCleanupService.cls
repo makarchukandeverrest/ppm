@@ -1,4 +1,7 @@
 public with sharing class ProposalDocCleanupService {
+  public class ProposalDocCleanupException extends Exception {
+  }
+
   @TestVisible
   private static final Set<String> COMPLETED_STAGES = new Set<String>{
     'Approved'
@@ -20,6 +23,8 @@ public with sharing class ProposalDocCleanupService {
   private static final String COMPLETED_TOKEN = '_completed';
   private static final String COMPLETED_SUFFIX = ' - completed';
   private static final String CERTIFICATE_TOKEN = 'certificate';
+  @TestVisible
+  private static final String FEED_PREFIX = 'Proposal document cleanup: ';
 
   public static void enqueueForStageTransition(
     List<Opportunity> newList,
@@ -209,26 +214,62 @@ public with sharing class ProposalDocCleanupService {
       return;
     }
 
+    List<ContentDocument> documents = [
+      SELECT Id
+      FROM ContentDocument
+      WHERE Id IN :documentsToDelete
+    ];
+    if (documents.isEmpty()) {
+      return;
+    }
+
+    List<Database.DeleteResult> results = Database.delete(documents, false);
+    Integer deletedCount = 0;
+    List<String> errors = new List<String>();
+    for (Database.DeleteResult result : results) {
+      if (result.isSuccess()) {
+        deletedCount++;
+        continue;
+      }
+      for (Database.Error err : result.getErrors()) {
+        errors.add(err.getMessage());
+      }
+    }
+
+    if (!errors.isEmpty()) {
+      String failMessage =
+        FEED_PREFIX +
+        'could not delete ' +
+        errors.size() +
+        ' file(s). ' +
+        String.join(errors, '; ');
+      postProposalFeed(proposalId, failMessage);
+      throw new ProposalDocCleanupException(failMessage);
+    }
+
+    postProposalFeed(
+      proposalId,
+      FEED_PREFIX + 'removed ' + deletedCount + ' outdated generated PDF(s).'
+    );
+  }
+
+  private static void postProposalFeed(Id proposalId, String body) {
+    if (proposalId == null || String.isBlank(body)) {
+      return;
+    }
     try {
-      delete [SELECT Id FROM ContentDocument WHERE Id IN :documentsToDelete];
-      System.debug(
-        LoggingLevel.INFO,
-        'ProposalDocCleanup: deleted ' +
-          documentsToDelete.size() +
-          ' ContentDocument(s) for Proposal ' +
-          proposalId +
-          ': ' +
-          documentsToDelete
+      insert new FeedItem(
+        ParentId = proposalId,
+        Body = body,
+        Type = 'TextPost'
       );
-    } catch (Exception ex) {
+    } catch (Exception feedEx) {
       System.debug(
         LoggingLevel.ERROR,
-        'ProposalDocCleanup: delete failed for Proposal ' +
+        'ProposalDocCleanup: failed to post feed for Proposal ' +
           proposalId +
           ': ' +
-          ex.getMessage() +
-          '\n' +
-          ex.getStackTraceString()
+          feedEx.getMessage()
       );
     }
   }
@@ -335,6 +376,10 @@ public with sharing class ProposalDocCleanupService {
       version.Title.toLowerCase().contains(CERTIFICATE_TOKEN);
   }
 
+  /**
+   * Only DocuSign-generated files (dfsle generated fields), never title matching.
+   * A hand-uploaded PDF whose title contains "proposal" must not be deleted.
+   */
   @TestVisible
   private static Boolean looksLikeGeneratedProposalDocument(
     ContentVersion version
@@ -342,14 +387,8 @@ public with sharing class ProposalDocCleanupService {
     if (version == null) {
       return false;
     }
-    if (
-      String.isNotBlank(version.dfsle__GeneratedFileName__c) ||
-      String.isNotBlank(version.dfsle__GeneratedFileFormat__c)
-    ) {
-      return true;
-    }
-    return version.Title != null &&
-      version.Title.toLowerCase().contains('proposal');
+    return String.isNotBlank(version.dfsle__GeneratedFileName__c) ||
+      String.isNotBlank(version.dfsle__GeneratedFileFormat__c);
   }
 
   private static Set<Id> findDocumentsLinkedElsewhere(
