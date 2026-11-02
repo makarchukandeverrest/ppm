@@ -1,8 +1,75 @@
 public with sharing class ContractBidLabelsFiller {
   private static final String NEW_RECORD_CREATED = 'New record created';
+  private static final String INFO_VERIFIED_LABEL = 'info verified';
+  private static final String VERIFY_CONTACT_INFO_SUBJECT = 'Verify contact info';
+  private static final String TASK_STATUS_COMPLETED = 'Completed';
   private static final List<String> DEFAULT_LABELS = new List<String>{
     'Contract Created'
   };
+
+  public static void applyInfoVerifiedLabelOnTaskComplete(
+    List<Task> newTasks,
+    Map<Id, Task> oldMap
+  ) {
+    if (newTasks == null || newTasks.isEmpty() || oldMap == null) {
+      return;
+    }
+
+    Set<Id> bidIds = new Set<Id>();
+    for (Task taskRecord : newTasks) {
+      Task oldTask = oldMap.get(taskRecord.Id);
+      if (oldTask == null) {
+        continue;
+      }
+      if (
+        taskRecord.Status != TASK_STATUS_COMPLETED ||
+        oldTask.Status == TASK_STATUS_COMPLETED
+      ) {
+        continue;
+      }
+      if (taskRecord.Subject != VERIFY_CONTACT_INFO_SUBJECT) {
+        continue;
+      }
+      if (
+        taskRecord.WhatId == null ||
+        taskRecord.WhatId.getSObjectType() != Contract_Bid__c.SObjectType
+      ) {
+        continue;
+      }
+      bidIds.add(taskRecord.WhatId);
+    }
+
+    addLabel(bidIds, INFO_VERIFIED_LABEL);
+  }
+
+  public static void addLabel(Set<Id> bidIds, String labelValue) {
+    if (bidIds == null || bidIds.isEmpty() || String.isBlank(labelValue)) {
+      return;
+    }
+
+    String labelToAdd = labelValue.trim();
+    List<Contract_Bid__c> bids = [
+      SELECT Id, Label__c
+      FROM Contract_Bid__c
+      WHERE Id IN :bidIds
+    ];
+    List<Contract_Bid__c> bidsToUpdate = new List<Contract_Bid__c>();
+    for (Contract_Bid__c bid : bids) {
+      Set<String> labels = new Set<String>();
+      if (String.isNotBlank(bid.Label__c)) {
+        labels.addAll(bid.Label__c.split(';'));
+      }
+      if (labels.contains(labelToAdd)) {
+        continue;
+      }
+      labels.add(labelToAdd);
+      bid.Label__c = String.join(new List<String>(labels), ';');
+      bidsToUpdate.add(bid);
+    }
+    if (!bidsToUpdate.isEmpty()) {
+      update bidsToUpdate;
+    }
+  }
 
   public static void fillLabels(List<Contract_Bid__c> bids) {
     for (Contract_Bid__c bid : bids) {
