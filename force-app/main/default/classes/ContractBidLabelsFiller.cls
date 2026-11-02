@@ -3,9 +3,6 @@ public with sharing class ContractBidLabelsFiller {
   private static final String INFO_VERIFIED_LABEL = 'info verified';
   private static final String VERIFY_CONTACT_INFO_SUBJECT = 'Verify contact info';
   private static final String TASK_STATUS_COMPLETED = 'Completed';
-  private static final List<String> DEFAULT_LABELS = new List<String>{
-    'Contract Created'
-  };
 
   public static void applyInfoVerifiedLabelOnTaskComplete(
     List<Task> newTasks,
@@ -68,17 +65,6 @@ public with sharing class ContractBidLabelsFiller {
     }
     if (!bidsToUpdate.isEmpty()) {
       update bidsToUpdate;
-    }
-  }
-
-  public static void fillLabels(List<Contract_Bid__c> bids) {
-    for (Contract_Bid__c bid : bids) {
-      Set<String> labels = new Set<String>();
-      if (String.isNotBlank(bid.Label__c)) {
-        labels.addAll(bid.Label__c.split(';'));
-      }
-      labels.addAll(DEFAULT_LABELS);
-      bid.Label__c = String.join(new List<String>(labels), ';');
     }
   }
 
