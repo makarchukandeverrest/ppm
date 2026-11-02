@@ -293,6 +293,23 @@ private class MapCustomersControllerTest {
     System.assertEquals(39.2904000, saved.Map_Latitude__c);
     System.assertEquals(-76.6122000, saved.Map_Longitude__c);
 
+    MapCustomersController.MapCoordinate invalid = new MapCustomersController.MapCoordinate();
+    invalid.accountId = saved.Id;
+    invalid.latitude = 120;
+    invalid.longitude = -76.6122000;
+    Boolean threw = false;
+    try {
+      MapCustomersController.saveMapCoordinates(
+        new List<MapCustomersController.MapCoordinate>{ invalid }
+      );
+    } catch (AuraHandledException ex) {
+      threw = true;
+    }
+    System.assert(
+      threw,
+      'Out-of-range coordinates must fail instead of writing silently'
+    );
+
     insert new Task(
       WhatId = saved.Id,
       Subject = 'Older visit',
