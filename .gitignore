@@ -42,6 +42,9 @@ $RECYCLE.BIN/
 # Local environment variables
 .env
 
+# Cursor IDE / agent rules (local only)
+.cursor/
+
 # Local temp / scratch deploy folders (never commit)
 /tmp-*/
 
