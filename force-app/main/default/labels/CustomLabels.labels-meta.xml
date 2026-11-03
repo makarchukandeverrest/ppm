@@ -51,12 +51,4 @@ This email was sent automatically when the completed proposal was received from 
     >Subject for signed proposal copy email</shortDescription>
         <value>Signed Proposal: {0}</value>
     </labels>
-    <labels>
-        <fullName>MapTiler_Api_Key</fullName>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription
-    >MapTiler key for the customer map — real value only in the org, do not commit secrets</shortDescription>
-        <value>SET_IN_ORG_ONLY</value>
-    </labels>
 </CustomLabels>
