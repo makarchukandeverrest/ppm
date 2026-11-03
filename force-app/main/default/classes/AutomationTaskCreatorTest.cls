@@ -90,4 +90,33 @@ private class AutomationTaskCreatorTest {
     System.assertEquals('Not Started', created.Status);
     System.assertEquals('Normal', created.Priority);
   }
+
+  @IsTest
+  static void createTasks_requiresSystemAdminContext() {
+    User taskOwner = [
+      SELECT Id
+      FROM User
+      WHERE Email = 'regional.manager@example.com'
+      LIMIT 1
+    ];
+
+    AutomationTaskCreator.Request request = new AutomationTaskCreator.Request();
+    request.ownerId = taskOwner.Id;
+    request.subject = 'Should fail outside System Admin';
+
+    Boolean threw = false;
+    System.runAs(taskOwner) {
+      try {
+        AutomationTaskCreator.createTasks(
+          new List<AutomationTaskCreator.Request>{ request }
+        );
+      } catch (AutomationTaskCreator.AutomationTaskCreatorException e) {
+        threw = e.getMessage().contains('System Administrator');
+      }
+    }
+    System.assert(
+      threw,
+      'Expected AutomationTaskCreatorException when not System Administrator'
+    );
+  }
 }

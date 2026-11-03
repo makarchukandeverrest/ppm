@@ -51,6 +51,8 @@ const MAP_ATTRIBUTION =
 const GEOCODE_CACHE_KEY = "ppmCustomersMapGeocodes";
 const GEOCODE_MAX_BATCH = 8;
 const GEOCODE_MAX_PATH = 1400;
+// MapTiler relevance is 0–1; below this we neither pin nor persist to Account.
+const MIN_GEOCODE_RELEVANCE = 0.8;
 const DEFAULT_MAP_CENTER = [39.8283, -98.5795];
 const DEFAULT_MAP_ZOOM = 4;
 
@@ -1428,7 +1430,11 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
     }
     if (located.length) {
       this.mapError = "";
-      this.saveResolvedCoordinates(located);
+      // Only persist high-confidence matches so a bad MapTiler hit does not
+      // stick on the Account. Low/unknown relevance stays session-only.
+      await this.saveResolvedCoordinates(
+        located.filter((item) => item.persistable)
+      );
     } else if (!this.hasFilteredMarkers) {
       this.mapError = "Addresses could not be located.";
     }
@@ -1457,28 +1463,48 @@ export default class CustomersMap extends NavigationMixin(LightningElement) {
     const collections = Array.isArray(payload) ? payload : [payload];
     const found = [];
     collections.forEach((collection, index) => {
-      const coordinates = collection?.features?.[0]?.geometry?.coordinates;
+      const feature = collection?.features?.[0];
+      const coordinates = feature?.geometry?.coordinates;
       const customer = customers[index];
       if (!customer || !coordinates || coordinates.length < 2) {
+        return;
+      }
+      const relevance =
+        typeof feature.relevance === "number" ? feature.relevance : null;
+      // Reject weak matches entirely — do not pin or write to Account.
+      if (relevance == null || relevance < MIN_GEOCODE_RELEVANCE) {
         return;
       }
       found.push({
         accountId: customer.accountId,
         latitude: coordinates[1],
-        longitude: coordinates[0]
+        longitude: coordinates[0],
+        persistable: true
       });
     });
     return found;
   }
 
   async saveResolvedCoordinates(rows) {
+    if (!rows?.length) {
+      return;
+    }
     for (let index = 0; index < rows.length; index += 200) {
-      const updates = rows.slice(index, index + 200);
+      const updates = rows.slice(index, index + 200).map((row) => ({
+        accountId: row.accountId,
+        latitude: row.latitude,
+        longitude: row.longitude
+      }));
       try {
         // eslint-disable-next-line no-await-in-loop
         await saveMapCoordinates({ updates });
       } catch (error) {
+        const message =
+          error?.body?.message ||
+          error?.message ||
+          "Could not save map coordinates.";
         console.error("Error saving map coordinates:", error);
+        this.mapError = message;
       }
     }
   }

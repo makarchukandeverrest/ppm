@@ -1,5 +1,9 @@
 public without sharing class AutomationTaskCreator {
   private static final String AUTOMATION_USER_NAME = 'Premier Pool Management';
+  private static final String SYSTEM_ADMIN_PROFILE = 'System Administrator';
+
+  public class AutomationTaskCreatorException extends Exception {
+  }
 
   @TestVisible
   private static Id automationUserIdOverride;
@@ -37,9 +41,10 @@ public without sharing class AutomationTaskCreator {
 
   @InvocableMethod(
     label='Create Automation Task'
-    description='Creates Tasks assigned to Owner Id with Created By = Premier Pool Management.'
+    description='Budget Season only. Creates Tasks with Created By = Premier Pool Management. Must run as System Administrator (Set Audit Fields) — schedule ContractBidBudgetSeasonScheduler as that user.'
   )
   public static List<Result> createTasks(List<Request> requests) {
+    assertSystemAdminContext();
     Id createdById = getAutomationUserId();
     List<Task> tasks = new List<Task>();
 
@@ -74,16 +79,41 @@ public without sharing class AutomationTaskCreator {
     return results;
   }
 
+  private static void assertSystemAdminContext() {
+    // CreatedById on insert requires Set Audit Fields; we only allow System Admin.
+    String profileName = [
+      SELECT Name
+      FROM Profile
+      WHERE Id = :UserInfo.getProfileId()
+      LIMIT 1
+    ]
+    .Name;
+    if (profileName != SYSTEM_ADMIN_PROFILE) {
+      throw new AutomationTaskCreatorException(
+        'AutomationTaskCreator must run as System Administrator (current profile: ' +
+          profileName +
+          '). Schedule the job / run the automation as that user.'
+      );
+    }
+  }
+
   private static Id getAutomationUserId() {
     if (automationUserIdOverride != null) {
       return automationUserIdOverride;
     }
-    return [
+    List<User> automationUsers = [
       SELECT Id
       FROM User
       WHERE Name = :AUTOMATION_USER_NAME AND IsActive = TRUE
       LIMIT 1
-    ]
-    .Id;
+    ];
+    if (automationUsers.isEmpty()) {
+      throw new AutomationTaskCreatorException(
+        'Active user "' +
+          AUTOMATION_USER_NAME +
+          '" is required for AutomationTaskCreator CreatedById.'
+      );
+    }
+    return automationUsers[0].Id;
   }
 }

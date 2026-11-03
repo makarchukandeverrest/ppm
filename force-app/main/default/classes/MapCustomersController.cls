@@ -1,4 +1,7 @@
 public with sharing class MapCustomersController {
+  @TestVisible
+  private static final Integer MAX_MAP_ACCOUNTS = 2000;
+
   public class CustomerMapRow {
     @AuraEnabled
     public Id accountId;
@@ -309,7 +312,10 @@ public with sharing class MapCustomersController {
         BillingPostalCode != NULL
         OR (BillingLatitude != NULL
         AND BillingLongitude != NULL)
+        OR (Map_Latitude__c != NULL
+        AND Map_Longitude__c != NULL)
       ORDER BY Name ASC
+      LIMIT :MAX_MAP_ACCOUNTS
     ];
 
     List<CustomerMapRow> rows = new List<CustomerMapRow>();
@@ -321,6 +327,10 @@ public with sharing class MapCustomersController {
     return rows;
   }
 
+  /**
+   * Persists map pins onto Account. Callers must only send coordinates they
+   * trust (e.g. high MapTiler relevance). allOrNone — failures surface to LWC.
+   */
   @AuraEnabled
   public static void saveMapCoordinates(List<MapCoordinate> updates) {
     if (updates == null || updates.isEmpty()) {
@@ -337,6 +347,11 @@ public with sharing class MapCustomersController {
       ) {
         continue;
       }
+      if (!isValidCoordinate(updateRow.latitude, updateRow.longitude)) {
+        throw new AuraHandledException(
+          'Invalid map coordinates for Account ' + updateRow.accountId
+        );
+      }
       accounts.add(
         new Account(
           Id = updateRow.accountId,
@@ -345,9 +360,27 @@ public with sharing class MapCustomersController {
         )
       );
     }
-    if (!accounts.isEmpty()) {
-      Database.update(accounts, false);
+    if (accounts.isEmpty()) {
+      return;
     }
+    try {
+      update accounts;
+    } catch (DmlException ex) {
+      throw new AuraHandledException(
+        'Could not save map coordinates: ' + ex.getDmlMessage(0)
+      );
+    }
+  }
+
+  @TestVisible
+  private static Boolean isValidCoordinate(
+    Decimal latitude,
+    Decimal longitude
+  ) {
+    return latitude >= -90 &&
+      latitude <= 90 &&
+      longitude >= -180 &&
+      longitude <= 180;
   }
 
   @AuraEnabled
