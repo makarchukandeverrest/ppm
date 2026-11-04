@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
     <actionOverrides>
         <actionName>Accept</actionName>
@@ -128,7 +128,8 @@
     </actionOverrides>
     <actionOverrides>
         <actionName>View</actionName>
-        <comment>Action override created by Lightning App Builder during activation.</comment>
+        <comment
+    >Action override created by Lightning App Builder during activation.</comment>
         <content>Contract_Bid_Record_Page</content>
         <formFactor>Large</formFactor>
         <skipRecordTypeSelect>false</skipRecordTypeSelect>
@@ -140,8 +141,12 @@
     </actionOverrides>
     <actionOverrides>
         <actionName>View</actionName>
+        <comment
+    >Action override created by Lightning App Builder during activation.</comment>
+        <content>Contract_Bid_Phone_Record_Page</content>
         <formFactor>Small</formFactor>
-        <type>Default</type>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Flexipage</type>
     </actionOverrides>
     <allowInChatterGroups>false</allowInChatterGroups>
     <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
@@ -172,20 +177,29 @@
         <excludedStandardButtons>MassChangeOwner</excludedStandardButtons>
         <excludedStandardButtons>PrintableListView</excludedStandardButtons>
         <excludedStandardButtons>MassAssignRecordLabel</excludedStandardButtons>
-        <excludedStandardButtons>OmniChannelMassRouteWork</excludedStandardButtons>
+        <excludedStandardButtons
+    >OmniChannelMassRouteWork</excludedStandardButtons>
         <listViewButtons>Send_Contracts</listViewButtons>
         <listViewButtons>Mass_Send</listViewButtons>
         <listViewButtons>Send_Emails</listViewButtons>
         <listViewButtons>Mass_Clone</listViewButtons>
         <listViewButtons>Update_DocuSign_Expiration</listViewButtons>
-        <searchResultsAdditionalFields>Version__c</searchResultsAdditionalFields>
-        <searchResultsAdditionalFields>Customer__c</searchResultsAdditionalFields>
-        <searchResultsAdditionalFields>Management_Company__c</searchResultsAdditionalFields>
-        <searchResultsAdditionalFields>Current_Vendor_Object__c</searchResultsAdditionalFields>
-        <searchResultsAdditionalFields>CREATED_DATE</searchResultsAdditionalFields>
-        <searchResultsAdditionalFields>Due_Date__c</searchResultsAdditionalFields>
-        <searchResultsAdditionalFields>EBD_Due_Date__c</searchResultsAdditionalFields>
-        <searchResultsAdditionalFields>Lead_Owner__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields
+    >Version__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields
+    >Customer__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields
+    >Management_Company__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields
+    >Current_Vendor_Object__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields
+    >CREATED_DATE</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields
+    >Due_Date__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields
+    >EBD_Due_Date__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields
+    >Lead_Owner__c</searchResultsAdditionalFields>
         <searchResultsCustomButtons>Send_Contracts</searchResultsCustomButtons>
     </searchLayouts>
     <sharingModel>ControlledByParent</sharingModel>
