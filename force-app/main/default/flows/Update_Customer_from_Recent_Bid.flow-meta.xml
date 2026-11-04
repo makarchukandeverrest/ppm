@@ -1,9 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <Flow xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>65.0</apiVersion>
     <areMetricsLoggedToDataCloud>false</areMetricsLoggedToDataCloud>
     <environments>Default</environments>
-    <interviewLabel>Update Customer from Recent Bid {!$Flow.CurrentDateTime}</interviewLabel>
+    <interviewLabel
+  >Update Customer from Recent Bid {!$Flow.CurrentDateTime}</interviewLabel>
     <label>Update Customer from Recent Bid</label>
     <processMetadataValues>
         <name>BuilderType</name>
@@ -32,265 +33,302 @@
         <inputAssignments>
             <field>Additional_Comments__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.Additional_Comments__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.Additional_Comments__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>Budget_Season__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.Budget_Season__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.Budget_Season__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
-            <field>Contract_Creator__c</field>
+            <field>Contract_Creator_Picklist__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.Record_Manager__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.Contract_Creator_Picklist__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>Contract_End_Date__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.Contract_End_Date__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.Contract_End_Date__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>Contract_Start_Date__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.Contract_Start_Date__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.Contract_Start_Date__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>Label__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.Label__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.Label__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>Lead_Generator__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.Lead_Generator__c</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Regional_Manager__c</field>
-            <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.Lead_Owner__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.Lead_Generator__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>NormalSeason_Holiday_Close_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.NormalSeason_Holiday_Close_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.NormalSeason_Holiday_Close_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>NormalSeason_Holiday_Open_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.NormalSeason_Holiday_Open_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.NormalSeason_Holiday_Open_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>NormalSeason_Hours_per_Lifeguard__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.NormalSeason_Hours_per_Lifeguard__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.NormalSeason_Hours_per_Lifeguard__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>NormalSeason_Number_of_Lifeguards__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.NormalSeason_Number_of_Lifeguards__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.NormalSeason_Number_of_Lifeguards__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>NormalSeason_Saturday_Close_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.NormalSeason_Saturday_Close_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.NormalSeason_Saturday_Close_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>NormalSeason_Saturday_Open_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.NormalSeason_Saturday_Open_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.NormalSeason_Saturday_Open_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>NormalSeason_Sunday_Close_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.NormalSeason_Sunday_Close_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.NormalSeason_Sunday_Close_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>NormalSeason_Sunday_Open_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.NormalSeason_Sunday_Open_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.NormalSeason_Sunday_Open_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>Normal_Season_Friday_Close_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.Normal_Season_Friday_Close_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.Normal_Season_Friday_Close_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>Normal_Season_Friday_Open_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.Normal_Season_Friday_Open_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.Normal_Season_Friday_Open_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>Normal_Season_Monday_Close_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.Normal_Season_Monday_Close_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.Normal_Season_Monday_Close_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>Normal_Season_Monday_Open_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.Normal_Season_Monday_Open_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.Normal_Season_Monday_Open_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>Normal_Season_Thursday_Close_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.Normal_Season_Thursday_Close_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.Normal_Season_Thursday_Close_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>Normal_Season_Thursday_Open_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.Normal_Season_Thursday_Open_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.Normal_Season_Thursday_Open_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>Normal_Season_Tuesday_Close_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.Normal_Season_Tuesday_Close_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.Normal_Season_Tuesday_Close_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>Normal_Season_Tuesday_Open_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.Normal_Season_Tuesday_Open_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.Normal_Season_Tuesday_Open_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>Normal_Season_Wednesday_Close_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.Normal_Season_Wednesday_Close_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.Normal_Season_Wednesday_Close_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>Normal_Season_Wednesday_Open_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.Normal_Season_Wednesday_Open_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.Normal_Season_Wednesday_Open_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>SchoolOff_Season_Friday_Close_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.SchoolOff_Season_Friday_Close_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.SchoolOff_Season_Friday_Close_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>SchoolOff_Season_Friday_Open_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.SchoolOff_Season_Friday_Open_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.SchoolOff_Season_Friday_Open_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>SchoolOff_Season_Holiday_Close_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.SchoolOff_Season_Holiday_Close_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.SchoolOff_Season_Holiday_Close_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>SchoolOff_Season_Holiday_Open_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.SchoolOff_Season_Holiday_Open_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.SchoolOff_Season_Holiday_Open_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>SchoolOff_Season_Monday_Close_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.SchoolOff_Season_Monday_Close_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.SchoolOff_Season_Monday_Close_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>SchoolOff_Season_Monday_Open_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.SchoolOff_Season_Monday_Open_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.SchoolOff_Season_Monday_Open_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>SchoolOff_Season_Number_of_Lifeguards__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.SchoolOff_Season_Number_of_Lifeguards__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.SchoolOff_Season_Number_of_Lifeguards__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>SchoolOff_Season_Saturday_Close_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.SchoolOff_Season_Saturday_Close_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.SchoolOff_Season_Saturday_Close_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>SchoolOff_Season_Saturday_Open_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.SchoolOff_Season_Saturday_Open_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.SchoolOff_Season_Saturday_Open_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>SchoolOff_Season_Sunday_Close_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.SchoolOff_Season_Sunday_Close_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.SchoolOff_Season_Sunday_Close_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>SchoolOff_Season_Sunday_Open_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.SchoolOff_Season_Sunday_Open_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.SchoolOff_Season_Sunday_Open_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>SchoolOff_Season_Thursday_Close_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.SchoolOff_Season_Thursday_Close_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.SchoolOff_Season_Thursday_Close_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>SchoolOff_Season_Thursday_Open_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.SchoolOff_Season_Thursday_Open_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.SchoolOff_Season_Thursday_Open_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>SchoolOff_Season_Tuesday_Close_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.SchoolOff_Season_Tuesday_Close_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.SchoolOff_Season_Tuesday_Close_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>SchoolOff_Season_Tuesday_Open_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.SchoolOff_Season_Tuesday_Open_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.SchoolOff_Season_Tuesday_Open_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>SchoolOff_Season_Wednesday_Close_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.SchoolOff_Season_Wednesday_Close_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.SchoolOff_Season_Wednesday_Close_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>SchoolOff_Season_Wednesday_Open_Time__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.SchoolOff_Season_Wednesday_Open_Time__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.SchoolOff_Season_Wednesday_Open_Time__c</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
             <field>School_Off_Season_Hours_per_Lifeguard__c</field>
             <value>
-                <elementReference>$Record.Recent_Contract_Bid__r.School_Off_Season_Hours_per_Lifeguard__c</elementReference>
+                <elementReference
+        >$Record.Recent_Contract_Bid__r.School_Off_Season_Hours_per_Lifeguard__c</elementReference>
             </value>
         </inputAssignments>
         <inputReference>$Record</inputReference>
