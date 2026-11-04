@@ -7,30 +7,30 @@ import {
   unregisterRefreshHandler
 } from "lightning/refresh";
 import { getRecord, getFieldValue } from "lightning/uiRecordApi";
-import getUnifiedActivities from "@salesforce/apex/UnifiedActivityController.getUnifiedActivities";
+import { getObjectInfo } from "lightning/uiObjectInfoApi";
+import TASK_OBJECT from "@salesforce/schema/Task";
+import resolveContractCreatorUserId from "@salesforce/apex/ContractCreatorUserResolver.resolveUserId";
+import { PIN_TOAST } from "./unifiedActivityFeedConstants";
+import {
+  enrichActivities,
+  extractErrorMessage
+} from "./unifiedActivityFeedUtils";
+import {
+  fetchUnifiedActivities,
+  pinActivity,
+  unpinActivity
+} from "./unifiedActivityFeedService";
 
 const WHO_ID_OBJECTS = new Set(["Contact", "Lead"]);
-
-const FILE_ICONS = {
-  pdf: "doctype:pdf",
-  doc: "doctype:word",
-  docx: "doctype:word",
-  xls: "doctype:excel",
-  xlsx: "doctype:excel",
-  ppt: "doctype:ppt",
-  pptx: "doctype:ppt",
-  txt: "doctype:txt",
-  csv: "doctype:csv",
-  zip: "doctype:zip"
-};
-
-function fileIconName(fileName) {
-  const extension = String(fileName || "")
-    .split(".")
-    .pop()
-    .toLowerCase();
-  return FILE_ICONS[extension] || "doctype:attachment";
-}
+const BID_STAGE_BID_QUALIFIED = "Contact Made";
+// Negotiation Started = current API; Proposal/Review = label "Negotiation" on stage-update branch
+const BID_STAGES_NEGOTIATION = new Set([
+  "Negotiation Started",
+  "Proposal/Review"
+]);
+const RM_REQUEST_RECORD_TYPE_LABEL = "Regional Manager Request";
+const REQUEST_CONTRACT_SUBJECT = "Request a Contract Bid";
+const REQUEST_NEW_VERSION_SUBJECT = "Request New Version";
 
 const DEFAULT_CONFIG = {
   Account: {
@@ -68,6 +68,9 @@ export default class UnifiedActivityFeed extends NavigationMixin(
   primaryContactId;
   primaryContactEmail = "";
   accountAddress = "";
+  currentStage;
+  contractCreatorPicklist;
+  rmRequestRecordTypeId;
   refreshHandlerId;
   activities = [];
   totalCount = 0;
@@ -87,6 +90,17 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     }
   }
 
+  @wire(getObjectInfo, { objectApiName: TASK_OBJECT })
+  wiredTaskObjectInfo({ data }) {
+    if (!data?.recordTypeInfos) {
+      return;
+    }
+    const match = Object.values(data.recordTypeInfos).find(
+      (rt) => rt.name === RM_REQUEST_RECORD_TYPE_LABEL && rt.available
+    );
+    this.rmRequestRecordTypeId = match?.recordTypeId;
+  }
+
   @wire(getRecord, {
     recordId: "$recordId",
     fields: "$activityDefaultFields"
@@ -103,47 +117,25 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     this.primaryContactId = this.resolvePrimaryContactId(data);
     this.primaryContactEmail = this.resolvePrimaryContactEmail(data);
     this.accountAddress = this.resolveAccountAddress(data);
+    this.currentStage = this.resolveCurrentStage(data);
+    this.contractCreatorPicklist = this.resolveContractCreatorPicklist(data);
   }
 
-  // Nested Customer__r.Primary_Contact__c can fail on the parent wire; load from Account.
-  @wire(getRecord, {
-    recordId: "$relatedRecordId",
-    fields: [
-      "Account.Primary_Contact__c",
-      "Account.Primary_Contact__r.Email",
-      "Account.Email__c",
-      "Account.BillingStreet",
-      "Account.BillingCity",
-      "Account.BillingState",
-      "Account.BillingPostalCode",
-      "Account.BillingCountry"
-    ]
-  })
-  wiredRelatedAccountDefaults({ data }) {
-    if (!data || this.objectApiName === "Account") {
-      return;
-    }
-    const contactId = getFieldValue(data, "Account.Primary_Contact__c");
-    if (contactId) {
-      this.primaryContactId = contactId;
-    }
-    const contactEmail = getFieldValue(
-      data,
-      "Account.Primary_Contact__r.Email"
+  get isNegotiationStage() {
+    return BID_STAGES_NEGOTIATION.has(this.currentStage);
+  }
+
+  get showRequestContract() {
+    return (
+      this.objectApiName === "Contract_Bid__c" &&
+      (this.currentStage === BID_STAGE_BID_QUALIFIED || this.isNegotiationStage)
     );
-    const accountEmail = getFieldValue(data, "Account.Email__c");
-    if (contactEmail || accountEmail) {
-      this.primaryContactEmail = contactEmail || accountEmail || "";
-    }
-    if (!this.accountAddress) {
-      this.accountAddress = this.formatAddress([
-        getFieldValue(data, "Account.BillingStreet"),
-        getFieldValue(data, "Account.BillingCity"),
-        getFieldValue(data, "Account.BillingState"),
-        getFieldValue(data, "Account.BillingPostalCode"),
-        getFieldValue(data, "Account.BillingCountry")
-      ]);
-    }
+  }
+
+  get requestContractSubject() {
+    return this.isNegotiationStage
+      ? REQUEST_NEW_VERSION_SUBJECT
+      : REQUEST_CONTRACT_SUBJECT;
   }
 
   get effectiveConfig() {
@@ -170,6 +162,8 @@ export default class UnifiedActivityFeed extends NavigationMixin(
       this.primaryContactEmail = "";
       this.accountAddress = "";
       this.relatedRecordId = undefined;
+      this.currentStage = undefined;
+      this.contractCreatorPicklist = undefined;
       if (value) {
         this.loadActivities(true);
       } else {
@@ -283,7 +277,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     }
 
     try {
-      const result = await getUnifiedActivities({
+      const result = await fetchUnifiedActivities({
         recordId: this.recordId,
         sortDirection: this.sortDirection,
         pageSize: this.maxItems,
@@ -294,7 +288,9 @@ export default class UnifiedActivityFeed extends NavigationMixin(
         currentRecordLabel: this.currentRecordLabel
       });
 
-      const enriched = this.enrichActivities(result.items || []);
+      const enriched = enrichActivities(result.items || [], {
+        showSourceLabels: this.showSourceLabels
+      });
       this.activities = reset ? enriched : [...this.activities, ...enriched];
       this.totalCount = result.totalCount || 0;
       this.hasMore = result.hasMore || false;
@@ -307,111 +303,10 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     }
   }
 
-  enrichActivities(data) {
-    return data.map((item) => {
-      const contentParts = (item.contentParts || []).map((part, index) => ({
-        ...part,
-        key: `${item.id}-${index}`,
-        isText: part.partType === "text",
-        isImage: part.partType === "image",
-        isFile: part.partType === "file",
-        fileIcon: fileIconName(part.fileName),
-        isClickable:
-          (part.partType === "image" || part.partType === "file") &&
-          !!part.contentDocumentId
-      }));
-      const hasDescription = !!(
-        item.description && String(item.description).trim()
-      );
-      const hasDisplayBody = contentParts.length > 0 || hasDescription;
-      const isEmail = item.type === "EmailMessage";
-      const isNote = item.type === "ContentNote";
-
-      return {
-        ...item,
-        contentParts,
-        hasContentParts: contentParts.length > 0,
-        hasDescription,
-        hasDisplayBody,
-        showSourceLabel: this.showSourceLabels && !!item.sourceLabel,
-        displayDate: this.formatDate(item.createdDate),
-        timelineClass: `slds-timeline__item_expandable ${this.timelineItemClass(item.type)}`,
-        isTask: item.type === "Task",
-        isCall: item.type === "Call",
-        isEvent: item.type === "Event",
-        isEmail,
-        isNote,
-        isFeed: item.type === "FeedItem",
-        isCollapsibleBody: isEmail && hasDisplayBody,
-        bodyPreview: isEmail
-          ? this.buildPlainTextPreview(item.description)
-          : "",
-        attachmentCount: item.attachmentCount || 0,
-        hasAttachments: isEmail && (item.attachmentCount || 0) > 0,
-        attachmentLabel:
-          isEmail && (item.attachmentCount || 0) > 0
-            ? item.attachmentCount === 1
-              ? "1 attachment"
-              : `${item.attachmentCount} attachments`
-            : ""
-      };
-    });
-  }
-
-  buildPlainTextPreview(value) {
-    if (!value) {
-      return "";
-    }
-    const text = String(value)
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<br\s*\/?>/gi, " ")
-      .replace(/<\/p>/gi, " ")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/&nbsp;/gi, " ")
-      .replace(/&amp;/gi, "&")
-      .replace(/&lt;/gi, "<")
-      .replace(/&gt;/gi, ">")
-      .replace(/&quot;/gi, '"')
-      .replace(/&#39;/gi, "'")
-      .replace(/\s+/g, " ")
-      .trim();
-    const maxLength = 160;
-    if (text.length <= maxLength) {
-      return text;
-    }
-    return `${text.slice(0, maxLength).trim()}…`;
-  }
-
-  timelineItemClass(type) {
-    switch (type) {
-      case "Call":
-        return "slds-timeline__item_call";
-      case "Event":
-        return "slds-timeline__item_event";
-      case "EmailMessage":
-        return "slds-timeline__item_email";
-      default:
-        return "slds-timeline__item_task";
-    }
-  }
-
   get showSourceLabels() {
     return (
       !!this.relatedRecordConfig && this.relatedRecordConfig.trim().length > 0
     );
-  }
-
-  formatDate(value) {
-    if (!value) return "";
-    const date = new Date(value);
-    return date.toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit"
-    });
   }
 
   handleSortToggle() {
@@ -440,6 +335,25 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     this.loadActivities(false);
   }
 
+  async handleRequestContract() {
+    if (!this.recordId) {
+      return;
+    }
+
+    const defaults = {
+      ...this.getActivityDefaults(),
+      Subject: this.requestContractSubject
+    };
+    if (this.rmRequestRecordTypeId) {
+      defaults.RecordTypeId = this.rmRequestRecordTypeId;
+    }
+    const ownerId = await this.resolveContractCreatorOwnerId();
+    if (ownerId) {
+      defaults.OwnerId = ownerId;
+    }
+    this.openNewActivityRecord("Task", defaults, this.rmRequestRecordTypeId);
+  }
+
   handleNewTask() {
     this.openNewActivityRecord("Task", this.getActivityDefaults());
   }
@@ -449,22 +363,20 @@ export default class UnifiedActivityFeed extends NavigationMixin(
   }
 
   handleLogACall() {
-    // Global.LogACall uses state.recordId as Related To. Opening from Contract Bid
-    // forces WhatId=Contract Bid and ignores WhoId defaults — open on Contact instead.
-    const contactId = this.getCallContactId();
-    if (contactId) {
-      this.openGlobalQuickAction(
-        "Global.LogACall",
-        { WhoId: contactId },
-        contactId
-      );
-      return;
-    }
     this.openGlobalQuickAction("Global.LogACall");
   }
 
   handleLogAVisit() {
-    this.openNewActivityRecord("Event", this.getVisitDefaults());
+    const accountId =
+      this.objectApiName === "Account" ? this.recordId : this.relatedRecordId;
+    if (!accountId) {
+      return;
+    }
+    this.openGlobalQuickAction(
+      "Account.New_Visit",
+      this.getVisitDefaults(accountId),
+      accountId
+    );
   }
 
   handleNewPost() {
@@ -507,10 +419,46 @@ export default class UnifiedActivityFeed extends NavigationMixin(
         .forEach((field) => fields.add(`${record.apiName}.${field}`));
     }
 
+    if (record.apiName === "Contract_Bid__c") {
+      fields.add(`${record.apiName}.Stage__c`);
+      fields.add(`${record.apiName}.Contract_Creator_Picklist__c`);
+    }
+
     if (fields.size === 0) {
       return undefined;
     }
     return Array.from(fields);
+  }
+
+  resolveCurrentStage(record) {
+    if (record.apiName !== "Contract_Bid__c") {
+      return undefined;
+    }
+    return getFieldValue(record, `${record.apiName}.Stage__c`);
+  }
+
+  resolveContractCreatorPicklist(record) {
+    if (record.apiName !== "Contract_Bid__c") {
+      return undefined;
+    }
+    return getFieldValue(
+      record,
+      `${record.apiName}.Contract_Creator_Picklist__c`
+    );
+  }
+
+  async resolveContractCreatorOwnerId() {
+    if (!this.contractCreatorPicklist) {
+      return undefined;
+    }
+    try {
+      return await resolveContractCreatorUserId({
+        picklistValue: this.contractCreatorPicklist
+      });
+    } catch (error) {
+      this.showError(error);
+      return undefined;
+    }
   }
 
   parseRelatedRecordConfig() {
@@ -592,23 +540,18 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     }
 
     const defaults = { WhatId: whatId };
-    if (this.primaryContactId) {
+    // Contract Bid Related To accepts either the Contact or the Bid. Default to the Bid.
+    if (this.objectApiName !== "Contract_Bid__c" && this.primaryContactId) {
       defaults.WhoId = this.primaryContactId;
     }
     return defaults;
   }
 
-  getCallContactId() {
-    if (WHO_ID_OBJECTS.has(this.objectApiName)) {
-      return this.recordId;
-    }
-    return this.primaryContactId;
-  }
-
-  getVisitDefaults() {
+  getVisitDefaults(accountId) {
     const start = new Date();
     const end = new Date(start.getTime() + 60 * 60 * 1000);
     const defaults = {
+      WhatId: accountId,
       Subject: "Site Visit",
       StartDateTime: start.toISOString().slice(0, 19) + "Z",
       EndDateTime: end.toISOString().slice(0, 19) + "Z"
@@ -640,12 +583,19 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     });
   }
 
-  openNewActivityRecord(objectApiName, defaults) {
+  openNewActivityRecord(objectApiName, defaults, recordTypeId) {
     if (!this.recordId) {
       return;
     }
 
     const fieldDefaults = defaults || this.getActivityDefaults();
+    const state = {
+      defaultFieldValues: encodeDefaultFieldValues(fieldDefaults),
+      navigationLocation: "RELATED_LIST"
+    };
+    if (recordTypeId) {
+      state.recordTypeId = recordTypeId;
+    }
 
     this[NavigationMixin.Navigate]({
       type: "standard__objectPage",
@@ -653,10 +603,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(
         objectApiName,
         actionName: "new"
       },
-      state: {
-        defaultFieldValues: encodeDefaultFieldValues(fieldDefaults),
-        navigationLocation: "RELATED_LIST"
-      }
+      state
     });
   }
 
@@ -700,21 +647,54 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     this.loadActivities(true);
   }
 
+  async handlePinToggle(event) {
+    const activityId = event.detail?.activityId;
+    const shouldPin = event.detail?.pin === true;
+    if (!activityId || !this.recordId) {
+      return;
+    }
+
+    try {
+      if (shouldPin) {
+        await pinActivity(activityId, this.recordId);
+        this.dispatchEvent(
+          new ShowToastEvent({
+            title: PIN_TOAST.pinnedTitle,
+            message: PIN_TOAST.pinnedMessage,
+            variant: "success"
+          })
+        );
+      } else {
+        await unpinActivity(activityId, this.recordId);
+        this.dispatchEvent(
+          new ShowToastEvent({
+            title: PIN_TOAST.unpinnedTitle,
+            message: PIN_TOAST.unpinnedMessage,
+            variant: "success"
+          })
+        );
+      }
+      await this.loadActivities(true);
+    } catch (error) {
+      this.dispatchEvent(
+        new ShowToastEvent({
+          title: shouldPin
+            ? PIN_TOAST.pinErrorTitle
+            : PIN_TOAST.unpinErrorTitle,
+          message: extractErrorMessage(error),
+          variant: "error"
+        })
+      );
+    }
+  }
+
   showError(error) {
-    const message = this.extractErrorMessage(error);
     this.dispatchEvent(
       new ShowToastEvent({
         title: "Error loading activities",
-        message: message,
+        message: extractErrorMessage(error),
         variant: "error"
       })
     );
-  }
-
-  extractErrorMessage(error) {
-    if (error.body?.message) return error.body.message;
-    if (typeof error.body === "string") return error.body;
-    if (error.message) return error.message;
-    return "An unknown error occurred";
   }
 }
