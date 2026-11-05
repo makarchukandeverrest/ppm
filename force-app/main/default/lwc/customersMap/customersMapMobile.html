@@ -82,20 +82,16 @@
         </div>
 
         <div class="mobile-map">
-          <template if:true={hasFilteredMarkers}>
-            <lightning-map
-              map-markers={filteredMapMarkers}
-              markers-title="Customers"
-              onmarkerselect={handleMarkerSelect}
-              selected-marker-value={selectedMarkerValue}
-              list-view="hidden"
-              zoom-level={zoomLevel}
-              center={center}
-              options={mapOptions}
-            >
-            </lightning-map>
+          <template if:true={hasMapCandidates}>
+            <div class="map-root" lwc:dom="manual"></div>
+            <template if:true={locatingMessage}>
+              <p class="mobile-locating">{locatingMessage}</p>
+            </template>
+            <template if:true={mapError}>
+              <p class="mobile-locating mobile-locating_error">{mapError}</p>
+            </template>
           </template>
-          <template if:false={hasFilteredMarkers}>
+          <template if:false={hasMapCandidates}>
             <div class="mobile-empty">
               <lightning-icon
                 icon-name="utility:location"
@@ -144,7 +140,19 @@
             <p
               class="slds-text-body_small slds-text-color_weak slds-m-bottom_small"
             >
-              {selectedLocationAddress}
+              <template if:true={selectedLocationMapsUrl}>
+                <a
+                  class="mobile-link"
+                  href={selectedLocationMapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {selectedLocationAddress}
+                </a>
+              </template>
+              <template if:false={selectedLocationMapsUrl}>
+                {selectedLocationAddress}
+              </template>
             </p>
           </template>
 
@@ -167,7 +175,19 @@
                 <p
                   class="slds-text-body_small slds-text-color_weak mobile-detail__address"
                 >
-                  {detail.address}
+                  <template if:true={detail.mapsUrl}>
+                    <a
+                      class="mobile-link"
+                      href={detail.mapsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {detail.address}
+                    </a>
+                  </template>
+                  <template if:false={detail.mapsUrl}>
+                    {detail.address}
+                  </template>
                 </p>
               </template>
 
@@ -185,11 +205,18 @@
                       >
                         {detail.primaryContactName}
                       </button>
-                      <template if:true={detail.primaryContactPhone}>
+                      <template if:true={detail.callHref}>
                         <div>
-                          <lightning-formatted-phone
-                            value={detail.primaryContactPhone}
-                          ></lightning-formatted-phone>
+                          <a
+                            class="mobile-link"
+                            href={detail.callHref}
+                            data-account-id={detail.accountId}
+                            data-contact-id={detail.primaryContactId}
+                            data-phone={detail.primaryContactPhone}
+                            onclick={handleCall}
+                          >
+                            {detail.primaryContactPhone}
+                          </a>
                         </div>
                       </template>
                       <template if:true={detail.primaryContactEmail}>

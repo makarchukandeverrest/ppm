@@ -1,8 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <ListView xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>AllAccounts</fullName>
+    <columns>Stage__c</columns>
     <columns>ACCOUNT.NAME</columns>
+    <columns>Primary_Contact__c</columns>
     <columns>ACCOUNT.ADDRESS1_STREET</columns>
+    <columns>Regional_Manager__c</columns>
     <columns>ACCOUNT.ADDRESS1_STATE</columns>
     <columns>ACCOUNT.PHONE1</columns>
     <columns>CORE.USERS.FIRST_NAME</columns>

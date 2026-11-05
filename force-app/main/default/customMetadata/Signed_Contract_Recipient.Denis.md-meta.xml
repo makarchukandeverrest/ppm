@@ -1,7 +1,15 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomMetadata
+  xmlns="http://soap.sforce.com/2006/04/metadata"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+>
     <label>Denis</label>
     <protected>false</protected>
+    <values>
+        <field>Applies_To__c</field>
+        <value xsi:type="xsd:string">Contract_Bid</value>
+    </values>
     <values>
         <field>Email__c</field>
         <value xsi:type="xsd:string">denis@premierswim.com</value>
@@ -13,9 +21,5 @@
     <values>
         <field>Recipient_Type__c</field>
         <value xsi:type="xsd:string">Email</value>
-    </values>
-    <values>
-        <field>Applies_To__c</field>
-        <value xsi:type="xsd:string">Contract_Bid</value>
     </values>
 </CustomMetadata>

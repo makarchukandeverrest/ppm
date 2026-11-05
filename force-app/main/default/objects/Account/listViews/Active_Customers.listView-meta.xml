@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <ListView xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Active_Customers</fullName>
     <columns>ACCOUNT.NAME</columns>
@@ -11,6 +11,11 @@
         <field>Current_Customer__c</field>
         <operation>equals</operation>
         <value>1</value>
+    </filters>
+    <filters>
+        <field>Regional_Manager__c</field>
+        <operation>contains</operation>
+        <value>ammar</value>
     </filters>
     <label>Active Customers</label>
 </ListView>
