@@ -11,9 +11,7 @@ public with sharing class ContractBidTriggerHandler extends TriggerHandler {
   }
 
   protected override void beforeInsert() {
-    ContractBidLabelsFiller.fillLabels(this.newList);
   }
-
 
   protected override void afterInsert() {
     updateCurrentCustomerAccounts();
@@ -28,11 +26,15 @@ public with sharing class ContractBidTriggerHandler extends TriggerHandler {
       }
     }
     if (!bidsChangedStage.isEmpty()) {
-      ContractBidActivityStampService.stampStageChanges(bidsChangedStage, this.oldMap);
+      ContractBidActivityStampService.stampStageChanges(
+        bidsChangedStage,
+        this.oldMap
+      );
     }
   }
 
   protected override void afterUpdate() {
+    cleanupClosedBidAutomation();
     updateCurrentCustomerAccounts();
     disableRemindersWhenChecked();
   }
@@ -57,13 +59,31 @@ public with sharing class ContractBidTriggerHandler extends TriggerHandler {
     }
   }
 
+  private void cleanupClosedBidAutomation() {
+    Set<Id> closedBidIds = new Set<Id>();
+    for (Contract_Bid__c bid : this.newList) {
+      if (
+        stageChangedTo(bid, STAGE_CLOSED_WON) ||
+        stageChangedTo(bid, STAGE_CLOSED_LOST)
+      ) {
+        closedBidIds.add(bid.Id);
+      }
+    }
+    if (!closedBidIds.isEmpty()) {
+      ContractBidSendCleanupService.onBidsClosed(closedBidIds);
+    }
+  }
+
   private void disableRemindersWhenChecked() {
     Set<Id> stopReminderBidIds = new Set<Id>();
     for (Contract_Bid__c bid : this.newList) {
-      Contract_Bid__c oldBid = this.oldMap != null ? this.oldMap.get(bid.Id) : null;
+      Contract_Bid__c oldBid = this.oldMap != null
+        ? this.oldMap.get(bid.Id)
+        : null;
       if (
         bid.Stop_Sending_Reminders__c == true &&
-        (oldBid == null || oldBid.Stop_Sending_Reminders__c != true)
+        (oldBid == null ||
+        oldBid.Stop_Sending_Reminders__c != true)
       ) {
         stopReminderBidIds.add(bid.Id);
       }

@@ -10,13 +10,11 @@ public with sharing class DocuSignEnvelopeTriggerHandler extends TriggerHandler 
   }
 
   protected override void afterInsert() {
-    ContractBidSendCleanupService.completeOpenFollowUpTasks(
-      collectContractBidIds(null)
-    );
+    ContractBidSendCleanupService.onEnvelopeSent(collectContractBidIds(null));
   }
 
   protected override void afterUpdate() {
-    ContractBidSendCleanupService.completeOpenFollowUpTasks(
+    ContractBidSendCleanupService.onEnvelopeSent(
       collectContractBidIds(this.oldMap)
     );
   }
