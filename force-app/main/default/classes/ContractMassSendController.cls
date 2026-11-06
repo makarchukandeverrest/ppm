@@ -28,6 +28,43 @@ public with sharing class ContractMassSendController {
       recordId.getSobjectType() == Opportunity.SObjectType;
   }
 
+  private static Set<Id> contractBidIdsFrom(List<Id> inputIds) {
+    Set<Id> bidIds = new Set<Id>();
+    if (inputIds == null) {
+      return bidIds;
+    }
+    for (Id recordId : inputIds) {
+      if (
+        recordId != null &&
+        recordId.getSobjectType() == Contract_Bid__c.SObjectType
+      ) {
+        bidIds.add(recordId);
+      }
+    }
+    return bidIds;
+  }
+
+  private static void applyPdfCcRecipients(
+    MassSendEmailBuilder.BuildRequest req,
+    Id accountId,
+    Boolean useSelectedBids,
+    MassSendEmailBuilder.SelectedBidCc selectedBidCc,
+    Map<Id, String> accountToRmEmail,
+    Map<Id, String> accountToLeadGenEmail
+  ) {
+    if (useSelectedBids) {
+      req.leadOwnerCcEmails = selectedBidCc == null
+        ? null
+        : selectedBidCc.leadOwnerEmailsByAccount.get(accountId);
+      req.leadGeneratorCcEmails = selectedBidCc == null
+        ? null
+        : selectedBidCc.leadGeneratorEmailsByAccount.get(accountId);
+      return;
+    }
+    req.regionalManagerEmail = accountToRmEmail.get(accountId);
+    req.leadGeneratorEmail = accountToLeadGenEmail.get(accountId);
+  }
+
   /** Org-wide address used when the mass-send host is a Work Order record page. */
   private static final String WORK_ORDER_ORG_WIDE_EMAIL_ADDRESS = 'sfalert@sf.premierswim.com';
 
@@ -551,9 +588,8 @@ public with sharing class ContractMassSendController {
   }
 
   /**
-   * File rules for email/PDF mass send when applyContractFileFilters is true:
-   * PDF only, year match, exclude signed/completed/welcome/bid.
-   * (DocuSign selector may still allow doc/docx via AccountFilesController.)
+   * File rules aligned with AccountFilesController.getAccountsWithFiles when
+   * applyContractFileFilters is true (year, exclude signed/completed/welcome/bid).
    */
   private static List<ContentVersion> queryContractVersions(
     Set<Id> docIds,
@@ -828,9 +864,17 @@ public with sharing class ContractMassSendController {
       emailTemplateId
     );
     List<String> namedCcEmails = MassSendEmailBuilder.loadNamedContractSendPdfCcEmails();
-    Map<Id, String> accountToRmEmail = MassSendEmailBuilder.resolveRegionalManagerEmailsByAccount(
-      accountIds
-    );
+    Set<Id> selectedBidIds = contractBidIdsFrom(inputIds);
+    Boolean useSelectedBids = !selectedBidIds.isEmpty();
+    MassSendEmailBuilder.SelectedBidCc selectedBidCc = useSelectedBids
+      ? MassSendEmailBuilder.resolveCcFromSelectedBids(selectedBidIds)
+      : new MassSendEmailBuilder.SelectedBidCc();
+    Map<Id, String> accountToRmEmail = useSelectedBids
+      ? new Map<Id, String>()
+      : MassSendEmailBuilder.resolveRegionalManagerEmailsByAccount(accountIds);
+    Map<Id, String> accountToLeadGenEmail = useSelectedBids
+      ? new Map<Id, String>()
+      : MassSendEmailBuilder.resolveLeadGeneratorEmailsByAccount(accountIds);
 
     for (SendReqRow r : rows) {
       String rowSubject = r.subject != null ? r.subject : subject;
@@ -967,7 +1011,14 @@ public with sharing class ContractMassSendController {
         req.recipientEmail = whoEmail;
         req.sendingUser = sendingUser;
         req.useWorkOrderMailbox = useWorkOrderMailbox;
-        req.regionalManagerEmail = accountToRmEmail.get(opp.AccountId);
+        applyPdfCcRecipients(
+          req,
+          opp.AccountId,
+          useSelectedBids,
+          selectedBidCc,
+          accountToRmEmail,
+          accountToLeadGenEmail
+        );
         req.namedCcEmails = namedCcEmails;
 
         MassSendEmailBuilder.EmailBuildResult result = MassSendEmailBuilder.buildEmail(
@@ -1047,7 +1098,14 @@ public with sharing class ContractMassSendController {
       req.recipientEmail = acc.Primary_Contact__r.Email;
       req.sendingUser = sendingUser;
       req.useWorkOrderMailbox = useWorkOrderMailbox;
-      req.regionalManagerEmail = accountToRmEmail.get(acc.Id);
+      applyPdfCcRecipients(
+        req,
+        acc.Id,
+        useSelectedBids,
+        selectedBidCc,
+        accountToRmEmail,
+        accountToLeadGenEmail
+      );
       req.namedCcEmails = namedCcEmails;
 
       MassSendEmailBuilder.EmailBuildResult result = MassSendEmailBuilder.buildEmail(
