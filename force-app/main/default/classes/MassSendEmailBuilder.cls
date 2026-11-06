@@ -17,8 +17,7 @@ public with sharing class MassSendEmailBuilder {
     'Jessica Floyd'
   };
 
-  private static final String WORK_ORDER_ORG_WIDE_EMAIL_ADDRESS =
-    'sf_workorders@premierswim.com';
+  private static final String WORK_ORDER_ORG_WIDE_EMAIL_ADDRESS = 'sfalert@ppsfalerts.com';
 
   public class BuildRequest {
     public Id targetWhoId;
@@ -37,6 +36,9 @@ public with sharing class MassSendEmailBuilder {
     public User sendingUser;
     public Boolean useWorkOrderMailbox;
     public String regionalManagerEmail;
+    public String leadGeneratorEmail;
+    public List<String> leadOwnerCcEmails;
+    public List<String> leadGeneratorCcEmails;
     public List<String> namedCcEmails;
     public Boolean applyWorkOrderPlaceholders;
     public Id lineItemsRestrictStmId;
@@ -83,7 +85,9 @@ public with sharing class MassSendEmailBuilder {
     applyOutboundSenderIdentity(mail, req.sendingUser, req.useWorkOrderMailbox);
 
     if (req.parsedContent == true && String.isNotBlank(effectiveBody)) {
-      mail.setSubject(String.isNotBlank(effectiveSubject) ? effectiveSubject : '');
+      mail.setSubject(
+        String.isNotBlank(effectiveSubject) ? effectiveSubject : ''
+      );
       mail.setHtmlBody(effectiveBody);
     } else if (req.emailTemplateId != null) {
       Messaging.SingleEmailMessage rendered = Messaging.renderStoredEmailTemplate(
@@ -168,6 +172,9 @@ public with sharing class MassSendEmailBuilder {
       req.templateDeveloperName,
       req.recipientEmail,
       req.regionalManagerEmail,
+      req.leadGeneratorEmail,
+      req.leadOwnerCcEmails,
+      req.leadGeneratorCcEmails,
       req.namedCcEmails
     );
 
@@ -285,7 +292,10 @@ public with sharing class MassSendEmailBuilder {
   }
 
   public static String prepareForRenderEmailTemplate(String text, Id whoId) {
-    return expandEmailMergeAliases(normalizeTripleBraceMergeFields(text), whoId);
+    return expandEmailMergeAliases(
+      normalizeTripleBraceMergeFields(text),
+      whoId
+    );
   }
 
   private static String escapeHtml(String raw) {
@@ -318,7 +328,10 @@ public with sharing class MassSendEmailBuilder {
     if (!needs) {
       return content;
     }
-    String tableHtml = buildQuickBookLineItemsHtml(workOrderId, serviceTeamMemberId);
+    String tableHtml = buildQuickBookLineItemsHtml(
+      workOrderId,
+      serviceTeamMemberId
+    );
     String out = content;
     for (String ph : LINE_ITEM_PLACEHOLDERS) {
       out = out.replace(ph, tableHtml);
@@ -495,7 +508,8 @@ public with sharing class MassSendEmailBuilder {
   }
 
   private static Boolean isWorkOrderId(Id recordId) {
-    return recordId != null && recordId.getSobjectType() == WorkOrder.SObjectType;
+    return recordId != null &&
+      recordId.getSobjectType() == WorkOrder.SObjectType;
   }
 
   /* ---------- CC / template helpers ---------- */
@@ -518,8 +532,7 @@ public with sharing class MassSendEmailBuilder {
     for (User userRecord : [
       SELECT Name, Email
       FROM User
-      WHERE Name IN :CONTRACT_SEND_PDF_CC_USER_NAMES
-      AND IsActive = true
+      WHERE Name IN :CONTRACT_SEND_PDF_CC_USER_NAMES AND IsActive = TRUE
     ]) {
       if (String.isNotBlank(userRecord.Email)) {
         emailByName.put(userRecord.Name, userRecord.Email);
@@ -535,7 +548,9 @@ public with sharing class MassSendEmailBuilder {
     return emails;
   }
 
-  public static Map<Id, String> resolveRegionalManagerEmailsByAccount(Set<Id> accountIds) {
+  public static Map<Id, String> resolveRegionalManagerEmailsByAccount(
+    Set<Id> accountIds
+  ) {
     Map<Id, String> accountToRmEmail = new Map<Id, String>();
     if (accountIds == null || accountIds.isEmpty()) {
       return accountToRmEmail;
@@ -544,10 +559,11 @@ public with sharing class MassSendEmailBuilder {
     for (Contract_Bid__c bid : [
       SELECT Customer__c, Lead_Owner__r.Email, CreatedDate
       FROM Contract_Bid__c
-      WHERE Customer__c IN :accountIds
-      AND Lead_Owner__c != NULL
-      AND Lead_Owner__r.IsActive = true
-      AND Lead_Owner__r.Email != NULL
+      WHERE
+        Customer__c IN :accountIds
+        AND Lead_Owner__c != NULL
+        AND Lead_Owner__r.IsActive = TRUE
+        AND Lead_Owner__r.Email != NULL
       ORDER BY CreatedDate DESC
     ]) {
       if (!accountToRmEmail.containsKey(bid.Customer__c)) {
@@ -557,19 +573,119 @@ public with sharing class MassSendEmailBuilder {
     return accountToRmEmail;
   }
 
+  public static Map<Id, String> resolveLeadGeneratorEmailsByAccount(
+    Set<Id> accountIds
+  ) {
+    Map<Id, String> accountToLeadGenEmail = new Map<Id, String>();
+    if (accountIds == null || accountIds.isEmpty()) {
+      return accountToLeadGenEmail;
+    }
+
+    for (Contract_Bid__c bid : [
+      SELECT Customer__c, Lead_Generator__r.Email, CreatedDate
+      FROM Contract_Bid__c
+      WHERE
+        Customer__c IN :accountIds
+        AND Lead_Generator__c != NULL
+        AND Lead_Generator__r.IsActive = TRUE
+        AND Lead_Generator__r.Email != NULL
+      ORDER BY CreatedDate DESC
+    ]) {
+      if (!accountToLeadGenEmail.containsKey(bid.Customer__c)) {
+        accountToLeadGenEmail.put(bid.Customer__c, bid.Lead_Generator__r.Email);
+      }
+    }
+    return accountToLeadGenEmail;
+  }
+
+  public class SelectedBidCc {
+    public Map<Id, List<String>> leadOwnerEmailsByAccount = new Map<Id, List<String>>();
+    public Map<Id, List<String>> leadGeneratorEmailsByAccount = new Map<Id, List<String>>();
+  }
+
+  public static SelectedBidCc resolveCcFromSelectedBids(Set<Id> bidIds) {
+    SelectedBidCc result = new SelectedBidCc();
+    if (bidIds == null || bidIds.isEmpty()) {
+      return result;
+    }
+
+    for (Contract_Bid__c bid : [
+      SELECT
+        Customer__c,
+        Lead_Owner__r.Email,
+        Lead_Owner__r.IsActive,
+        Lead_Generator__r.Email,
+        Lead_Generator__r.IsActive
+      FROM Contract_Bid__c
+      WHERE Id IN :bidIds AND Customer__c != NULL
+      ORDER BY CreatedDate DESC
+    ]) {
+      addSelectedBidEmail(
+        result.leadOwnerEmailsByAccount,
+        bid.Customer__c,
+        bid.Lead_Owner__r
+      );
+      addSelectedBidEmail(
+        result.leadGeneratorEmailsByAccount,
+        bid.Customer__c,
+        bid.Lead_Generator__r
+      );
+    }
+    return result;
+  }
+
+  private static void addSelectedBidEmail(
+    Map<Id, List<String>> emailsByAccount,
+    Id accountId,
+    User userRecord
+  ) {
+    if (
+      accountId == null ||
+      userRecord == null ||
+      userRecord.IsActive != true ||
+      String.isBlank(userRecord.Email)
+    ) {
+      return;
+    }
+    List<String> emails = emailsByAccount.get(accountId);
+    if (emails == null) {
+      emails = new List<String>();
+      emailsByAccount.put(accountId, emails);
+    }
+    String emailKey = userRecord.Email.trim().toLowerCase();
+    for (String existingEmail : emails) {
+      if (
+        existingEmail != null &&
+        existingEmail.trim().toLowerCase() == emailKey
+      ) {
+        return;
+      }
+    }
+    emails.add(userRecord.Email.trim());
+  }
+
   private static void applyContractSendPdfCcAddresses(
     Messaging.SingleEmailMessage mail,
     String templateDeveloperName,
     String toEmail,
     String regionalManagerEmail,
+    String leadGeneratorEmail,
+    List<String> leadOwnerCcEmails,
+    List<String> leadGeneratorCcEmails,
     List<String> namedCcEmails
   ) {
-    if (mail == null || !CONTRACT_SEND_PDF_TEMPLATE_DEVELOPER_NAMES.contains(templateDeveloperName)) {
+    if (
+      mail == null ||
+      !CONTRACT_SEND_PDF_TEMPLATE_DEVELOPER_NAMES.contains(
+        templateDeveloperName
+      )
+    ) {
       return;
     }
     List<String> ccEmails = buildContractSendPdfCcAddresses(
       toEmail,
-      regionalManagerEmail,
+      mergeCcEmails(regionalManagerEmail, leadOwnerCcEmails),
+      mergeCcEmails(leadGeneratorEmail, leadGeneratorCcEmails),
       namedCcEmails
     );
     if (!ccEmails.isEmpty()) {
@@ -580,19 +696,61 @@ public with sharing class MassSendEmailBuilder {
   public static List<String> buildContractSendPdfCcAddresses(
     String toEmail,
     String regionalManagerEmail,
+    String leadGeneratorEmail,
+    List<String> namedCcEmails
+  ) {
+    return buildContractSendPdfCcAddresses(
+      toEmail,
+      mergeCcEmails(regionalManagerEmail, null),
+      mergeCcEmails(leadGeneratorEmail, null),
+      namedCcEmails
+    );
+  }
+
+  public static List<String> buildContractSendPdfCcAddresses(
+    String toEmail,
+    List<String> leadOwnerEmails,
+    List<String> leadGeneratorEmails,
     List<String> namedCcEmails
   ) {
     Set<String> seen = new Set<String>();
     List<String> ccEmails = new List<String>();
-    String toEmailKey = String.isBlank(toEmail) ? null : toEmail.trim().toLowerCase();
+    String toEmailKey = String.isBlank(toEmail)
+      ? null
+      : toEmail.trim().toLowerCase();
 
-    addCcEmail(ccEmails, seen, toEmailKey, regionalManagerEmail);
-    if (namedCcEmails != null) {
-      for (String namedEmail : namedCcEmails) {
-        addCcEmail(ccEmails, seen, toEmailKey, namedEmail);
-      }
-    }
+    addCcEmails(ccEmails, seen, toEmailKey, leadOwnerEmails);
+    addCcEmails(ccEmails, seen, toEmailKey, leadGeneratorEmails);
+    addCcEmails(ccEmails, seen, toEmailKey, namedCcEmails);
     return ccEmails;
+  }
+
+  private static List<String> mergeCcEmails(
+    String singleEmail,
+    List<String> moreEmails
+  ) {
+    List<String> emails = new List<String>();
+    if (String.isNotBlank(singleEmail)) {
+      emails.add(singleEmail);
+    }
+    if (moreEmails != null) {
+      emails.addAll(moreEmails);
+    }
+    return emails;
+  }
+
+  private static void addCcEmails(
+    List<String> ccEmails,
+    Set<String> seen,
+    String toEmailKey,
+    List<String> emailValues
+  ) {
+    if (emailValues == null) {
+      return;
+    }
+    for (String emailValue : emailValues) {
+      addCcEmail(ccEmails, seen, toEmailKey, emailValue);
+    }
   }
 
   private static void addCcEmail(
