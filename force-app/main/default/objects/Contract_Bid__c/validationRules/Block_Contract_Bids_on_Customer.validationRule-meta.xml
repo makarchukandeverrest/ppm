@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Block_Contract_Bids_on_Customer</fullName>
+    <active>true</active>
+    <description
+  >Prevents creating a Contract Bid when the linked Customer has Block Contract Bids enabled.</description>
+    <errorConditionFormula>AND(
+  ISNEW(),
+  Customer__r.Block_Contract_Bids__c = TRUE
+)</errorConditionFormula>
+    <errorMessage
+  >Cannot create a Contract Bid for this Customer because Contract Bids are blocked on the Customer record.</errorMessage>
+</ValidationRule>

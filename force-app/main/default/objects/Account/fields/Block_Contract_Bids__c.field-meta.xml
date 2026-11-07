@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Block_Contract_Bids__c</fullName>
+    <defaultValue>false</defaultValue>
+    <inlineHelpText
+  >When checked, new Contract Bids cannot be created for this Customer. Existing records are kept.</inlineHelpText>
+    <label>Block Contract Bids</label>
+    <trackFeedHistory>false</trackFeedHistory>
+    <type>Checkbox</type>
+</CustomField>

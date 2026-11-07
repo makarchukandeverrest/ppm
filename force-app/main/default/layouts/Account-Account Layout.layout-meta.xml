@@ -84,6 +84,10 @@
             </layoutItems>
             <layoutItems>
                 <behavior>Edit</behavior>
+                <field>Block_Contract_Bids__c</field>
+            </layoutItems>
+            <layoutItems>
+                <behavior>Edit</behavior>
                 <field>Contract_Start_Date__c</field>
             </layoutItems>
             <layoutItems>
