@@ -178,7 +178,7 @@ private class DocuSignDfsleEnvelopeServiceTest {
   }
 
   @IsTest
-  static void testSendEnvelopeWithSignature_skipsBlockedCustomer() {
+  static void testSendEnvelopeWithSignature_blockedCustomerThrows() {
     Account acc = [SELECT Id, Name FROM Account LIMIT 1];
     acc.Block_Contract_Bids__c = true;
     update acc;
@@ -209,11 +209,28 @@ private class DocuSignDfsleEnvelopeServiceTest {
       )
     };
 
-    Test.startTest();
-    DocuSignDfsleEnvelopeService.sendEnvelopeWithSignature(
-      JSON.serialize(accWithFiles)
+    Boolean threw = false;
+    try {
+      Test.startTest();
+      DocuSignDfsleEnvelopeService.sendEnvelopeWithSignature(
+        JSON.serialize(accWithFiles)
+      );
+      Test.stopTest();
+    } catch (AuraHandledException ex) {
+      threw = true;
+      System.assert(
+        ex.getMessage()
+          .contains(
+            DocuSignDfsleEnvelopeService.BLOCKED_CONTRACT_BIDS_SEND_ERROR
+          ),
+        'Expected blocked-customer send error'
+      );
+    }
+    System.assertEquals(
+      true,
+      threw,
+      'Send UI path should fail for blocked Customer'
     );
-    Test.stopTest();
 
     Contract_Bid__c cbAfter = [
       SELECT Stage__c

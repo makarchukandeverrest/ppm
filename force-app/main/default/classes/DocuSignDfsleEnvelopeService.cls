@@ -128,6 +128,10 @@ public with sharing class DocuSignDfsleEnvelopeService {
     Set<Id> blockedAccountIds = getAccountsWithBlockedContractBids(
       context.accountIds
     );
+    assertNoBlockedCustomersInSendPayload(
+      accountWithFilesList,
+      blockedAccountIds
+    );
 
     Map<Id, List<CcRecipient>> accountToUsersMap = getAccountToUsersMap(
       context.accountIds
@@ -143,8 +147,6 @@ public with sharing class DocuSignDfsleEnvelopeService {
       if (acc.contract == null || acc.contract.Id == null)
         continue;
       if (String.isBlank(acc.email) || String.isBlank(acc.accountName))
-        continue;
-      if (acc.accountId != null && blockedAccountIds.contains(acc.accountId))
         continue;
 
       List<CcRecipient> ccUsers = new List<CcRecipient>();
@@ -922,6 +924,39 @@ public with sharing class DocuSignDfsleEnvelopeService {
     ];
     if (!accounts.isEmpty() && accounts[0].Block_Contract_Bids__c == true) {
       throw new DocuSignEnvelopeException(BLOCKED_CONTRACT_BIDS_SEND_ERROR);
+    }
+  }
+
+  private static void assertNoBlockedCustomersInSendPayload(
+    List<AccountWithFiles> accountWithFilesList,
+    Set<Id> blockedAccountIds
+  ) {
+    if (
+      blockedAccountIds == null ||
+      blockedAccountIds.isEmpty() ||
+      accountWithFilesList == null
+    ) {
+      return;
+    }
+
+    for (AccountWithFiles acc : accountWithFilesList) {
+      if (
+        acc == null ||
+        acc.accountId == null ||
+        !blockedAccountIds.contains(acc.accountId) ||
+        acc.files == null
+      ) {
+        continue;
+      }
+      for (FileWrapper file : acc.files) {
+        if (file != null && file.ToSent == true) {
+          AuraHandledException blockedSendError = new AuraHandledException(
+            BLOCKED_CONTRACT_BIDS_SEND_ERROR
+          );
+          blockedSendError.setMessage(BLOCKED_CONTRACT_BIDS_SEND_ERROR);
+          throw blockedSendError;
+        }
+      }
     }
   }
 
