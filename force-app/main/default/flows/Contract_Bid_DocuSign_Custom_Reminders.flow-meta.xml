@@ -520,6 +520,14 @@
                     <booleanValue>false</booleanValue>
                 </rightValue>
             </conditions>
+<conditions>
+    <leftValueReference
+        >Get_Customer_3.Block_Contract_Bids__c</leftValueReference>
+    <operator>EqualTo</operator>
+    <rightValue>
+        <booleanValue>false</booleanValue>
+    </rightValue>
+</conditions>
             <connector>
                 <targetReference>Get_Recipients_3</targetReference>
             </connector>
@@ -558,10 +566,136 @@
                     <booleanValue>false</booleanValue>
                 </rightValue>
             </conditions>
+<conditions>
+    <leftValueReference
+        >Get_Customer_2.Block_Contract_Bids__c</leftValueReference>
+    <operator>EqualTo</operator>
+    <rightValue>
+        <booleanValue>false</booleanValue>
+    </rightValue>
+</conditions>
             <connector>
                 <targetReference>Get_Recipients_2</targetReference>
             </connector>
             <label>Copy 1 of Still active</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Reminders_Allowed_4</name>
+        <label>Reminders Allowed 4</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Stop Sending Reminders</defaultConnectorLabel>
+        <rules>
+            <name>Reminders_Allowed_4_Continue</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference
+        >Get_Contract_Bid_4.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference
+        >Get_Customer_4.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+<conditions>
+    <leftValueReference
+        >Get_Customer_4.Block_Contract_Bids__c</leftValueReference>
+    <operator>EqualTo</operator>
+    <rightValue>
+        <booleanValue>false</booleanValue>
+    </rightValue>
+</conditions>
+            <connector>
+                <targetReference>Phone_Call_Task</targetReference>
+            </connector>
+            <label>Continue</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Reminders_Allowed_5</name>
+        <label>Reminders Allowed 5</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Stop Sending Reminders</defaultConnectorLabel>
+        <rules>
+            <name>Reminders_Allowed_5_Continue</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference
+        >Get_Contract_Bid_5.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference
+        >Get_Customer_5.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+<conditions>
+    <leftValueReference
+        >Get_Customer_5.Block_Contract_Bids__c</leftValueReference>
+    <operator>EqualTo</operator>
+    <rightValue>
+        <booleanValue>false</booleanValue>
+    </rightValue>
+</conditions>
+            <connector>
+                <targetReference
+        >Copy_1_of_Get_Custom_Notification</targetReference>
+            </connector>
+            <label>Continue</label>
+        </rules>
+    </decisions>
+    <decisions>
+        <name>Reminders_Allowed_Sent</name>
+        <label>Reminders Allowed Sent</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <defaultConnectorLabel>Stop Sending Reminders</defaultConnectorLabel>
+        <rules>
+            <name>Reminders_Allowed_Sent_Continue</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference
+        >Get_Contract_Bid_Sent.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+            <conditions>
+                <leftValueReference
+        >Get_Customer_Sent.Stop_Sending_Reminders__c</leftValueReference>
+                <operator>EqualTo</operator>
+                <rightValue>
+                    <booleanValue>false</booleanValue>
+                </rightValue>
+            </conditions>
+<conditions>
+    <leftValueReference
+        >Get_Customer_Sent.Block_Contract_Bids__c</leftValueReference>
+    <operator>EqualTo</operator>
+    <rightValue>
+        <booleanValue>false</booleanValue>
+    </rightValue>
+</conditions>
+            <connector>
+                <targetReference>Get_Primary_Contact_Sent</targetReference>
+            </connector>
+            <label>Continue</label>
         </rules>
     </decisions>
     <decisions>
@@ -596,104 +730,18 @@
                     <booleanValue>false</booleanValue>
                 </rightValue>
             </conditions>
+<conditions>
+    <leftValueReference
+        >Get_Customer_1.Block_Contract_Bids__c</leftValueReference>
+    <operator>EqualTo</operator>
+    <rightValue>
+        <booleanValue>false</booleanValue>
+    </rightValue>
+</conditions>
             <connector>
                 <targetReference>Get_Recipients</targetReference>
             </connector>
             <label>Still active</label>
-        </rules>
-    </decisions>
-    <decisions>
-        <name>Reminders_Allowed_Sent</name>
-        <label>Reminders Allowed Sent</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <defaultConnectorLabel>Stop Sending Reminders</defaultConnectorLabel>
-        <rules>
-            <name>Reminders_Allowed_Sent_Continue</name>
-            <conditionLogic>and</conditionLogic>
-            <conditions>
-                <leftValueReference
-        >Get_Contract_Bid_Sent.Stop_Sending_Reminders__c</leftValueReference>
-                <operator>EqualTo</operator>
-                <rightValue>
-                    <booleanValue>false</booleanValue>
-                </rightValue>
-            </conditions>
-            <conditions>
-                <leftValueReference
-        >Get_Customer_Sent.Stop_Sending_Reminders__c</leftValueReference>
-                <operator>EqualTo</operator>
-                <rightValue>
-                    <booleanValue>false</booleanValue>
-                </rightValue>
-            </conditions>
-            <connector>
-                <targetReference>Get_Primary_Contact_Sent</targetReference>
-            </connector>
-            <label>Continue</label>
-        </rules>
-    </decisions>
-    <decisions>
-        <name>Reminders_Allowed_4</name>
-        <label>Reminders Allowed 4</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <defaultConnectorLabel>Stop Sending Reminders</defaultConnectorLabel>
-        <rules>
-            <name>Reminders_Allowed_4_Continue</name>
-            <conditionLogic>and</conditionLogic>
-            <conditions>
-                <leftValueReference
-        >Get_Contract_Bid_4.Stop_Sending_Reminders__c</leftValueReference>
-                <operator>EqualTo</operator>
-                <rightValue>
-                    <booleanValue>false</booleanValue>
-                </rightValue>
-            </conditions>
-            <conditions>
-                <leftValueReference
-        >Get_Customer_4.Stop_Sending_Reminders__c</leftValueReference>
-                <operator>EqualTo</operator>
-                <rightValue>
-                    <booleanValue>false</booleanValue>
-                </rightValue>
-            </conditions>
-            <connector>
-                <targetReference>Phone_Call_Task</targetReference>
-            </connector>
-            <label>Continue</label>
-        </rules>
-    </decisions>
-    <decisions>
-        <name>Reminders_Allowed_5</name>
-        <label>Reminders Allowed 5</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <defaultConnectorLabel>Stop Sending Reminders</defaultConnectorLabel>
-        <rules>
-            <name>Reminders_Allowed_5_Continue</name>
-            <conditionLogic>and</conditionLogic>
-            <conditions>
-                <leftValueReference
-        >Get_Contract_Bid_5.Stop_Sending_Reminders__c</leftValueReference>
-                <operator>EqualTo</operator>
-                <rightValue>
-                    <booleanValue>false</booleanValue>
-                </rightValue>
-            </conditions>
-            <conditions>
-                <leftValueReference
-        >Get_Customer_5.Stop_Sending_Reminders__c</leftValueReference>
-                <operator>EqualTo</operator>
-                <rightValue>
-                    <booleanValue>false</booleanValue>
-                </rightValue>
-            </conditions>
-            <connector>
-                <targetReference
-        >Copy_1_of_Get_Custom_Notification</targetReference>
-            </connector>
-            <label>Continue</label>
         </rules>
     </decisions>
     <description
@@ -730,12 +778,6 @@
     >RIGHT(TEXT({!Get_Contract_Bid_2.Contract_Year__c}), 4)</expression>
     </formulas>
     <formulas>
-        <name>GreetingLine_Sent</name>
-        <dataType>String</dataType>
-        <expression
-    >IF(NOT(ISBLANK({!Get_Primary_Contact_Sent.FirstName})), &quot;Hello &quot; &amp; {!Get_Primary_Contact_Sent.FirstName} &amp; &quot;,&quot;, IF(NOT(ISBLANK({!Get_Primary_Contact_Sent.Name})), &quot;Hello &quot; &amp; {!Get_Primary_Contact_Sent.Name} &amp; &quot;,&quot;, &quot;Hello,&quot;))</expression>
-    </formulas>
-    <formulas>
         <name>GreetingLine_1</name>
         <dataType>String</dataType>
         <expression
@@ -752,6 +794,12 @@
         <dataType>String</dataType>
         <expression
     >IF(NOT(ISBLANK({!Get_Primary_Contact_3.FirstName})), &quot;Hi &quot; &amp; {!Get_Primary_Contact_3.FirstName} &amp; &quot;,&quot;, IF(NOT(ISBLANK({!Get_Primary_Contact_3.Name})), &quot;Hi &quot; &amp; {!Get_Primary_Contact_3.Name} &amp; &quot;,&quot;, &quot;Hi,&quot;))</expression>
+    </formulas>
+    <formulas>
+        <name>GreetingLine_Sent</name>
+        <dataType>String</dataType>
+        <expression
+    >IF(NOT(ISBLANK({!Get_Primary_Contact_Sent.FirstName})), &quot;Hello &quot; &amp; {!Get_Primary_Contact_Sent.FirstName} &amp; &quot;,&quot;, IF(NOT(ISBLANK({!Get_Primary_Contact_Sent.Name})), &quot;Hello &quot; &amp; {!Get_Primary_Contact_Sent.Name} &amp; &quot;,&quot;, &quot;Hello,&quot;))</expression>
     </formulas>
     <formulas>
         <name>PhoneCallSubject</name>
@@ -788,6 +836,231 @@
         </value>
     </processMetadataValues>
     <processType>AutoLaunchedFlow</processType>
+    <recordCreates>
+        <name>Log_Contract_Sent_Email</name>
+        <label>Log Contract Sent Email</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <inputAssignments>
+            <field>FromAddress</field>
+            <value>
+                <stringValue>office@premierswim.com</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Incoming</field>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>RelatedToId</field>
+            <value>
+                <elementReference>Get_Contract_Bid_Sent.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Status</field>
+            <value>
+                <stringValue>3</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Subject</field>
+            <value>
+                <elementReference>ContractSentSubject</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>TextBody</field>
+            <value>
+                <elementReference>ContractSentBody</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>ToAddress</field>
+            <value>
+                <elementReference
+        >Get_Recipients_Sent.dfsle__Email__c</elementReference>
+            </value>
+        </inputAssignments>
+        <object>EmailMessage</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordCreates>
+    <recordCreates>
+        <name>Log_Reminder_1_Email</name>
+        <label>Log Reminder 1 Email</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <inputAssignments>
+            <field>CcAddress</field>
+            <value>
+                <elementReference
+        >Get_Contract_Bid.Lead_Owner__r.Email</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>FromAddress</field>
+            <value>
+                <stringValue>office@premierswim.com</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Incoming</field>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>RelatedToId</field>
+            <value>
+                <elementReference>Get_Contract_Bid.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Status</field>
+            <value>
+                <stringValue>3</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Subject</field>
+            <value>
+                <elementReference>ReminderSubject_1</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>TextBody</field>
+            <value>
+                <elementReference>Reminder1Body</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>ToAddress</field>
+            <value>
+                <elementReference
+        >Get_Recipients.dfsle__Email__c</elementReference>
+            </value>
+        </inputAssignments>
+        <object>EmailMessage</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordCreates>
+    <recordCreates>
+        <name>Log_Reminder_2_Email</name>
+        <label>Log Reminder 2 Email</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <inputAssignments>
+            <field>CcAddress</field>
+            <value>
+                <elementReference
+        >Get_Contract_Bid_2.Lead_Owner__r.Email</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>FromAddress</field>
+            <value>
+                <stringValue>office@premierswim.com</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Incoming</field>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>RelatedToId</field>
+            <value>
+                <elementReference>Get_Contract_Bid_2.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Status</field>
+            <value>
+                <stringValue>3</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Subject</field>
+            <value>
+                <elementReference>ReminderSubject_2</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>TextBody</field>
+            <value>
+                <elementReference>Reminder2Body</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>ToAddress</field>
+            <value>
+                <elementReference
+        >Get_Recipients_2.dfsle__Email__c</elementReference>
+            </value>
+        </inputAssignments>
+        <object>EmailMessage</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordCreates>
+    <recordCreates>
+        <name>Log_Reminder_3_Email</name>
+        <label>Log Reminder 3 Email</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <inputAssignments>
+            <field>CcAddress</field>
+            <value>
+                <elementReference
+        >Get_Contract_Bid_3.Lead_Owner__r.Email</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>FromAddress</field>
+            <value>
+                <stringValue>office@premierswim.com</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Incoming</field>
+            <value>
+                <booleanValue>false</booleanValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>RelatedToId</field>
+            <value>
+                <elementReference>Get_Contract_Bid_3.Id</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Status</field>
+            <value>
+                <stringValue>3</stringValue>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Subject</field>
+            <value>
+                <elementReference>ReminderSubject_3</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>TextBody</field>
+            <value>
+                <elementReference>Reminder3Body</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>ToAddress</field>
+            <value>
+                <elementReference
+        >Get_Recipients_3.dfsle__Email__c</elementReference>
+            </value>
+        </inputAssignments>
+        <object>EmailMessage</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordCreates>
     <recordCreates>
         <name>New_Task_Action_1</name>
         <label>Visit Property Action</label>
@@ -873,231 +1146,6 @@
         <object>Task</object>
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordCreates>
-    <recordCreates>
-        <name>Log_Contract_Sent_Email</name>
-        <label>Log Contract Sent Email</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <inputAssignments>
-            <field>RelatedToId</field>
-            <value>
-                <elementReference>Get_Contract_Bid_Sent.Id</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Subject</field>
-            <value>
-                <elementReference>ContractSentSubject</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>TextBody</field>
-            <value>
-                <elementReference>ContractSentBody</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>ToAddress</field>
-            <value>
-                <elementReference
-        >Get_Recipients_Sent.dfsle__Email__c</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>FromAddress</field>
-            <value>
-                <stringValue>office@premierswim.com</stringValue>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Status</field>
-            <value>
-                <stringValue>3</stringValue>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Incoming</field>
-            <value>
-                <booleanValue>false</booleanValue>
-            </value>
-        </inputAssignments>
-        <object>EmailMessage</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
-    </recordCreates>
-    <recordCreates>
-        <name>Log_Reminder_1_Email</name>
-        <label>Log Reminder 1 Email</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <inputAssignments>
-            <field>RelatedToId</field>
-            <value>
-                <elementReference>Get_Contract_Bid.Id</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Subject</field>
-            <value>
-                <elementReference>ReminderSubject_1</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>TextBody</field>
-            <value>
-                <elementReference>Reminder1Body</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>ToAddress</field>
-            <value>
-                <elementReference
-        >Get_Recipients.dfsle__Email__c</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>CcAddress</field>
-            <value>
-                <elementReference
-        >Get_Contract_Bid.Lead_Owner__r.Email</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>FromAddress</field>
-            <value>
-                <stringValue>office@premierswim.com</stringValue>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Status</field>
-            <value>
-                <stringValue>3</stringValue>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Incoming</field>
-            <value>
-                <booleanValue>false</booleanValue>
-            </value>
-        </inputAssignments>
-        <object>EmailMessage</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
-    </recordCreates>
-    <recordCreates>
-        <name>Log_Reminder_2_Email</name>
-        <label>Log Reminder 2 Email</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <inputAssignments>
-            <field>RelatedToId</field>
-            <value>
-                <elementReference>Get_Contract_Bid_2.Id</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Subject</field>
-            <value>
-                <elementReference>ReminderSubject_2</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>TextBody</field>
-            <value>
-                <elementReference>Reminder2Body</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>ToAddress</field>
-            <value>
-                <elementReference
-        >Get_Recipients_2.dfsle__Email__c</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>CcAddress</field>
-            <value>
-                <elementReference
-        >Get_Contract_Bid_2.Lead_Owner__r.Email</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>FromAddress</field>
-            <value>
-                <stringValue>office@premierswim.com</stringValue>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Status</field>
-            <value>
-                <stringValue>3</stringValue>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Incoming</field>
-            <value>
-                <booleanValue>false</booleanValue>
-            </value>
-        </inputAssignments>
-        <object>EmailMessage</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
-    </recordCreates>
-    <recordCreates>
-        <name>Log_Reminder_3_Email</name>
-        <label>Log Reminder 3 Email</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <inputAssignments>
-            <field>RelatedToId</field>
-            <value>
-                <elementReference>Get_Contract_Bid_3.Id</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Subject</field>
-            <value>
-                <elementReference>ReminderSubject_3</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>TextBody</field>
-            <value>
-                <elementReference>Reminder3Body</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>ToAddress</field>
-            <value>
-                <elementReference
-        >Get_Recipients_3.dfsle__Email__c</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>CcAddress</field>
-            <value>
-                <elementReference
-        >Get_Contract_Bid_3.Lead_Owner__r.Email</elementReference>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>FromAddress</field>
-            <value>
-                <stringValue>office@premierswim.com</stringValue>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Status</field>
-            <value>
-                <stringValue>3</stringValue>
-            </value>
-        </inputAssignments>
-        <inputAssignments>
-            <field>Incoming</field>
-            <value>
-                <booleanValue>false</booleanValue>
-            </value>
-        </inputAssignments>
-        <object>EmailMessage</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
-    </recordCreates>
     <recordLookups>
         <name>Copy_1_of_Get_Custom_Notification</name>
         <label>Copy 1 of Get Custom Notification</label>
@@ -1143,6 +1191,138 @@
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordLookups>
     <recordLookups>
+        <name>Get_Contract_Bid_2</name>
+        <label>Get Contract Bid 2</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Customer_2</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.dfsle__SourceId__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Contract_Bid__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Contract_Bid_3</name>
+        <label>Get Contract Bid 3</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Customer_3</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.dfsle__SourceId__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Contract_Bid__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Contract_Bid_4</name>
+        <label>Get Contract Bid 4</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Customer_4</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.dfsle__SourceId__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Contract_Bid__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Contract_Bid_5</name>
+        <label>Get Contract Bid 5</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Customer_5</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.dfsle__SourceId__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Contract_Bid__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Contract_Bid_Sent</name>
+        <label>Get Contract Bid Sent</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Customer_Sent</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>$Record.dfsle__SourceId__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Contract_Bid__c</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Custom_Notification</name>
+        <label>Get Custom Notification</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Fill_Recipients</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>DeveloperName</field>
+            <operator>EqualTo</operator>
+            <value>
+                <stringValue>Task_Due_Date</stringValue>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>CustomNotificationType</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
         <name>Get_Customer_1</name>
         <label>Get Customer 1</label>
         <locationX>0</locationX>
@@ -1159,6 +1339,121 @@
             <value>
                 <elementReference
         >Get_Contract_Bid.Customer__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Account</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Customer_2</name>
+        <label>Get Customer 2</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Primary_Contact_2</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference
+        >Get_Contract_Bid_2.Customer__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Account</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Customer_3</name>
+        <label>Get Customer 3</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Get_Primary_Contact_3</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference
+        >Get_Contract_Bid_3.Customer__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Account</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Customer_4</name>
+        <label>Get Customer 4</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Reminders_Allowed_4</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference
+        >Get_Contract_Bid_4.Customer__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Account</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Customer_5</name>
+        <label>Get Customer 5</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Reminders_Allowed_5</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference
+        >Get_Contract_Bid_5.Customer__c</elementReference>
+            </value>
+        </filters>
+        <getFirstRecordOnly>true</getFirstRecordOnly>
+        <object>Account</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordLookups>
+    <recordLookups>
+        <name>Get_Customer_Sent</name>
+        <label>Get Customer Sent</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <assignNullValuesIfNoRecordsFound
+    >false</assignNullValuesIfNoRecordsFound>
+        <connector>
+            <targetReference>Reminders_Allowed_Sent</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference
+        >Get_Contract_Bid_Sent.Customer__c</elementReference>
             </value>
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
@@ -1189,51 +1484,6 @@
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordLookups>
     <recordLookups>
-        <name>Get_Contract_Bid_2</name>
-        <label>Get Contract Bid 2</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound
-    >false</assignNullValuesIfNoRecordsFound>
-        <connector>
-            <targetReference>Get_Customer_2</targetReference>
-        </connector>
-        <filterLogic>and</filterLogic>
-        <filters>
-            <field>Id</field>
-            <operator>EqualTo</operator>
-            <value>
-                <elementReference>$Record.dfsle__SourceId__c</elementReference>
-            </value>
-        </filters>
-        <getFirstRecordOnly>true</getFirstRecordOnly>
-        <object>Contract_Bid__c</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
-    </recordLookups>
-    <recordLookups>
-        <name>Get_Customer_2</name>
-        <label>Get Customer 2</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound
-    >false</assignNullValuesIfNoRecordsFound>
-        <connector>
-            <targetReference>Get_Primary_Contact_2</targetReference>
-        </connector>
-        <filterLogic>and</filterLogic>
-        <filters>
-            <field>Id</field>
-            <operator>EqualTo</operator>
-            <value>
-                <elementReference
-        >Get_Contract_Bid_2.Customer__c</elementReference>
-            </value>
-        </filters>
-        <getFirstRecordOnly>true</getFirstRecordOnly>
-        <object>Account</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
-    </recordLookups>
-    <recordLookups>
         <name>Get_Primary_Contact_2</name>
         <label>Get Primary Contact 2</label>
         <locationX>0</locationX>
@@ -1254,51 +1504,6 @@
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
         <object>Contact</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
-    </recordLookups>
-    <recordLookups>
-        <name>Get_Contract_Bid_3</name>
-        <label>Get Contract Bid 3</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound
-    >false</assignNullValuesIfNoRecordsFound>
-        <connector>
-            <targetReference>Get_Customer_3</targetReference>
-        </connector>
-        <filterLogic>and</filterLogic>
-        <filters>
-            <field>Id</field>
-            <operator>EqualTo</operator>
-            <value>
-                <elementReference>$Record.dfsle__SourceId__c</elementReference>
-            </value>
-        </filters>
-        <getFirstRecordOnly>true</getFirstRecordOnly>
-        <object>Contract_Bid__c</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
-    </recordLookups>
-    <recordLookups>
-        <name>Get_Customer_3</name>
-        <label>Get Customer 3</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound
-    >false</assignNullValuesIfNoRecordsFound>
-        <connector>
-            <targetReference>Get_Primary_Contact_3</targetReference>
-        </connector>
-        <filterLogic>and</filterLogic>
-        <filters>
-            <field>Id</field>
-            <operator>EqualTo</operator>
-            <value>
-                <elementReference
-        >Get_Contract_Bid_3.Customer__c</elementReference>
-            </value>
-        </filters>
-        <getFirstRecordOnly>true</getFirstRecordOnly>
-        <object>Account</object>
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordLookups>
     <recordLookups>
@@ -1325,141 +1530,6 @@
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordLookups>
     <recordLookups>
-        <name>Get_Contract_Bid_4</name>
-        <label>Get Contract Bid 4</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound
-    >false</assignNullValuesIfNoRecordsFound>
-        <connector>
-            <targetReference>Get_Customer_4</targetReference>
-        </connector>
-        <filterLogic>and</filterLogic>
-        <filters>
-            <field>Id</field>
-            <operator>EqualTo</operator>
-            <value>
-                <elementReference>$Record.dfsle__SourceId__c</elementReference>
-            </value>
-        </filters>
-        <getFirstRecordOnly>true</getFirstRecordOnly>
-        <object>Contract_Bid__c</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
-    </recordLookups>
-    <recordLookups>
-        <name>Get_Customer_4</name>
-        <label>Get Customer 4</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound
-    >false</assignNullValuesIfNoRecordsFound>
-        <connector>
-            <targetReference>Reminders_Allowed_4</targetReference>
-        </connector>
-        <filterLogic>and</filterLogic>
-        <filters>
-            <field>Id</field>
-            <operator>EqualTo</operator>
-            <value>
-                <elementReference
-        >Get_Contract_Bid_4.Customer__c</elementReference>
-            </value>
-        </filters>
-        <getFirstRecordOnly>true</getFirstRecordOnly>
-        <object>Account</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
-    </recordLookups>
-    <recordLookups>
-        <name>Get_Contract_Bid_5</name>
-        <label>Get Contract Bid 5</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound
-    >false</assignNullValuesIfNoRecordsFound>
-        <connector>
-            <targetReference>Get_Customer_5</targetReference>
-        </connector>
-        <filterLogic>and</filterLogic>
-        <filters>
-            <field>Id</field>
-            <operator>EqualTo</operator>
-            <value>
-                <elementReference>$Record.dfsle__SourceId__c</elementReference>
-            </value>
-        </filters>
-        <getFirstRecordOnly>true</getFirstRecordOnly>
-        <object>Contract_Bid__c</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
-    </recordLookups>
-    <recordLookups>
-        <name>Get_Customer_5</name>
-        <label>Get Customer 5</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound
-    >false</assignNullValuesIfNoRecordsFound>
-        <connector>
-            <targetReference>Reminders_Allowed_5</targetReference>
-        </connector>
-        <filterLogic>and</filterLogic>
-        <filters>
-            <field>Id</field>
-            <operator>EqualTo</operator>
-            <value>
-                <elementReference
-        >Get_Contract_Bid_5.Customer__c</elementReference>
-            </value>
-        </filters>
-        <getFirstRecordOnly>true</getFirstRecordOnly>
-        <object>Account</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
-    </recordLookups>
-    <recordLookups>
-        <name>Get_Contract_Bid_Sent</name>
-        <label>Get Contract Bid Sent</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound
-    >false</assignNullValuesIfNoRecordsFound>
-        <connector>
-            <targetReference>Get_Customer_Sent</targetReference>
-        </connector>
-        <filterLogic>and</filterLogic>
-        <filters>
-            <field>Id</field>
-            <operator>EqualTo</operator>
-            <value>
-                <elementReference>$Record.dfsle__SourceId__c</elementReference>
-            </value>
-        </filters>
-        <getFirstRecordOnly>true</getFirstRecordOnly>
-        <object>Contract_Bid__c</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
-    </recordLookups>
-    <recordLookups>
-        <name>Get_Customer_Sent</name>
-        <label>Get Customer Sent</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound
-    >false</assignNullValuesIfNoRecordsFound>
-        <connector>
-            <targetReference>Reminders_Allowed_Sent</targetReference>
-        </connector>
-        <filterLogic>and</filterLogic>
-        <filters>
-            <field>Id</field>
-            <operator>EqualTo</operator>
-            <value>
-                <elementReference
-        >Get_Contract_Bid_Sent.Customer__c</elementReference>
-            </value>
-        </filters>
-        <getFirstRecordOnly>true</getFirstRecordOnly>
-        <object>Account</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
-    </recordLookups>
-    <recordLookups>
         <name>Get_Primary_Contact_Sent</name>
         <label>Get Primary Contact Sent</label>
         <locationX>0</locationX>
@@ -1480,28 +1550,6 @@
         </filters>
         <getFirstRecordOnly>true</getFirstRecordOnly>
         <object>Contact</object>
-        <storeOutputAutomatically>true</storeOutputAutomatically>
-    </recordLookups>
-    <recordLookups>
-        <name>Get_Custom_Notification</name>
-        <label>Get Custom Notification</label>
-        <locationX>0</locationX>
-        <locationY>0</locationY>
-        <assignNullValuesIfNoRecordsFound
-    >false</assignNullValuesIfNoRecordsFound>
-        <connector>
-            <targetReference>Fill_Recipients</targetReference>
-        </connector>
-        <filterLogic>and</filterLogic>
-        <filters>
-            <field>DeveloperName</field>
-            <operator>EqualTo</operator>
-            <value>
-                <stringValue>Task_Due_Date</stringValue>
-            </value>
-        </filters>
-        <getFirstRecordOnly>true</getFirstRecordOnly>
-        <object>CustomNotificationType</object>
         <storeOutputAutomatically>true</storeOutputAutomatically>
     </recordLookups>
     <recordLookups>
