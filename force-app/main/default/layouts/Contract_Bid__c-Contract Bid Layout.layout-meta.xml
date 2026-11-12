@@ -62,10 +62,6 @@
                 <behavior>Edit</behavior>
                 <field>Contract_Year__c</field>
             </layoutItems>
-            <layoutItems>
-                <behavior>Readonly</behavior>
-                <field>Click_Record__c</field>
-            </layoutItems>
         </layoutColumns>
         <layoutColumns>
             <layoutItems>
