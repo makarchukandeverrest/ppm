@@ -30,6 +30,13 @@ public class UnifiedActivityModels {
     public Integer nextOffset;
   }
 
+  /** Kept for org classes (UnifiedActivityPinService) already deployed to sandbox. */
+  public class PinnedActivityInfo {
+    public Id activityId;
+    public String pinnedByName;
+    public Datetime pinnedAt;
+  }
+
   public class ActivityItem {
     @AuraEnabled
     public Id id;
