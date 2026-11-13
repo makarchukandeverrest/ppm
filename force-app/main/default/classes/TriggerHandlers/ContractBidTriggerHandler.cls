@@ -11,9 +11,7 @@ public with sharing class ContractBidTriggerHandler extends TriggerHandler {
   }
 
   protected override void beforeInsert() {
-    ContractBidLabelsFiller.fillLabels(this.newList);
   }
-
 
   protected override void afterInsert() {
     updateCurrentCustomerAccounts();
@@ -28,7 +26,10 @@ public with sharing class ContractBidTriggerHandler extends TriggerHandler {
       }
     }
     if (!bidsChangedStage.isEmpty()) {
-      ContractBidActivityStampService.stampStageChanges(bidsChangedStage, this.oldMap);
+      ContractBidActivityStampService.stampStageChanges(
+        bidsChangedStage,
+        this.oldMap
+      );
     }
   }
 
@@ -60,10 +61,13 @@ public with sharing class ContractBidTriggerHandler extends TriggerHandler {
   private void disableRemindersWhenChecked() {
     Set<Id> stopReminderBidIds = new Set<Id>();
     for (Contract_Bid__c bid : this.newList) {
-      Contract_Bid__c oldBid = this.oldMap != null ? this.oldMap.get(bid.Id) : null;
+      Contract_Bid__c oldBid = this.oldMap != null
+        ? this.oldMap.get(bid.Id)
+        : null;
       if (
         bid.Stop_Sending_Reminders__c == true &&
-        (oldBid == null || oldBid.Stop_Sending_Reminders__c != true)
+        (oldBid == null ||
+        oldBid.Stop_Sending_Reminders__c != true)
       ) {
         stopReminderBidIds.add(bid.Id);
       }
