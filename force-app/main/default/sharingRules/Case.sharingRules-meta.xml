@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<SharingRules xmlns="http://soap.sforce.com/2006/04/metadata">
+    <sharingCriteriaRules>
+        <fullName>Ammar_Case_Sharing</fullName>
+        <accessLevel>Edit</accessLevel>
+        <label>Ammar Case Sharing</label>
+        <sharedTo>
+            <group>Regional_Ammar</group>
+        </sharedTo>
+        <criteriaItems>
+            <field>Regional_Manager__c</field>
+            <operation>equals</operation>
+            <value>005Vv00000BNEvCIAX</value>
+        </criteriaItems>
+        <includeRecordsOwnedByAll>true</includeRecordsOwnedByAll>
+    </sharingCriteriaRules>
+    <sharingCriteriaRules>
+        <fullName>Hamzah_Case_Sharing</fullName>
+        <accessLevel>Edit</accessLevel>
+        <label>Hamzah Case Sharing</label>
+        <sharedTo>
+            <group>Regional_Hamzah</group>
+        </sharedTo>
+        <criteriaItems>
+            <field>Regional_Manager__c</field>
+            <operation>equals</operation>
+            <value>005Kd000004bJSMIA2</value>
+        </criteriaItems>
+        <includeRecordsOwnedByAll>true</includeRecordsOwnedByAll>
+    </sharingCriteriaRules>
+    <sharingCriteriaRules>
+        <fullName>Jhon_Case_Sharing</fullName>
+        <accessLevel>Edit</accessLevel>
+        <label>Jhon Case Sharing</label>
+        <sharedTo>
+            <group>Regional_Jhon</group>
+        </sharedTo>
+        <criteriaItems>
+            <field>Regional_Manager__c</field>
+            <operation>equals</operation>
+            <value>005Vv00000EG4CVIA1</value>
+        </criteriaItems>
+        <includeRecordsOwnedByAll>true</includeRecordsOwnedByAll>
+    </sharingCriteriaRules>
+    <sharingCriteriaRules>
+        <fullName>Samuel_Case_Sharing</fullName>
+        <accessLevel>Edit</accessLevel>
+        <label>Samuel Case Sharing</label>
+        <sharedTo>
+            <group>Regional_Samuel</group>
+        </sharedTo>
+        <criteriaItems>
+            <field>Regional_Manager__c</field>
+            <operation>equals</operation>
+            <value>005Vv00000JoZfZIAV</value>
+        </criteriaItems>
+        <includeRecordsOwnedByAll>true</includeRecordsOwnedByAll>
+    </sharingCriteriaRules>
+    <sharingCriteriaRules>
+        <fullName>Stanislav_Case_Sharing</fullName>
+        <accessLevel>Edit</accessLevel>
+        <label>Stanislav Case Sharing</label>
+        <sharedTo>
+            <group>Regional_Stanislav</group>
+        </sharedTo>
+        <criteriaItems>
+            <field>Regional_Manager__c</field>
+            <operation>equals</operation>
+            <value>005Kd000004bJSqIAM</value>
+        </criteriaItems>
+        <includeRecordsOwnedByAll>true</includeRecordsOwnedByAll>
+    </sharingCriteriaRules>
+</SharingRules>
