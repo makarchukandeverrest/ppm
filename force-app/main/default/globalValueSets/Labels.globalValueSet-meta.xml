@@ -41,11 +41,6 @@
         <label>Revision Needed</label>
     </customValue>
     <customValue>
-        <fullName>Keep Same Info</fullName>
-        <default>false</default>
-        <label>Keep Same Info</label>
-    </customValue>
-    <customValue>
         <fullName>Contract Approved</fullName>
         <default>false</default>
         <label>Contract Approved</label>
@@ -111,40 +106,10 @@
         <label>Marijana to Complete</label>
     </customValue>
     <customValue>
-        <fullName>Goran to do</fullName>
+        <fullName>Value 6</fullName>
         <default>false</default>
         <isActive>false</isActive>
-        <label>Goran to do</label>
-    </customValue>
-    <customValue>
-        <fullName>Rania to do</fullName>
-        <default>false</default>
-        <isActive>false</isActive>
-        <label>Rania to do</label>
-    </customValue>
-    <customValue>
-        <fullName>Natasa to do</fullName>
-        <default>false</default>
-        <isActive>false</isActive>
-        <label>Natasa to do</label>
-    </customValue>
-    <customValue>
-        <fullName>No Updates</fullName>
-        <default>false</default>
-        <isActive>false</isActive>
-        <label>No Updates</label>
-    </customValue>
-    <customValue>
-        <fullName>Details Page</fullName>
-        <default>false</default>
-        <isActive>false</isActive>
-        <label>Details Page</label>
-    </customValue>
-    <customValue>
-        <fullName>Check Information</fullName>
-        <default>false</default>
-        <isActive>false</isActive>
-        <label>Check Information</label>
+        <label>Value 6</label>
     </customValue>
     <customValue>
         <fullName>Verified</fullName>
@@ -153,22 +118,58 @@
         <label>Verified</label>
     </customValue>
     <customValue>
-        <fullName>Value 6</fullName>
+        <fullName>Assumptive Lead</fullName>
         <default>false</default>
         <isActive>false</isActive>
-        <label>Value 6</label>
+        <label>Assumptive Lead</label>
     </customValue>
     <customValue>
-        <fullName>Value 5</fullName>
+        <fullName>Check Information</fullName>
         <default>false</default>
         <isActive>false</isActive>
-        <label>Value 5</label>
+        <label>Check Information</label>
     </customValue>
     <customValue>
-        <fullName>Marijana to do</fullName>
+        <fullName>Details Page</fullName>
         <default>false</default>
         <isActive>false</isActive>
-        <label>Marijana to do</label>
+        <label>Details Page</label>
+    </customValue>
+    <customValue>
+        <fullName>No Updates</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>No Updates</label>
+    </customValue>
+    <customValue>
+        <fullName>Keep Same Info</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>Keep Same Info</label>
+    </customValue>
+    <customValue>
+        <fullName>Natasa to do</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>Natasa to do</label>
+    </customValue>
+    <customValue>
+        <fullName>Rania to do</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>Rania to do</label>
+    </customValue>
+    <customValue>
+        <fullName>Goran to do</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>Goran to do</label>
+    </customValue>
+    <customValue>
+        <fullName>Marijana to Complete</fullName>
+        <default>false</default>
+        <isActive>false</isActive>
+        <label>Marijana to Complete</label>
     </customValue>
     <description>Labels to comment</description>
     <masterLabel>Labels</masterLabel>

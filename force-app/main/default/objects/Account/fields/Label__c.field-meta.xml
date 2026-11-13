@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Label__c</fullName>
     <label>Label</label>
@@ -95,19 +95,9 @@
                 <label>New record created</label>
             </value>
             <value>
-                <fullName>Mass Created</fullName>
+                <fullName>info verified</fullName>
                 <default>false</default>
-                <label>Mass Created</label>
-            </value>
-            <value>
-                <fullName>MISSING FILE/CONTACT INFO</fullName>
-                <default>false</default>
-                <label>MISSING FILE/CONTACT INFO</label>
-            </value>
-            <value>
-                <fullName>Resend Bid</fullName>
-                <default>false</default>
-                <label>Resend Bid</label>
+                <label>Info Verified</label>
             </value>
         </valueSetDefinition>
     </valueSet>
