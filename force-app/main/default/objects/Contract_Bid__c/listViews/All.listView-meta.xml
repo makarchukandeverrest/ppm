@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <ListView xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>All</fullName>
     <columns>NAME</columns>
@@ -7,8 +7,7 @@
     <columns>Colored_Labels__c</columns>
     <columns>Colored_Stage__c</columns>
     <columns>Stage__c</columns>
-    <columns>RFP__c</columns>
-    <columns>Renewal_Client__c</columns>
+    <columns>Bid_Type__c</columns>
     <columns>Management_Company__c</columns>
     <filterScope>Everything</filterScope>
     <filters>
@@ -19,7 +18,8 @@
     <filters>
         <field>Stage__c</field>
         <operation>notEqual</operation>
-        <value>Contract Bid Package Sent,Contract Sent via DocuSign,First Follow Up (Follow up sent in PD)</value>
+        <value
+    >Contract Bid Package Sent,Contract Sent via DocuSign,First Follow Up (Follow up sent in PD)</value>
     </filters>
     <label>All</label>
 </ListView>
