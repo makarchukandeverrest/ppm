@@ -123,7 +123,7 @@ private class ContractBidRequestStageServiceTest {
       Customer__c = customer.Id,
       Management_Company__c = company.Id,
       Stage__c = 'Contact Made',
-      Info_Verified__c = true
+      Label__c = 'info verified'
     );
     insert bid;
     return bid;

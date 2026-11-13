@@ -138,8 +138,8 @@ Confirm and complete:
 - Customer
 - Primary Contact
 - Management Company
-- Info Verified checkbox
+- Info Verified label
 
-Once Info Verified is ticked, use Request Contract to move the bid to Contract Requested.</text>
+Once the Info Verified label is set, use Request Contract to move the bid to Contract Requested.</text>
     </textTemplates>
 </Flow>

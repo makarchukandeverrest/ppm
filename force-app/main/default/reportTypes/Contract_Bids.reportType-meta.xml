@@ -363,11 +363,6 @@
         </columns>
         <columns>
             <checkedByDefault>false</checkedByDefault>
-            <field>Info_Verified__c</field>
-            <table>Contract_Bid__c</table>
-        </columns>
-        <columns>
-            <checkedByDefault>false</checkedByDefault>
             <field>Contract_Creator_Picklist__c</field>
             <table>Contract_Bid__c</table>
         </columns>
