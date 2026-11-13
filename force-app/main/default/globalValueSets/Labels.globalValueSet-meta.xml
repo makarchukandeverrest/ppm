@@ -118,12 +118,6 @@
         <label>Verified</label>
     </customValue>
     <customValue>
-        <fullName>Assumptive Lead</fullName>
-        <default>false</default>
-        <isActive>false</isActive>
-        <label>Assumptive Lead</label>
-    </customValue>
-    <customValue>
         <fullName>Check Information</fullName>
         <default>false</default>
         <isActive>false</isActive>
@@ -164,12 +158,6 @@
         <default>false</default>
         <isActive>false</isActive>
         <label>Goran to do</label>
-    </customValue>
-    <customValue>
-        <fullName>Marijana to Complete</fullName>
-        <default>false</default>
-        <isActive>false</isActive>
-        <label>Marijana to Complete</label>
     </customValue>
     <description>Labels to comment</description>
     <masterLabel>Labels</masterLabel>
