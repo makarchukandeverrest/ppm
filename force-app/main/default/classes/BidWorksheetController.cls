@@ -60,8 +60,7 @@ public with sharing class BidWorksheetController {
     // Get current year for filtering
     Integer currentYear = Date.today().year();
 
-    // Get latest versions of files that match "Bid" or "BW" pattern AND modified in current year
-    // Supports both PDF/DOCX contracts and Excel worksheets
+    // Latest .docx Bid Worksheet for the current year (exclude Contracts that also contain "Bids")
     List<ContentVersion> versions = [
       SELECT
         Id,
@@ -76,10 +75,7 @@ public with sharing class BidWorksheetController {
         ContentDocumentId IN :docIds
         AND IsLatest = TRUE
         AND FileExtension = 'docx'
-        AND (Title LIKE '%Bid%'
-        OR Title LIKE '%bid%'
-        OR Title LIKE '%BW%'
-        OR Title LIKE '%bw%')
+        AND Title LIKE '%Bid Worksheet%'
         AND CALENDAR_YEAR(LastModifiedDate) = :currentYear
       ORDER BY LastModifiedDate DESC
       LIMIT 1

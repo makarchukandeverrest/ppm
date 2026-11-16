@@ -95,6 +95,53 @@ private class BidWorksheetControllerTest {
   }
 
   @isTest
+  static void testGetBidWorksheetsExcludesContract() {
+    Account testCustomer = [
+      SELECT Id
+      FROM Account
+      WHERE Name = 'Test Customer'
+      LIMIT 1
+    ];
+
+    ContentVersion contractCv = new ContentVersion(
+      Title = '100 Capitol Yards-2026-2027 Bids-100 Capitol Yards 8944 A--Contract',
+      PathOnClient = 'Contract.docx',
+      VersionData = Blob.valueOf('Contract content'),
+      IsMajorVersion = true
+    );
+    insert contractCv;
+
+    ContentVersion insertedContract = [
+      SELECT ContentDocumentId
+      FROM ContentVersion
+      WHERE Id = :contractCv.Id
+    ];
+    insert new ContentDocumentLink(
+      ContentDocumentId = insertedContract.ContentDocumentId,
+      LinkedEntityId = testCustomer.Id,
+      ShareType = 'V',
+      Visibility = 'AllUsers'
+    );
+
+    Test.startTest();
+    List<BidWorksheetController.FileDto> result = BidWorksheetController.getBidWorksheets(
+      testCustomer.Id
+    );
+    Test.stopTest();
+
+    System.assertEquals(
+      1,
+      result.size(),
+      'Should still return only the Bid Worksheet'
+    );
+    System.assertEquals(
+      'Bid Worksheet Test',
+      result[0].title,
+      'Contract title with Bids must not win over Bid Worksheet'
+    );
+  }
+
+  @isTest
   static void testGetBidWorksheetsFromContractBid() {
     Account testCustomer = [
       SELECT Id
