@@ -1257,12 +1257,6 @@
         </itemInstances>
         <itemInstances>
             <componentInstance>
-                <componentName>bidWorksheetViewer</componentName>
-                <identifier>c_bidWorksheetViewer</identifier>
-            </componentInstance>
-        </itemInstances>
-        <itemInstances>
-            <componentInstance>
                 <componentInstanceProperties>
                     <name>lookupFieldName</name>
                     <value>Account.Recent_Contract_Bid__c</value>

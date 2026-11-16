@@ -69,6 +69,16 @@
                     <name>uiBehavior</name>
                     <value>none</value>
                 </fieldInstanceProperties>
+                <fieldItem>Record.Customer__c</fieldItem>
+                <identifier>RecordCustomer_cField</identifier>
+            </fieldInstance>
+        </itemInstances>
+        <itemInstances>
+            <fieldInstance>
+                <fieldInstanceProperties>
+                    <name>uiBehavior</name>
+                    <value>none</value>
+                </fieldInstanceProperties>
                 <fieldItem>Record.Bid_Number__c</fieldItem>
                 <identifier>RecordBid_Number_cField</identifier>
             </fieldInstance>
@@ -1988,6 +1998,12 @@
                 </componentInstanceProperties>
                 <componentName>console:relatedRecord</componentName>
                 <identifier>console_relatedRecord</identifier>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentName>bidWorksheetViewer</componentName>
+                <identifier>c_bidWorksheetViewer</identifier>
             </componentInstance>
         </itemInstances>
         <itemInstances>
