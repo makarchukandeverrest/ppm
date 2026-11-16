@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Stage__c</fullName>
     <label>Stage</label>
@@ -13,6 +13,11 @@
                 <fullName>Contact Made</fullName>
                 <default>false</default>
                 <label>Contact Made</label>
+            </value>
+            <value>
+                <fullName>Contract Requested</fullName>
+                <default>false</default>
+                <label>Contract Requested</label>
             </value>
             <value>
                 <fullName>Information Verified</fullName>

@@ -40,7 +40,8 @@ public with sharing class DocuSignDfsleEnvelopeService {
 
   @TestVisible
   private static final String STAGE_CONTRACT_SENT = 'Contract Sent via DocuSign';
-  private static final String STAGE_NEGOTIATION_STARTED = 'Negotiation Started';
+  // Short stage model: UI label "Negotiation" = API Proposal/Review
+  private static final String STAGE_NEGOTIATION_STARTED = 'Proposal/Review';
   private static final String STAGE_CLOSED_WON = 'Closed - WON';
   private static final String STAGE_REFERENCE_ACTIVE_STAGES = 'Active_Stages';
   @TestVisible
