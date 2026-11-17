@@ -26,10 +26,7 @@ public with sharing class ContractBidTriggerHandler extends TriggerHandler {
       }
     }
     if (!bidsChangedStage.isEmpty()) {
-      ContractBidActivityStampService.stampStageChanges(
-        bidsChangedStage,
-        this.oldMap
-      );
+      ContractBidActivityStampService.stampStageChanges(bidsChangedStage, this.oldMap);
     }
   }
 
@@ -61,14 +58,8 @@ public with sharing class ContractBidTriggerHandler extends TriggerHandler {
   private void disableRemindersWhenChecked() {
     Set<Id> stopReminderBidIds = new Set<Id>();
     for (Contract_Bid__c bid : this.newList) {
-      Contract_Bid__c oldBid = this.oldMap != null
-        ? this.oldMap.get(bid.Id)
-        : null;
-      if (
-        bid.Stop_Sending_Reminders__c == true &&
-        (oldBid == null ||
-        oldBid.Stop_Sending_Reminders__c != true)
-      ) {
+      Contract_Bid__c oldBid = this.oldMap != null ? this.oldMap.get(bid.Id) : null;
+      if (bid.Stop_Sending_Reminders__c == true && (oldBid == null || oldBid.Stop_Sending_Reminders__c != true)) {
         stopReminderBidIds.add(bid.Id);
       }
     }
@@ -76,9 +67,7 @@ public with sharing class ContractBidTriggerHandler extends TriggerHandler {
   }
 
   private Boolean stageChangedTo(Contract_Bid__c bid, String targetStage) {
-    String previousStage = this.oldMap != null
-      ? this.oldMap.get(bid.Id)?.Stage__c
-      : null;
+    String previousStage = this.oldMap != null ? this.oldMap.get(bid.Id)?.Stage__c : null;
     return bid.Stage__c == targetStage && previousStage != targetStage;
   }
 }
