@@ -12,6 +12,12 @@
   &quot;Contract Sent via DocuSign&quot;,
     IMAGE(&quot;/resource/Purple&quot;, &quot;Contract Sent&quot;, 30, 30) &amp; &quot; Contract Sent&quot;,
 
+  &quot;Viewed&quot;,
+    IMAGE(&quot;/resource/Purple&quot;, &quot;Viewed&quot;, 30, 30) &amp; &quot; Viewed&quot;,
+
+  &quot;Need Contact Verification&quot;,
+    IMAGE(&quot;/resource/Red_Orange&quot;, &quot;DocuSign Bounced&quot;, 30, 30) &amp; &quot; DocuSign Bounced&quot;,
+
   &quot;Proposal/Review&quot;,
     IMAGE(&quot;/resource/Dark_Purple&quot;, &quot;Negotiation&quot;, 30, 30) &amp; &quot; Negotiation&quot;,
 

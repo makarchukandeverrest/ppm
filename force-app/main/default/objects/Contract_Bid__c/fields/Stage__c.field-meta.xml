@@ -17,6 +17,11 @@
                 <label>Bid Qualified</label>
             </value>
             <value>
+                <fullName>Need Contact Verification</fullName>
+                <default>false</default>
+                <label>DocuSign Bounced</label>
+            </value>
+            <value>
                 <fullName>Contract Requested</fullName>
                 <default>false</default>
                 <label>Contract Requested</label>
@@ -25,6 +30,11 @@
                 <fullName>Contract Sent via DocuSign</fullName>
                 <default>false</default>
                 <label>Contract Sent</label>
+            </value>
+            <value>
+                <fullName>Viewed</fullName>
+                <default>false</default>
+                <label>Viewed</label>
             </value>
             <value>
                 <fullName>Proposal/Review</fullName>
@@ -72,6 +82,12 @@
                 <label>Conversation Started</label>
             </value>
             <value>
+                <fullName>DocuSign Bounced</fullName>
+                <default>false</default>
+                <isActive>false</isActive>
+                <label>DocuSign Bounced (deprecated)</label>
+            </value>
+            <value>
                 <fullName>First Follow Up (Follow up sent in PD)</fullName>
                 <default>false</default>
                 <isActive>false</isActive>
@@ -82,12 +98,6 @@
                 <default>false</default>
                 <isActive>false</isActive>
                 <label>Information Verified</label>
-            </value>
-            <value>
-                <fullName>Need Contact Verification</fullName>
-                <default>false</default>
-                <isActive>false</isActive>
-                <label>Need Contact Verification</label>
             </value>
             <value>
                 <fullName>Negotiation Started</fullName>
