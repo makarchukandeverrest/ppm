@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Colored_Labels__c</fullName>
     <externalId>false</externalId>
@@ -25,6 +25,14 @@ IMAGE(&quot;/resource/Red&quot;, &quot;Hot Lead&quot;, 30, 30) &amp; &quot; Hot 
 
 IF(INCLUDES(Label__c, &quot;Need More Info&quot;),
 IMAGE(&quot;/resource/Orange&quot;, &quot;Need More Info&quot;, 30, 30) &amp; &quot; Need More Info &quot;,
+&quot;&quot;) &amp;
+
+IF(INCLUDES(Label__c, &quot;Need Verification&quot;),
+IMAGE(&quot;/resource/Red_Orange&quot;, &quot;Need Verification&quot;, 30, 30) &amp; &quot; Need Verification &quot;,
+&quot;&quot;) &amp;
+
+IF(INCLUDES(Label__c, &quot;info verified&quot;),
+IMAGE(&quot;/resource/Green&quot;, &quot;Info Verified&quot;, 30, 30) &amp; &quot; Info Verified &quot;,
 &quot;&quot;) &amp;
 
 IF(INCLUDES(Label__c, &quot;Cold Lead&quot;),

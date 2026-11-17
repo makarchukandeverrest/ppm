@@ -19,8 +19,8 @@
     </filters>
     <filters>
         <field>Label__c</field>
-        <operation>excludes</operation>
-        <value>info verified</value>
+        <operation>includes</operation>
+        <value>Need Verification</value>
     </filters>
     <label>My bids – to verify</label>
     <sharedTo>

@@ -56,6 +56,11 @@
         <label>New record created</label>
     </customValue>
     <customValue>
+        <fullName>Need Verification</fullName>
+        <default>false</default>
+        <label>Need Verification</label>
+    </customValue>
+    <customValue>
         <fullName>info verified</fullName>
         <default>false</default>
         <label>Info Verified</label>

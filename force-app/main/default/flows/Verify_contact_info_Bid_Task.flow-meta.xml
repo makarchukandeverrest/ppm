@@ -84,7 +84,7 @@
         </rules>
     </decisions>
     <description
-  >On Bid create, assigns a Verify contact info task to the Lead Generator (Created By = Premier Pool Management), due in 2 days.</description>
+  >On Bid create, assigns a Verify contact info task to the Lead Generator (Created By = Premier Pool Management), due in 2 days. Task creation also applies the Need Verification label via Task trigger.</description>
     <environments>Default</environments>
     <formulas>
         <name>TaskDueDate</name>
