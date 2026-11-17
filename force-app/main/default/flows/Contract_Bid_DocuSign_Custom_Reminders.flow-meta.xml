@@ -733,7 +733,7 @@
                 </rightValue>
             </conditions>
             <connector>
-                <targetReference>Get_Recipients_2</targetReference>
+                <targetReference>Log_Reminder_2_Text_Post</targetReference>
             </connector>
             <label>Copy 1 of Still active</label>
         </rules>
@@ -779,7 +779,7 @@
                 </rightValue>
             </conditions>
             <connector>
-                <targetReference>Get_Recipients</targetReference>
+                <targetReference>Log_Reminder_1_Text_Post</targetReference>
             </connector>
             <label>Still active</label>
         </rules>
@@ -849,7 +849,7 @@
                 </rightValue>
             </conditions>
             <connector>
-                <targetReference>Phone_Call_Task</targetReference>
+                <targetReference>Log_Reminder_21_Text_Post</targetReference>
             </connector>
             <label>Continue</label>
         </rules>
@@ -926,7 +926,7 @@
     </decisions>
 
     <description
-  >Contract Bid DocuSign reminders: Day 0 sent email + reset timers; Day 7 Reminder 1; Day 14 Reminder 2; Day 21 RM call task (upsert). Stops when Viewed, Stop Sending Reminders, or envelope leaves Sent. Reminder 3 and visit removed.</description>
+  >Contract Bid DocuSign reminders: Day 0 sent email kept; Day 7/14/21 unsigned Chatter on Contract Bid instead of customer follow-up emails; Day 21 still upserts RM call task. Stops when Viewed, Stop Sending Reminders, or envelope leaves Sent.</description>
     <environments>Default</environments>
 
     <formulas>
@@ -1149,6 +1149,35 @@
             <field>Title</field>
             <value>
                 <elementReference>ReminderSubject_2</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>Type</field>
+            <value>
+                <stringValue>TextPost</stringValue>
+            </value>
+        </inputAssignments>
+        <object>FeedItem</object>
+        <storeOutputAutomatically>true</storeOutputAutomatically>
+    </recordCreates>
+    <recordCreates>
+        <name>Log_Reminder_21_Text_Post</name>
+        <label>Log Reminder 21 Text Post</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Set_Follow_Up_Count_3</targetReference>
+        </connector>
+        <inputAssignments>
+            <field>Body</field>
+            <value>
+                <elementReference>Reminder21Body</elementReference>
+            </value>
+        </inputAssignments>
+        <inputAssignments>
+            <field>ParentId</field>
+            <value>
+                <elementReference>Get_Contract_Bid_4.Id</elementReference>
             </value>
         </inputAssignments>
         <inputAssignments>
@@ -1949,6 +1978,30 @@
         </inputAssignments>
         <object>Contract_Bid__c</object>
     </recordUpdates>
+    <recordUpdates>
+        <name>Set_Follow_Up_Count_3</name>
+        <label>Set Follow-Up Count 3</label>
+        <locationX>0</locationX>
+        <locationY>0</locationY>
+        <connector>
+            <targetReference>Phone_Call_Task</targetReference>
+        </connector>
+        <filterLogic>and</filterLogic>
+        <filters>
+            <field>Id</field>
+            <operator>EqualTo</operator>
+            <value>
+                <elementReference>Get_Contract_Bid_4.Id</elementReference>
+            </value>
+        </filters>
+        <inputAssignments>
+            <field>Follow_Up_Count__c</field>
+            <value>
+                <numberValue>3.0</numberValue>
+            </value>
+        </inputAssignments>
+        <object>Contract_Bid__c</object>
+    </recordUpdates>
     <start>
         <locationX>0</locationX>
         <locationY>0</locationY>
@@ -2048,28 +2101,20 @@ Premier Pool Management Contracts Team</text>
     <textTemplates>
         <name>Reminder1Body</name>
         <isViewedAsPlainText>true</isViewedAsPlainText>
-        <text>{!GreetingLine_1}
-
-Just a quick note to make sure the DocuSign agreement came through on your end.
-
-If you didn’t see it or need it resent, I’m happy to take care of that. And of course, let me know if there’s anything you’d like to go over.
-
-Thank you,
-Premier Pool Management Contracts Team</text>
+        <text
+    >The contract has not been signed after 7 days. Please follow up.</text>
     </textTemplates>
     <textTemplates>
         <name>Reminder2Body</name>
         <isViewedAsPlainText>true</isViewedAsPlainText>
-        <text>{!GreetingLine_2}
-
-I wanted to touch base as we start mapping out staffing and preseason planning for {!ContractSeasonYear_2}. Finalizing the agreement helps us reserve your team and schedule accordingly.
-
-Whenever you have a moment, I’d appreciate an idea of your timeline so we can plan ahead on our side.
-
-Looking forward to working together.
-
-Best,
-Premier Pool Management Contracts Team</text>
+        <text
+    >The contract has not been signed after 14 days. Please follow up.</text>
+    </textTemplates>
+    <textTemplates>
+        <name>Reminder21Body</name>
+        <isViewedAsPlainText>true</isViewedAsPlainText>
+        <text
+    >The contract has not been signed after 21 days. Please follow up.</text>
     </textTemplates>
     <textTemplates>
         <name>Reminder3Body</name>
