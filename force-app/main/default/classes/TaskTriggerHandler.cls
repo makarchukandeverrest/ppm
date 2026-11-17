@@ -15,6 +15,9 @@ public with sharing class TaskTriggerHandler extends TriggerHandler {
 
   protected override void afterInsert() {
     ContractBidRequestStageService.moveToContractRequested(this.newList);
+    ContractBidLabelsFiller.applyNeedVerificationLabelOnTaskCreate(
+      this.newList
+    );
     TaskQueueNotificationService.notifyQueueMembers(this.newList, null);
     ContractBidActivityStampService.recalculateActivityStats(
       collectActivityParentIds(this.newList)

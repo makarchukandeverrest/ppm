@@ -200,4 +200,74 @@ private class ContractBidLabelsFillerTest {
     ];
     System.assertEquals('New record created', previousBid.Label__c);
   }
+
+  @IsTest
+  static void verifyTaskCreate_addsNeedVerificationLabel() {
+    Account customer = [SELECT Id FROM Account WHERE Name = 'Labels Customer'];
+    Contract_Bid__c bid = new Contract_Bid__c(
+      Name = 'Verify Label Bid',
+      Customer__c = customer.Id,
+      Stage__c = 'Contact Made',
+      Contract_Year__c = '2026-2027',
+      Label__c = 'Hot Lead'
+    );
+    insert bid;
+
+    Test.startTest();
+    insert new Task(
+      Subject = 'Verify contact info',
+      WhatId = bid.Id,
+      Status = 'Not Started'
+    );
+    Test.stopTest();
+
+    bid = [SELECT Label__c FROM Contract_Bid__c WHERE Id = :bid.Id];
+    System.assert(
+      bid.Label__c.contains('Need Verification'),
+      'Need Verification label should be set when verify task is created'
+    );
+    System.assert(
+      bid.Label__c.contains('Hot Lead'),
+      'Existing labels should be preserved'
+    );
+  }
+
+  @IsTest
+  static void verifyTaskComplete_swapsNeedVerificationForInfoVerified() {
+    Account customer = [SELECT Id FROM Account WHERE Name = 'Labels Customer'];
+    Contract_Bid__c bid = new Contract_Bid__c(
+      Name = 'Verify Complete Bid',
+      Customer__c = customer.Id,
+      Stage__c = 'Contact Made',
+      Contract_Year__c = '2026-2027',
+      Label__c = 'Need Verification;Hot Lead'
+    );
+    insert bid;
+
+    Task verifyTask = new Task(
+      Subject = 'Verify contact info',
+      WhatId = bid.Id,
+      Status = 'Not Started'
+    );
+    insert verifyTask;
+
+    Test.startTest();
+    verifyTask.Status = 'Completed';
+    update verifyTask;
+    Test.stopTest();
+
+    bid = [SELECT Label__c FROM Contract_Bid__c WHERE Id = :bid.Id];
+    System.assert(
+      bid.Label__c.contains('info verified'),
+      'Info Verified label should be set when verify task is completed'
+    );
+    System.assert(
+      !bid.Label__c.contains('Need Verification'),
+      'Need Verification label should be cleared when verification is completed'
+    );
+    System.assert(
+      bid.Label__c.contains('Hot Lead'),
+      'Existing labels should be preserved'
+    );
+  }
 }
