@@ -199,7 +199,7 @@
         <name>TaskDescription</name>
         <dataType>String</dataType>
         <expression
-    >&quot;DocuSign envelope &quot; &amp; $Record.Name &amp; &quot; signer is still Sent after 7 days and was not Delivered. Please follow up.&quot;</expression>
+    >&quot;DocuSign envelope &quot; &amp; $Record.Name &amp; &quot; signer is still Sent after 7 days and was not Viewed. Please follow up.&quot;</expression>
     </formulas>
     <formulas>
         <name>TaskDueDate</name>
@@ -209,7 +209,7 @@
     <formulas>
         <name>TaskSubject</name>
         <dataType>String</dataType>
-        <expression>&quot;Follow up: Contract not delivered&quot;</expression>
+        <expression>&quot;Follow up: Contract not viewed&quot;</expression>
     </formulas>
     <interviewLabel
   >Contract Bid Envelope Not Delivered {!$Flow.CurrentDateTime}</interviewLabel>

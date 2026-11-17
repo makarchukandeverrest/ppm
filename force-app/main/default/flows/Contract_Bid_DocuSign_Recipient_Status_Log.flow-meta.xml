@@ -194,7 +194,7 @@
         <inputAssignments>
             <field>Title</field>
             <value>
-                <stringValue>Contract delivered in DocuSign</stringValue>
+                <stringValue>Contract viewed in DocuSign</stringValue>
             </value>
         </inputAssignments>
         <inputAssignments>
@@ -481,7 +481,7 @@
     <textTemplates>
         <name>DeliveredLogBody</name>
         <isViewedAsPlainText>true</isViewedAsPlainText>
-        <text>Contract delivered in DocuSign.
+        <text>Contract viewed in DocuSign.
 Recipient: {!$Record.dfsle__Email__c}
 Lead Generator: {!LeadGeneratorName}
 Regional Manager: {!RegionalManagerName}
