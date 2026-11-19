@@ -126,6 +126,9 @@ public with sharing class UnifiedActivityMapper {
     List<UnifiedActivityModels.ActivityItem> result = new List<UnifiedActivityModels.ActivityItem>();
     Map<Id, ContentVersion> versionsById = loadContentPostVersions(feedItems);
     Map<Id, ContentNote> notesById = loadNotesForContentPosts(versionsById);
+    Map<Id, List<FeedComment>> commentsByFeedItemId = loadFeedCommentsByFeedItemIds(
+      feedItems
+    );
 
     for (FeedItem fi : feedItems) {
       if (fi.Type == 'ContentPost' && fi.RelatedRecordId != null) {
@@ -150,22 +153,50 @@ public with sharing class UnifiedActivityMapper {
       String feedTitle = fi.Type == 'TrackedChange'
         ? buildTrackedChangeTitle(contentParts, fi)
         : buildFeedItemTitle(fi);
-      result.add(
-        new UnifiedActivityModels.ActivityItem(
-          fi.Id,
-          TYPE_FEED,
-          feedTitle,
-          UnifiedActivityUtils.buildPlainTextFromParts(contentParts, fi.Body),
-          fi.CreatedDate,
-          fi.CreatedById,
-          fi.CreatedBy?.Name,
-          null,
-          contentParts,
-          recordLabels.get(fi.ParentId)
-        )
+      UnifiedActivityModels.ActivityItem item = new UnifiedActivityModels.ActivityItem(
+        fi.Id,
+        TYPE_FEED,
+        feedTitle,
+        UnifiedActivityUtils.buildPlainTextFromParts(contentParts, fi.Body),
+        fi.CreatedDate,
+        fi.CreatedById,
+        fi.CreatedBy?.Name,
+        null,
+        contentParts,
+        recordLabels.get(fi.ParentId)
       );
+      item.comments = commentsByFeedItemId.containsKey(fi.Id)
+        ? commentsByFeedItemId.get(fi.Id)
+        : new List<FeedComment>();
+      result.add(item);
     }
     return result;
+  }
+
+  private Map<Id, List<FeedComment>> loadFeedCommentsByFeedItemIds(
+    List<FeedItem> feedItems
+  ) {
+    Map<Id, List<FeedComment>> commentsByFeedItemId = new Map<Id, List<FeedComment>>();
+    if (feedItems == null || feedItems.isEmpty()) {
+      return commentsByFeedItemId;
+    }
+
+    Set<Id> feedItemIds = new Set<Id>();
+    for (FeedItem fi : feedItems) {
+      if (fi.Id != null) {
+        feedItemIds.add(fi.Id);
+      }
+    }
+
+    for (
+      FeedComment comment : selector.getFeedCommentsByFeedItemIds(feedItemIds)
+    ) {
+      if (!commentsByFeedItemId.containsKey(comment.FeedItemId)) {
+        commentsByFeedItemId.put(comment.FeedItemId, new List<FeedComment>());
+      }
+      commentsByFeedItemId.get(comment.FeedItemId).add(comment);
+    }
+    return commentsByFeedItemId;
   }
 
   private Map<Id, ContentVersion> loadContentPostVersions(

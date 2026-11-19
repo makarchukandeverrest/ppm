@@ -325,4 +325,24 @@ public with sharing class UnifiedActivitySelector {
     List<SObject> results = Database.query(soql, AccessLevel.USER_MODE);
     return results.isEmpty() ? null : results[0];
   }
+
+  public List<FeedComment> getFeedCommentsByFeedItemIds(Set<Id> feedItemIds) {
+    if (feedItemIds == null || feedItemIds.isEmpty()) {
+      return new List<FeedComment>();
+    }
+    return [
+      SELECT
+        Id,
+        FeedItemId,
+        CommentBody,
+        CreatedDate,
+        CreatedById,
+        CreatedBy.Name
+      FROM FeedComment
+      WHERE FeedItemId IN :feedItemIds
+      WITH USER_MODE
+      ORDER BY CreatedDate ASC
+      LIMIT :MAX_AGGREGATE_ITEMS
+    ];
+  }
 }
