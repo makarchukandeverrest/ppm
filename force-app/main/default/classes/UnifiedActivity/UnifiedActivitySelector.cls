@@ -335,6 +335,7 @@ public with sharing class UnifiedActivitySelector {
         Id,
         FeedItemId,
         CommentBody,
+        RelatedRecordId,
         CreatedDate,
         CreatedById,
         CreatedBy.Name

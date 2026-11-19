@@ -309,23 +309,28 @@ export default class UnifiedActivityFeed extends NavigationMixin(
 
   enrichActivities(data) {
     return data.map((item) => {
-      const contentParts = (item.contentParts || []).map((part, index) => ({
-        ...part,
-        key: `${item.id}-${index}`,
-        isText: part.partType === "text",
-        isImage: part.partType === "image",
-        isFile: part.partType === "file",
-        fileIcon: fileIconName(part.fileName),
-        isClickable:
-          (part.partType === "image" || part.partType === "file") &&
-          !!part.contentDocumentId
-      }));
+      const contentParts = this.enrichContentParts(item.contentParts, item.id);
       const hasDescription = !!(
         item.description && String(item.description).trim()
       );
       const hasDisplayBody = contentParts.length > 0 || hasDescription;
       const isEmail = item.type === "EmailMessage";
       const isNote = item.type === "ContentNote";
+      const isFeed = item.type === "FeedItem";
+      const comments = (item.comments || []).map((comment, index) => {
+        const commentParts = this.enrichContentParts(
+          comment.contentParts,
+          `${item.id}-comment-${comment.id || index}`
+        );
+        return {
+          id: comment.id,
+          key: `${item.id}-comment-${comment.id || index}`,
+          body: comment.body || "",
+          createdByName: comment.createdByName || "",
+          displayDate: this.formatDate(comment.createdDate),
+          contentParts: commentParts
+        };
+      });
 
       return {
         ...item,
@@ -341,7 +346,9 @@ export default class UnifiedActivityFeed extends NavigationMixin(
         isEvent: item.type === "Event",
         isEmail,
         isNote,
-        isFeed: item.type === "FeedItem",
+        isFeed,
+        comments,
+        hasComments: isFeed && comments.length > 0,
         isCollapsibleBody: isEmail && hasDisplayBody,
         bodyPreview: isEmail
           ? this.buildPlainTextPreview(item.description)
@@ -356,6 +363,20 @@ export default class UnifiedActivityFeed extends NavigationMixin(
             : ""
       };
     });
+  }
+
+  enrichContentParts(parts, keyPrefix) {
+    return (parts || []).map((part, index) => ({
+      ...part,
+      key: `${keyPrefix}-${index}`,
+      isText: part.partType === "text",
+      isImage: part.partType === "image",
+      isFile: part.partType === "file",
+      fileIcon: fileIconName(part.fileName),
+      isClickable:
+        (part.partType === "image" || part.partType === "file") &&
+        !!part.contentDocumentId
+    }));
   }
 
   buildPlainTextPreview(value) {
@@ -640,12 +661,19 @@ export default class UnifiedActivityFeed extends NavigationMixin(
     });
   }
 
-  openNewActivityRecord(objectApiName, defaults) {
+  openNewActivityRecord(objectApiName, defaults, recordTypeId) {
     if (!this.recordId) {
       return;
     }
 
     const fieldDefaults = defaults || this.getActivityDefaults();
+    const state = {
+      defaultFieldValues: encodeDefaultFieldValues(fieldDefaults),
+      navigationLocation: "RELATED_LIST"
+    };
+    if (recordTypeId) {
+      state.recordTypeId = recordTypeId;
+    }
 
     this[NavigationMixin.Navigate]({
       type: "standard__objectPage",
@@ -653,10 +681,7 @@ export default class UnifiedActivityFeed extends NavigationMixin(
         objectApiName,
         actionName: "new"
       },
-      state: {
-        defaultFieldValues: encodeDefaultFieldValues(fieldDefaults),
-        navigationLocation: "RELATED_LIST"
-      }
+      state
     });
   }
 

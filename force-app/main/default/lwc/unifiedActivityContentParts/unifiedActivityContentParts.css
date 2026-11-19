@@ -1,0 +1,37 @@
+.activity-image {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.activity-image[role="button"] {
+  cursor: pointer;
+}
+
+.activity-image[role="button"]:hover {
+  opacity: 0.92;
+}
+
+.activity-image[role="button"]:focus {
+  outline: 2px solid var(--lwc-brandAccessible, #0176d3);
+  outline-offset: 2px;
+}
+
+.activity-file {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--lwc-colorBorder, #e5e5e5);
+  border-radius: 0.25rem;
+  background: var(--lwc-colorBackgroundAlt, #fff);
+  text-align: left;
+}
+
+.activity-file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

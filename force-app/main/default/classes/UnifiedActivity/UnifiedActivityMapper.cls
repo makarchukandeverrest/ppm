@@ -126,7 +126,7 @@ public with sharing class UnifiedActivityMapper {
     List<UnifiedActivityModels.ActivityItem> result = new List<UnifiedActivityModels.ActivityItem>();
     Map<Id, ContentVersion> versionsById = loadContentPostVersions(feedItems);
     Map<Id, ContentNote> notesById = loadNotesForContentPosts(versionsById);
-    Map<Id, List<FeedComment>> commentsByFeedItemId = loadFeedCommentsByFeedItemIds(
+    Map<Id, List<UnifiedActivityModels.ActivityComment>> commentsByFeedItemId = loadFeedCommentsByFeedItemIds(
       feedItems
     );
 
@@ -167,16 +167,16 @@ public with sharing class UnifiedActivityMapper {
       );
       item.comments = commentsByFeedItemId.containsKey(fi.Id)
         ? commentsByFeedItemId.get(fi.Id)
-        : new List<FeedComment>();
+        : new List<UnifiedActivityModels.ActivityComment>();
       result.add(item);
     }
     return result;
   }
 
-  private Map<Id, List<FeedComment>> loadFeedCommentsByFeedItemIds(
+  private Map<Id, List<UnifiedActivityModels.ActivityComment>> loadFeedCommentsByFeedItemIds(
     List<FeedItem> feedItems
   ) {
-    Map<Id, List<FeedComment>> commentsByFeedItemId = new Map<Id, List<FeedComment>>();
+    Map<Id, List<UnifiedActivityModels.ActivityComment>> commentsByFeedItemId = new Map<Id, List<UnifiedActivityModels.ActivityComment>>();
     if (feedItems == null || feedItems.isEmpty()) {
       return commentsByFeedItemId;
     }
@@ -188,15 +188,140 @@ public with sharing class UnifiedActivityMapper {
       }
     }
 
-    for (
-      FeedComment comment : selector.getFeedCommentsByFeedItemIds(feedItemIds)
-    ) {
-      if (!commentsByFeedItemId.containsKey(comment.FeedItemId)) {
-        commentsByFeedItemId.put(comment.FeedItemId, new List<FeedComment>());
+    List<FeedComment> feedComments = selector.getFeedCommentsByFeedItemIds(
+      feedItemIds
+    );
+    Set<Id> relatedVersionIds = new Set<Id>();
+    for (FeedComment comment : feedComments) {
+      if (comment.RelatedRecordId != null) {
+        relatedVersionIds.add(comment.RelatedRecordId);
       }
-      commentsByFeedItemId.get(comment.FeedItemId).add(comment);
+    }
+    Map<Id, ContentVersion> commentVersionsById = loadContentVersionsByIds(
+      relatedVersionIds
+    );
+
+    for (FeedComment comment : feedComments) {
+      if (!commentsByFeedItemId.containsKey(comment.FeedItemId)) {
+        commentsByFeedItemId.put(
+          comment.FeedItemId,
+          new List<UnifiedActivityModels.ActivityComment>()
+        );
+      }
+      commentsByFeedItemId.get(comment.FeedItemId)
+        .add(mapFeedComment(comment, commentVersionsById));
     }
     return commentsByFeedItemId;
+  }
+
+  private UnifiedActivityModels.ActivityComment mapFeedComment(
+    FeedComment comment,
+    Map<Id, ContentVersion> commentVersionsById
+  ) {
+    UnifiedActivityModels.ActivityComment activityComment = new UnifiedActivityModels.ActivityComment();
+    activityComment.id = comment.Id;
+    activityComment.feedItemId = comment.FeedItemId;
+    activityComment.createdDate = comment.CreatedDate;
+    activityComment.createdById = comment.CreatedById;
+    activityComment.createdByName = comment.CreatedBy?.Name;
+    activityComment.contentParts = buildFeedCommentContentParts(
+      comment,
+      commentVersionsById
+    );
+    activityComment.body = UnifiedActivityUtils.buildPlainTextFromParts(
+      activityComment.contentParts,
+      comment.CommentBody
+    );
+    return activityComment;
+  }
+
+  private List<UnifiedActivityModels.ActivityContentPart> buildFeedCommentContentParts(
+    FeedComment comment,
+    Map<Id, ContentVersion> commentVersionsById
+  ) {
+    if (
+      UnifiedActivityUtils.containsInlineImageReference(comment.CommentBody)
+    ) {
+      List<UnifiedActivityModels.ActivityContentPart> connectApiParts = buildCommentContentPartsFromConnectApi(
+        comment.Id
+      );
+      if (!connectApiParts.isEmpty()) {
+        return connectApiParts;
+      }
+    }
+
+    if (comment.RelatedRecordId != null) {
+      return buildRelatedRecordCommentParts(comment, commentVersionsById);
+    }
+
+    if (String.isBlank(comment.CommentBody)) {
+      return new List<UnifiedActivityModels.ActivityContentPart>();
+    }
+    UnifiedActivityModels.ActivityContentPart textPart = new UnifiedActivityModels.ActivityContentPart();
+    textPart.partType = 'text';
+    textPart.text = UnifiedActivityUtils.isRichTextBody(comment.CommentBody)
+      ? comment.CommentBody
+      : UnifiedActivityUtils.escapeHtml(comment.CommentBody);
+    return new List<UnifiedActivityModels.ActivityContentPart>{ textPart };
+  }
+
+  private List<UnifiedActivityModels.ActivityContentPart> buildRelatedRecordCommentParts(
+    FeedComment comment,
+    Map<Id, ContentVersion> commentVersionsById
+  ) {
+    ContentVersion version = commentVersionsById != null
+      ? commentVersionsById.get(comment.RelatedRecordId)
+      : null;
+    Id contentDocumentId = version != null
+      ? version.ContentDocumentId
+      : resolveContentDocumentIdFromVersionId(
+          String.valueOf(comment.RelatedRecordId)
+        );
+    Id partDocumentId = contentDocumentId != null
+      ? contentDocumentId
+      : comment.RelatedRecordId;
+
+    List<UnifiedActivityModels.ActivityContentPart> parts = new List<UnifiedActivityModels.ActivityContentPart>();
+    if (String.isNotBlank(comment.CommentBody)) {
+      UnifiedActivityModels.ActivityContentPart textPart = new UnifiedActivityModels.ActivityContentPart();
+      textPart.partType = 'text';
+      textPart.text = UnifiedActivityUtils.isRichTextBody(comment.CommentBody)
+        ? comment.CommentBody
+        : UnifiedActivityUtils.escapeHtml(comment.CommentBody);
+      parts.add(textPart);
+    }
+    if (version != null && !isImageFileType(version.FileType)) {
+      parts.add(
+        buildFilePart(partDocumentId, buildAttachmentFileName(version))
+      );
+      return parts;
+    }
+    String imageUrl = contentDocumentId != null
+      ? '/sfc/servlet.shepherd/document/download/' + contentDocumentId
+      : '/sfc/servlet.shepherd/version/download/' + comment.RelatedRecordId;
+    parts.add(buildImagePart(partDocumentId, imageUrl, 'Image'));
+    return parts;
+  }
+
+  private List<UnifiedActivityModels.ActivityContentPart> buildCommentContentPartsFromConnectApi(
+    Id commentId
+  ) {
+    try {
+      ConnectApi.Comment comment = ConnectApi.ChatterFeeds.getComment(
+        null,
+        commentId
+      );
+      if (
+        comment == null ||
+        comment.body == null ||
+        comment.body.messageSegments == null
+      ) {
+        return new List<UnifiedActivityModels.ActivityContentPart>();
+      }
+      return buildPartsFromMessageSegments(comment.body.messageSegments, true);
+    } catch (Exception ex) {
+      return new List<UnifiedActivityModels.ActivityContentPart>();
+    }
   }
 
   private Map<Id, ContentVersion> loadContentPostVersions(
@@ -208,8 +333,12 @@ public with sharing class UnifiedActivityMapper {
         versionIds.add(fi.RelatedRecordId);
       }
     }
+    return loadContentVersionsByIds(versionIds);
+  }
+
+  private Map<Id, ContentVersion> loadContentVersionsByIds(Set<Id> versionIds) {
     Map<Id, ContentVersion> versionsById = new Map<Id, ContentVersion>();
-    if (versionIds.isEmpty()) {
+    if (versionIds == null || versionIds.isEmpty()) {
       return versionsById;
     }
     for (
@@ -709,43 +838,78 @@ public with sharing class UnifiedActivityMapper {
       }
 
       ConnectApi.FeedItem feedItem = (ConnectApi.FeedItem) element;
-
-      List<UnifiedActivityModels.ActivityContentPart> parts = new List<UnifiedActivityModels.ActivityContentPart>();
-      List<String> versionIds = new List<String>();
-      List<Integer> imagePartIndexes = new List<Integer>();
-
-      if (feedItem.body != null && feedItem.body.messageSegments != null) {
-        for (
-          ConnectApi.MessageSegment segment : feedItem.body.messageSegments
-        ) {
-          appendSegment(parts, segment, versionIds, imagePartIndexes);
-        }
-      }
-
+      List<ConnectApi.MessageSegment> segments = feedItem.body != null
+        ? feedItem.body.messageSegments
+        : null;
+      List<UnifiedActivityModels.ActivityContentPart> parts = buildPartsFromMessageSegments(
+        segments,
+        false
+      );
       if (parts.isEmpty()) {
         parts.addAll(buildTrackedChangesCapabilityParts(feedItem));
       }
-
-      Map<String, Id> versionToDocumentId = resolveContentDocumentIds(
-        versionIds
-      );
-      for (Integer partIndex : imagePartIndexes) {
-        UnifiedActivityModels.ActivityContentPart imagePart = parts[partIndex];
-        Id contentDocumentId = extractContentDocumentIdFromImageUrl(
-          imagePart.imageUrl
-        );
-        if (contentDocumentId == null) {
-          String versionId = extractVersionIdFromImageUrl(imagePart.imageUrl);
-          if (String.isNotBlank(versionId)) {
-            contentDocumentId = versionToDocumentId.get(versionId);
-          }
-        }
-        imagePart.contentDocumentId = contentDocumentId;
-      }
-
       return parts;
     } catch (Exception ex) {
       return new List<UnifiedActivityModels.ActivityContentPart>();
+    }
+  }
+
+  private List<UnifiedActivityModels.ActivityContentPart> buildPartsFromMessageSegments(
+    List<ConnectApi.MessageSegment> segments,
+    Boolean preferShepherdDownload
+  ) {
+    List<UnifiedActivityModels.ActivityContentPart> parts = new List<UnifiedActivityModels.ActivityContentPart>();
+    if (segments == null || segments.isEmpty()) {
+      return parts;
+    }
+
+    List<String> versionIds = new List<String>();
+    List<Integer> imagePartIndexes = new List<Integer>();
+    for (ConnectApi.MessageSegment segment : segments) {
+      appendSegment(parts, segment, versionIds, imagePartIndexes);
+    }
+    finalizeImageDocumentIds(
+      parts,
+      imagePartIndexes,
+      versionIds,
+      preferShepherdDownload == true
+    );
+    return parts;
+  }
+
+  private void finalizeImageDocumentIds(
+    List<UnifiedActivityModels.ActivityContentPart> parts,
+    List<Integer> imagePartIndexes,
+    List<String> versionIds,
+    Boolean preferShepherdDownload
+  ) {
+    Map<String, Id> versionToDocumentId = resolveContentDocumentIds(versionIds);
+    for (Integer partIndex : imagePartIndexes) {
+      UnifiedActivityModels.ActivityContentPart imagePart = parts[partIndex];
+      Id contentDocumentId = extractContentDocumentIdFromImageUrl(
+        imagePart.imageUrl
+      );
+      if (contentDocumentId == null) {
+        String versionId = extractVersionIdFromImageUrl(imagePart.imageUrl);
+        if (String.isNotBlank(versionId)) {
+          contentDocumentId = versionToDocumentId.get(versionId);
+        }
+      }
+      if (contentDocumentId == null && String.isNotBlank(imagePart.imageUrl)) {
+        contentDocumentId = resolveContentDocumentIdFromImageUrl(
+          imagePart.imageUrl
+        );
+      }
+      imagePart.contentDocumentId = contentDocumentId;
+      if (
+        preferShepherdDownload &&
+        contentDocumentId != null &&
+        (String.isBlank(imagePart.imageUrl) ||
+        !imagePart.imageUrl.contains('/sfc/servlet.shepherd/'))
+      ) {
+        imagePart.imageUrl =
+          '/sfc/servlet.shepherd/document/download/' + contentDocumentId;
+      }
     }
   }
 

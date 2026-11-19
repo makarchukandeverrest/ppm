@@ -19,6 +19,23 @@ public class UnifiedActivityModels {
     public String fileName;
   }
 
+  public class ActivityComment {
+    @AuraEnabled
+    public Id id;
+    @AuraEnabled
+    public Id feedItemId;
+    @AuraEnabled
+    public String body;
+    @AuraEnabled
+    public Datetime createdDate;
+    @AuraEnabled
+    public String createdById;
+    @AuraEnabled
+    public String createdByName;
+    @AuraEnabled
+    public List<ActivityContentPart> contentParts;
+  }
+
   public class ActivityPageResult {
     @AuraEnabled
     public List<ActivityItem> items;
@@ -58,7 +75,7 @@ public class UnifiedActivityModels {
     @AuraEnabled
     public Integer attachmentCount;
     @AuraEnabled
-    public List<FeedComment> comments;
+    public List<ActivityComment> comments;
 
     public ActivityItem(
       Id id,
@@ -136,7 +153,7 @@ public class UnifiedActivityModels {
       this.attachmentCount = 0;
       this.iconName = UnifiedActivityUtils.iconNameFor(type, title);
       this.formattedType = UnifiedActivityUtils.formattedTypeFor(type, title);
-      this.comments = new List<FeedComment>();
+      this.comments = new List<ActivityComment>();
     }
   }
 

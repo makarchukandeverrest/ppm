@@ -8,6 +8,7 @@ export default class UnifiedActivityFeedActivityList extends LightningElement {
   @api emptyMessage = "";
 
   expandedActivityIds = [];
+  expandedCommentIds = [];
 
   get hasActivities() {
     return this.activities.length > 0;
@@ -19,11 +20,16 @@ export default class UnifiedActivityFeedActivityList extends LightningElement {
 
   get displayActivities() {
     const expandedIds = new Set(this.expandedActivityIds);
+    const expandedCommentIds = new Set(this.expandedCommentIds);
     return (this.activities || []).map((item) => {
       const isExpanded = expandedIds.has(item.id);
       const isCollapsible = item.isCollapsibleBody === true;
+      const comments = item.comments || [];
+      const commentsExpanded = expandedCommentIds.has(item.id);
+      const commentCount = comments.length;
       return {
         ...item,
+        comments,
         isExpanded,
         showPreview: isCollapsible && !isExpanded && !!item.bodyPreview,
         showCollapsedStatus: isCollapsible && !isExpanded && !!item.status,
@@ -31,24 +37,40 @@ export default class UnifiedActivityFeedActivityList extends LightningElement {
         showOpenNote: item.isNote === true,
         toggleLabel: isExpanded ? "Hide email body" : "Show email body",
         expandIcon: isExpanded ? "utility:chevrondown" : "utility:chevronright",
-        expandAria: isExpanded ? "true" : "false"
+        expandAria: isExpanded ? "true" : "false",
+        showCommentsToggle: item.hasComments === true,
+        showComments: commentsExpanded,
+        commentsToggleLabel: commentsExpanded
+          ? "Hide comments"
+          : commentCount === 1
+            ? "Show 1 comment"
+            : `Show ${commentCount} comments`,
+        commentsExpandIcon: commentsExpanded
+          ? "utility:chevrondown"
+          : "utility:chevronright",
+        commentsExpandAria: commentsExpanded ? "true" : "false"
       };
     });
   }
 
   handleToggleBody(event) {
+    this.toggleExpandedId("expandedActivityIds", event);
+  }
+
+  handleToggleComments(event) {
+    this.toggleExpandedId("expandedCommentIds", event);
+  }
+
+  toggleExpandedId(stateKey, event) {
     event.stopPropagation();
     const recordId = event.currentTarget.dataset.id;
     if (!recordId) {
       return;
     }
-    if (this.expandedActivityIds.includes(recordId)) {
-      this.expandedActivityIds = this.expandedActivityIds.filter(
-        (id) => id !== recordId
-      );
-    } else {
-      this.expandedActivityIds = [...this.expandedActivityIds, recordId];
-    }
+    const current = this[stateKey] || [];
+    this[stateKey] = current.includes(recordId)
+      ? current.filter((id) => id !== recordId)
+      : [...current, recordId];
   }
 
   handleItemClick(event) {
@@ -58,17 +80,13 @@ export default class UnifiedActivityFeedActivityList extends LightningElement {
 
   handleImageClick(event) {
     event.stopPropagation();
-    const contentDocumentId = event.currentTarget.dataset.id;
+    const contentDocumentId = event.detail?.contentDocumentId;
+    if (!contentDocumentId) {
+      return;
+    }
     this.dispatchEvent(
       new CustomEvent("imageclick", { detail: { contentDocumentId } })
     );
-  }
-
-  handleImageKeydown(event) {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      this.handleImageClick(event);
-    }
   }
 
   handleLoadMore() {
