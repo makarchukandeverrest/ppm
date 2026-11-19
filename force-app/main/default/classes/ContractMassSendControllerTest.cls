@@ -1701,10 +1701,11 @@ private class ContractMassSendControllerTest {
   }
 
   @isTest
-  static void testBuildContractSendPdfCcAddresses_includesRmAndNamedUsers() {
+  static void testBuildContractSendPdfCcAddresses_includesRmLeadGenAndNamedUsers() {
     List<String> cc = MassSendEmailBuilder.buildContractSendPdfCcAddresses(
       'customer@example.com',
       'rm@example.com',
+      'leadgen@example.com',
       new List<String>{
         'roman@example.com',
         'stephanie@example.com',
@@ -1712,11 +1713,20 @@ private class ContractMassSendControllerTest {
       }
     );
 
-    System.assertEquals(4, cc.size(), 'Expected RM plus three named CC users.');
+    System.assertEquals(
+      5,
+      cc.size(),
+      'Expected RM, Lead Generator, and three named CC users.'
+    );
     System.assertEquals(
       'rm@example.com',
       cc[0],
       'Regional Manager should be first CC.'
+    );
+    System.assertEquals(
+      'leadgen@example.com',
+      cc[1],
+      'Lead Generator should be CC after the Regional Manager.'
     );
     System.assert(cc.contains('roman@example.com'));
     System.assert(cc.contains('stephanie@example.com'));
@@ -1728,6 +1738,7 @@ private class ContractMassSendControllerTest {
     List<String> cc = MassSendEmailBuilder.buildContractSendPdfCcAddresses(
       'jessica@example.com',
       '  JESSICA@example.com  ',
+      'stephanie@example.com',
       new List<String>{
         'roman@example.com',
         '',
@@ -1742,8 +1753,8 @@ private class ContractMassSendControllerTest {
       cc.size(),
       'To-address and duplicates should be skipped.'
     );
-    System.assertEquals('roman@example.com', cc[0]);
-    System.assertEquals('stephanie@example.com', cc[1]);
+    System.assertEquals('stephanie@example.com', cc[0]);
+    System.assertEquals('roman@example.com', cc[1]);
     System.assert(!cc.contains('jessica@example.com'));
   }
 
@@ -1757,9 +1768,7 @@ private class ContractMassSendControllerTest {
       LIMIT 1
     ];
 
-    Contract_Bid__c bid = [SELECT Id FROM Contract_Bid__c LIMIT 1];
-    bid.Lead_Owner__c = rmUser.Id;
-    update bid;
+    insert new Contract_Bid__c(Customer__c = acc.Id, Lead_Owner__c = rmUser.Id);
 
     Test.startTest();
     Map<Id, String> rmByAccount = MassSendEmailBuilder.resolveRegionalManagerEmailsByAccount(
@@ -1771,6 +1780,226 @@ private class ContractMassSendControllerTest {
       rmUser.Email,
       rmByAccount.get(acc.Id),
       'Expected Regional Manager email from Contract Bid Lead Owner.'
+    );
+  }
+
+  @isTest
+  static void testResolveLeadGeneratorEmailsByAccount_usesContractBidLeadGenerator() {
+    Account acc = [SELECT Id FROM Account LIMIT 1];
+    User leadGenUser = [
+      SELECT Id, Email
+      FROM User
+      WHERE IsActive = TRUE AND Email != NULL
+      LIMIT 1
+    ];
+
+    Contract_Bid__c bid = [SELECT Id FROM Contract_Bid__c LIMIT 1];
+    bid.Lead_Generator__c = leadGenUser.Id;
+    update bid;
+
+    Test.startTest();
+    Map<Id, String> leadGenByAccount = MassSendEmailBuilder.resolveLeadGeneratorEmailsByAccount(
+      new Set<Id>{ acc.Id }
+    );
+    Test.stopTest();
+
+    System.assertEquals(
+      leadGenUser.Email,
+      leadGenByAccount.get(acc.Id),
+      'Expected Lead Generator email from the latest Contract Bid.'
+    );
+  }
+
+  @isTest
+  static void testResolveLeadGeneratorEmailsByAccount_missingLeadGeneratorDoesNotFail() {
+    Account acc = [SELECT Id FROM Account LIMIT 1];
+
+    Test.startTest();
+    Map<Id, String> leadGenByAccount = MassSendEmailBuilder.resolveLeadGeneratorEmailsByAccount(
+      new Set<Id>{ acc.Id }
+    );
+    Test.stopTest();
+
+    System.assertEquals(
+      false,
+      leadGenByAccount.containsKey(acc.Id),
+      'A bid without a Lead Generator should not add a CC email.'
+    );
+  }
+
+  @isTest
+  static void testPdfCcBuilder_emptyLookupsAndMissingAddress() {
+    System.assertEquals(
+      0,
+      MassSendEmailBuilder.resolveLeadGeneratorEmailsByAccount(null).size()
+    );
+    System.assertEquals(
+      0,
+      MassSendEmailBuilder.resolveLeadGeneratorEmailsByAccount(new Set<Id>())
+        .size()
+    );
+    System.assertEquals(
+      0,
+      MassSendEmailBuilder.resolveRegionalManagerEmailsByAccount(null).size()
+    );
+    System.assertEquals(
+      0,
+      MassSendEmailBuilder.resolveRegionalManagerEmailsByAccount(new Set<Id>())
+        .size()
+    );
+    System.assertEquals(
+      null,
+      MassSendEmailBuilder.resolveEmailTemplateDeveloperName(null)
+    );
+    System.assertEquals(
+      null,
+      MassSendEmailBuilder.resolveEmailTemplateDeveloperName(
+        UserInfo.getUserId()
+      )
+    );
+
+    MassSendEmailBuilder.BuildRequest missingTemplate = new MassSendEmailBuilder.BuildRequest();
+    missingTemplate.useWorkOrderMailbox = false;
+    missingTemplate.sendingUser = new User(Email = 'sender@example.com');
+    MassSendEmailBuilder.EmailBuildResult missingResult = MassSendEmailBuilder.buildEmail(
+      missingTemplate
+    );
+    System.assertEquals(
+      'Email template is required.',
+      missingResult.errorMessage
+    );
+
+    MassSendEmailBuilder.BuildRequest req = new MassSendEmailBuilder.BuildRequest();
+    req.parsedContent = true;
+    req.rowSubject = 'PDF subject';
+    req.rowBody = '<p>PDF body</p>';
+    req.toAddresses = new List<String>{ 'customer@example.com' };
+    req.templateDeveloperName = 'Contract_Send_PDF_New_Customer';
+    req.recipientEmail = 'customer@example.com';
+    req.regionalManagerEmail = 'rm@example.com';
+    req.leadGeneratorEmail = 'leadgen@example.com';
+    req.namedCcEmails = new List<String>{
+      'stephanie@example.com',
+      'rm@example.com'
+    };
+    req.useWorkOrderMailbox = false;
+    req.sendingUser = new User(Email = 'sender@example.com');
+
+    MassSendEmailBuilder.EmailBuildResult built = MassSendEmailBuilder.buildEmail(
+      req
+    );
+    System.assertEquals(null, built.errorMessage);
+    System.assertEquals(3, built.mail.getCcAddresses().size());
+    System.assertEquals('rm@example.com', built.mail.getCcAddresses()[0]);
+    System.assertEquals('leadgen@example.com', built.mail.getCcAddresses()[1]);
+
+    WorkOrder wo = [SELECT Id FROM WorkOrder LIMIT 1];
+    String lineItems = MassSendEmailBuilder.applyLineItemsPlaceholder(
+      '[LINE_ITEMS]',
+      wo.Id,
+      null
+    );
+    System.assert(lineItems.contains('Labor'));
+
+    Account blankAcc = new Account(Name = 'No Address Account');
+    insert blankAcc;
+    WorkOrder blankWo = new WorkOrder(
+      Subject = 'No Address WO',
+      Status = 'New',
+      Priority = 'Medium',
+      AccountId = blankAcc.Id
+    );
+    insert blankWo;
+    String addressHtml = MassSendEmailBuilder.applyAccountAddressPlaceholder(
+      'Addr [ACCOUNT_ADDRESS]',
+      blankWo.Id,
+      true
+    );
+    System.assert(
+      addressHtml.contains('No account or billing/shipping address')
+    );
+    String addressLine = MassSendEmailBuilder.applyAccountAddressPlaceholder(
+      'Addr [ACCOUNT_ADDRESS]',
+      blankWo.Id,
+      false
+    );
+    System.assertEquals('Addr ', addressLine);
+  }
+
+  @isTest
+  static void testResolveCcFromSelectedBids_usesTheChosenBid() {
+    Account acc = [SELECT Id FROM Account LIMIT 1];
+    List<User> users = [
+      SELECT Id, Email
+      FROM User
+      WHERE IsActive = TRUE AND Email != NULL
+      ORDER BY CreatedDate ASC
+      LIMIT 2
+    ];
+    System.assert(
+      users.size() >= 1,
+      'An active user with an email is required.'
+    );
+
+    User selectedUser = users[0];
+    User otherUser = users.size() > 1 ? users[1] : users[0];
+
+    Contract_Bid__c selectedBid = new Contract_Bid__c(
+      Customer__c = acc.Id,
+      Lead_Owner__c = selectedUser.Id
+    );
+    Contract_Bid__c otherBid = new Contract_Bid__c(Customer__c = acc.Id);
+    insert new List<Contract_Bid__c>{ selectedBid, otherBid };
+
+    selectedBid.Lead_Generator__c = selectedUser.Id;
+    otherBid.Lead_Generator__c = otherUser.Id;
+    update new List<Contract_Bid__c>{ selectedBid, otherBid };
+
+    Test.startTest();
+    MassSendEmailBuilder.SelectedBidCc selectedCc = MassSendEmailBuilder.resolveCcFromSelectedBids(
+      new Set<Id>{ selectedBid.Id }
+    );
+    Test.stopTest();
+
+    System.assertEquals(
+      new List<String>{ selectedUser.Email },
+      selectedCc.leadGeneratorEmailsByAccount.get(acc.Id),
+      'Lead Generator should come from the selected Contract Bid.'
+    );
+    System.assertEquals(
+      new List<String>{ selectedUser.Email },
+      selectedCc.leadOwnerEmailsByAccount.get(acc.Id),
+      'Lead Owner should come from the selected Contract Bid.'
+    );
+  }
+
+  @isTest
+  static void testResolveCcFromSelectedBids_blankLeadGeneratorStaysBlank() {
+    Account acc = [SELECT Id FROM Account LIMIT 1];
+    User leadGenUser = [
+      SELECT Id, Email
+      FROM User
+      WHERE IsActive = TRUE AND Email != NULL
+      LIMIT 1
+    ];
+
+    Contract_Bid__c selectedBid = new Contract_Bid__c(Customer__c = acc.Id);
+    Contract_Bid__c otherBid = new Contract_Bid__c(Customer__c = acc.Id);
+    insert new List<Contract_Bid__c>{ selectedBid, otherBid };
+
+    otherBid.Lead_Generator__c = leadGenUser.Id;
+    update otherBid;
+
+    Test.startTest();
+    MassSendEmailBuilder.SelectedBidCc selectedCc = MassSendEmailBuilder.resolveCcFromSelectedBids(
+      new Set<Id>{ selectedBid.Id }
+    );
+    Test.stopTest();
+
+    System.assertEquals(
+      null,
+      selectedCc.leadGeneratorEmailsByAccount.get(acc.Id),
+      'An empty Lead Generator on the selected bid should not be replaced by another bid.'
     );
   }
 }

@@ -11,9 +11,7 @@ public with sharing class ContractBidTriggerHandler extends TriggerHandler {
   }
 
   protected override void beforeInsert() {
-    ContractBidLabelsFiller.fillLabels(this.newList);
   }
-
 
   protected override void afterInsert() {
     updateCurrentCustomerAccounts();
@@ -61,10 +59,7 @@ public with sharing class ContractBidTriggerHandler extends TriggerHandler {
     Set<Id> stopReminderBidIds = new Set<Id>();
     for (Contract_Bid__c bid : this.newList) {
       Contract_Bid__c oldBid = this.oldMap != null ? this.oldMap.get(bid.Id) : null;
-      if (
-        bid.Stop_Sending_Reminders__c == true &&
-        (oldBid == null || oldBid.Stop_Sending_Reminders__c != true)
-      ) {
+      if (bid.Stop_Sending_Reminders__c == true && (oldBid == null || oldBid.Stop_Sending_Reminders__c != true)) {
         stopReminderBidIds.add(bid.Id);
       }
     }
@@ -72,9 +67,7 @@ public with sharing class ContractBidTriggerHandler extends TriggerHandler {
   }
 
   private Boolean stageChangedTo(Contract_Bid__c bid, String targetStage) {
-    String previousStage = this.oldMap != null
-      ? this.oldMap.get(bid.Id)?.Stage__c
-      : null;
+    String previousStage = this.oldMap != null ? this.oldMap.get(bid.Id)?.Stage__c : null;
     return bid.Stage__c == targetStage && previousStage != targetStage;
   }
 }
