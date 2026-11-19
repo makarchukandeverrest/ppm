@@ -57,6 +57,8 @@ public class UnifiedActivityModels {
     public String sourceLabel;
     @AuraEnabled
     public Integer attachmentCount;
+    @AuraEnabled
+    public List<FeedComment> comments;
 
     public ActivityItem(
       Id id,
@@ -134,6 +136,7 @@ public class UnifiedActivityModels {
       this.attachmentCount = 0;
       this.iconName = UnifiedActivityUtils.iconNameFor(type, title);
       this.formattedType = UnifiedActivityUtils.formattedTypeFor(type, title);
+      this.comments = new List<FeedComment>();
     }
   }
 
