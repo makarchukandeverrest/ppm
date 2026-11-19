@@ -52,7 +52,7 @@ private class ContractBidLabelsFillerTest {
   }
 
   @IsTest
-  static void insert_addsDefaultLabels() {
+  static void insert_doesNotAddDefaultLabels() {
     Account customer = [SELECT Id FROM Account WHERE Name = 'Labels Customer'];
 
     Test.startTest();
@@ -66,12 +66,11 @@ private class ContractBidLabelsFillerTest {
     Test.stopTest();
 
     bid = [SELECT Label__c FROM Contract_Bid__c WHERE Id = :bid.Id];
-    System.assert(!bid.Label__c.contains('Assumptive Bid'));
-    System.assert(bid.Label__c.contains('Contract Created'));
+    System.assert(String.isBlank(bid.Label__c));
   }
 
   @IsTest
-  static void insert_keepsExistingLabelsAndAddsDefaults() {
+  static void insert_keepsExistingLabelsWithoutDefaults() {
     Account customer = [SELECT Id FROM Account WHERE Name = 'Labels Customer'];
 
     Test.startTest();
@@ -86,9 +85,7 @@ private class ContractBidLabelsFillerTest {
     Test.stopTest();
 
     bid = [SELECT Label__c FROM Contract_Bid__c WHERE Id = :bid.Id];
-    System.assert(bid.Label__c.contains('Hot Lead'));
-    System.assert(!bid.Label__c.contains('Assumptive Bid'));
-    System.assert(bid.Label__c.contains('Contract Created'));
+    System.assertEquals('Hot Lead', bid.Label__c);
   }
 
   @IsTest
