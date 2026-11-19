@@ -568,19 +568,14 @@ export default class ContractsSendSelector extends NavigationMixin(LightningElem
     }
 
     closeAfterSuccess() {
+        // List View / Flow mass send → back to Contract Bid list
         if (this.isInFlow) {
             const listUrl = '/lightning/o/Contract_Bid__c/list';
             (window.top || window).location.assign(listUrl);
             return;
         }
 
+        // Bid record page Quick Action → just close modal, stay on the bid
         this.dispatchEvent(new CloseActionScreenEvent());
-        this[NavigationMixin.Navigate]({
-            type: 'standard__objectPage',
-            attributes: {
-                objectApiName: 'Contract_Bid__c',
-                actionName: 'list'
-            }
-        });
     }
 }
