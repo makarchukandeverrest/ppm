@@ -46,9 +46,9 @@
         <label>Contract Approved</label>
     </customValue>
     <customValue>
-        <fullName>Sales Form Lead</fullName>
+        <fullName>New Lead</fullName>
         <default>false</default>
-        <label>Sales Form Lead</label>
+        <label>New Lead</label>
     </customValue>
     <customValue>
         <fullName>New record created</fullName>
@@ -56,26 +56,30 @@
         <label>New record created</label>
     </customValue>
     <customValue>
-        <fullName>info verified</fullName>
+        <fullName>Mass Created</fullName>
         <default>false</default>
-        <label>Info Verified</label>
+        <label>Mass Created</label>
     </customValue>
     <customValue>
-        <fullName>Needs Regional Help</fullName>
+        <fullName>MISSING FILE/CONTACT INFO</fullName>
         <default>false</default>
-        <label>Needs Regional Help</label>
+        <label>MISSING FILE/CONTACT INFO</label>
     </customValue>
     <customValue>
-        <fullName>Natasa to Complete</fullName>
+        <fullName>Resend Bid</fullName>
+        <default>false</default>
+        <label>Resend Bid</label>
+    </customValue>
+    <customValue>
+        <fullName>Contract Extended</fullName>
+        <default>false</default>
+        <label>Contract Extended</label>
+    </customValue>
+    <customValue>
+        <fullName>Assumptive Lead</fullName>
         <default>false</default>
         <isActive>false</isActive>
-        <label>Natasa to Complete</label>
-    </customValue>
-    <customValue>
-        <fullName>Goran to Complete</fullName>
-        <default>false</default>
-        <isActive>false</isActive>
-        <label>Goran to Complete</label>
+        <label>Assumptive Lead</label>
     </customValue>
     <customValue>
         <fullName>Rania to Complete</fullName>
@@ -84,34 +88,22 @@
         <label>Rania to Complete</label>
     </customValue>
     <customValue>
-        <fullName>Marijana to do</fullName>
+        <fullName>Goran to Complete</fullName>
         <default>false</default>
         <isActive>false</isActive>
-        <label>Marijana to do</label>
+        <label>Goran to Complete</label>
     </customValue>
     <customValue>
-        <fullName>Mass Created</fullName>
+        <fullName>Natasa to Complete</fullName>
         <default>false</default>
         <isActive>false</isActive>
-        <label>Mass Created</label>
+        <label>Natasa to Complete</label>
     </customValue>
     <customValue>
-        <fullName>MISSING FILE/CONTACT INFO</fullName>
+        <fullName>Marijana to Complete</fullName>
         <default>false</default>
         <isActive>false</isActive>
-        <label>MISSING FILE/CONTACT INFO</label>
-    </customValue>
-    <customValue>
-        <fullName>New Lead</fullName>
-        <default>false</default>
-        <isActive>false</isActive>
-        <label>New Lead</label>
-    </customValue>
-    <customValue>
-        <fullName>Value 5</fullName>
-        <default>false</default>
-        <isActive>false</isActive>
-        <label>Value 5</label>
+        <label>Marijana to Complete</label>
     </customValue>
     <customValue>
         <fullName>Value 6</fullName>
@@ -124,12 +116,6 @@
         <default>false</default>
         <isActive>false</isActive>
         <label>Verified</label>
-    </customValue>
-    <customValue>
-        <fullName>Assumptive Lead</fullName>
-        <default>false</default>
-        <isActive>false</isActive>
-        <label>Assumptive Lead</label>
     </customValue>
     <customValue>
         <fullName>Check Information</fullName>
@@ -172,12 +158,6 @@
         <default>false</default>
         <isActive>false</isActive>
         <label>Goran to do</label>
-    </customValue>
-    <customValue>
-        <fullName>Marijana to Complete</fullName>
-        <default>false</default>
-        <isActive>false</isActive>
-        <label>Marijana to Complete</label>
     </customValue>
     <description>Labels to comment</description>
     <masterLabel>Labels</masterLabel>

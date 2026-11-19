@@ -1,0 +1,34 @@
+<template>
+  <template if:true={showModal}>
+    <section
+      role="dialog"
+      tabindex="-1"
+      aria-modal="true"
+      aria-labelledby="lost-deal-reason-heading"
+      class="slds-modal slds-fade-in-open slds-modal_small"
+    >
+      <div class="slds-modal__container">
+        <div class="slds-modal__header">
+          <h1
+            id="lost-deal-reason-heading"
+            class="slds-modal__title slds-hyphenate"
+          >
+            Lost Deal Reason
+          </h1>
+        </div>
+        <div class="slds-modal__content slds-p-around_medium">
+          <template for:each={flowRuns} for:item="run">
+            <lightning-flow
+              key={run.id}
+              flow-api-name="Contract_Bid_lost_deal_updater"
+              flow-input-variables={inputVariables}
+              onstatuschange={handleStatusChange}
+            >
+            </lightning-flow>
+          </template>
+        </div>
+      </div>
+    </section>
+    <div class="slds-backdrop slds-backdrop_open"></div>
+  </template>
+</template>
